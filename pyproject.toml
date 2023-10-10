@@ -6,6 +6,10 @@ authors = ["Yiorgis Gozadinos <ggozadinos@gmail.com>"]
 license = "GPL"
 readme = "README.md"
 
+[tool.poetry.scripts]
+oterm = "oterm.cli.oterm:cli"
+
+
 [tool.poetry.dependencies]
 python = "^3.10"
 textual = { version = "^0.38.1", extras = ["dev"] }
@@ -19,6 +23,7 @@ ruff = "^0.0.292"
 black = "^23.9.1"
 pytest = "^7.4.2"
 pytest-asyncio = "^0.21.1"
+textual-dev = "^1.2.1"
 
 [build-system]
 requires = ["poetry-core"]
