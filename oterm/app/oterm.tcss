@@ -1,0 +1,48 @@
+#chatContainer {
+    overflow-y: auto;
+    padding: 1;
+    height: 100%;
+}
+
+ChatItem {
+    padding: 1;
+    padding-bottom: 0;
+}
+
+ChatItem .chatItem {
+    height: auto;
+}
+
+ChatItem .author {
+    width: 8%;
+    padding: 1;
+    color: $secondary;
+
+}
+
+ChatItem .USER {
+    background: $panel;
+}
+
+ChatItem .OLLAMA {
+    background: $panel-lighten-1;
+}
+
+ChatItem .text{
+    margin: 1;
+    width: 90%;
+}
+
+PromptWidget {
+    background: $panel;
+    height: 5;
+    margin: 1;
+    padding: 1;
+    dock: bottom;
+}
+
+PromptWidget Input {
+    margin-right: 1;
+    padding-right: 1;
+    overflow-y: auto;
+}
