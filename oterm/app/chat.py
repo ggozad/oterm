@@ -21,6 +21,14 @@ class ChatContainer(Widget):
     ollama = OlammaLLM()
     messages: reactive[list[tuple[str, Author]]] = reactive([])
 
+    def __init__(
+        self,
+        *children: Widget,
+        **kwargs,
+    ) -> None:
+        super().__init__(*children, **kwargs)
+        self.ollama = OlammaLLM()  # We do this to reset the context
+
     def compose(self) -> ComposeResult:
         with Vertical():
             yield Vertical(id="messageContainer")
