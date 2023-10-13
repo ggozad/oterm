@@ -1,5 +1,6 @@
 import json
 from typing import Any, AsyncGenerator
+
 import httpx
 
 from oterm.config import Config

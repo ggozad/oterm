@@ -3,6 +3,7 @@ from enum import Enum
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
+from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Input, LoadingIndicator, Static
@@ -34,27 +35,40 @@ class ChatContainer(Widget):
         input.clear()
         input.disabled = True
         self.messages.append((message, Author.USER))
-        message_container.mount(ChatItem(message, Author.USER))
+        chat_item = ChatItem()
+        chat_item.text = message
+        chat_item.author = Author.USER
+        message_container.mount(chat_item)
+
+        chat_item = ChatItem()
+        chat_item.author = Author.OLLAMA
+        message_container.mount(chat_item)
         loading = LoadingIndicator()
         message_container.mount(loading)
         message_container.scroll_end()
 
-        response = await self.ollama.completion(message)
+        response = ""
+        async for text in self.ollama.stream(message):
+            response = text
+            chat_item.text = text
+            message_container.scroll_end()
         self.messages.append((response, Author.OLLAMA))
         loading.remove()
-        message_container.mount(ChatItem(response, Author.OLLAMA))
         input.disabled = False
         input.focus()
 
 
-class ChatItem(Static):
-    text: str = ""
+class ChatItem(Widget):
+    text: reactive[str] = reactive("")
     author: Author
 
-    def __init__(self, text="", author=Author.USER, **kwargs):
-        super().__init__(**kwargs)
-        self.author = author
-        self.text = text
+    def watch_text(self, text: str) -> None:
+        try:
+            widget = self.query_one(".text", Static)
+            if widget:
+                widget.update(text)
+        except NoMatches:
+            pass
 
     def compose(self) -> ComposeResult:
         """A chat item."""
