@@ -12,7 +12,7 @@ oterm = "oterm.cli.oterm:cli"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-textual = { version = "^0.38.1", extras = ["dev"] }
+textual = { version = "^0.40.0", extras = ["dev", "syntax"] }
 typer = "^0.9.0"
 python-dotenv = "^1.0.0"
 pydantic = "^2.4.2"

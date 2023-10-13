@@ -1,6 +1,5 @@
-from oterm.app.prompt import PromptWidget
 from textual.app import App, ComposeResult
-from textual.widgets import Header, Footer
+from textual.widgets import Footer, Header
 
 from oterm.app.chat import ChatContainer
 
@@ -14,7 +13,6 @@ class OTerm(App):
     def compose(self) -> ComposeResult:
         yield Header()
         yield ChatContainer()
-        yield PromptWidget(id="prompt")
         yield Footer()
 
     def action_toggle_dark(self) -> None:

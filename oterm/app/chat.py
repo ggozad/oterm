@@ -1,10 +1,15 @@
 from enum import Enum
 
+from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Static
+from textual.widgets import Input, LoadingIndicator, Static
+from textual.worker import get_current_worker
+
+from oterm.app.prompt import PromptWidget
+from oterm.ollama import OlammaLLM
 
 
 class Author(Enum):
@@ -13,36 +18,51 @@ class Author(Enum):
 
 
 class ChatContainer(Widget):
+    ollama = OlammaLLM()
+    messages: reactive[list[tuple[str, Author]]] = reactive([])
+
     def compose(self) -> ComposeResult:
-        with Vertical(id="chatContainer"):
-            yield ChatItem(
-                "1But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?",
-                Author.OLLAMA,
-            )
-            yield ChatItem(
-                "2But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?",
-                Author.USER,
-            )
-            yield ChatItem(
-                "3But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?",
-                Author.OLLAMA,
-            )
-            yield ChatItem(
-                "4But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?",
-                Author.USER,
-            )
-            yield ChatItem(
-                "5But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?",
-                Author.OLLAMA,
-            )
-            yield ChatItem(
-                "6But I must explain to you how all this mistaken idea of denouncing pleasure and praising pain was born and I will give you a complete account of the system, and expound the actual teachings of the great explorer of the truth, the master-builder of human happiness. No one rejects, dislikes, or avoids pleasure itself, because it is pleasure, but because those who do not know how to pursue pleasure rationally encounter consequences that are extremely painful. Nor again is there anyone who loves or pursues or desires to obtain pain of itself, because it is pain, but because occasionally circumstances occur in which toil and pain can procure him some great pleasure. To take a trivial example, which of us ever undertakes laborious physical exercise, except to obtain some advantage from it? But who has any right to find fault with a man who chooses to enjoy a pleasure that has no annoying consequences, or one who avoids a pain that produces no resultant pleasure?",
-                Author.USER,
-            )
+        with Vertical():
+            yield Vertical(id="messageContainer")
+            yield PromptWidget(id="prompt")
+
+    @on(Input.Submitted)
+    async def on_submit(self, event: Input.Submitted) -> None:
+        message = event.value
+        input = event.input
+        input.clear()
+
+        message_container = self.query_one("#messageContainer")
+
+        self.messages.append((message, Author.USER))
+        message_container.mount(ChatItem(message, Author.USER))
+        loading = LoadingIndicator()
+        message_container.mount(loading)
+        message_container.scroll_end()
+        input.disabled = True
+        self.get_response(message)
+
+    @work(exclusive=True, thread=True)
+    def get_response(self, prompt: str) -> None:
+        response = self.ollama.completion(prompt)
+        worker = get_current_worker()
+        if not worker.is_cancelled:
+            self.app.call_from_thread(self.add_ollama_response, response)
+            return
+
+    def add_ollama_response(self, response: str) -> None:
+        message_container = self.query_one("#messageContainer")
+        self.messages.append((response, Author.OLLAMA))
+        loading_indicator = self.query_one(LoadingIndicator)
+        loading_indicator.remove()
+        message_container.mount(ChatItem(response, Author.OLLAMA))
+        input = self.query_one("#promptInput")
+        input.disabled = False
+        input.focus()
 
 
 class ChatItem(Static):
-    text: reactive[str] = reactive("")
+    text: str = ""
     author: Author
 
     def __init__(self, text="", author=Author.USER, **kwargs):

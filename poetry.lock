@@ -1050,22 +1050,25 @@ files = [
 
 [[package]]
 name = "textual"
-version = "0.38.1"
+version = "0.40.0"
 description = "Modern Text User Interface framework"
 optional = false
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "textual-0.38.1-py3-none-any.whl", hash = "sha256:8d38cbad6ac0b1320e52c7516e96b817e448d7c58d991269d3cf300108bbd191"},
-    {file = "textual-0.38.1.tar.gz", hash = "sha256:504c934c3281217a29e7a95d498aacb7fbc629f6430895f7ac51ea7ba66e5d99"},
+    {file = "textual-0.40.0-py3-none-any.whl", hash = "sha256:3e98f0c9c9a9361d3077c00e3fc5a708f927dd1ce45a1149eb1ba6945ce9d71c"},
+    {file = "textual-0.40.0.tar.gz", hash = "sha256:0fd014f9fab7f6d88167c82f90e115b118b3016b8597281d14c9257967f7812e"},
 ]
 
 [package.dependencies]
 importlib-metadata = ">=4.11.3"
 markdown-it-py = {version = ">=2.1.0", extras = ["linkify", "plugins"]}
 rich = ">=13.3.3"
-tree-sitter = ">=0.20.1,<0.21.0"
-tree_sitter_languages = {version = ">=1.7.0", markers = "python_version >= \"3.8\" and python_version < \"4.0\""}
+tree-sitter = {version = ">=0.20.1,<0.21.0", optional = true, markers = "extra == \"syntax\""}
+tree_sitter_languages = {version = ">=1.7.0", optional = true, markers = "extra == \"syntax\""}
 typing-extensions = ">=4.4.0,<5.0.0"
+
+[package.extras]
+syntax = ["tree-sitter (>=0.20.1,<0.21.0)", "tree_sitter_languages (>=1.7.0)"]
 
 [[package]]
 name = "textual-dev"
@@ -1390,4 +1393,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "7c305e7700a1e8958bc22cb8505c821e879c247d8f2cfbaec534a9c5d128df76"
+content-hash = "aee9e3495ab5e75fcc331d0f8a0d5fd2b28d5a8670a7c6129b6af3ad055d99b5"

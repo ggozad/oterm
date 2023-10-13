@@ -1,4 +1,4 @@
-#chatContainer {
+#messageContainer {
     overflow-y: auto;
     padding: 1;
     height: 100%;
@@ -45,4 +45,8 @@ PromptWidget Input {
     margin-right: 1;
     padding-right: 1;
     overflow-y: auto;
+}
+
+LoadingIndicator {
+    height: 3;
 }
