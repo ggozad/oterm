@@ -1,7 +1,5 @@
 import json
-from typing import List, Tuple
-
-import requests
+import httpx
 
 from oterm.config import Config
 
@@ -15,20 +13,20 @@ class OlammaLLM:
         self.model = model
         self.template = template
         self.system = system
-        self.context: List[int] = []
+        self.context: list[int] = []
 
-    def completion(
-        self,
-        prompt: str,
-    ) -> str:
-        response, context = self._generate(
+    async def completion(self, prompt: str) -> str:
+        response, context = await self._agenerate(
             prompt=prompt,
             context=self.context,
         )
         self.context = context
         return response
 
-    def _generate(self, prompt: str, context: List[int]) -> Tuple[str, List[int]]:
+    async def _agenerate(
+        self, prompt: str, context: list[int]
+    ) -> tuple[str, list[int]]:
+        client = httpx.AsyncClient()
         jsn = {
             "model": self.model,
             "prompt": prompt,
@@ -39,21 +37,17 @@ class OlammaLLM:
         if self.template:
             jsn["template"] = self.template
 
-        r = requests.post(
-            f"{Config.OLLAMA_URL}/generate",
-            json=jsn,
-            stream=True,
-        )
-        r.raise_for_status()
+        res = ""
+        async with client.stream(
+            "POST", f"{Config.OLLAMA_URL}/generate", json=jsn
+        ) as response:
+            async for line in response.aiter_lines():
+                body = json.loads(line)
+                res += body.get("response", "")
 
-        response = ""
-        for line in r.iter_lines():
-            body = json.loads(line)
-            response += body.get("response", "")
+                if "error" in body:
+                    raise OllamaError(body["error"])
 
-            if "error" in body:
-                raise OllamaError(body["error"])
-
-            if body.get("done", False):
-                return response, body["context"]
-        return response, []
+                if body.get("done", False):
+                    return res, body["context"]
+        return res, []
