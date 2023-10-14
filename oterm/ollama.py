@@ -67,3 +67,15 @@ class OllamaLLM:
 
                 if body.get("done", False):
                     yield res, body["context"]
+
+
+class OllamaAPI:
+    async def get_models(self) -> list[dict[str, str]]:
+        client = httpx.AsyncClient()
+        res = await client.get(f"{Config.OLLAMA_URL}/tags")
+        return res.json().get("models", [])
+
+    async def get_model_info(self, model: str) -> dict[str, str]:
+        client = httpx.AsyncClient()
+        res = await client.post(f"{Config.OLLAMA_URL}/show", json={"name": model})
+        return res.json()
