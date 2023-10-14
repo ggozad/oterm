@@ -10,7 +10,7 @@ class OllamaError(Exception):
     pass
 
 
-class OlammaLLM:
+class OllamaLLM:
     def __init__(self, model="nous-hermes:13b", template="", system=""):
         self.model = model
         self.template = template

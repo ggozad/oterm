@@ -9,7 +9,7 @@ from textual.widget import Widget
 from textual.widgets import Input, LoadingIndicator, Static
 
 from oterm.app.prompt import PromptWidget
-from oterm.ollama import OlammaLLM
+from oterm.ollama import OllamaLLM
 
 
 class Author(Enum):
@@ -18,7 +18,7 @@ class Author(Enum):
 
 
 class ChatContainer(Widget):
-    ollama = OlammaLLM()
+    ollama = OllamaLLM()
     messages: reactive[list[tuple[str, Author]]] = reactive([])
 
     def __init__(
@@ -27,7 +27,7 @@ class ChatContainer(Widget):
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
-        self.ollama = OlammaLLM()  # We do this to reset the context
+        self.ollama = OllamaLLM()  # We do this to reset the context
 
     def compose(self) -> ComposeResult:
         with Vertical():

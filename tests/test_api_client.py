@@ -1,18 +1,18 @@
 import pytest
 
-from oterm.ollama import OlammaLLM, OllamaError
+from oterm.ollama import OllamaLLM, OllamaError
 
 
 @pytest.mark.asyncio
 async def test_generate():
-    llm = OlammaLLM()
+    llm = OllamaLLM()
     res = await llm.completion("Please add 2 and 2")
     assert "4" in res
 
 
 @pytest.mark.asyncio
 async def test_llm_context():
-    llm = OlammaLLM()
+    llm = OllamaLLM()
     await llm.completion("I am testing oterm, a python client for Ollama.")
     # There should now be a context saved for the conversation.
     assert llm.context
@@ -22,7 +22,7 @@ async def test_llm_context():
 
 @pytest.mark.asyncio
 async def test_errors():
-    llm = OlammaLLM(model="non-existent-model")
+    llm = OllamaLLM(model="non-existent-model")
     try:
         await llm.completion("This should fail.")
     except OllamaError as e:
@@ -31,7 +31,7 @@ async def test_errors():
 
 @pytest.mark.asyncio
 async def test_iterator():
-    llm = OlammaLLM()
+    llm = OllamaLLM()
     response = ""
     async for text in llm.stream("Please add 2 and 2"):
         response = text
