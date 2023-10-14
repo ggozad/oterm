@@ -1,7 +1,8 @@
 from textual.app import App, ComposeResult
-from textual.widgets import Footer, Header, TabPane, TabbedContent
+from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat import ChatContainer
+from oterm.app.splash import SplashScreen
 
 
 class OTerm(App):
@@ -13,6 +14,7 @@ class OTerm(App):
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "quit", "Quit"),
     ]
+    SCREENS = {"splash": SplashScreen()}
 
     tab_count = 1
 
@@ -28,6 +30,9 @@ class OTerm(App):
         pane = TabPane(f"chat #{self.tab_count}", id=f"chat-{self.tab_count}")
         pane.compose_add_child(ChatContainer())
         tabs.add_pane(pane)
+
+    async def on_mount(self) -> None:
+        await self.push_screen("splash")
 
     def compose(self) -> ComposeResult:
         yield Header()
