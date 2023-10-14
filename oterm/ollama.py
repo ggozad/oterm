@@ -31,6 +31,7 @@ class OllamaLLM:
 
     async def stream(self, prompt) -> AsyncGenerator[str, Any]:
         context = []
+
         async for text, ctx in self._agenerate(
             prompt=prompt,
             context=self.context,
@@ -56,7 +57,7 @@ class OllamaLLM:
 
         res = ""
         async with client.stream(
-            "POST", f"{Config.OLLAMA_URL}/generate", json=jsn
+            "POST", f"{Config.OLLAMA_URL}/generate", json=jsn, timeout=None
         ) as response:
             async for line in response.aiter_lines():
                 body = json.loads(line)

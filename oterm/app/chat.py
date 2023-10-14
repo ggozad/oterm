@@ -24,10 +24,11 @@ class ChatContainer(Widget):
     def __init__(
         self,
         *children: Widget,
+        model: str = "nous-hermes:13b",
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
-        self.ollama = OllamaLLM()  # We do this to reset the context
+        self.ollama = OllamaLLM(model=model)  # We do this to reset the context
 
     def compose(self) -> ComposeResult:
         with Vertical():
