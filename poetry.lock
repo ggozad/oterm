@@ -123,6 +123,41 @@ files = [
 frozenlist = ">=1.1.0"
 
 [[package]]
+name = "aiosql"
+version = "9.0"
+description = "Simple SQL in Python"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "aiosql-9.0-py3-none-any.whl", hash = "sha256:a074f6294e00530728f114862241d231ba95e2ae569663303f74b24b81dccc0c"},
+    {file = "aiosql-9.0.tar.gz", hash = "sha256:8bcbddebc02be488f33786b8b1c1100335ac9f03cf61530eaafed64b04fa8994"},
+]
+
+[package.extras]
+dev = ["black", "build", "coverage", "flake8", "mypy", "pytest", "pytest-asyncio", "rstcheck", "types-setuptools"]
+dev-duckdb = ["duckdb"]
+dev-mariadb = ["mariadb"]
+dev-mysql = ["mysql-connector-python", "mysqlclient", "pymysql", "pytest-mysql"]
+dev-postgres = ["asyncpg", "pg8000", "psycopg (>=3)", "psycopg2", "psycopg2-binary", "pygresql", "pytest-postgresql"]
+dev-sqlite = ["aiosqlite", "apsw"]
+dist = ["build", "sphinx (>=4,<5)", "sphinx-rtd-theme (>=0.5.2)", "twine", "wheel"]
+
+[[package]]
+name = "aiosqlite"
+version = "0.19.0"
+description = "asyncio bridge to the standard sqlite3 module"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "aiosqlite-0.19.0-py3-none-any.whl", hash = "sha256:edba222e03453e094a3ce605db1b970c4b3376264e56f32e2a4959f948d66a96"},
+    {file = "aiosqlite-0.19.0.tar.gz", hash = "sha256:95ee77b91c8d2808bd08a59fbebf66270e9090c3d92ffbf260dc0db0b979577d"},
+]
+
+[package.extras]
+dev = ["aiounittest (==1.4.1)", "attribution (==1.6.2)", "black (==23.3.0)", "coverage[toml] (==7.2.3)", "flake8 (==5.0.4)", "flake8-bugbear (==23.3.12)", "flit (==3.7.1)", "mypy (==1.2.0)", "ufmt (==2.1.0)", "usort (==1.0.6)"]
+docs = ["sphinx (==6.1.3)", "sphinx-mdinclude (==0.5.3)"]
+
+[[package]]
 name = "annotated-types"
 version = "0.6.0"
 description = "Reusable constraint types to use with typing.Annotated"
@@ -1491,4 +1526,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "67daf1021a549c23bff57790f01e4ef20eedea7fb0d8eb45acbc803baae8169f"
+content-hash = "d7f665c68b085d50d0305ddec8d86b1fb123b48a418d904169ac131827805ec4"

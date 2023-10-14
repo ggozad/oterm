@@ -4,6 +4,7 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 from oterm.app.chat import ChatContainer
 from oterm.app.model_selection import ModelSelection
 from oterm.app.splash import SplashScreen
+from oterm.store.store import Store
 
 
 class OTerm(App):
@@ -42,6 +43,7 @@ class OTerm(App):
         self.push_screen("model_selection", on_model_select)
 
     async def on_mount(self) -> None:
+        self.store = await Store.create()
         self.action_new_chat()
         await self.push_screen("splash")
 
