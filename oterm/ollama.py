@@ -71,12 +71,12 @@ class OllamaLLM:
 
 
 class OllamaAPI:
-    async def get_models(self) -> list[dict[str, str]]:
+    async def get_models(self) -> list[dict[str, Any]]:
         client = httpx.AsyncClient()
         response = await client.get(f"{Config.OLLAMA_URL}/tags")
         return response.json().get("models", [])
 
-    async def get_model_info(self, model: str) -> dict[str, str]:
+    async def get_model_info(self, model: str) -> dict[str, Any]:
         client = httpx.AsyncClient()
         response = await client.post(f"{Config.OLLAMA_URL}/show", json={"name": model})
         if response.json().get("error"):

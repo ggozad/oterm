@@ -2,6 +2,7 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat import ChatContainer
+from oterm.app.model_selection import ModelSelection
 from oterm.app.splash import SplashScreen
 
 
@@ -14,9 +15,12 @@ class OTerm(App):
         ("d", "toggle_dark", "Toggle dark mode"),
         ("q", "quit", "Quit"),
     ]
-    SCREENS = {"splash": SplashScreen()}
+    SCREENS = {
+        "splash": SplashScreen(),
+        "model_selection": ModelSelection(),
+    }
 
-    tab_count = 1
+    tab_count = 0
 
     def action_toggle_dark(self) -> None:
         self.dark = not self.dark
@@ -25,20 +29,25 @@ class OTerm(App):
         return self.exit()
 
     def action_new_chat(self) -> None:
-        self.tab_count += 1
-        tabs = self.query_one(TabbedContent)
-        pane = TabPane(f"chat #{self.tab_count}", id=f"chat-{self.tab_count}")
-        pane.compose_add_child(ChatContainer())
-        tabs.add_pane(pane)
+        def on_model_select(model: str) -> None:
+            self.tab_count += 1
+            tabs = self.query_one(TabbedContent)
+            pane = TabPane(
+                f"chat #{self.tab_count} - {model}", id=f"chat-{self.tab_count}"
+            )
+            pane.compose_add_child(ChatContainer(model=model))
+            tabs.add_pane(pane)
+            tabs.active = f"chat-{self.tab_count}"
+
+        self.push_screen("model_selection", on_model_select)
 
     async def on_mount(self) -> None:
+        self.action_new_chat()
         await self.push_screen("splash")
 
     def compose(self) -> ComposeResult:
         yield Header()
-        with TabbedContent(id="tabs"):
-            with TabPane("chat #1", id="chat-1"):
-                yield ChatContainer()
+        yield TabbedContent(id="tabs")
         yield Footer()
 
 

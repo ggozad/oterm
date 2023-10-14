@@ -35,6 +35,9 @@ class ChatContainer(Widget):
             yield Vertical(id="messageContainer")
             yield PromptWidget(id="prompt")
 
+    def on_mount(self) -> None:
+        self.query_one("#prompt").focus()
+
     @on(Input.Submitted)
     async def on_submit(self, event: Input.Submitted) -> None:
         message = event.value

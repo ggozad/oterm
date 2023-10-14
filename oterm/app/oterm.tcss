@@ -55,11 +55,33 @@ LoadingIndicator {
     height: 3;
 }
 
+#model-select-container {
+    width: 80%;
+    height: auto;
+    background: $panel;
+    border: $panel-lighten-1;
+}
+
+#model-select-container .title {
+    color: $secondary;
+}
+
+#model-select {
+    margin-top: 1;
+    width: 50%;
+}
+
+#model-details {
+    margin: 2;
+    width: 50%;
+}
+
 #splash-container {
     height: 100%;
     width: 100%;
     background: $panel;
 }
+
 #splash {
     color: $secondary;
     height: 100%;
