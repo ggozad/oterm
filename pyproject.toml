@@ -3,12 +3,30 @@ name = "oterm"
 version = "0.1.0"
 description = "A terminal client for ollama."
 authors = ["Yiorgis Gozadinos <ggozadinos@gmail.com>"]
-license = "GPL"
+license = "MIT"
 readme = "README.md"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: Microsoft :: Windows :: Windows 10",
+    "Operating System :: Microsoft :: Windows :: Windows 11",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
+]
 
 [tool.poetry.scripts]
 oterm = "oterm.cli.oterm:cli"
 
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/ggozad/oterm/issues"
 
 [tool.poetry.dependencies]
 python = "^3.10"
