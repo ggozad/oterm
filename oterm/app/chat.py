@@ -55,6 +55,7 @@ class ChatContainer(Widget):
                 chat_item.text = message
                 chat_item.author = author
                 message_container.mount(chat_item)
+            message_container.scroll_end()
 
     @on(Input.Submitted)
     async def on_submit(self, event: Input.Submitted) -> None:
@@ -88,10 +89,8 @@ class ChatContainer(Widget):
         input.focus()
 
         # Save to db
-        await self.app.store.save_chat(  # type: ignore
+        await self.app.store.save_context(  # type: ignore
             id=self.db_id,
-            name=self.chat_name,
-            model=self.ollama.model,
             context=json.dumps(self.ollama.context),
         )
         await self.app.store.save_message(  # type: ignore

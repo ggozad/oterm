@@ -62,6 +62,24 @@ class Store(object):
             await connection.commit()
             return res[0][0]
 
+    async def save_context(self, id: int, context: str) -> None:
+        async with aiosqlite.connect(self.db_path) as connection:
+            await chat_queries.save_context(  # type: ignore
+                connection,
+                id=id,
+                context=context,
+            )
+            await connection.commit()
+
+    async def rename_chat(self, id: int, name: str) -> None:
+        async with aiosqlite.connect(self.db_path) as connection:
+            await chat_queries.rename_chat(  # type: ignore
+                connection,
+                id=id,
+                name=name,
+            )
+            await connection.commit()
+
     async def get_chats(self) -> list[tuple[int, str, str, list[int]]]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore

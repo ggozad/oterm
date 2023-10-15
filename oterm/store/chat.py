@@ -5,6 +5,10 @@ chat_sqlite = """
 -- name: save_chat
 INSERT OR REPLACE INTO chat(id, name, model, context) 
 VALUES(:id, :name, :model, :context) RETURNING id;
+-- name: save_context
+UPDATE chat SET context = :context WHERE id = :id;
+-- name: rename_chat
+UPDATE chat SET name = :name WHERE id = :id;
 -- name: get_chats
 SELECT id, name, model, context FROM chat;
 -- name: delete_chat
