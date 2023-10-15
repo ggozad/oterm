@@ -55,10 +55,15 @@ class OTerm(App):
         else:
             tabs = self.query_one(TabbedContent)
             for id, name, model, context in saved_chats:
+                messages = await self.store.get_messages(id)
                 pane = TabPane(name, id=f"chat-{id}")
                 pane.compose_add_child(
                     ChatContainer(
-                        db_id=id, chat_name=name, model=model, context=context
+                        db_id=id,
+                        chat_name=name,
+                        model=model,
+                        context=context,
+                        messages=messages,  # type: ignore
                     )
                 )
                 tabs.add_pane(pane)

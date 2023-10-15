@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import aiosqlite
+from oterm.app.chat import Author
 
 from oterm.store.chat import queries as chat_queries
 from oterm.store.setup import queries as setup_queries
@@ -69,3 +70,19 @@ class Store(object):
                 for id, name, model, context in chats
             ]
             return chats
+
+    async def save_message(self, chat_id: int, author: str, text: str) -> None:
+        async with aiosqlite.connect(self.db_path) as connection:
+            await chat_queries.save_message(  # type: ignore
+                connection,
+                chat_id=chat_id,
+                author=author,
+                text=text,
+            )
+            await connection.commit()
+
+    async def get_messages(self, chat_id: int) -> list[tuple[Author, str]]:
+        async with aiosqlite.connect(self.db_path) as connection:
+            messages = await chat_queries.get_messages(connection, chat_id=chat_id)  # type: ignore
+            messages = [(Author(author), text) for author, text in messages]
+            return messages

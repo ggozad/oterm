@@ -20,7 +20,7 @@ class Author(Enum):
 
 class ChatContainer(Widget):
     ollama = OllamaLLM()
-    messages: reactive[list[tuple[str, Author]]] = reactive([])
+    messages: reactive[list[tuple[Author, str]]] = reactive([])
 
     def __init__(
         self,
@@ -29,6 +29,7 @@ class ChatContainer(Widget):
         chat_name: str,
         model: str = "nous-hermes:13b",
         context: list[int] = [],
+        messages: list[tuple[Author, str]] = [],
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
@@ -38,6 +39,7 @@ class ChatContainer(Widget):
         )  # We do this to reset the context
         self.chat_name = chat_name
         self.db_id = db_id
+        self.messages = messages
 
     def compose(self) -> ComposeResult:
         with Vertical():
@@ -46,6 +48,13 @@ class ChatContainer(Widget):
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
+        if self.messages:
+            message_container = self.query_one("#messageContainer")
+            for author, message in self.messages:
+                chat_item = ChatItem()
+                chat_item.text = message
+                chat_item.author = author
+                message_container.mount(chat_item)
 
     @on(Input.Submitted)
     async def on_submit(self, event: Input.Submitted) -> None:
@@ -55,7 +64,7 @@ class ChatContainer(Widget):
 
         input.clear()
         input.disabled = True
-        self.messages.append((message, Author.USER))
+        self.messages.append((Author.USER, message))
         chat_item = ChatItem()
         chat_item.text = message
         chat_item.author = Author.USER
@@ -73,7 +82,7 @@ class ChatContainer(Widget):
             response = text
             chat_item.text = text
             message_container.scroll_end()
-        self.messages.append((response, Author.OLLAMA))
+        self.messages.append((Author.OLLAMA, response))
         loading.remove()
         input.disabled = False
         input.focus()
@@ -84,6 +93,16 @@ class ChatContainer(Widget):
             name=self.chat_name,
             model=self.ollama.model,
             context=json.dumps(self.ollama.context),
+        )
+        await self.app.store.save_message(  # type: ignore
+            chat_id=self.db_id,
+            author=Author.USER.value,
+            text=message,
+        )
+        await self.app.store.save_message(  # type: ignore
+            chat_id=self.db_id,
+            author=Author.OLLAMA.value,
+            text=response,
         )
 
 
