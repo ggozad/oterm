@@ -1,7 +1,5 @@
 # oterm
-the terminal-based ollama client.
-
-oterm is a text-based client for [Ollama](https://github.com/jmorganca/ollama) that you can run from your terminal.
+the text-based terminal client for [Ollama](https://github.com/jmorganca/ollama).
 
 ## Features
 
@@ -15,6 +13,10 @@ In your terminal
 ```
 pip install oterm
 ```
+
+### Screenshots
+![Chat](screenshots/chat.png)
+![Model selection](./screenshots/model_selection.png)
 
 ## License
 
