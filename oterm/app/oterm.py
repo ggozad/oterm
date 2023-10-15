@@ -14,14 +14,13 @@ class OTerm(App):
     BINDINGS = [
         ("n", "new_chat", "new chat"),
         ("d", "toggle_dark", "Toggle dark mode"),
+        ("x", "forget_chat", "forget chat"),
         ("q", "quit", "Quit"),
     ]
     SCREENS = {
         "splash": SplashScreen(),
         "model_selection": ModelSelection(),
     }
-
-    tab_count = 0
 
     def action_toggle_dark(self) -> None:
         self.dark = not self.dark
@@ -31,21 +30,29 @@ class OTerm(App):
 
     def action_new_chat(self) -> None:
         async def on_model_select(model: str) -> None:
-            self.tab_count += 1
-            name = f"chat #{self.tab_count} - {model}"
+            tabs = self.query_one(TabbedContent)
+            tab_count = tabs.tab_count
+            name = f"chat #{tab_count+1} - {model}"
             id = await self.store.save_chat(
                 id=None,
                 name=name,
                 model=model,
                 context="[]",
             )
-            tabs = self.query_one(TabbedContent)
             pane = TabPane(name, id=f"chat-{id}")
             pane.compose_add_child(ChatContainer(db_id=id, chat_name=name, model=model))
             tabs.add_pane(pane)
             tabs.active = f"chat-{id}"
 
         self.push_screen("model_selection", on_model_select)
+
+    async def action_forget_chat(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        active_pane_id = tabs.active
+
+        if active_pane_id:
+            await self.store.delete_chat(int(active_pane_id.split("-")[1]))
+            tabs.remove_pane(active_pane_id)
 
     async def on_mount(self) -> None:
         self.store = await Store.create()
@@ -68,7 +75,6 @@ class OTerm(App):
                 )
                 tabs.add_pane(pane)
                 tabs.active = f"chat-{id}"
-                self.tab_count += 1
 
         await self.push_screen("splash")
 

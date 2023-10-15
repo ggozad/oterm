@@ -71,6 +71,11 @@ class Store(object):
             ]
             return chats
 
+    async def delete_chat(self, id: int) -> None:
+        async with aiosqlite.connect(self.db_path) as connection:
+            await chat_queries.delete_chat(connection, id=id)  # type: ignore
+            await connection.commit()
+
     async def save_message(self, chat_id: int, author: str, text: str) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
             await chat_queries.save_message(  # type: ignore
