@@ -49,7 +49,22 @@ class OTerm(App):
 
     async def on_mount(self) -> None:
         self.store = await Store.create()
-        self.action_new_chat()
+        saved_chats = await self.store.get_chats()  # type: ignore
+        if not saved_chats:
+            self.action_new_chat()
+        else:
+            tabs = self.query_one(TabbedContent)
+            for id, name, model, context in saved_chats:
+                pane = TabPane(name, id=f"chat-{id}")
+                pane.compose_add_child(
+                    ChatContainer(
+                        db_id=id, chat_name=name, model=model, context=context
+                    )
+                )
+                tabs.add_pane(pane)
+                tabs.active = f"chat-{id}"
+                self.tab_count += 1
+
         await self.push_screen("splash")
 
     def compose(self) -> ComposeResult:

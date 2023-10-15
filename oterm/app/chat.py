@@ -28,11 +28,14 @@ class ChatContainer(Widget):
         db_id: int,
         chat_name: str,
         model: str = "nous-hermes:13b",
+        context: list[int] = [],
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
 
-        self.ollama = OllamaLLM(model=model)  # We do this to reset the context
+        self.ollama = OllamaLLM(
+            model=model, context=context
+        )  # We do this to reset the context
         self.chat_name = chat_name
         self.db_id = db_id
 
@@ -76,7 +79,7 @@ class ChatContainer(Widget):
         input.focus()
 
         # Save to db
-        await self.app.store.save_chat(
+        await self.app.store.save_chat(  # type: ignore
             id=self.db_id,
             name=self.chat_name,
             model=self.ollama.model,

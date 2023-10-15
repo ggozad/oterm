@@ -11,11 +11,13 @@ class OllamaError(Exception):
 
 
 class OllamaLLM:
-    def __init__(self, model="nous-hermes:13b", template="", system=""):
+    def __init__(
+        self, model="nous-hermes:13b", template="", system="", context: list[int] = []
+    ):
         self.model = model
         self.template = template
         self.system = system
-        self.context: list[int] = []
+        self.context = context
 
     async def completion(self, prompt: str) -> str:
         response = ""

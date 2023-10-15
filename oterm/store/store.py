@@ -1,9 +1,11 @@
+import json
 import sys
 from pathlib import Path
 
 import aiosqlite
-from oterm.store.setup import queries as setup_queries
+
 from oterm.store.chat import queries as chat_queries
+from oterm.store.setup import queries as setup_queries
 
 
 def get_data_dir() -> Path:
@@ -58,3 +60,12 @@ class Store(object):
 
             await connection.commit()
             return res[0][0]
+
+    async def get_chats(self) -> list[tuple[int, str, str, list[int]]]:
+        async with aiosqlite.connect(self.db_path) as connection:
+            chats = await chat_queries.get_chats(connection)  # type: ignore
+            chats = [
+                (id, name, model, json.loads(context))
+                for id, name, model, context in chats
+            ]
+            return chats
