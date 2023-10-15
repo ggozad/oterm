@@ -57,9 +57,12 @@ LoadingIndicator {
 
 #model-select-container {
     width: 80%;
-    height: auto;
+    height: 50%;
     background: $panel;
-    border: $panel-lighten-1;
+    border: $panel-lighten-2;
+    margin-top: 2;
+    margin-left: 2;
+    padding: 1;
 }
 
 #model-select-container .title {

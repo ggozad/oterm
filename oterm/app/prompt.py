@@ -11,6 +11,6 @@ class PromptWidget(Static):
         """Human prompt."""
         with Horizontal():
             yield Input(
-                placeholder="Your prompt here",
+                placeholder="Message Ollama…",
                 id="promptInput",
             )

@@ -5,7 +5,7 @@ from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
-from textual.widgets import Footer, Header, Label, OptionList
+from textual.widgets import Label, OptionList
 
 from oterm.ollama import OllamaAPI
 
@@ -86,10 +86,8 @@ class ModelSelection(ModalScreen[str]):
         return Text(model)
 
     def compose(self) -> ComposeResult:
-        yield Header()
         with Container(id="model-select-container"):
             yield Label("Select a model:", classes="title")
             with Horizontal():
                 yield OptionList(id="model-select")
                 yield ModelDetails(id="model-details")
-        yield Footer()

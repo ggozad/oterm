@@ -6,8 +6,8 @@ oterm is a text-based client for [Ollama](https://github.com/jmorganca/ollama) t
 ## Features
 
 * intuitive and simple terminal UI, no need to run servers, frontends, just type `oterm` in your terminal.
-* persistent chat, stored together with the context embeddings in sqlite.
-* can use any of the models you have pulled in Ollama
+* multiple persistent chat sessions, stored together with the context embeddings in sqlite.
+* can use any of the models you have pulled in Ollama, or your own custom models.
 
 ## Installation
 
