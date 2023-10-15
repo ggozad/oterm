@@ -30,15 +30,20 @@ class OTerm(App):
         return self.exit()
 
     def action_new_chat(self) -> None:
-        def on_model_select(model: str) -> None:
+        async def on_model_select(model: str) -> None:
             self.tab_count += 1
-            tabs = self.query_one(TabbedContent)
-            pane = TabPane(
-                f"chat #{self.tab_count} - {model}", id=f"chat-{self.tab_count}"
+            name = f"chat #{self.tab_count} - {model}"
+            id = await self.store.save_chat(
+                id=None,
+                name=name,
+                model=model,
+                context="[]",
             )
-            pane.compose_add_child(ChatContainer(model=model))
+            tabs = self.query_one(TabbedContent)
+            pane = TabPane(name, id=f"chat-{id}")
+            pane.compose_add_child(ChatContainer(db_id=id, chat_name=name, model=model))
             tabs.add_pane(pane)
-            tabs.active = f"chat-{self.tab_count}"
+            tabs.active = f"chat-{id}"
 
         self.push_screen("model_selection", on_model_select)
 

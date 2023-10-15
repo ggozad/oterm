@@ -1,4 +1,5 @@
 from enum import Enum
+import json
 
 from textual import on
 from textual.app import ComposeResult
@@ -24,11 +25,16 @@ class ChatContainer(Widget):
     def __init__(
         self,
         *children: Widget,
+        db_id: int,
+        chat_name: str,
         model: str = "nous-hermes:13b",
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
+
         self.ollama = OllamaLLM(model=model)  # We do this to reset the context
+        self.chat_name = chat_name
+        self.db_id = db_id
 
     def compose(self) -> ComposeResult:
         with Vertical():
@@ -68,6 +74,14 @@ class ChatContainer(Widget):
         loading.remove()
         input.disabled = False
         input.focus()
+
+        # Save to db
+        await self.app.store.save_chat(
+            id=self.db_id,
+            name=self.chat_name,
+            model=self.ollama.model,
+            context=json.dumps(self.ollama.context),
+        )
 
 
 class ChatItem(Widget):
