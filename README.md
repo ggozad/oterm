@@ -9,8 +9,16 @@ the text-based terminal client for [Ollama](https://github.com/jmorganca/ollama)
 
 ## Installation
 
-In your terminal
+Using `brew` for MacOS:
+
+```bash
+brew tap ggozad/formulas
+brew install ggozad/formulas/oterm
 ```
+
+Using `pip`:
+
+```bash
 pip install oterm
 ```
 
