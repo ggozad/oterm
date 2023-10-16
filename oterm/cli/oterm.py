@@ -1,3 +1,5 @@
+from importlib import metadata
+
 import typer
 
 from oterm.app.oterm import app
@@ -6,7 +8,10 @@ cli = typer.Typer()
 
 
 @cli.command()
-def salman():
+def oterm(version: bool = typer.Option(None, "--version", "-v")):
+    if version:
+        typer.echo(f"oterm v{metadata.version('oterm')}")
+        exit(0)
     app.run()
 
 
