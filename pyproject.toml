@@ -38,7 +38,7 @@ aiosqlite = "^0.19.0"
 
 [tool.poetry.group.dev.dependencies]
 pdbpp = "^0.10.3"
-ruff = "^0.0.292"
+ruff = "^0.1.0"
 black = "^23.9.1"
 pytest = "^7.4.2"
 pytest-asyncio = "^0.21.1"
