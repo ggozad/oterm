@@ -11,6 +11,8 @@ UPDATE chat SET context = :context WHERE id = :id;
 UPDATE chat SET name = :name WHERE id = :id;
 -- name: get_chats
 SELECT id, name, model, context FROM chat;
+-- name: get_chat
+SELECT id, name, model, context FROM chat WHERE id = :id;
 -- name: delete_chat
 DELETE FROM chat WHERE id = :id;
 -- name: save_message
