@@ -76,7 +76,7 @@ class OllamaAPI:
     async def get_models(self) -> list[dict[str, Any]]:
         client = httpx.AsyncClient()
         response = await client.get(f"{Config.OLLAMA_URL}/tags")
-        return response.json().get("models", [])
+        return response.json().get("models", []) or []
 
     async def get_model_info(self, model: str) -> dict[str, Any]:
         client = httpx.AsyncClient()
