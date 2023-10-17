@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 
 import aiosqlite
-from oterm.app.chat import Author
 
+from oterm.app.chat import Author
 from oterm.store.chat import queries as chat_queries
 from oterm.store.setup import queries as setup_queries
 

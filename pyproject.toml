@@ -45,6 +45,36 @@ pytest = "^7.4.2"
 pytest-asyncio = "^0.21.1"
 textual-dev = "^1.2.1"
 
+[tool.black]
+line-length = 88
+target-versions = ["py310"]
+
+[tool.ruff]
+line-length = 88
+# Enable Flake's "E" and "F" codes by default and "I" for sorting imports.
+select = ["E", "F", "I"]
+ignore = ["E501", "E741"] # E741 should not be ignored
+# Exclude a variety of commonly ignored directories.
+exclude = [
+    ".direnv",
+    ".eggs",
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "__pypackages__",
+    ".cache",
+    "_build",
+    "build",
+    "dist",
+    "venv",
+]
+per-file-ignores = { "__init__.py" = ["F401", "F403"] }
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+# Assume Python 3.10.
+target-version = "py310"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

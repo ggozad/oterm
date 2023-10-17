@@ -1,5 +1,5 @@
-from enum import Enum
 import json
+from enum import Enum
 
 from textual import on
 from textual.app import ComposeResult

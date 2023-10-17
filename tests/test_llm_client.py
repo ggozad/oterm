@@ -1,6 +1,6 @@
 import pytest
 
-from oterm.ollama import OllamaLLM, OllamaError
+from oterm.ollama import OllamaError, OllamaLLM
 
 
 @pytest.mark.asyncio

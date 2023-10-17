@@ -2,10 +2,10 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat import ChatContainer
+from oterm.app.chat_rename import ChatRename
 from oterm.app.model_selection import ModelSelection
 from oterm.app.splash import SplashScreen
 from oterm.store.store import Store
-from oterm.app.chat_rename import ChatRename
 
 
 class OTerm(App):

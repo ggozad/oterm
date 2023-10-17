@@ -1,6 +1,5 @@
 import aiosql
 
-
 create_sqlite = """
 -- name: create_chat_table
 CREATE TABLE IF NOT EXISTS "chat" (

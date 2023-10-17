@@ -1,6 +1,5 @@
 import aiosql
 
-
 chat_sqlite = """
 -- name: save_chat
 INSERT OR REPLACE INTO chat(id, name, model, context) 
