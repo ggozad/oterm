@@ -79,6 +79,24 @@ LoadingIndicator {
     width: 50%;
 }
 
+#chat-rename-container {
+    width: 80%;
+    height: 10;
+    background: $panel;
+    border: $panel-lighten-2;
+    margin-top: 2;
+    margin-left: 2;
+    padding: 1;
+}
+
+#chat-rename-container .title {
+    color: $secondary;
+}
+
+#chat-rename-input {
+    margin: 2;
+}
+
 #splash-container {
     height: 100%;
     width: 100%;

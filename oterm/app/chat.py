@@ -21,6 +21,7 @@ class Author(Enum):
 class ChatContainer(Widget):
     ollama = OllamaLLM()
     messages: reactive[list[tuple[Author, str]]] = reactive([])
+    chat_name: str
 
     def __init__(
         self,

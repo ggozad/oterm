@@ -5,6 +5,7 @@ from oterm.app.chat import ChatContainer
 from oterm.app.model_selection import ModelSelection
 from oterm.app.splash import SplashScreen
 from oterm.store.store import Store
+from oterm.app.chat_rename import ChatRename
 
 
 class OTerm(App):
@@ -14,6 +15,7 @@ class OTerm(App):
     BINDINGS = [
         ("n", "new_chat", "new chat"),
         ("d", "toggle_dark", "Toggle dark mode"),
+        ("r", "rename_chat", "rename chat"),
         ("x", "forget_chat", "forget chat"),
         ("q", "quit", "Quit"),
     ]
@@ -45,6 +47,36 @@ class OTerm(App):
             tabs.active = f"chat-{id}"
 
         self.push_screen("model_selection", on_model_select)
+
+    async def action_rename_chat(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        id = int(tabs.active.split("-")[1])
+        chat = await self.store.get_chat(id)
+        if chat is None:
+            return
+        _, name, model, context = chat
+
+        async def on_chat_rename(name: str) -> None:
+            await self.store.rename_chat(id, name)
+            messages = await self.store.get_messages(id)
+            tabs.remove_pane(tabs.active)
+            pane = TabPane(name, id=f"chat-{id}")
+            pane.compose_add_child(
+                ChatContainer(
+                    db_id=id,
+                    chat_name=name,
+                    model=model,
+                    messages=messages,
+                    context=context,
+                )
+            )
+            await tabs.add_pane(pane)
+            tabs.active = f"chat-{id}"
+
+        if chat:
+            screen = ChatRename()
+            screen.old_name = name
+            self.push_screen(screen, on_chat_rename)
 
     async def action_forget_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
