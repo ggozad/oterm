@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.1.3 - 
+------------------
+
+- Show discreet info on running model.
+  [ggozad]
+
 0.1.2 - 2023-10-17
 ------------------
 

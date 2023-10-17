@@ -44,6 +44,7 @@ class ChatContainer(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical():
+            yield Static(f"model: {self.ollama.model}", id="info")
             yield Vertical(id="messageContainer")
             yield PromptWidget(id="prompt")
 
