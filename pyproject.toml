@@ -35,6 +35,7 @@ python-dotenv = "^1.0.0"
 httpx = "^0.25.0"
 aiosql = "^9.0"
 aiosqlite = "^0.19.0"
+pyperclip = "^1.8.2"
 
 [tool.poetry.group.dev.dependencies]
 pdbpp = "^0.10.3"

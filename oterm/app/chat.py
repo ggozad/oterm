@@ -1,10 +1,12 @@
 import json
 from enum import Enum
 
+import pyperclip
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.css.query import NoMatches
+from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Input, LoadingIndicator, Static
@@ -41,12 +43,6 @@ class ChatContainer(Widget):
         self.chat_name = chat_name
         self.db_id = db_id
         self.messages = messages
-
-    def compose(self) -> ComposeResult:
-        with Vertical():
-            yield Static(f"model: {self.ollama.model}", id="info")
-            yield Vertical(id="messageContainer")
-            yield PromptWidget(id="prompt")
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
@@ -106,10 +102,23 @@ class ChatContainer(Widget):
             text=response,
         )
 
+    def compose(self) -> ComposeResult:
+        with Vertical():
+            yield Static(f"model: {self.ollama.model}", id="info")
+            yield Vertical(id="messageContainer")
+            yield PromptWidget(id="prompt")
+
 
 class ChatItem(Widget):
     text: reactive[str] = reactive("")
     author: Author
+
+    @on(Click)
+    async def on_click(self, event: Click) -> None:
+        pyperclip.copy(self.text)
+        widget = self.query_one(".text", Static)
+        widget.styles.animate("opacity", 0.5, duration=0.1)
+        widget.styles.animate("opacity", 1.0, duration=0.1, delay=0.1)
 
     def watch_text(self, text: str) -> None:
         try:

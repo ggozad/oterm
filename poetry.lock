@@ -901,6 +901,16 @@ files = [
 plugins = ["importlib-metadata"]
 
 [[package]]
+name = "pyperclip"
+version = "1.8.2"
+description = "A cross-platform clipboard module for Python. (Only handles plain text for now.)"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pyperclip-1.8.2.tar.gz", hash = "sha256:105254a8b04934f0bc84e9c24eb360a591aaf6535c9def5f29d92af107a9bf57"},
+]
+
+[[package]]
 name = "pyreadline"
 version = "2.1"
 description = "A python implmementation of GNU readline."
@@ -1246,4 +1256,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "92a9431876af4a0c5df75fe5236a608d4e76cb5ac57cdb57f918fe3ea7af17bd"
+content-hash = "83eb4447c68c8aa1cb83bf05f52adbc300c8bd36e0081614d6b5755c5d12f474"
