@@ -47,7 +47,6 @@ class AppConfig:
                     else:
                         value = json.loads(value)
                 else:
-                    print(env.get(field))
                     value = var_type(env.get(field, default_value))
                 self.__setattr__(field, value)
             except ValueError:
