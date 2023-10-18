@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.4 -
+0.1.4 - 2023-10-18
 ------------------
 
 - Show template, system, and params in the model selection screen.
