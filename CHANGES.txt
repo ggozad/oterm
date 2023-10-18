@@ -4,6 +4,9 @@ Changelog
 0.1.4 -
 ------------------
 
+- Show template, system, and params in the model selection screen.
+  [ggozad]
+
 - Click to copy to clipboard.
   [ggozad]
 

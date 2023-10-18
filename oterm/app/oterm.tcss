@@ -65,12 +65,9 @@ LoadingIndicator {
 }
 
 #model-select-container {
-    width: 80%;
-    height: 50%;
     background: $panel;
     border: $panel-lighten-2;
-    margin-top: 2;
-    margin-left: 2;
+    margin: 2;
     padding: 1;
 }
 
@@ -80,12 +77,16 @@ LoadingIndicator {
 
 #model-select {
     margin-top: 1;
-    width: 50%;
+    width: 30%;
 }
 
 #model-details {
     margin: 2;
-    width: 50%;
+    width: 70%;
+}
+
+#model-details .log {
+    height: auto;
 }
 
 #chat-rename-container {
