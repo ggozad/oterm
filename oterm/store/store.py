@@ -1,5 +1,7 @@
 import json
 import sys
+from distutils.version import StrictVersion
+from importlib import metadata
 from pathlib import Path
 
 import aiosqlite
@@ -7,6 +9,38 @@ import aiosqlite
 from oterm.app.chat import Author
 from oterm.store.chat import queries as chat_queries
 from oterm.store.setup import queries as setup_queries
+from oterm.store.upgrades import upgrades
+
+
+def semantic_version_to_int(version: str) -> int:
+    """
+    Convert a semantic version string to an integer.
+
+    :param version: Semantic version string
+    :type version: str
+    :return: Integer representation of semantic version
+    :rtype: int
+    """
+    major, minor, patch = version.split(".")
+    major = int(major) << 16
+    minor = int(minor) << 8
+    patch = int(patch)
+    return major + minor + patch
+
+
+def int_to_semantic_version(version: int) -> str:
+    """
+    Convert an integer to a semantic version string.
+
+    :param version: Integer representation of semantic version
+    :type version: int
+    :return: Semantic version string
+    :rtype: str
+    """
+    major = version >> 16
+    minor = (version >> 8) & 255
+    patch = version & 255
+    return f"{major}.{minor}.{patch}"
 
 
 def get_data_dir() -> Path:
@@ -40,12 +74,37 @@ class Store(object):
         self = Store()
         data_path = get_data_dir()
         data_path.mkdir(parents=True, exist_ok=True)
-        self.db_path = Path(data_path / "store.db")
-        async with aiosqlite.connect(self.db_path) as connection:
-            await setup_queries.create_chat_table(connection)  # type: ignore
-            await setup_queries.create_message_table(connection)  # type: ignore
+        self.db_path = data_path / "store.db"
 
+        if not self.db_path.exists():
+            # Create tables and set user_version
+            async with aiosqlite.connect(self.db_path) as connection:
+                await setup_queries.create_chat_table(connection)  # type: ignore
+                await setup_queries.create_message_table(connection)  # type: ignore
+                await self.set_user_version(metadata.version("oterm"))
+        else:
+            # Upgrade database
+            current_version: str = metadata.version("oterm")
+            db_version = await self.get_user_version()
+            for version, steps in upgrades:
+                if StrictVersion(current_version) >= StrictVersion(
+                    version
+                ) and StrictVersion(version) > StrictVersion(db_version):
+                    for step in steps:
+                        await step(self.db_path)
+            await self.set_user_version(current_version)
         return self
+
+    async def get_user_version(self) -> str:
+        async with aiosqlite.connect(self.db_path) as connection:
+            res = await setup_queries.get_user_version(connection)  # type: ignore
+            return int_to_semantic_version(res[0][0])
+
+    async def set_user_version(self, version: str) -> None:
+        async with aiosqlite.connect(self.db_path) as connection:
+            await connection.execute(
+                f"PRAGMA user_version = {semantic_version_to_int(version)};"
+            )
 
     async def save_chat(
         self, id: int | None, name: str, model: str, context: str
