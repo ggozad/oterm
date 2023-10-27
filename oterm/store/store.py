@@ -107,7 +107,13 @@ class Store(object):
             )
 
     async def save_chat(
-        self, id: int | None, name: str, model: str, context: str
+        self,
+        id: int | None,
+        name: str,
+        model: str,
+        context: str,
+        template: str | None,
+        system: str | None,
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res: list[tuple[int]] = await chat_queries.save_chat(  # type: ignore
@@ -116,6 +122,8 @@ class Store(object):
                 name=name,
                 model=model,
                 context=context,
+                template=template,
+                system=system,
             )
 
             await connection.commit()
@@ -139,23 +147,27 @@ class Store(object):
             )
             await connection.commit()
 
-    async def get_chats(self) -> list[tuple[int, str, str, list[int]]]:
+    async def get_chats(
+        self,
+    ) -> list[tuple[int, str, str, list[int], str | None, str | None]]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore
             chats = [
-                (id, name, model, json.loads(context))
-                for id, name, model, context in chats
+                (id, name, model, json.loads(context), template, system)
+                for id, name, model, context, template, system in chats
             ]
             return chats
 
-    async def get_chat(self, id) -> tuple[int, str, str, list[int]] | None:
+    async def get_chat(
+        self, id
+    ) -> tuple[int, str, str, list[int], str | None, str | None] | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
             if chat:
                 chat = chat[0]
-                id, name, model, context = chat
+                id, name, model, context, template, system = chat
                 context = json.loads(context)
-                return id, name, model, context
+                return id, name, model, context, template, system
 
     async def delete_chat(self, id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:

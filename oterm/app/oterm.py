@@ -40,6 +40,8 @@ class OTerm(App):
                 name=name,
                 model=model,
                 context="[]",
+                template=None,
+                system=None,
             )
             pane = TabPane(name, id=f"chat-{id}")
             pane.compose_add_child(ChatContainer(db_id=id, chat_name=name, model=model))
@@ -54,7 +56,7 @@ class OTerm(App):
         chat = await self.store.get_chat(id)
         if chat is None:
             return
-        _, name, model, context = chat
+        _, name, model, context, template, system = chat
 
         async def on_chat_rename(name: str) -> None:
             await self.store.rename_chat(id, name)
@@ -93,7 +95,7 @@ class OTerm(App):
             self.action_new_chat()
         else:
             tabs = self.query_one(TabbedContent)
-            for id, name, model, context in saved_chats:
+            for id, name, model, context, template, system in saved_chats:
                 messages = await self.store.get_messages(id)
                 pane = TabPane(name, id=f"chat-{id}")
                 pane.compose_add_child(
