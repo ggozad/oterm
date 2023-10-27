@@ -50,7 +50,7 @@ class ModelDetails(Widget):
         params = []
         for line in lines:
             if line:
-                key, value = line.split()
+                key, value = line.split(maxsplit=1)
                 try:
                     value = literal_eval(value)
                 except (SyntaxError, ValueError):
