@@ -1,7 +1,8 @@
 Changelog
 =========
 
-0.1.6 - 2023-11-01
+
+0.1.7 - 2023-11-01
 ------------------
 
 - Allow customizing the system and template of models.
