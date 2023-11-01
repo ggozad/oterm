@@ -24,6 +24,8 @@ class ChatContainer(Widget):
     ollama = OllamaLLM()
     messages: reactive[list[tuple[Author, str]]] = reactive([])
     chat_name: str
+    system: str | None
+    template: str | None
 
     def __init__(
         self,
@@ -33,16 +35,19 @@ class ChatContainer(Widget):
         model: str = "nous-hermes:13b",
         context: list[int] = [],
         messages: list[tuple[Author, str]] = [],
+        system: str | None = None,
+        template: str | None = None,
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
-
         self.ollama = OllamaLLM(
-            model=model, context=context
+            model=model, context=context, template=template, system=system
         )  # We do this to reset the context
         self.chat_name = chat_name
         self.db_id = db_id
         self.messages = messages
+        self.system = system
+        self.template = template
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()

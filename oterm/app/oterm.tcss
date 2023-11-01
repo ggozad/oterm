@@ -75,18 +75,23 @@ LoadingIndicator {
     color: $secondary;
 }
 
+#model-select-container .button-container {    
+    height: 3;
+}
+#model-select-container .button-container Button {    
+    margin-right: 1;
+}
+
 #model-select {
     margin-top: 1;
-    width: 30%;
 }
 
 #model-details {
-    margin: 2;
-    width: 70%;
+    margin: 1;
 }
 
-#model-details .log {
-    height: auto;
+#model-select-container .button-container  {
+    margin: 1;
 }
 
 #chat-rename-container {

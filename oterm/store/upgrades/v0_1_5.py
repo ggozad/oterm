@@ -15,5 +15,5 @@ async def add_template_system_to_chat(db_path: Path) -> None:
 
 
 upgrades: list[tuple[str, list[Callable[[Path], Awaitable[None]]]]] = [
-    ("0.1.5", [add_template_system_to_chat])
+    ("0.1.6", [add_template_system_to_chat])
 ]

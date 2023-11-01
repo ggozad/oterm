@@ -4,6 +4,9 @@ Changelog
 0.1.6 - 
 ------------------
 
+- Allow customizing the system and template of models.
+  [ggozad]
+
 - DB migrations.
   [ggozad]
 

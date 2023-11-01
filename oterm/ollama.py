@@ -12,7 +12,11 @@ class OllamaError(Exception):
 
 class OllamaLLM:
     def __init__(
-        self, model="nous-hermes:13b", template="", system="", context: list[int] = []
+        self,
+        model="nous-hermes:13b",
+        template: str | None = None,
+        system: str | None = None,
+        context: list[int] = [],
     ):
         self.model = model
         self.template = template
@@ -44,7 +48,9 @@ class OllamaLLM:
         self.context = context
 
     async def _agenerate(
-        self, prompt: str, context: list[int]
+        self,
+        prompt: str,
+        context: list[int],
     ) -> AsyncGenerator[tuple[str, list[int]], Any]:
         client = httpx.AsyncClient()
         jsn = {

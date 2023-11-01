@@ -1,3 +1,5 @@
+import json
+
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
@@ -31,20 +33,29 @@ class OTerm(App):
         return self.exit()
 
     def action_new_chat(self) -> None:
-        async def on_model_select(model: str) -> None:
+        async def on_model_select(model_info: str) -> None:
+            model: dict = json.loads(model_info)
             tabs = self.query_one(TabbedContent)
             tab_count = tabs.tab_count
-            name = f"chat #{tab_count+1} - {model}"
+            name = f"chat #{tab_count+1} - {model['name']}"
             id = await self.store.save_chat(
                 id=None,
                 name=name,
-                model=model,
+                model=model["name"],
                 context="[]",
-                template=None,
-                system=None,
+                template=model["template"],
+                system=model["system"],
             )
             pane = TabPane(name, id=f"chat-{id}")
-            pane.compose_add_child(ChatContainer(db_id=id, chat_name=name, model=model))
+            pane.compose_add_child(
+                ChatContainer(
+                    db_id=id,
+                    chat_name=name,
+                    model=model["name"],
+                    system=model["system"],
+                    template=model["template"],
+                )
+            )
             tabs.add_pane(pane)
             tabs.active = f"chat-{id}"
 
@@ -70,6 +81,8 @@ class OTerm(App):
                     model=model,
                     messages=messages,
                     context=context,
+                    template=template,
+                    system=system,
                 )
             )
             await tabs.add_pane(pane)
@@ -105,6 +118,8 @@ class OTerm(App):
                         model=model,
                         context=context,
                         messages=messages,  # type: ignore
+                        template=template,
+                        system=system,
                     )
                 )
                 tabs.add_pane(pane)
