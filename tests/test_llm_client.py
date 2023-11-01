@@ -26,7 +26,7 @@ async def test_errors():
     try:
         await llm.completion("This should fail.")
     except OllamaError as e:
-        assert "no such file or directory" in str(e)
+        assert "model 'non-existent-model' not found" in str(e)
 
 
 @pytest.mark.asyncio
