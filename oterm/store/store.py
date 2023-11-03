@@ -1,6 +1,6 @@
 import json
 import sys
-from distutils.version import StrictVersion
+from packaging import version
 from importlib import metadata
 from pathlib import Path
 
@@ -87,9 +87,9 @@ class Store(object):
             current_version: str = metadata.version("oterm")
             db_version = await self.get_user_version()
             for version, steps in upgrades:
-                if StrictVersion(current_version) >= StrictVersion(
+                if version.parse(current_version) >= version.parse(
                     version
-                ) and StrictVersion(version) > StrictVersion(db_version):
+                ) and version.parse(version) > version.parse(db_version):
                     for step in steps:
                         await step(self.db_path)
             await self.set_user_version(current_version)
