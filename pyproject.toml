@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "oterm"
-version = "0.1.7"
+version = "0.1.8"
 description = "A text-based terminal client for Ollama."
 authors = ["Yiorgis Gozadinos <ggozadinos@gmail.com>"]
 homepage = "https://github.com/ggozad/oterm"
@@ -45,7 +45,7 @@ black = "^23.10.1"
 pytest = "^7.4.3"
 pytest-asyncio = "^0.21.1"
 textual-dev = "^1.2.1"
-aiohttp = {version = ">=3.9.0b0",  python = ">=3.12"}
+aiohttp = { version = ">=3.9.0b0", python = ">=3.12" }
 
 [tool.black]
 line-length = 88

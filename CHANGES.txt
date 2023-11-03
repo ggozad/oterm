@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-0.1.8 - 
+0.1.8 - 2023-11-03
 ------------------
 
 - Remove distutils dependency, make oterm compatible with python 3.12.
