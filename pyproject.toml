@@ -36,6 +36,7 @@ httpx = "^0.25.0"
 aiosql = "^9.0"
 aiosqlite = "^0.19.0"
 pyperclip = "^1.8.2"
+packaging = "^23.2"
 
 [tool.poetry.group.dev.dependencies]
 pdbpp = "^0.10.3"
@@ -44,6 +45,7 @@ black = "^23.10.1"
 pytest = "^7.4.3"
 pytest-asyncio = "^0.21.1"
 textual-dev = "^1.2.1"
+aiohttp = {version = ">=3.9.0b0",  python = ">=3.12"}
 
 [tool.black]
 line-length = 88
