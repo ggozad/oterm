@@ -1,15 +1,14 @@
 import json
 import sys
-from packaging import version
 from importlib import metadata
 from pathlib import Path
 
 import aiosqlite
-
 from oterm.app.chat import Author
 from oterm.store.chat import queries as chat_queries
 from oterm.store.setup import queries as setup_queries
 from oterm.store.upgrades import upgrades
+from packaging.version import parse
 
 
 def semantic_version_to_int(version: str) -> int:
@@ -87,9 +86,9 @@ class Store(object):
             current_version: str = metadata.version("oterm")
             db_version = await self.get_user_version()
             for version, steps in upgrades:
-                if version.parse(current_version) >= version.parse(
-                    version
-                ) and version.parse(version) > version.parse(db_version):
+                if parse(current_version) >= parse(version) and parse(version) > parse(
+                    db_version
+                ):
                     for step in steps:
                         await step(self.db_path)
             await self.set_user_version(current_version)
