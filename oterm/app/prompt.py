@@ -1,7 +1,6 @@
 from textual import events, on
 from textual.app import ComposeResult
 from textual.containers import Horizontal
-from textual.events import Key
 from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Button, Input, Static, TextArea
@@ -34,15 +33,29 @@ class FlexibleInput(Widget):
         input = self.query_one("#promptInput", Input)
         textarea = self.query_one("#promptArea", TextArea)
         if self.is_multiline:
-            textarea.text = input.value
+            textarea.text = self.text
             textarea.visible = True
             textarea.focus()
             input.visible = False
         else:
-            input.value = textarea.text
+            input.value = self.text
             textarea.visible = False
             input.focus()
             input.visible = True
+
+    @on(Input.Changed, "#promptInput")
+    def on_input_changed(self, event: Input.Changed):
+        self.text = event.input.value
+
+    @on(TextArea.Changed, "#promptArea")
+    def on_area_changed(self, event: TextArea.Changed):
+        self.text = event.text_area.text
+
+    @on(Button.Pressed, "#post")
+    async def on_post(self):
+        input = self.query_one("#promptInput", Input)
+        input.value = self.text
+        self.post_message(input.Submitted(input, self.text, None))
 
     def compose(self) -> ComposeResult:
         print("compose", self.is_multiline)
