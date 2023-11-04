@@ -1,6 +1,9 @@
-from textual import events, on
+from dataclasses import dataclass
+
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal
+from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Button, Input, Static, TextArea
@@ -11,6 +14,15 @@ from textual.widgets import Button, Input, Static, TextArea
 class FlexibleInput(Widget):
     is_multiline = reactive(False, layout=True)
     text = reactive("", layout=True)
+
+    @dataclass
+    class Submitted(Message):
+        input: "FlexibleInput"
+        value: str
+
+        @property
+        def control(self) -> "FlexibleInput":
+            return self.input
 
     def __init__(self, text, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -27,6 +39,24 @@ class FlexibleInput(Widget):
             textarea.visible = False
             input.focus()
 
+    def clear(self) -> None:
+        self.text = ""
+        self.query_one("#promptInput", Input).value = ""
+        self.query_one("#promptArea", TextArea).text = ""
+
+    def focus(self, scroll_visible: bool = True) -> "FlexibleInput":
+        if self.is_multiline:
+            self.query_one("#promptArea", TextArea).focus(scroll_visible)
+        else:
+            self.query_one("#promptInput", Input).focus(scroll_visible)
+        return self
+
+    @on(Input.Submitted, "#promptInput")
+    def on_input_submitted(self, event: Input.Submitted):
+        self.post_message(self.Submitted(self, event.input.value))
+        event.stop()
+        event.prevent_default()
+
     @on(Button.Pressed, "#toggle-multiline")
     def on_toggle_multiline(self):
         self.is_multiline = not self.is_multiline
@@ -35,13 +65,12 @@ class FlexibleInput(Widget):
         if self.is_multiline:
             textarea.text = self.text
             textarea.visible = True
-            textarea.focus()
             input.visible = False
         else:
             input.value = self.text
             textarea.visible = False
-            input.focus()
             input.visible = True
+        self.focus()
 
     @on(Input.Changed, "#promptInput")
     def on_input_changed(self, event: Input.Changed):
@@ -55,14 +84,13 @@ class FlexibleInput(Widget):
     async def on_post(self):
         input = self.query_one("#promptInput", Input)
         input.value = self.text
-        self.post_message(input.Submitted(input, self.text, None))
+        self.post_message(self.Submitted(self, self.text))
 
     def compose(self) -> ComposeResult:
-        print("compose", self.is_multiline)
         with Horizontal():
             yield Input(
                 id="promptInput",
-                placeholder="Message Ollama… ",
+                placeholder="Message Ollama…",
             )
             yield TextArea(id="promptArea")
             with Horizontal(id="button-container"):

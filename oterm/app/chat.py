@@ -11,7 +11,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Input, LoadingIndicator, Static
 
-from oterm.app.prompt import PromptWidget
+from oterm.app.prompt import FlexibleInput, PromptWidget
 from oterm.ollama import OllamaLLM
 
 
@@ -60,8 +60,8 @@ class ChatContainer(Widget):
                 message_container.mount(chat_item)
             message_container.scroll_end()
 
-    @on(Input.Submitted)
-    async def on_submit(self, event: Input.Submitted) -> None:
+    @on(FlexibleInput.Submitted)
+    async def on_submit(self, event: FlexibleInput.Submitted) -> None:
         message = event.value
         input = event.input
         message_container = self.query_one("#messageContainer")
