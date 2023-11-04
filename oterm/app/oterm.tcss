@@ -40,11 +40,23 @@ ChatItem .text{
 
 PromptWidget {
     background: $panel;
+    min-height: 5;
+    height: auto;
+    margin: 1;
+    margin-bottom: 0;
+    dock: bottom;
+}
+
+PromptWidget .singleline {
     height: 5;
     margin: 1;
     padding: 1;
     margin-bottom: 0;
     dock: bottom;
+}
+PromptWidget .multiline {
+    margin: 1;
+    height: 10;
 }
 
 PromptWidget #promptInput {

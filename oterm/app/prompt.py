@@ -66,11 +66,16 @@ class FlexibleInput(Widget):
             textarea.text = self.text
             textarea.visible = True
             input.visible = False
+            self.add_class("multiline")
+            self.remove_class("singleline")
         else:
             input.value = self.text
             textarea.visible = False
             input.visible = True
+            self.add_class("singleline")
+            self.remove_class("multiline")
         self.focus()
+        self.refresh()
 
     @on(Input.Changed, "#promptInput")
     def on_input_changed(self, event: Input.Changed):
@@ -103,4 +108,4 @@ class PromptWidget(Static):
 
     def compose(self) -> ComposeResult:
         """Human prompt."""
-        yield FlexibleInput(text=self.text)
+        yield FlexibleInput(text=self.text, classes="singleline")
