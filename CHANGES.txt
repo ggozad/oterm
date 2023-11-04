@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.1.9 - 
+------------------
+
+
+- Introduce FlexibleInput, an input that can be multiline.
+  [ggozad]
 
 0.1.8 - 2023-11-03
 ------------------

@@ -8,7 +8,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Button, Input, Static, TextArea
 
-# TODO: Handle past event on Input widget and potentially switch to multiline
+# TODO: Handle paste event on Input widget and switch to multiline
 
 
 class FlexibleInput(Widget):
@@ -107,5 +107,4 @@ class PromptWidget(Static):
     text = reactive("")
 
     def compose(self) -> ComposeResult:
-        """Human prompt."""
         yield FlexibleInput(text=self.text, classes="singleline")

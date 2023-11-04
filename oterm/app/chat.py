@@ -9,7 +9,7 @@ from textual.css.query import NoMatches
 from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Input, LoadingIndicator, Static
+from textual.widgets import LoadingIndicator, Static
 
 from oterm.app.prompt import FlexibleInput, PromptWidget
 from oterm.ollama import OllamaLLM
