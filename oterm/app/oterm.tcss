@@ -52,8 +52,16 @@ PromptWidget .singleline {
     margin: 1;
     padding: 1;
     margin-bottom: 0;
-    dock: bottom;
 }
+
+PromptWidget .multiline PastableInput {
+    display: none;
+}
+
+PromptWidget .singleline TextArea {
+    display: none;
+}
+
 PromptWidget .multiline {
     margin: 1;
     height: 10;
