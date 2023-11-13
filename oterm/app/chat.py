@@ -11,7 +11,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import LoadingIndicator, Static
 
-from oterm.app.prompt import FlexibleInput, PromptWidget
+from oterm.app.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
 
 
@@ -111,7 +111,7 @@ class ChatContainer(Widget):
         with Vertical():
             yield Static(f"model: {self.ollama.model}", id="info")
             yield Vertical(id="messageContainer")
-            yield PromptWidget(id="prompt")
+            yield FlexibleInput("", id="prompt", classes="singleline")
 
 
 class ChatItem(Widget):

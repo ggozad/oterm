@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.1.10 - 
+------------------
+
+- When pasting multiline text to the singleline input, switch to multiline textarea
+  [ggozad]
+
 0.1.9 - 2023-11-04
 ------------------
 

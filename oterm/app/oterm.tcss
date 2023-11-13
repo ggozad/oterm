@@ -38,52 +38,45 @@ ChatItem .text{
     width: 90%;
 }
 
-PromptWidget {
+#prompt {
     background: $panel;
-    min-height: 5;
-    height: auto;
     margin: 1;
     margin-bottom: 0;
     dock: bottom;
 }
 
-PromptWidget .singleline {
+#prompt.singleline {
     height: 5;
     margin: 1;
     padding: 1;
     margin-bottom: 0;
 }
 
-PromptWidget .multiline PastableInput {
+#prompt.multiline #promptInput {
     display: none;
 }
 
-PromptWidget .singleline TextArea {
+
+#prompt.singleline #promptArea {
     display: none;
 }
 
-PromptWidget .multiline {
-    margin: 1;
+#prompt.multiline {
     height: 10;
 }
 
-PromptWidget #promptInput {
+#prompt #promptInput #promptArea {
     width: 70%;
     dock: left;
 }
 
-PromptWidget #promptArea {
-    width: 70%;
-    dock: left;
-}
-
-PromptWidget #button-container {
+#prompt #button-container {
     padding-left: 1;
     width: 35;
     dock: right;
 }
 
-PromptWidget #button-container #toggle-multiline {
+#prompt #button-container #toggle-multiline {
     margin-left:1;
 }
 

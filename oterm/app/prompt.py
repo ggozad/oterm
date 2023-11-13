@@ -7,17 +7,17 @@ from textual.containers import Horizontal
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Button, Input, Static, TextArea
+from textual.widgets import Button, Input, TextArea
 
 
 class PastableInput(Input):
     def _on_paste(self, event: events.Paste) -> None:
         if event.text:
             self.insert_text_at_cursor(event.text)
-            lines = event.text.splitlines()
-            if len(lines) > 1:
-                parent = cast(FlexibleInput, self.app.query(".prompt").first())
-                parent.toggle_multiline()
+            if len(event.text.splitlines()) > 1:
+                input = cast(FlexibleInput, self.parent.parent)  # type: ignore
+                input.text = self.value
+                input.toggle_multiline()
 
 
 class FlexibleInput(Widget):
@@ -41,10 +41,7 @@ class FlexibleInput(Widget):
         input = self.query_one("#promptInput", PastableInput)
         textarea = self.query_one("#promptArea", TextArea)
         textarea.show_line_numbers = False
-        if self.is_multiline:
-            textarea.focus()
-        else:
-            input.focus()
+        input.focus()
 
     def clear(self) -> None:
         self.text = ""
@@ -58,13 +55,8 @@ class FlexibleInput(Widget):
             self.query_one("#promptInput", PastableInput).focus()
         return self
 
-    @on(PastableInput.Submitted, "#promptInput")
-    def on_input_submitted(self, event: Input.Submitted):
-        self.post_message(self.Submitted(self, event.input.value))
-        event.stop()
-        event.prevent_default()
-
-    def watch_is_multiline(self, value: bool) -> None:
+    def toggle_multiline(self):
+        self.is_multiline = not self.is_multiline
         input = self.query_one("#promptInput", PastableInput)
         textarea = self.query_one("#promptArea", TextArea)
         if self.is_multiline:
@@ -77,13 +69,15 @@ class FlexibleInput(Widget):
             self.remove_class("multiline")
         self.focus()
 
+    @on(PastableInput.Submitted, "#promptInput")
+    def on_input_submitted(self, event: Input.Submitted):
+        self.post_message(self.Submitted(self, event.input.value))
+        event.stop()
+        event.prevent_default()
+
     @on(Button.Pressed, "#toggle-multiline")
     def on_toggle_multiline_pressed(self):
         self.toggle_multiline()
-
-    def toggle_multiline(self):
-        print("TOGGLE MULTILINE")
-        self.is_multiline = not self.is_multiline
 
     @on(PastableInput.Changed, "#promptInput")
     def on_input_changed(self, event: PastableInput.Changed):
@@ -95,8 +89,6 @@ class FlexibleInput(Widget):
 
     @on(Button.Pressed, "#post")
     async def on_post(self):
-        input = self.query_one("#promptInput", PastableInput)
-        input.value = self.text
         self.post_message(self.Submitted(self, self.text))
 
     def compose(self) -> ComposeResult:
@@ -109,10 +101,3 @@ class FlexibleInput(Widget):
             with Horizontal(id="button-container"):
                 yield Button("post", id="post", variant="primary")
                 yield Button("↕", id="toggle-multiline", variant="success")
-
-
-class PromptWidget(Static):
-    text = reactive("")
-
-    def compose(self) -> ComposeResult:
-        yield FlexibleInput(text=self.text, classes="prompt")
