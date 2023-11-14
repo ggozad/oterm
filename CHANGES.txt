@@ -10,6 +10,9 @@ Changelog
 - When pasting multiline text to the singleline input, switch to multiline textarea
   [ggozad]
 
+- Disable SSL verification via OTERM_VERIFY_SSL.
+  [huynle]
+
 0.1.9 - 2023-11-04
 ------------------
 
