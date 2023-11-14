@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from re import A
 from typing import cast
 
 from textual import events, on
@@ -83,7 +82,7 @@ class FlexibleInput(Widget):
             pass
 
     @on(PastableInput.Submitted, "#promptInput")
-    def on_input_submitted(self, event: Input.Submitted):
+    def on_input_submitted(self, event: PastableInput.Submitted):
         self.post_message(self.Submitted(self, event.input.value))
         event.stop()
         event.prevent_default()
@@ -98,7 +97,12 @@ class FlexibleInput(Widget):
 
     @on(TextArea.Changed, "#promptArea")
     def on_area_changed(self, event: TextArea.Changed):
-        self.text = event.text_area.text
+        lines = [
+            event.text_area.document.get_line(line)
+            for line in range(event.text_area.document.line_count)
+        ]
+
+        self.text = "\n".join(lines)
 
     @on(Button.Pressed, "#post")
     async def on_post(self):
