@@ -52,7 +52,7 @@ class OllamaLLM:
         prompt: str,
         context: list[int],
     ) -> AsyncGenerator[tuple[str, list[int]], Any]:
-        client = httpx.AsyncClient()
+        client = httpx.AsyncClient(verify=Config.OLLAMA_VERIFY)
         jsn = {
             "model": self.model,
             "prompt": prompt,
@@ -80,12 +80,12 @@ class OllamaLLM:
 
 class OllamaAPI:
     async def get_models(self) -> list[dict[str, Any]]:
-        client = httpx.AsyncClient()
+        client = httpx.AsyncClient(verify=Config.OLLAMA_VERIFY)
         response = await client.get(f"{Config.OLLAMA_URL}/tags")
         return response.json().get("models", []) or []
 
     async def get_model_info(self, model: str) -> dict[str, Any]:
-        client = httpx.AsyncClient()
+        client = httpx.AsyncClient(verify=Config.OLLAMA_VERIFY)
         response = await client.post(f"{Config.OLLAMA_URL}/show", json={"name": model})
         if response.json().get("error"):
             raise OllamaError(response.json()["error"])
