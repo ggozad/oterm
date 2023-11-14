@@ -66,6 +66,11 @@ class FlexibleInput(Widget):
             textarea.text = self.text
             self.add_class("multiline")
             self.remove_class("singleline")
+            line_count = textarea.document.line_count
+            textarea.cursor_location = (
+                line_count - 1,
+                len(textarea.document.get_line(line_count - 1)),
+            )
         else:
             input.value = self.text
             self.add_class("singleline")

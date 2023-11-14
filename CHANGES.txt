@@ -4,6 +4,9 @@ Changelog
 0.1.10 - 
 ------------------
 
+- Prompt widget improvements.
+  [ggozad]
+
 - When pasting multiline text to the singleline input, switch to multiline textarea
   [ggozad]
 
