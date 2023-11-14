@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from re import A
 from typing import cast
 
 from textual import events, on
 from textual.app import ComposeResult
 from textual.containers import Horizontal
+from textual.css.query import NoMatches
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget
@@ -68,6 +70,15 @@ class FlexibleInput(Widget):
             self.add_class("singleline")
             self.remove_class("multiline")
         self.focus()
+
+    def watch_text(self):
+        try:
+            if len(self.text.splitlines()) > 1:
+                self.query_one("#toggle-multiline", Button).disabled = True
+            else:
+                self.query_one("#toggle-multiline", Button).disabled = False
+        except NoMatches:
+            pass
 
     @on(PastableInput.Submitted, "#promptInput")
     def on_input_submitted(self, event: Input.Submitted):
