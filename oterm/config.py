@@ -24,6 +24,7 @@ class AppConfig:
 
     ENV: str = "development"
     OLLAMA_URL: str = "http://localhost:11434/api"
+    OLLAMA_VERIFY: bool = True
 
     def __init__(self, env):
         for field in self.__annotations__:
