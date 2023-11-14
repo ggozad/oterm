@@ -20,6 +20,8 @@ class PastableInput(Input):
                 input = cast(FlexibleInput, self.parent.parent)  # type: ignore
                 input.text = self.value
                 input.toggle_multiline()
+        event.stop()
+        event.prevent_default()
 
 
 class FlexibleInput(Widget):
