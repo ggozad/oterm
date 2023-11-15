@@ -1,5 +1,5 @@
 import json
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, Literal
 
 import httpx
 
@@ -17,11 +17,13 @@ class OllamaLLM:
         template: str | None = None,
         system: str | None = None,
         context: list[int] = [],
+        format: Literal["json"] | None = None,
     ):
         self.model = model
         self.template = template
         self.system = system
         self.context = context
+        self.format = format
 
     async def completion(self, prompt: str) -> str:
         response = ""
@@ -62,6 +64,8 @@ class OllamaLLM:
             jsn["system"] = self.system
         if self.template:
             jsn["template"] = self.template
+        if self.format:
+            jsn["format"] = self.format
 
         res = ""
         async with client.stream(
