@@ -35,7 +35,7 @@ OLLAMA_URL=http://host:port/api
 
 ### Customizing models
 
-When creating a new chat, you may not only select the model, but also customize the `template` as well as the `system` instruction to pass to the model. 
+When creating a new chat, you may not only select the model, but also customize the `template` as well as the `system` instruction to pass to the model. Checking the `JSON output` checkbox will cause the model reply in JSON format.
 
 ### Screenshots
 ![Chat](screenshots/chat.png)

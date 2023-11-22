@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.1.11 - 
+-------------------
+
+- Support for `format` parameter in Ollama (essentially json for the time being).
+  [ggozad]
+
 0.1.10 - 2023-11-14
 -------------------
 

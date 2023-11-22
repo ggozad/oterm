@@ -121,6 +121,11 @@ LoadingIndicator {
     margin: 1;
 }
 
+#model-select-container .json-format {
+    background: $panel;
+    color: $secondary;
+}
+
 #chat-rename-container {
     width: 80%;
     height: 10;

@@ -2,6 +2,7 @@ import json
 import sys
 from importlib import metadata
 from pathlib import Path
+from typing import Literal
 
 import aiosqlite
 from oterm.app.chat import Author
@@ -113,6 +114,7 @@ class Store(object):
         context: str,
         template: str | None,
         system: str | None,
+        format: str | None,
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res: list[tuple[int]] = await chat_queries.save_chat(  # type: ignore
@@ -123,6 +125,7 @@ class Store(object):
                 context=context,
                 template=template,
                 system=system,
+                format=format,
             )
 
             await connection.commit()
@@ -148,12 +151,14 @@ class Store(object):
 
     async def get_chats(
         self,
-    ) -> list[tuple[int, str, str, list[int], str | None, str | None]]:
+    ) -> list[
+        tuple[int, str, str, list[int], str | None, str | None, Literal["json"] | None]
+    ]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore
             chats = [
-                (id, name, model, json.loads(context), template, system)
-                for id, name, model, context, template, system in chats
+                (id, name, model, json.loads(context), template, system, format)
+                for id, name, model, context, template, system, format in chats
             ]
             return chats
 

@@ -7,7 +7,7 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Label, OptionList, Pretty, TextArea
+from textual.widgets import Button, Checkbox, Label, OptionList, Pretty, TextArea
 
 from oterm.ollama import OllamaAPI
 
@@ -24,6 +24,7 @@ class ModelSelection(ModalScreen[str]):
     template: reactive[str] = reactive("")
     system: reactive[str] = reactive("")
     params: reactive[list[tuple[str, str]]] = reactive([], layout=True)
+    json_format: reactive[bool] = reactive(False)
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -72,7 +73,16 @@ class ModelSelection(ModalScreen[str]):
             )
             system = self.query_one(".system", TextArea).text
             system = system if system != self.model_info.get("system", "") else None
-            result = json.dumps({"name": model, "template": template, "system": system})
+            jsn = self.query_one(".json-format", Checkbox).value
+
+            result = json.dumps(
+                {
+                    "name": model,
+                    "template": template,
+                    "system": system,
+                    "format": "json" if jsn else None,
+                }
+            )
             self.dismiss(result)
         else:
             self.dismiss()
@@ -147,6 +157,8 @@ class ModelSelection(ModalScreen[str]):
                     yield TextArea("", classes="system log")
                     yield Label("Parameters:", classes="title")
                     yield Pretty("", classes="parameters")
+                    yield Label("Format", classes="title")
+                    yield Checkbox("JSON output", value=False, classes="json-format")
 
             with Horizontal(classes="button-container"):
                 yield Button(

@@ -45,6 +45,7 @@ class OTerm(App):
                 context="[]",
                 template=model["template"],
                 system=model["system"],
+                format=model["format"],
             )
             pane = TabPane(name, id=f"chat-{id}")
             pane.compose_add_child(
@@ -54,6 +55,7 @@ class OTerm(App):
                     model=model["name"],
                     system=model["system"],
                     template=model["template"],
+                    format=model["format"],
                 )
             )
             tabs.add_pane(pane)
@@ -85,7 +87,7 @@ class OTerm(App):
                     system=system,
                 )
             )
-            await tabs.add_pane(pane)
+            tabs.add_pane(pane)
             tabs.active = f"chat-{id}"
 
         if chat:
@@ -108,7 +110,7 @@ class OTerm(App):
             self.action_new_chat()
         else:
             tabs = self.query_one(TabbedContent)
-            for id, name, model, context, template, system in saved_chats:
+            for id, name, model, context, template, system, format in saved_chats:
                 messages = await self.store.get_messages(id)
                 pane = TabPane(name, id=f"chat-{id}")
                 pane.compose_add_child(
@@ -120,6 +122,7 @@ class OTerm(App):
                         messages=messages,  # type: ignore
                         template=template,
                         system=system,
+                        format=format,
                     )
                 )
                 tabs.add_pane(pane)

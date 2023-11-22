@@ -1,5 +1,6 @@
 import json
 from enum import Enum
+from typing import Literal
 
 import pyperclip
 from textual import on
@@ -26,6 +27,7 @@ class ChatContainer(Widget):
     chat_name: str
     system: str | None
     template: str | None
+    format: Literal["json"] | None
 
     def __init__(
         self,
@@ -37,17 +39,23 @@ class ChatContainer(Widget):
         messages: list[tuple[Author, str]] = [],
         system: str | None = None,
         template: str | None = None,
+        format: Literal["json"] | None = None,
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
         self.ollama = OllamaLLM(
-            model=model, context=context, template=template, system=system
+            model=model,
+            context=context,
+            template=template,
+            system=system,
+            format=format,
         )  # We do this to reset the context
         self.chat_name = chat_name
         self.db_id = db_id
         self.messages = messages
         self.system = system
         self.template = template
+        self.format = format
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
