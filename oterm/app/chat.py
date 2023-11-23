@@ -136,5 +136,5 @@ class ChatItem(Widget):
     def compose(self) -> ComposeResult:
         """A chat item."""
         with Horizontal(classes=f"{self.author.name} chatItem"):
-            yield Static(self.author.value, classes="author")
-            yield Static(self.text, classes="text")
+            yield Static(self.author.value, classes="author", markup=False)
+            yield Static(self.text, classes="text", markup=False)
