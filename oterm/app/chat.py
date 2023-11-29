@@ -146,8 +146,6 @@ class ChatItem(Widget):
             self.jsn = {}
         try:
             txt_widget = self.query_one(".txt", Static)
-
-            print("parse", self.jsn, self.text)
             jsn_widget = self.query_one(".obj", Pretty)
             if self.jsn:
                 jsn_widget.update(self.jsn)

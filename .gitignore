@@ -1,8 +1,9 @@
 __pycache__/
 .cache/
 .venv/
-venv/
+.venv3.12/
 .env
 .env.local
 .DS_Store
 dist/
+oterm.rb
