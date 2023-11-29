@@ -4,6 +4,9 @@ Changelog
 0.1.11 - 
 -------------------
 
+- Syntax highlighting for json responses.
+  [ggozad]
+
 - Support for `format` parameter in Ollama (essentially json for the time being).
   [ggozad]
 

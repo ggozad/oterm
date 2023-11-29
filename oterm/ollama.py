@@ -66,8 +66,8 @@ class OllamaLLM:
             jsn["template"] = self.template
         if self.format:
             jsn["format"] = self.format
-        print(jsn)
         res = ""
+
         async with client.stream(
             "POST", f"{Config.OLLAMA_URL}/generate", json=jsn, timeout=None
         ) as response:

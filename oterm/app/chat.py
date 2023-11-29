@@ -10,7 +10,7 @@ from textual.css.query import NoMatches
 from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import LoadingIndicator, Static
+from textual.widgets import LoadingIndicator, Static, Pretty
 
 from oterm.app.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
@@ -124,25 +124,48 @@ class ChatContainer(Widget):
 
 class ChatItem(Widget):
     text: reactive[str] = reactive("")
+    jsn: reactive[dict] = reactive({})
     author: Author
 
     @on(Click)
     async def on_click(self, event: Click) -> None:
         pyperclip.copy(self.text)
-        widget = self.query_one(".text", Static)
+        widget = self.query_one(".text", Pretty)
         widget.styles.animate("opacity", 0.5, duration=0.1)
         widget.styles.animate("opacity", 1.0, duration=0.1, delay=0.1)
 
-    def watch_text(self, text: str) -> None:
+    def on_mount(self) -> None:
+        self.parse()
+
+    def parse(self) -> None:
         try:
-            widget = self.query_one(".text", Static)
-            if widget:
-                widget.update(text)
+            jsn = json.loads(self.text)
+            if isinstance(jsn, dict):
+                self.jsn = jsn
+        except json.JSONDecodeError:
+            self.jsn = {}
+        try:
+            txt_widget = self.query_one(".txt", Static)
+
+            print("parse", self.jsn, self.text)
+            jsn_widget = self.query_one(".obj", Pretty)
+            if self.jsn:
+                jsn_widget.update(self.jsn)
+                jsn_widget.display = True
+                txt_widget.display = False
+            else:
+                txt_widget.update(self.text)
+                txt_widget.display = True
+                jsn_widget.display = False
         except NoMatches:
             pass
+
+    def watch_text(self, text: str) -> None:
+        self.parse()
 
     def compose(self) -> ComposeResult:
         """A chat item."""
         with Horizontal(classes=f"{self.author.name} chatItem"):
             yield Static(self.author.value, classes="author", markup=False)
-            yield Static(self.text, classes="text", markup=False)
+            yield Pretty(self.jsn, classes="text obj")
+            yield Static(self.text, classes="text txt")
