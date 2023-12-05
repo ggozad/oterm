@@ -130,9 +130,10 @@ class ChatItem(Widget):
     @on(Click)
     async def on_click(self, event: Click) -> None:
         pyperclip.copy(self.text)
-        widget = self.query_one(".text", Pretty)
-        widget.styles.animate("opacity", 0.5, duration=0.1)
-        widget.styles.animate("opacity", 1.0, duration=0.1, delay=0.1)
+        widgets = self.query(".text")
+        for widget in widgets:
+            widget.styles.animate("opacity", 0.5, duration=0.1)
+            widget.styles.animate("opacity", 1.0, duration=0.1, delay=0.1)
 
     def on_mount(self) -> None:
         self.parse()
