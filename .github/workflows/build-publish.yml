@@ -1,0 +1,18 @@
+name: Build & publish to pypi
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.10
+      - uses: abatilo/actions-poetry@v2
+      - run: poetry config repositories.testpypi https://test.pypi.org/legacy/
+      - run: poetry config pypi-token.testpypi ${{ secrets.PYPI_API_TOKEN }}
+      - name: Publish package
+        run: poetry publish --build -r testpypi
