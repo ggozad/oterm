@@ -12,7 +12,11 @@ jobs:
         with:
           python-version: 3.10
       - uses: abatilo/actions-poetry@v2
-      - run: poetry config repositories.testpypi https://test.pypi.org/legacy/
-      - run: poetry config pypi-token.testpypi ${{ secrets.PYPI_API_TOKEN }}
+      - run: poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
       - name: Publish package
-        run: poetry publish --build -r testpypi
+        run: poetry publish --build
+    # For testing locally, replace pypi with testpypi
+    #   - run: poetry config repositories.testpypi https://test.pypi.org/legacy/
+    #   - run: poetry config pypi-token.testpypi ${{ secrets.PYPI_API_TOKEN }}
+    #   - name: Publish package
+    #     run: poetry publish --build -r testpypi

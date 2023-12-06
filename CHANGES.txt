@@ -4,6 +4,9 @@ Changelog
 0.1.14 - 
 -------------------
 
+- Automate pypi releases through github actions.
+  [ggozad]
+
 - Minor bug fixes.
   [ggozad]
 
