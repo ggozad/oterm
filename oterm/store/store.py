@@ -165,14 +165,16 @@ class Store(object):
 
     async def get_chat(
         self, id
-    ) -> tuple[int, str, str, list[int], str | None, str | None] | None:
+    ) -> tuple[
+        int, str, str, list[int], str | None, str | None, Literal["json"] | None
+    ] | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
             if chat:
                 chat = chat[0]
-                id, name, model, context, template, system = chat
+                id, name, model, context, template, system, format = chat
                 context = json.loads(context)
-                return id, name, model, context, template, system
+                return id, name, model, context, template, system, format
 
     async def delete_chat(self, id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:

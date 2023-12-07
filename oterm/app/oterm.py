@@ -69,7 +69,7 @@ class OTerm(App):
         chat = await self.store.get_chat(id)
         if chat is None:
             return
-        _, name, model, context, template, system = chat
+        _, name, model, context, template, system, format = chat
 
         async def on_chat_rename(name: str) -> None:
             await self.store.rename_chat(id, name)
@@ -85,6 +85,7 @@ class OTerm(App):
                     context=context,
                     template=template,
                     system=system,
+                    format=format,
                 )
             )
             tabs.add_pane(pane)
