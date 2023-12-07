@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.15 - 
+0.1.15 - 2023-12-07
 -------------------
 
 - Fix crash on renaming a chat.
