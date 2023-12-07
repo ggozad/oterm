@@ -29,7 +29,7 @@ class OTerm(App):
     def action_toggle_dark(self) -> None:
         self.dark = not self.dark
 
-    def action_quit(self) -> None:
+    async def action_quit(self) -> None:
         return self.exit()
 
     def action_new_chat(self) -> None:
