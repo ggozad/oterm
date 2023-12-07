@@ -37,6 +37,11 @@ OLLAMA_URL=http://host:port/api
 
 When creating a new chat, you may not only select the model, but also customize the `template` as well as the `system` instruction to pass to the model. Checking the `JSON output` checkbox will cause the model reply in JSON format.
 
+### Chat session storage
+
+All your chat sessions are stored locally in a sqlite database.
+You can find the location of the database by running `oterm --db`.
+
 ### Screenshots
 ![Chat](screenshots/chat.png)
 ![Model selection](./screenshots/model_selection.png)

@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.1.16 -
+-------------------
+
+- Support markdown in chat messages.
+  [ggozad]
+
+- Show db location with when running with `--db`.
+  [ggozad]
+
 0.1.15 - 2023-12-07
 -------------------
 
