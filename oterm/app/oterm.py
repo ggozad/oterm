@@ -88,7 +88,8 @@ class OTerm(App):
                     format=format,
                 )
             )
-            tabs.add_pane(pane)
+            added = tabs.add_pane(pane)
+            await added()
             tabs.active = f"chat-{id}"
 
         if chat:
