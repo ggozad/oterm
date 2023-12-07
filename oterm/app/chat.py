@@ -10,7 +10,7 @@ from textual.css.query import NoMatches
 from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import LoadingIndicator, Static, Pretty
+from textual.widgets import LoadingIndicator, Markdown, Pretty, Static
 
 from oterm.app.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
@@ -146,7 +146,7 @@ class ChatItem(Widget):
         except json.JSONDecodeError:
             self.jsn = {}
         try:
-            txt_widget = self.query_one(".txt", Static)
+            txt_widget = self.query_one(".txt", Markdown)
             jsn_widget = self.query_one(".obj", Pretty)
             if self.jsn:
                 jsn_widget.update(self.jsn)
@@ -167,4 +167,4 @@ class ChatItem(Widget):
         with Horizontal(classes=f"{self.author.name} chatItem"):
             yield Static(self.author.value, classes="author", markup=False)
             yield Pretty(self.jsn, classes="text obj")
-            yield Static(self.text, classes="text txt")
+            yield Markdown(self.text, classes="text txt")
