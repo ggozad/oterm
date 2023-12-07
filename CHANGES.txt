@@ -4,6 +4,8 @@ Changelog
 0.1.15 - 
 -------------------
 
+- Fix crash on renaming a chat.
+  [ggozad]
 
 0.1.14 - 2023-12-06
 -------------------
