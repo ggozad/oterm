@@ -5,6 +5,7 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat import ChatContainer
 from oterm.app.chat_rename import ChatRename
+from oterm.app.image_browser import ImageSelect
 from oterm.app.model_selection import ModelSelection
 from oterm.app.splash import SplashScreen
 from oterm.store.store import Store
@@ -19,6 +20,7 @@ class OTerm(App):
         ("ctrl+t", "toggle_dark", "Toggle dark mode"),
         ("ctrl+r", "rename_chat", "rename chat"),
         ("ctrl+x", "forget_chat", "forget chat"),
+        ("i", "image_select", "image select"),
         ("ctrl+q", "quit", "Quit"),
     ]
     SCREENS = {
@@ -106,6 +108,13 @@ class OTerm(App):
         id = int(tabs.active.split("-")[1])
         await self.store.delete_chat(id)
         tabs.remove_pane(tabs.active)
+
+    async def action_image_select(self) -> None:
+        async def on_image_selected(image: str) -> None:
+            print(image)
+
+        screen = ImageSelect()
+        self.push_screen(screen, on_image_selected)
 
     async def on_mount(self) -> None:
         self.store = await Store.create()
