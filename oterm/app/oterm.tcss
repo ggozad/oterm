@@ -144,6 +144,26 @@ LoadingIndicator {
     margin: 2;
 }
 
+#image-select-container #image-directory-tree {
+    width: 30%;
+}
+
+#image-select-container #image-preview{
+    width: 70%;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+#image-select-container .button-container {
+    height: 5;
+    padding:1;
+}
+
+#image-select-container .button-container Button {    
+    margin-right: 1;
+}
+
+
 #splash-container {
     height: 100%;
     width: 100%;

@@ -7,3 +7,4 @@ __pycache__/
 .DS_Store
 dist/
 oterm.rb
+photos/
