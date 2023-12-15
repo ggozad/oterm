@@ -110,8 +110,9 @@ class OTerm(App):
         tabs.remove_pane(tabs.active)
 
     async def action_image_select(self) -> None:
-        async def on_image_selected(image: str) -> None:
-            print(image)
+        async def on_image_selected(image) -> None:
+            path, img_str = image
+            print(path, img_str)
 
         screen = ImageSelect()
         self.push_screen(screen, on_image_selected)

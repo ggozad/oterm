@@ -1,16 +1,20 @@
+from base64 import b64encode
+from io import BytesIO
 from pathlib import Path
 from typing import Iterable
 
 from PIL import Image as PILImage
+from PIL import UnidentifiedImageError
 from rich_pixels import Pixels
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
-from textual.widgets import Button, DirectoryTree, Label
+from textual.widgets import DirectoryTree, Label
 
 IMG_MAX_SIZE = 80
+IMAGE_EXTENSIONS = PILImage.registered_extensions()
 
 
 class Image(Widget):
@@ -22,20 +26,22 @@ class Image(Widget):
 
     def watch_path(self, path: str) -> None:
         if path:
-            with PILImage.open(path) as img:
-                max_size = max(img.width, img.height)
-                width = int(img.width / max_size * IMG_MAX_SIZE)
-                height = int(img.height / max_size * IMG_MAX_SIZE)
+            try:
+                with PILImage.open(path) as img:
+                    max_size = max(img.width, img.height)
+                    width = int(img.width / max_size * IMG_MAX_SIZE)
+                    height = int(img.height / max_size * IMG_MAX_SIZE)
 
-                self.set_styles(
-                    f"""
-                    width: {width * 2};
-                    height: {height};
-                    padding:1;
-                    """
-                )
-                self.pixels = Pixels.from_image_path(path, (width, height))
-
+                    self.set_styles(
+                        f"""
+                        width: {width * 2};
+                        height: {height};
+                        padding:1;
+                        """
+                    )
+                    self.pixels = Pixels.from_image_path(path, (width, height))
+            except UnidentifiedImageError:
+                self.pixels = None
         else:
             self.pixels = None
 
@@ -48,15 +54,11 @@ class Image(Widget):
 class ImageDirectoryTree(DirectoryTree):
     def filter_paths(self, paths: Iterable[Path]) -> Iterable[Path]:
         return [
-            path
-            for path in paths
-            if path.suffix in [".png", ".jpg", ".jpeg"] or path.is_dir()
+            path for path in paths if path.suffix in IMAGE_EXTENSIONS or path.is_dir()
         ]
 
 
-class ImageSelect(ModalScreen[str]):
-    image: reactive[str] = reactive("")
-
+class ImageSelect(ModalScreen[tuple[Path, bytes]]):
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]
@@ -71,14 +73,20 @@ class ImageSelect(ModalScreen[str]):
     async def on_directory_tree_file_selected(
         self, ev: DirectoryTree.FileSelected
     ) -> None:
-        image = self.query_one(Image)
-        image.path = ev.path.as_posix()
-
-    def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.name == "select":
-            pass
-        else:
+        try:
+            buffered = BytesIO()
+            image = PILImage.open(ev.path)
+            image.save(buffered, format="JPEG")
+            img_str = b64encode(buffered.getvalue())
+            self.dismiss((ev.path, img_str))
+        except UnidentifiedImageError:
             self.dismiss()
+
+    async def on_tree_node_highlighted(self, ev: DirectoryTree.NodeHighlighted) -> None:
+        path = ev.node.data.path
+        if path.suffix in IMAGE_EXTENSIONS:
+            image = self.query_one(Image)
+            image.path = path.as_posix()
 
     def compose(self) -> ComposeResult:
         with Container(id="image-select-container"):
@@ -87,6 +95,3 @@ class ImageSelect(ModalScreen[str]):
                 yield ImageDirectoryTree("./", id="image-directory-tree")
                 with Container(id="image-preview"):
                     yield Image(id="image")
-            with Horizontal(classes="button-container"):
-                yield Button("Select", name="select", variant="primary")
-                yield Button("Cancel", name="cancel")
