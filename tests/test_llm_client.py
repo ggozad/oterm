@@ -21,6 +21,13 @@ async def test_llm_context():
 
 
 @pytest.mark.asyncio
+async def test_multi_modal_llm(llama_image):
+    llm = OllamaLLM(model="llava")
+    res = await llm.completion("Describe this image", images=[llama_image])
+    assert "llama" in res or "animal" in res
+
+
+@pytest.mark.asyncio
 async def test_errors():
     llm = OllamaLLM(model="non-existent-model")
     try:

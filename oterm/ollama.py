@@ -33,12 +33,13 @@ class OllamaLLM:
         self.context = context
         self.format = format
 
-    async def completion(self, prompt: str) -> str:
+    async def completion(self, prompt: str, images: list[str] = []) -> str:
         response = ""
         context = []
         async for text, ctx in self._agenerate(
             prompt=prompt,
             context=self.context,
+            images=images,
         ):
             response = text
             context = ctx
@@ -58,9 +59,7 @@ class OllamaLLM:
         self.context = context
 
     async def _agenerate(
-        self,
-        prompt: str,
-        context: list[int],
+        self, prompt: str, context: list[int], images: list[str] = []
     ) -> AsyncGenerator[tuple[str, list[int]], Any]:
         client = httpx.AsyncClient(verify=Config.OTERM_VERIFY_SSL)
         jsn = {
@@ -74,6 +73,8 @@ class OllamaLLM:
             jsn["template"] = self.template
         if self.format:
             jsn["format"] = self.format
+        if images:
+            jsn["images"] = images
         res = ""
 
         try:

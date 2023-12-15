@@ -58,7 +58,7 @@ class ImageDirectoryTree(DirectoryTree):
         ]
 
 
-class ImageSelect(ModalScreen[tuple[Path, bytes]]):
+class ImageSelect(ModalScreen[tuple[Path, str]]):
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]
@@ -74,11 +74,11 @@ class ImageSelect(ModalScreen[tuple[Path, bytes]]):
         self, ev: DirectoryTree.FileSelected
     ) -> None:
         try:
-            buffered = BytesIO()
+            buffer = BytesIO()
             image = PILImage.open(ev.path)
-            image.save(buffered, format="JPEG")
-            img_str = b64encode(buffered.getvalue())
-            self.dismiss((ev.path, img_str))
+            image.save(buffer, format="JPEG")
+            b64 = b64encode(buffer.getvalue()).decode("utf-8")
+            self.dismiss((ev.path, b64))
         except UnidentifiedImageError:
             self.dismiss()
 

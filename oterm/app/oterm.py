@@ -111,8 +111,8 @@ class OTerm(App):
 
     async def action_image_select(self) -> None:
         async def on_image_selected(image) -> None:
-            path, img_str = image
-            print(path, img_str)
+            path, b64 = image
+            print(path, b64)
 
         screen = ImageSelect()
         self.push_screen(screen, on_image_selected)
