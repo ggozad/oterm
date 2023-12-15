@@ -17,7 +17,7 @@ class ModelSelection(ModalScreen[str]):
     models = []
     models_info: dict[str, dict] = {}
 
-    name: reactive[str] = reactive("")
+    model_name: reactive[str] = reactive("")
     tag: reactive[str] = reactive("")
     bytes: reactive[int] = reactive(0)
     model_info: reactive[dict[str, str]] = reactive({}, layout=True)
@@ -54,7 +54,7 @@ class ModelSelection(ModalScreen[str]):
         model_meta = next((m for m in self.models if m["name"] == str(model)), None)
         if model_meta:
             name, tag = model_meta["name"].split(":")
-            self.name = name
+            self.model_name = name
             self.tag = tag
             self.bytes = model_meta["size"]
 
@@ -66,7 +66,7 @@ class ModelSelection(ModalScreen[str]):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.name == "create":
-            model = f"{self.name}:{self.tag}"
+            model = f"{self.model_name}:{self.tag}"
             template = self.query_one(".template", TextArea).text
             template = (
                 template if template != self.model_info.get("template", "") else None
@@ -94,7 +94,7 @@ class ModelSelection(ModalScreen[str]):
     def watch_name(self, name: str) -> None:
         try:
             widget = self.query_one(".name", Label)
-            widget.update(f"Name: {self.name}")
+            widget.update(f"Name: {self.model_name}")
         except NoMatches:
             pass
 
