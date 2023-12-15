@@ -23,10 +23,6 @@ class OTerm(App):
         ("i", "image_select", "image select"),
         ("ctrl+q", "quit", "Quit"),
     ]
-    SCREENS = {
-        "splash": SplashScreen(),
-        "model_selection": ModelSelection(),
-    }
 
     def action_toggle_dark(self) -> None:
         self.dark = not self.dark
@@ -63,7 +59,7 @@ class OTerm(App):
             tabs.add_pane(pane)
             tabs.active = f"chat-{id}"
 
-        self.push_screen("model_selection", on_model_select)
+        self.push_screen(ModelSelection(), on_model_select)
 
     async def action_rename_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
@@ -141,8 +137,7 @@ class OTerm(App):
                 )
                 tabs.add_pane(pane)
                 tabs.active = f"chat-{id}"
-
-        await self.push_screen("splash")
+        await self.push_screen(SplashScreen())
 
     def compose(self) -> ComposeResult:
         yield Header()
