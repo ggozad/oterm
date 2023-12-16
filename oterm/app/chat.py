@@ -74,6 +74,11 @@ class ChatContainer(Widget):
         input = event.input
         message_container = self.query_one("#messageContainer")
 
+        if not message.strip():
+            input.clear()
+            input.focus()
+            return
+
         input.clear()
         input.disabled = True
         self.messages.append((Author.USER, message))
