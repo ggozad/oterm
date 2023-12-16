@@ -46,12 +46,15 @@ class OllamaLLM:
         self.context = context
         return response
 
-    async def stream(self, prompt) -> AsyncGenerator[str, Any]:
+    async def stream(
+        self, prompt: str, images: list[str] = []
+    ) -> AsyncGenerator[str, Any]:
         context = []
 
         async for text, ctx in self._agenerate(
             prompt=prompt,
             context=self.context,
+            images=images,
         ):
             context = ctx
             yield text

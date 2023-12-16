@@ -1,5 +1,6 @@
 import json
 from enum import Enum
+from pathlib import Path
 from typing import Literal
 
 import pyperclip
@@ -29,6 +30,7 @@ class ChatContainer(Widget):
     system: str | None
     template: str | None
     format: Literal["json"] | None
+    images: list[tuple[Path, str]] = []
 
     def __init__(
         self,
@@ -96,11 +98,12 @@ class ChatContainer(Widget):
         message_container.scroll_end()
 
         response = ""
-        async for text in self.ollama.stream(message):
+        async for text in self.ollama.stream(message, [img for _, img in self.images]):
             response = text
             chat_item.text = text
             message_container.scroll_end()
         self.messages.append((Author.OLLAMA, response))
+        self.images = []
         loading.remove()
         input.disabled = False
         input.focus()
@@ -123,7 +126,12 @@ class ChatContainer(Widget):
 
     @on(ImageAdded)
     def on_image_added(self, ev: ImageAdded) -> None:
-        print("Image added", ev)
+        self.images.append((ev.path, ev.image))
+        message_container = self.query_one("#messageContainer")
+        notification = Notification()
+        notification.message = f"Image {ev.path} added."
+        message_container.mount(notification)
+        message_container.scroll_end()
 
     def compose(self) -> ComposeResult:
         with Vertical():
@@ -178,3 +186,10 @@ class ChatItem(Widget):
             yield Static(self.author.value, classes="author", markup=False)
             yield Pretty(self.jsn, classes="text obj")
             yield Markdown(self.text, classes="text txt")
+
+
+class Notification(Widget):
+    message: reactive[str] = reactive("")
+
+    def compose(self) -> ComposeResult:
+        yield Static(self.message, classes="notification")
