@@ -84,6 +84,8 @@ class ImageSelect(ModalScreen[tuple[Path, str]]):
         try:
             buffer = BytesIO()
             image = PILImage.open(ev.path)
+            if image.mode != "RGB":
+                image = image.convert("RGB")
             image.save(buffer, format="JPEG")
             b64 = b64encode(buffer.getvalue()).decode("utf-8")
             self.dismiss((ev.path, b64))
