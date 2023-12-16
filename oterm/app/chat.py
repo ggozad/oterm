@@ -12,6 +12,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import LoadingIndicator, Markdown, Pretty, Static
 
+from oterm.app.image_browser import ImageAdded
 from oterm.app.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
 
@@ -119,6 +120,10 @@ class ChatContainer(Widget):
             author=Author.OLLAMA.value,
             text=response,
         )
+
+    @on(ImageAdded)
+    def on_image_added(self, ev: ImageAdded) -> None:
+        print("Image added", ev)
 
     def compose(self) -> ComposeResult:
         with Vertical():

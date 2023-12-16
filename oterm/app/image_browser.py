@@ -8,6 +8,7 @@ from PIL import UnidentifiedImageError
 from rich_pixels import Pixels
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
+from textual.message import Message
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widget import Widget
@@ -15,6 +16,13 @@ from textual.widgets import DirectoryTree, Label
 
 IMG_MAX_SIZE = 80
 IMAGE_EXTENSIONS = PILImage.registered_extensions()
+
+
+class ImageAdded(Message):
+    def __init__(self, path: Path, image: str) -> None:
+        self.path = path
+        self.image = image
+        super().__init__()
 
 
 class Image(Widget):

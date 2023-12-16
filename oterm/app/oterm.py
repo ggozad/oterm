@@ -5,7 +5,7 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat import ChatContainer
 from oterm.app.chat_rename import ChatRename
-from oterm.app.image_browser import ImageSelect
+from oterm.app.image_browser import ImageAdded, ImageSelect
 from oterm.app.model_selection import ModelSelection
 from oterm.app.splash import SplashScreen
 from oterm.store.store import Store
@@ -45,9 +45,10 @@ class OTerm(App):
                 system=model["system"],
                 format=model["format"],
             )
-            pane = TabPane(name, id=f"chat-{id}")
+            pane = TabPane(name, id=f"tab-{id}")
             pane.compose_add_child(
                 ChatContainer(
+                    id=f"chat-{id}",
                     db_id=id,
                     chat_name=name,
                     model=model["name"],
@@ -57,7 +58,7 @@ class OTerm(App):
                 )
             )
             tabs.add_pane(pane)
-            tabs.active = f"chat-{id}"
+            tabs.active = f"tab-{id}"
 
         self.push_screen(ModelSelection(), on_model_select)
 
@@ -75,9 +76,10 @@ class OTerm(App):
             await self.store.rename_chat(id, name)
             messages = await self.store.get_messages(id)
             tabs.remove_pane(tabs.active)
-            pane = TabPane(name, id=f"chat-{id}")
+            pane = TabPane(name, id=f"tab-{id}")
             pane.compose_add_child(
                 ChatContainer(
+                    id=f"chat-{id}",
                     db_id=id,
                     chat_name=name,
                     model=model,
@@ -90,7 +92,7 @@ class OTerm(App):
             )
             added = tabs.add_pane(pane)
             await added()
-            tabs.active = f"chat-{id}"
+            tabs.active = f"tab-{id}"
 
         if chat:
             screen = ChatRename()
@@ -108,7 +110,11 @@ class OTerm(App):
     async def action_image_select(self) -> None:
         async def on_image_selected(image) -> None:
             path, b64 = image
-            print(path, b64)
+            tabs = self.query_one(TabbedContent)
+            id = int(tabs.active.split("-")[1])
+
+            chat = self.query_one(f"#chat-{id}", ChatContainer)
+            chat.post_message(ImageAdded(path, b64))
 
         screen = ImageSelect()
         self.push_screen(screen, on_image_selected)
@@ -122,9 +128,10 @@ class OTerm(App):
             tabs = self.query_one(TabbedContent)
             for id, name, model, context, template, system, format in saved_chats:
                 messages = await self.store.get_messages(id)
-                pane = TabPane(name, id=f"chat-{id}")
+                pane = TabPane(name, id=f"tab-{id}")
                 pane.compose_add_child(
                     ChatContainer(
+                        id=f"chat-{id}",
                         db_id=id,
                         chat_name=name,
                         model=model,
@@ -136,7 +143,7 @@ class OTerm(App):
                     )
                 )
                 tabs.add_pane(pane)
-                tabs.active = f"chat-{id}"
+                tabs.active = f"tab-{id}"
         await self.push_screen(SplashScreen())
 
     def compose(self) -> ComposeResult:
