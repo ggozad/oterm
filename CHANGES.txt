@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.1.17 - 
+-------------------
+
+- Add key binding to switch to multiline input using ctrl+n.
+  [ggozad]
+
 0.1.16 - 2023-12-07
 -------------------
 

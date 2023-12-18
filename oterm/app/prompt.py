@@ -3,6 +3,7 @@ from typing import cast
 
 from textual import events, on
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.css.query import NoMatches
 from textual.message import Message
@@ -12,6 +13,22 @@ from textual.widgets import Button, Input, TextArea
 
 
 class PastableInput(Input):
+    BINDINGS = Input.BINDINGS + [
+        Binding(
+            key="ctrl+n",
+            action="toggle_multiline",
+            description="multiline",
+            show=True,
+            key_display=None,
+            priority=True,
+        ),
+    ]
+
+    def action_toggle_multiline(self) -> None:
+        input = cast(FlexibleInput, self.parent.parent)  # type: ignore
+        input.text = self.value
+        input.toggle_multiline()
+
     def _on_paste(self, event: events.Paste) -> None:
         if event.text:
             self.insert_text_at_cursor(event.text)
