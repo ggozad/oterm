@@ -11,6 +11,8 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Button, Input, TextArea
 
+from oterm.app.image_browser import ImageAdded, ImageSelect
+
 
 class PastableInput(Input):
     BINDINGS = Input.BINDINGS + [
@@ -43,6 +45,10 @@ class PastableInput(Input):
 class FlexibleInput(Widget):
     is_multiline = reactive(False)
     text = reactive("")
+
+    BINDINGS = [
+        ("ctrl+p", "add_image", "add image"),
+    ]
 
     @dataclass
     class Submitted(Message):
@@ -102,6 +108,14 @@ class FlexibleInput(Widget):
                 self.query_one("#toggle-multiline", Button).disabled = False
         except NoMatches:
             pass
+
+    def action_add_image(self) -> None:
+        async def on_image_selected(image) -> None:
+            path, b64 = image
+            self.post_message(ImageAdded(path, b64))
+
+        screen = ImageSelect()
+        self.app.push_screen(screen, on_image_selected)
 
     @on(PastableInput.Submitted, "#promptInput")
     def on_input_submitted(self, event: PastableInput.Submitted):

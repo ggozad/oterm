@@ -5,7 +5,6 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat import ChatContainer
 from oterm.app.chat_rename import ChatRename
-from oterm.app.image_browser import ImageAdded, ImageSelect
 from oterm.app.model_selection import ModelSelection
 from oterm.app.splash import SplashScreen
 from oterm.store.store import Store
@@ -17,11 +16,10 @@ class OTerm(App):
     CSS_PATH = "oterm.tcss"
     BINDINGS = [
         ("ctrl+n", "new_chat", "new chat"),
-        ("ctrl+t", "toggle_dark", "Toggle dark mode"),
+        ("ctrl+t", "toggle_dark", "toggle theme"),
         ("ctrl+r", "rename_chat", "rename chat"),
         ("ctrl+x", "forget_chat", "forget chat"),
-        ("i", "image_select", "image select"),
-        ("ctrl+q", "quit", "Quit"),
+        ("ctrl+q", "quit", "quit"),
     ]
 
     def action_toggle_dark(self) -> None:
@@ -106,18 +104,6 @@ class OTerm(App):
         id = int(tabs.active.split("-")[1])
         await self.store.delete_chat(id)
         tabs.remove_pane(tabs.active)
-
-    async def action_image_select(self) -> None:
-        async def on_image_selected(image) -> None:
-            path, b64 = image
-            tabs = self.query_one(TabbedContent)
-            id = int(tabs.active.split("-")[1])
-
-            chat = self.query_one(f"#chat-{id}", ChatContainer)
-            chat.post_message(ImageAdded(path, b64))
-
-        screen = ImageSelect()
-        self.push_screen(screen, on_image_selected)
 
     async def on_mount(self) -> None:
         self.store = await Store.create()
