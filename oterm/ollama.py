@@ -10,6 +10,14 @@ class OllamaError(Exception):
     pass
 
 
+class OllamaConnectError(OllamaError):
+    def __init__(self) -> None:
+        super().__init__(
+            f"Failed to connect to Ollama server running at {Config.OLLAMA_URL}. "
+            "You can set OLLAMA_URL if you want to use a different server."
+        )
+
+
 class OllamaLLM:
     def __init__(
         self,
@@ -68,29 +76,40 @@ class OllamaLLM:
             jsn["format"] = self.format
         res = ""
 
-        async with client.stream(
-            "POST", f"{Config.OLLAMA_URL}/generate", json=jsn, timeout=None
-        ) as response:
-            async for line in response.aiter_lines():
-                body = json.loads(line)
-                res += body.get("response", "")
-                yield res, []
-                if "error" in body:
-                    raise OllamaError(body["error"])
+        try:
+            async with client.stream(
+                "POST", f"{Config.OLLAMA_URL}/generate", json=jsn, timeout=None
+            ) as response:
+                async for line in response.aiter_lines():
+                    body = json.loads(line)
+                    res += body.get("response", "")
+                    yield res, []
+                    if "error" in body:
+                        raise OllamaError(body["error"])
 
-                if body.get("done", False):
-                    yield res, body["context"]
+                    if body.get("done", False):
+                        yield res, body["context"]
+        except httpx.ConnectError:
+            raise OllamaConnectError()
 
 
 class OllamaAPI:
     async def get_models(self) -> list[dict[str, Any]]:
         client = httpx.AsyncClient(verify=Config.OTERM_VERIFY_SSL)
-        response = await client.get(f"{Config.OLLAMA_URL}/tags")
+        try:
+            response = await client.get(f"{Config.OLLAMA_URL}/tags")
+        except httpx.ConnectError:
+            raise OllamaConnectError()
         return response.json().get("models", []) or []
 
     async def get_model_info(self, model: str) -> dict[str, Any]:
         client = httpx.AsyncClient(verify=Config.OTERM_VERIFY_SSL)
-        response = await client.post(f"{Config.OLLAMA_URL}/show", json={"name": model})
+        try:
+            response = await client.post(
+                f"{Config.OLLAMA_URL}/show", json={"name": model}
+            )
+        except httpx.ConnectError:
+            raise OllamaConnectError()
         if response.json().get("error"):
             raise OllamaError(response.json()["error"])
         return response.json()
