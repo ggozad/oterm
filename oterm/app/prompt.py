@@ -74,7 +74,7 @@ class FlexibleInput(Widget):
         self.query_one("#promptInput", PastableInput).value = ""
         self.query_one("#promptArea", TextArea).text = ""
 
-    def focus(self) -> "FlexibleInput":
+    def focus(self, scroll_visible=True) -> "FlexibleInput":
         if self.is_multiline:
             self.query_one("#promptArea", TextArea).focus()
         else:

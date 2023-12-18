@@ -7,7 +7,7 @@ from PIL import Image as PILImage
 from PIL import UnidentifiedImageError
 from rich_pixels import Pixels
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal
+from textual.containers import Container, Horizontal, Vertical
 from textual.message import Message
 from textual.reactive import reactive
 from textual.screen import ModalScreen
@@ -100,8 +100,9 @@ class ImageSelect(ModalScreen[tuple[Path, str]]):
 
     def compose(self) -> ComposeResult:
         with Container(id="image-select-container"):
-            yield Label("Select an image:", classes="title")
             with Horizontal():
-                yield ImageDirectoryTree("./", id="image-directory-tree")
+                with Vertical(id="image-directory-tree"):
+                    yield Label("Select an image:", classes="title")
+                    yield ImageDirectoryTree("./")
                 with Container(id="image-preview"):
                     yield Image(id="image")

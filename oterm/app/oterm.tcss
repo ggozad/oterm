@@ -147,7 +147,7 @@ LoadingIndicator {
 #image-select-container .title {
     color: $secondary;
     background: $panel;
-    width: 30%;
+    width: 100%;
     padding-top: 1;
     padding-bottom: 1;
 
