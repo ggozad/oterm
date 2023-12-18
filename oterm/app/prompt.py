@@ -15,7 +15,7 @@ from textual.widgets import Button, Input, TextArea
 class PastableInput(Input):
     BINDINGS = Input.BINDINGS + [
         Binding(
-            key="ctrl+n",
+            key="ctrl+l",
             action="toggle_multiline",
             description="multiline",
             show=True,
