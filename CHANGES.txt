@@ -7,6 +7,9 @@ Changelog
 - Add key binding to switch to multiline input using ctrl+n.
   [ggozad]
 
+- Change key bindings so that they can be invoked without loosing prompt focus.
+  [ggozad]
+
 0.1.16 - 2023-12-07
 -------------------
 

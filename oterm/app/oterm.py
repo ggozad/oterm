@@ -15,11 +15,11 @@ class OTerm(App):
     SUB_TITLE = "A terminal-based Ollama client."
     CSS_PATH = "oterm.tcss"
     BINDINGS = [
-        ("n", "new_chat", "new chat"),
-        ("d", "toggle_dark", "Toggle dark mode"),
-        ("r", "rename_chat", "rename chat"),
-        ("x", "forget_chat", "forget chat"),
-        ("q", "quit", "Quit"),
+        ("ctrl+n", "new_chat", "new chat"),
+        ("ctrl+t", "toggle_dark", "Toggle dark mode"),
+        ("ctrl+r", "rename_chat", "rename chat"),
+        ("ctrl+x", "forget_chat", "forget chat"),
+        ("ctrl+q", "quit", "Quit"),
     ]
     SCREENS = {
         "splash": SplashScreen(),
