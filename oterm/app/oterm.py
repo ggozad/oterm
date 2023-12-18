@@ -4,7 +4,6 @@ from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat import ChatContainer
-from oterm.app.chat_rename import ChatRename
 from oterm.app.model_selection import ModelSelection
 from oterm.app.splash import SplashScreen
 from oterm.store.store import Store
@@ -17,8 +16,6 @@ class OTerm(App):
     BINDINGS = [
         ("ctrl+n", "new_chat", "new chat"),
         ("ctrl+t", "toggle_dark", "toggle theme"),
-        ("ctrl+r", "rename_chat", "rename chat"),
-        ("ctrl+x", "forget_chat", "forget chat"),
         ("ctrl+q", "quit", "quit"),
     ]
 
@@ -59,51 +56,6 @@ class OTerm(App):
             tabs.active = f"tab-{id}"
 
         self.push_screen(ModelSelection(), on_model_select)
-
-    async def action_rename_chat(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if not tabs.active:
-            return
-        id = int(tabs.active.split("-")[1])
-        chat = await self.store.get_chat(id)
-        if chat is None:
-            return
-        _, name, model, context, template, system, format = chat
-
-        async def on_chat_rename(name: str) -> None:
-            await self.store.rename_chat(id, name)
-            messages = await self.store.get_messages(id)
-            tabs.remove_pane(tabs.active)
-            pane = TabPane(name, id=f"tab-{id}")
-            pane.compose_add_child(
-                ChatContainer(
-                    id=f"chat-{id}",
-                    db_id=id,
-                    chat_name=name,
-                    model=model,
-                    messages=messages,
-                    context=context,
-                    template=template,
-                    system=system,
-                    format=format,
-                )
-            )
-            added = tabs.add_pane(pane)
-            await added()
-            tabs.active = f"tab-{id}"
-
-        if chat:
-            screen = ChatRename()
-            screen.old_name = name
-            self.push_screen(screen, on_chat_rename)
-
-    async def action_forget_chat(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if not tabs.active:
-            return
-        id = int(tabs.active.split("-")[1])
-        await self.store.delete_chat(id)
-        tabs.remove_pane(tabs.active)
 
     async def on_mount(self) -> None:
         self.store = await Store.create()

@@ -11,8 +11,16 @@ from textual.css.query import NoMatches
 from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import LoadingIndicator, Markdown, Pretty, Static
+from textual.widgets import (
+    LoadingIndicator,
+    Markdown,
+    Pretty,
+    Static,
+    TabbedContent,
+    TabPane,
+)
 
+from oterm.app.chat_rename import ChatRename
 from oterm.app.image_browser import ImageAdded
 from oterm.app.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
@@ -31,6 +39,11 @@ class ChatContainer(Widget):
     template: str | None
     format: Literal["json"] | None
     images: list[tuple[Path, str]] = []
+
+    BINDINGS = [
+        ("ctrl+r", "rename_chat", "rename chat"),
+        ("ctrl+x", "forget_chat", "forget chat"),
+    ]
 
     def __init__(
         self,
@@ -123,6 +136,38 @@ class ChatContainer(Widget):
             author=Author.OLLAMA.value,
             text=response,
         )
+
+    async def action_rename_chat(self) -> None:
+        async def on_chat_rename(name: str) -> None:
+            tabs = self.app.query_one(TabbedContent)
+            await self.app.store.rename_chat(self.db_id, name)
+            tabs.remove_pane(tabs.active)
+            pane = TabPane(name, id=f"tab-{self.db_id}")
+            pane.compose_add_child(
+                ChatContainer(
+                    id=f"chat-{self.db_id}",
+                    db_id=self.db_id,
+                    chat_name=name,
+                    model=self.ollama.model,
+                    messages=self.messages,
+                    context=self.ollama.context,
+                    template=self.template,
+                    system=self.system,
+                    format=self.format,
+                )
+            )
+            added = tabs.add_pane(pane)
+            await added()
+            tabs.active = f"tab-{self.db_id}"
+
+        screen = ChatRename()
+        screen.old_name = self.chat_name
+        self.app.push_screen(screen, on_chat_rename)
+
+    async def action_forget_chat(self) -> None:
+        tabs = self.app.query_one(TabbedContent)
+        await self.app.store.delete_chat(self.db_id)
+        tabs.remove_pane(tabs.active)
 
     @on(ImageAdded)
     def on_image_added(self, ev: ImageAdded) -> None:
