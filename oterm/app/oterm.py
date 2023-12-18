@@ -65,6 +65,8 @@ class OTerm(App):
 
     async def action_rename_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
+        if not tabs.active:
+            return
         id = int(tabs.active.split("-")[1])
         chat = await self.store.get_chat(id)
         if chat is None:
@@ -99,11 +101,11 @@ class OTerm(App):
 
     async def action_forget_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
-        active_pane_id = tabs.active
-
-        if active_pane_id:
-            await self.store.delete_chat(int(active_pane_id.split("-")[1]))
-            tabs.remove_pane(active_pane_id)
+        if not tabs.active:
+            return
+        id = int(tabs.active.split("-")[1])
+        await self.store.delete_chat(id)
+        tabs.remove_pane(tabs.active)
 
     async def on_mount(self) -> None:
         self.store = await Store.create()
