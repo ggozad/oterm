@@ -4,6 +4,9 @@ Changelog
 0.1.17 - 
 -------------------
 
+- Support multimodal models, allow adding images to chat messages.
+  [ggozad]
+
 - Add key binding to switch to multiline input using ctrl+n.
   [ggozad]
 
