@@ -31,11 +31,21 @@ In order to use `oterm` you will need to have the Ollama server running. By defa
 OLLAMA_URL=http://host:port/api
 ```
 
-`oterm` will not (yet) pull models for you, please use `ollama` to do that. All the models you have pulled or created will be available to `oterm`.
+The following keyboard shortcuts are available:
+
+* `ctrl+n` - create a new chat session
+* `ctrl+r` - rename the current chat session
+* `ctrl+x` - delete the current chat session
+* `ctrl+t` - toggle between dark/light theme
+* `ctrl+q` - quit
+
+* `ctrl+l` - switch to multiline input mode
+* `ctrl+p` - select an image to include with the next message
+
 
 ### Customizing models
 
-When creating a new chat, you may not only select the model, but also customize the `template` as well as the `system` instruction to pass to the model. Checking the `JSON output` checkbox will cause the model reply in JSON format.
+When creating a new chat, you may not only select the model, but also customize the `template` as well as the `system` instruction to pass to the model. Checking the `JSON output` checkbox will cause the model reply in JSON format. Please note that `oterm` will not (yet) pull models for you, use `ollama` to do that. All the models you have pulled or created will be available to `oterm`.
 
 ### Chat session storage
 
@@ -45,6 +55,7 @@ You can find the location of the database by running `oterm --db`.
 ### Screenshots
 ![Chat](screenshots/chat.png)
 ![Model selection](./screenshots/model_selection.png)
+![Image selection](./screenshots/image_selection.png)
 
 ## License
 

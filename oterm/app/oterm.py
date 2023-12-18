@@ -16,15 +16,11 @@ class OTerm(App):
     CSS_PATH = "oterm.tcss"
     BINDINGS = [
         ("ctrl+n", "new_chat", "new chat"),
-        ("ctrl+t", "toggle_dark", "Toggle dark mode"),
+        ("ctrl+t", "toggle_dark", "toggle theme"),
         ("ctrl+r", "rename_chat", "rename chat"),
         ("ctrl+x", "forget_chat", "forget chat"),
-        ("ctrl+q", "quit", "Quit"),
+        ("ctrl+q", "quit", "quit"),
     ]
-    SCREENS = {
-        "splash": SplashScreen(),
-        "model_selection": ModelSelection(),
-    }
 
     def action_toggle_dark(self) -> None:
         self.dark = not self.dark
@@ -47,9 +43,10 @@ class OTerm(App):
                 system=model["system"],
                 format=model["format"],
             )
-            pane = TabPane(name, id=f"chat-{id}")
+            pane = TabPane(name, id=f"tab-{id}")
             pane.compose_add_child(
                 ChatContainer(
+                    id=f"chat-{id}",
                     db_id=id,
                     chat_name=name,
                     model=model["name"],
@@ -59,9 +56,9 @@ class OTerm(App):
                 )
             )
             tabs.add_pane(pane)
-            tabs.active = f"chat-{id}"
+            tabs.active = f"tab-{id}"
 
-        self.push_screen("model_selection", on_model_select)
+        self.push_screen(ModelSelection(), on_model_select)
 
     async def action_rename_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
@@ -77,9 +74,10 @@ class OTerm(App):
             await self.store.rename_chat(id, name)
             messages = await self.store.get_messages(id)
             tabs.remove_pane(tabs.active)
-            pane = TabPane(name, id=f"chat-{id}")
+            pane = TabPane(name, id=f"tab-{id}")
             pane.compose_add_child(
                 ChatContainer(
+                    id=f"chat-{id}",
                     db_id=id,
                     chat_name=name,
                     model=model,
@@ -92,7 +90,7 @@ class OTerm(App):
             )
             added = tabs.add_pane(pane)
             await added()
-            tabs.active = f"chat-{id}"
+            tabs.active = f"tab-{id}"
 
         if chat:
             screen = ChatRename()
@@ -116,9 +114,10 @@ class OTerm(App):
             tabs = self.query_one(TabbedContent)
             for id, name, model, context, template, system, format in saved_chats:
                 messages = await self.store.get_messages(id)
-                pane = TabPane(name, id=f"chat-{id}")
+                pane = TabPane(name, id=f"tab-{id}")
                 pane.compose_add_child(
                     ChatContainer(
+                        id=f"chat-{id}",
                         db_id=id,
                         chat_name=name,
                         model=model,
@@ -130,9 +129,8 @@ class OTerm(App):
                     )
                 )
                 tabs.add_pane(pane)
-                tabs.active = f"chat-{id}"
-
-        await self.push_screen("splash")
+                tabs.active = f"tab-{id}"
+        await self.push_screen(SplashScreen())
 
     def compose(self) -> ComposeResult:
         yield Header()
