@@ -17,7 +17,6 @@ from textual.widgets import (
     Pretty,
     Static,
     TabbedContent,
-    TabPane,
 )
 
 from oterm.app.chat_rename import ChatRename
@@ -141,24 +140,7 @@ class ChatContainer(Widget):
         async def on_chat_rename(name: str) -> None:
             tabs = self.app.query_one(TabbedContent)
             await self.app.store.rename_chat(self.db_id, name)
-            tabs.remove_pane(tabs.active)
-            pane = TabPane(name, id=f"tab-{self.db_id}")
-            pane.compose_add_child(
-                ChatContainer(
-                    id=f"chat-{self.db_id}",
-                    db_id=self.db_id,
-                    chat_name=name,
-                    model=self.ollama.model,
-                    messages=self.messages,
-                    context=self.ollama.context,
-                    template=self.template,
-                    system=self.system,
-                    format=self.format,
-                )
-            )
-            added = tabs.add_pane(pane)
-            await added()
-            tabs.active = f"tab-{self.db_id}"
+            tabs.get_tab(f"tab-{self.db_id}").update(name)
 
         screen = ChatRename()
         screen.old_name = self.chat_name
