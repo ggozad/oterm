@@ -1,16 +1,16 @@
 Changelog
 =========
 
-0.1.17 - 
+0.1.17 - 2023-12-19
 -------------------
 
 - Support multimodal models, allow adding images to chat messages.
   [ggozad]
 
-- Add key binding to switch to multiline input using ctrl+n.
+- Change key bindings so that they can be invoked without loosing prompt focus.
   [ggozad]
 
-- Change key bindings so that they can be invoked without loosing prompt focus.
+- Add key binding to switch to multiline input using ctrl+n.
   [ggozad]
 
 0.1.16 - 2023-12-07
