@@ -37,7 +37,8 @@ aiosql = "^9.0"
 aiosqlite = "^0.19.0"
 pyperclip = "^1.8.2"
 packaging = "^23.2"
-rich-pixels = "^2.1.1"
+rich-pixels = "^2.2.0"
+pillow = "^10.1.0"
 
 [tool.poetry.group.dev.dependencies]
 pdbpp = "^0.10.3"
