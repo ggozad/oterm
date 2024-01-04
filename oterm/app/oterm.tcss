@@ -111,6 +111,7 @@ LoadingIndicator {
 
 #model-select {
     margin-top: 1;
+    max-height: 70%;
 }
 
 #model-details {
