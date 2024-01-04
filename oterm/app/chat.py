@@ -7,14 +7,12 @@ import pyperclip
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
-from textual.css.query import NoMatches
 from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import (
     LoadingIndicator,
     Markdown,
-    Pretty,
     Static,
     TabbedContent,
 )
@@ -74,14 +72,13 @@ class ChatContainer(Widget):
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
-        if self.messages:
-            message_container = self.query_one("#messageContainer")
-            for author, message in self.messages:
-                chat_item = ChatItem()
-                chat_item.text = message
-                chat_item.author = author
-                message_container.mount(chat_item)
-            message_container.scroll_end()
+        message_container = self.query_one("#messageContainer")
+        for author, message in self.messages:
+            chat_item = ChatItem()
+            chat_item.text = message
+            chat_item.author = author
+            message_container.mount(chat_item)
+        message_container.scroll_end()
 
     @on(FlexibleInput.Submitted)
     async def on_submit(self, event: FlexibleInput.Submitted) -> None:
@@ -169,7 +166,6 @@ class ChatContainer(Widget):
 
 class ChatItem(Widget):
     text: reactive[str] = reactive("")
-    jsn: reactive[dict] = reactive({})
     author: Author
 
     @on(Click)
@@ -180,38 +176,22 @@ class ChatItem(Widget):
             widget.styles.animate("opacity", 0.5, duration=0.1)
             widget.styles.animate("opacity", 1.0, duration=0.1, delay=0.1)
 
-    def on_mount(self) -> None:
-        self.parse()
-
-    def parse(self) -> None:
+    async def watch_text(self, text: str) -> None:
+        text = self.text
         try:
-            jsn = json.loads(self.text)
+            jsn = json.loads(text)
             if isinstance(jsn, dict):
-                self.jsn = jsn
+                text = f"```json\n{self.text}\n```"
         except json.JSONDecodeError:
-            self.jsn = {}
-        try:
-            txt_widget = self.query_one(".txt", Markdown)
-            jsn_widget = self.query_one(".obj", Pretty)
-            if self.jsn:
-                jsn_widget.update(self.jsn)
-                jsn_widget.display = True
-                txt_widget.display = False
-            else:
-                txt_widget.update(self.text)
-                txt_widget.display = True
-                jsn_widget.display = False
-        except NoMatches:
             pass
 
-    def watch_text(self, text: str) -> None:
-        self.parse()
+        txt_widget = self.query_one(".text", Markdown)
+        await txt_widget.update(text)
 
     def compose(self) -> ComposeResult:
         """A chat item."""
         with Horizontal(classes=f"{self.author.name} chatItem"):
             yield Static(self.author.value, classes="author", markup=False)
-            yield Pretty(self.jsn, classes="text obj")
             yield Markdown(self.text, classes="text txt")
 
 
