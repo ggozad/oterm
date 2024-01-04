@@ -137,7 +137,7 @@ class ChatContainer(Widget):
         async def on_chat_rename(name: str) -> None:
             tabs = self.app.query_one(TabbedContent)
             await self.app.store.rename_chat(self.db_id, name)
-            tabs.get_tab(f"tab-{self.db_id}").update(name)
+            tabs.get_tab(f"chat-{self.db_id}").update(name)
 
         screen = ChatRename()
         screen.old_name = self.chat_name

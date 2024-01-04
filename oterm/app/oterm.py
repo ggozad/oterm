@@ -40,10 +40,9 @@ class OTerm(App):
                 system=model["system"],
                 format=model["format"],
             )
-            pane = TabPane(name, id=f"tab-{id}")
+            pane = TabPane(name, id=f"chat-{id}")
             pane.compose_add_child(
                 ChatContainer(
-                    id=f"chat-{id}",
                     db_id=id,
                     chat_name=name,
                     model=model["name"],
@@ -53,7 +52,7 @@ class OTerm(App):
                 )
             )
             tabs.add_pane(pane)
-            tabs.active = f"tab-{id}"
+            tabs.active = f"chat-{id}"
 
         self.push_screen(ModelSelection(), on_model_select)
 
@@ -66,10 +65,9 @@ class OTerm(App):
             tabs = self.query_one(TabbedContent)
             for id, name, model, context, template, system, format in saved_chats:
                 messages = await self.store.get_messages(id)
-                pane = TabPane(name, id=f"tab-{id}")
+                pane = TabPane(name, id=f"chat-{id}")
                 pane.compose_add_child(
                     ChatContainer(
-                        id=f"chat-{id}",
                         db_id=id,
                         chat_name=name,
                         model=model,
@@ -81,7 +79,7 @@ class OTerm(App):
                     )
                 )
                 tabs.add_pane(pane)
-                tabs.active = f"tab-{id}"
+                tabs.active = f"chat-{id}"
         await self.push_screen(SplashScreen())
 
     def compose(self) -> ComposeResult:
