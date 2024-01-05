@@ -82,7 +82,7 @@ class OllamaLLM:
 
         try:
             async with client.stream(
-                "POST", f"{Config.OLLAMA_URL}/generate", json=jsn, timeout=None
+                "POST", f"{Config.OLLAMA_URL}/api/generate", json=jsn, timeout=None
             ) as response:
                 async for line in response.aiter_lines():
                     body = json.loads(line)
@@ -101,7 +101,7 @@ class OllamaAPI:
     async def get_models(self) -> list[dict[str, Any]]:
         client = httpx.AsyncClient(verify=Config.OTERM_VERIFY_SSL)
         try:
-            response = await client.get(f"{Config.OLLAMA_URL}/tags")
+            response = await client.get(f"{Config.OLLAMA_URL}/api/tags")
         except httpx.ConnectError:
             raise OllamaConnectError()
         return response.json().get("models", []) or []
@@ -110,7 +110,7 @@ class OllamaAPI:
         client = httpx.AsyncClient(verify=Config.OTERM_VERIFY_SSL)
         try:
             response = await client.post(
-                f"{Config.OLLAMA_URL}/show", json={"name": model}
+                f"{Config.OLLAMA_URL}/api/show", json={"name": model}
             )
         except httpx.ConnectError:
             raise OllamaConnectError()
@@ -121,7 +121,7 @@ class OllamaAPI:
     async def pull_model(self, model: str) -> None:
         client = httpx.AsyncClient()
         async with client.stream(
-            "POST", f"{Config.OLLAMA_URL}/pull", json={"name": model}, timeout=None
+            "POST", f"{Config.OLLAMA_URL}/api/pull", json={"name": model}, timeout=None
         ) as response:
             async for line in response.aiter_lines():
                 body = json.loads(line)

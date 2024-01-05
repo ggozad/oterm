@@ -23,7 +23,8 @@ class AppConfig:
     """
 
     ENV: str = "development"
-    OLLAMA_URL: str = "http://localhost:11434/api"
+    OLLAMA_HOST: str = "0.0.0.0:11434"
+    OLLAMA_URL: str = ""
     OTERM_VERIFY_SSL: bool = True
 
     def __init__(self, env):
@@ -56,6 +57,8 @@ class AppConfig:
                         env[field], var_type, field  # type: ignore
                     )
                 )
+        if self.OLLAMA_URL == "":
+            self.OLLAMA_URL = f"http://{self.OLLAMA_HOST}"
 
     def __repr__(self):
         return str(self.__dict__)
