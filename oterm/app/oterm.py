@@ -1,4 +1,3 @@
-from email.mime import image
 import json
 
 from textual.app import App, ComposeResult
