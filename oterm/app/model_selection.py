@@ -26,6 +26,8 @@ class ModelSelection(ModalScreen[str]):
     params: reactive[list[tuple[str, str]]] = reactive([], layout=True)
     json_format: reactive[bool] = reactive(False)
 
+    last_highlighted_index = None
+
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
         ("enter", "create", "Create"),
@@ -67,6 +69,7 @@ class ModelSelection(ModalScreen[str]):
         option_list.clear_options()
         for model in models:
             option_list.add_option(item=self.model_option(model))
+        option_list.highlighted = self.last_highlighted_index
 
     def on_option_list_option_selected(self, option: OptionList.OptionSelected) -> None:
         self._create_chat()
@@ -87,6 +90,7 @@ class ModelSelection(ModalScreen[str]):
         # Now that there is a model selected we can create the chat.
         create_button = self.query_one("#create-btn", Button)
         create_button.disabled = False
+        ModelSelection.last_highlighted_index = option.option_index
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.name == "create":
