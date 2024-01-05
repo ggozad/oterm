@@ -1,3 +1,4 @@
+from email.mime import image
 import json
 
 from textual.app import App, ComposeResult
@@ -49,6 +50,7 @@ class OTerm(App):
                     system=model["system"],
                     template=model["template"],
                     format=model["format"],
+                    messages=[],
                 )
             )
             tabs.add_pane(pane)
