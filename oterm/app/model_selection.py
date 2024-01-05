@@ -28,10 +28,31 @@ class ModelSelection(ModalScreen[str]):
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
+        ("enter", "create", "Create"),
     ]
 
     def action_cancel(self) -> None:
         self.dismiss()
+
+    def action_create(self) -> None:
+        self._create_chat()
+
+    def _create_chat(self) -> None:
+        model = f"{self.model_name}:{self.tag}"
+        template = self.query_one(".template", TextArea).text
+        template = template if template != self.model_info.get("template", "") else None
+        system = self.query_one(".system", TextArea).text
+        system = system if system != self.model_info.get("system", "") else None
+        jsn = self.query_one(".json-format", Checkbox).value
+        result = json.dumps(
+            {
+                "name": model,
+                "template": template,
+                "system": system,
+                "format": "json" if jsn else None,
+            }
+        )
+        self.dismiss(result)
 
     async def on_mount(self) -> None:
         self.models = await self.api.get_models()
@@ -46,6 +67,9 @@ class ModelSelection(ModalScreen[str]):
         option_list.clear_options()
         for model in models:
             option_list.add_option(item=self.model_option(model))
+
+    def on_option_list_option_selected(self, option: OptionList.OptionSelected) -> None:
+        self._create_chat()
 
     def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
@@ -66,24 +90,7 @@ class ModelSelection(ModalScreen[str]):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.name == "create":
-            model = f"{self.model_name}:{self.tag}"
-            template = self.query_one(".template", TextArea).text
-            template = (
-                template if template != self.model_info.get("template", "") else None
-            )
-            system = self.query_one(".system", TextArea).text
-            system = system if system != self.model_info.get("system", "") else None
-            jsn = self.query_one(".json-format", Checkbox).value
-
-            result = json.dumps(
-                {
-                    "name": model,
-                    "template": template,
-                    "system": system,
-                    "format": "json" if jsn else None,
-                }
-            )
-            self.dismiss(result)
+            self._create_chat()
         else:
             self.dismiss()
 
