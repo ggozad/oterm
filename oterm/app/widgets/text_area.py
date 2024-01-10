@@ -13,7 +13,7 @@ class TextArea(BaseTextArea):
         self.theme = "vscode_dark" if self.app.dark else "github_light"
 
     def on_mount(self) -> None:
-        """Configure the text area on mount."""
+        """Watch app theme switching."""
         self.watch(self.app, "dark", self._retheme)
 
     async def _on_key(self, event: Key) -> None:
