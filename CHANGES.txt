@@ -4,6 +4,9 @@ Changelog
 0.1.19 - 
 -------------------
 
+- Introduce AppConfig saved to json file. Save theme setting for the time being.
+  [ggozad]
+
 - Fix TextArea and Markdown widgets to work with light theme.
   [ggozad]
 

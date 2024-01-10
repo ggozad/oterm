@@ -1,8 +1,11 @@
 import json
 import os
+from pathlib import Path
 from typing import Union, get_type_hints
 
 from dotenv import load_dotenv
+
+from oterm.utils import get_data_dir
 
 load_dotenv()
 
@@ -64,5 +67,33 @@ class EnvConfig:
         return str(self.__dict__)
 
 
+class AppConfig:
+    def __init__(self, path: Path = None):
+        if path is None:
+            path = get_data_dir() / "config.json"
+        self._path = path
+        self._data = {
+            "theme": "dark",
+        }
+        try:
+            with open(self._path, "r") as f:
+                saved = json.load(f)
+                self._data = self._data | saved
+        except FileNotFoundError:
+            self.save()
+
+    def set(self, key, value):
+        self._data[key] = value
+        self.save()
+
+    def get(self, key):
+        return self._data.get(key)
+
+    def save(self):
+        with open(self._path, "w") as f:
+            json.dump(self._data, f)
+
+
 # Expose Config object for app to import
 envConfig = EnvConfig(os.environ)
+appConfig = AppConfig()

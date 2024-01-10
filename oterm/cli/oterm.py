@@ -4,7 +4,8 @@ from importlib import metadata
 import typer
 
 from oterm.app.oterm import app
-from oterm.store.store import Store, get_data_dir
+from oterm.store.store import Store
+from oterm.utils import get_data_dir
 
 cli = typer.Typer()
 
