@@ -11,7 +11,8 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Button, Input
 
-from oterm.app.image_browser import ImageAdded, ImageSelect
+from oterm.app.image_browser import ImageSelect
+from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.text_area import TextArea
 
 

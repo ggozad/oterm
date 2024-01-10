@@ -3,9 +3,9 @@ import json
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
-from oterm.app.chat import ChatContainer
 from oterm.app.model_selection import ModelSelection
 from oterm.app.splash import SplashScreen
+from oterm.app.widgets.chat import ChatContainer
 from oterm.store.store import Store
 
 

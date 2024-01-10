@@ -7,7 +7,7 @@ from typing import Literal
 import aiosqlite
 from packaging.version import parse
 
-from oterm.app.chat import Author
+from oterm.app.widgets.chat import Author
 from oterm.store.chat import queries as chat_queries
 from oterm.store.setup import queries as setup_queries
 from oterm.store.upgrades import upgrades

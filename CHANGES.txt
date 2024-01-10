@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.1.19 - 
+-------------------
+
+- Fix TextArea and Markdown widgets to work with light theme.
+  [ggozad]
+
 0.1.18 - 2024-01-05
 -------------------
 
