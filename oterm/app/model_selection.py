@@ -7,8 +7,9 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Label, OptionList, Pretty, TextArea
+from textual.widgets import Button, Checkbox, Label, OptionList, Pretty
 
+from oterm.app.widgets.text_area import TextArea
 from oterm.ollama import OllamaAPI
 
 

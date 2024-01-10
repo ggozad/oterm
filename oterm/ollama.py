@@ -3,7 +3,7 @@ from typing import Any, AsyncGenerator, Literal
 
 import httpx
 
-from oterm.config import Config
+from oterm.config import envConfig
 
 
 class OllamaError(Exception):
@@ -13,7 +13,7 @@ class OllamaError(Exception):
 class OllamaConnectError(OllamaError):
     def __init__(self) -> None:
         super().__init__(
-            f"Failed to connect to Ollama server running at {Config.OLLAMA_URL}. "
+            f"Failed to connect to Ollama server running at {envConfig.OLLAMA_URL}. "
             "You can set OLLAMA_URL if you want to use a different server."
         )
 
@@ -64,7 +64,7 @@ class OllamaLLM:
     async def _agenerate(
         self, prompt: str, context: list[int], images: list[str] = []
     ) -> AsyncGenerator[tuple[str, list[int]], Any]:
-        client = httpx.AsyncClient(verify=Config.OTERM_VERIFY_SSL)
+        client = httpx.AsyncClient(verify=envConfig.OTERM_VERIFY_SSL)
         jsn = {
             "model": self.model,
             "prompt": prompt,
@@ -82,7 +82,7 @@ class OllamaLLM:
 
         try:
             async with client.stream(
-                "POST", f"{Config.OLLAMA_URL}/generate", json=jsn, timeout=None
+                "POST", f"{envConfig.OLLAMA_URL}/generate", json=jsn, timeout=None
             ) as response:
                 async for line in response.aiter_lines():
                     body = json.loads(line)
@@ -99,18 +99,18 @@ class OllamaLLM:
 
 class OllamaAPI:
     async def get_models(self) -> list[dict[str, Any]]:
-        client = httpx.AsyncClient(verify=Config.OTERM_VERIFY_SSL)
+        client = httpx.AsyncClient(verify=envConfig.OTERM_VERIFY_SSL)
         try:
-            response = await client.get(f"{Config.OLLAMA_URL}/tags")
+            response = await client.get(f"{envConfig.OLLAMA_URL}/tags")
         except httpx.ConnectError:
             raise OllamaConnectError()
         return response.json().get("models", []) or []
 
     async def get_model_info(self, model: str) -> dict[str, Any]:
-        client = httpx.AsyncClient(verify=Config.OTERM_VERIFY_SSL)
+        client = httpx.AsyncClient(verify=envConfig.OTERM_VERIFY_SSL)
         try:
             response = await client.post(
-                f"{Config.OLLAMA_URL}/show", json={"name": model}
+                f"{envConfig.OLLAMA_URL}/show", json={"name": model}
             )
         except httpx.ConnectError:
             raise OllamaConnectError()
@@ -121,7 +121,7 @@ class OllamaAPI:
     async def pull_model(self, model: str) -> None:
         client = httpx.AsyncClient()
         async with client.stream(
-            "POST", f"{Config.OLLAMA_URL}/pull", json={"name": model}, timeout=None
+            "POST", f"{envConfig.OLLAMA_URL}/pull", json={"name": model}, timeout=None
         ) as response:
             async for line in response.aiter_lines():
                 body = json.loads(line)

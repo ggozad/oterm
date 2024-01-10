@@ -1,4 +1,4 @@
-from oterm.store.store import int_to_semantic_version, semantic_version_to_int
+from oterm.utils import int_to_semantic_version, semantic_version_to_int
 
 
 def test_sqlite_user_version():

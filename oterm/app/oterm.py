@@ -3,9 +3,10 @@ import json
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
-from oterm.app.chat import ChatContainer
 from oterm.app.model_selection import ModelSelection
 from oterm.app.splash import SplashScreen
+from oterm.app.widgets.chat import ChatContainer
+from oterm.config import appConfig
 from oterm.store.store import Store
 
 
@@ -21,6 +22,7 @@ class OTerm(App):
 
     def action_toggle_dark(self) -> None:
         self.dark = not self.dark
+        appConfig.set("theme", "dark" if self.dark else "light")
 
     async def action_quit(self) -> None:
         return self.exit()
@@ -59,6 +61,7 @@ class OTerm(App):
 
     async def on_mount(self) -> None:
         self.store = await Store.create()
+        self.dark = appConfig.get("theme") == "dark"
         saved_chats = await self.store.get_chats()  # type: ignore
         if not saved_chats:
             self.action_new_chat()

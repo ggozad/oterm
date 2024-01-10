@@ -18,8 +18,8 @@ from textual.widgets import (
 )
 
 from oterm.app.chat_rename import ChatRename
-from oterm.app.image_browser import ImageAdded
-from oterm.app.prompt import FlexibleInput
+from oterm.app.widgets.image import ImageAdded
+from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
 
 
