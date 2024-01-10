@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class AppConfigError(Exception):
+class EnvConfigError(Exception):
     pass
 
 
@@ -15,7 +15,7 @@ def _parse_bool(val: Union[str, bool]) -> bool:
     return val if isinstance(val, bool) else val.lower() in ["true", "yes", "1"]
 
 
-class AppConfig:
+class EnvConfig:
     """
     Map environment variables to class fields according to these rules:
       - Field won't be parsed unless it has a type annotation
@@ -32,14 +32,14 @@ class AppConfig:
             if not field.isupper():
                 continue
 
-            # Raise AppConfigError if required field not supplied
+            # Raise EnvConfigError if required field not supplied
             default_value = getattr(self, field, None)
             if default_value is None and env.get(field) is None:
-                raise AppConfigError("The {} field is required".format(field))
+                raise EnvConfigError("The {} field is required".format(field))
 
             # Cast env var value to expected type and raise AppConfigError on failure
             try:
-                var_type = get_type_hints(AppConfig)[field]
+                var_type = get_type_hints(EnvConfig)[field]
                 if var_type == bool:
                     value = _parse_bool(env.get(field, default_value))
                 elif var_type == list[str]:
@@ -52,7 +52,7 @@ class AppConfig:
                     value = var_type(env.get(field, default_value))
                 self.__setattr__(field, value)
             except ValueError:
-                raise AppConfigError(
+                raise EnvConfigError(
                     'Unable to cast value of "{}" to type "{}" for "{}" field'.format(
                         env[field], var_type, field  # type: ignore
                     )
@@ -65,4 +65,4 @@ class AppConfig:
 
 
 # Expose Config object for app to import
-Config = AppConfig(os.environ)
+envConfig = EnvConfig(os.environ)
