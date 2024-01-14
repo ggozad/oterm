@@ -80,6 +80,7 @@ class AppConfig:
                 saved = json.load(f)
                 self._data = self._data | saved
         except FileNotFoundError:
+            Path.mkdir(self._path.parent, parents=True, exist_ok=True)
             self.save()
 
     def set(self, key, value):

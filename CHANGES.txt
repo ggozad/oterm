@@ -1,7 +1,13 @@
 Changelog
 =========
 
-0.1.19 - 
+0.1.20 - 2024-04-12
+-------------------
+
+- Minor bug fixes.
+  [ggozad]
+
+0.1.19 - 2024-01-11
 -------------------
 
 - Introduce AppConfig saved to json file. Save theme setting for the time being.
