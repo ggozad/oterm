@@ -144,14 +144,15 @@ LoadingIndicator {
 #chat-rename-input {
     margin: 2;
 }
-
+#image-select-container {
+    background: $panel;
+}
 #image-select-container .title {
     color: $secondary;
-    background: $panel;
     width: 100%;
     padding-top: 1;
     padding-bottom: 1;
-
+    text-align: center;
 }
 #image-select-container #image-directory-tree {
     width: 30%;
@@ -161,6 +162,11 @@ LoadingIndicator {
     width: 70%;
     overflow-x: auto;
     overflow-y: auto;
+}
+
+#image-select-container Input {
+    margin: 1;
+    padding: 0;
 }
 
 Notification {
