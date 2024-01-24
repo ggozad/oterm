@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.21 -
+0.1.21 - 2024-01-24
 -------------------
 
 - Allow changing the root of the filesystem tree when selecting an image.
@@ -10,7 +10,7 @@ Changelog
 - Minor bug fixes.
   [ggozad]
 
-0.1.20 - 2024-04-12
+0.1.20 - 2024-01-12
 -------------------
 
 - Minor bug fixes.
