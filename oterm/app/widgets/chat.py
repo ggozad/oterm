@@ -170,7 +170,11 @@ class ChatItem(Widget):
 
     @on(Click)
     async def on_click(self, event: Click) -> None:
-        pyperclip.copy(self.text)
+        try:
+            pyperclip.copy(self.text)
+        except pyperclip.PyperclipException:
+            # https://pyperclip.readthedocs.io/en/latest/index.html#not-implemented-error
+            return
         widgets = self.query(".text")
         for widget in widgets:
             widget.styles.animate("opacity", 0.5, duration=0.1)
