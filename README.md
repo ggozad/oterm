@@ -42,6 +42,7 @@ The following keyboard shortcuts are available:
 * `ctrl+l` - switch to multiline input mode
 * `ctrl+p` - select an image to include with the next message
 
+While Ollama is inferring the next message, you can press `ESC` to cancel the inference.
 
 ### Customizing models
 

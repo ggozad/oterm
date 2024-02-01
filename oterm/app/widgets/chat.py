@@ -1,3 +1,4 @@
+import asyncio
 import json
 from enum import Enum
 from pathlib import Path
@@ -6,6 +7,7 @@ from typing import Literal
 import pyperclip
 from textual import on
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.events import Click
 from textual.reactive import reactive
@@ -35,6 +37,9 @@ class ChatContainer(Widget):
     BINDINGS = [
         ("ctrl+r", "rename_chat", "rename chat"),
         ("ctrl+x", "forget_chat", "forget chat"),
+        Binding(
+            "escape", "cancel_inference", "cancel inference", show=False, priority=True
+        ),
     ]
 
     def __init__(
@@ -92,47 +97,60 @@ class ChatContainer(Widget):
             input.focus()
             return
 
-        input.clear()
-        input.disabled = True
-        self.messages.append((Author.USER, message))
-        chat_item = ChatItem()
-        chat_item.text = message
-        chat_item.author = Author.USER
-        message_container.mount(chat_item)
+        async def response_task() -> None:
+            input.clear()
+            self.messages.append((Author.USER, message))
+            user_chat_item = ChatItem()
+            user_chat_item.text = message
+            user_chat_item.author = Author.USER
+            message_container.mount(user_chat_item)
 
-        chat_item = ChatItem()
-        chat_item.author = Author.OLLAMA
-        message_container.mount(chat_item)
-        loading = LoadingIndicator()
-        message_container.mount(loading)
-        message_container.scroll_end()
-
-        response = ""
-        async for text in self.ollama.stream(message, [img for _, img in self.images]):
-            response = text
-            chat_item.text = text
+            response_chat_item = ChatItem()
+            response_chat_item.author = Author.OLLAMA
+            message_container.mount(response_chat_item)
+            loading = LoadingIndicator()
+            message_container.mount(loading)
             message_container.scroll_end()
-        self.messages.append((Author.OLLAMA, response))
-        self.images = []
-        loading.remove()
-        input.disabled = False
-        input.focus()
 
-        # Save to db
-        await self.app.store.save_context(  # type: ignore
-            id=self.db_id,
-            context=json.dumps(self.ollama.context),
-        )
-        await self.app.store.save_message(  # type: ignore
-            chat_id=self.db_id,
-            author=Author.USER.value,
-            text=message,
-        )
-        await self.app.store.save_message(  # type: ignore
-            chat_id=self.db_id,
-            author=Author.OLLAMA.value,
-            text=response,
-        )
+            try:
+                response = ""
+                async for text in self.ollama.stream(
+                    message, [img for _, img in self.images]
+                ):
+                    response = text
+                    response_chat_item.text = text
+                    message_container.scroll_end()
+                self.messages.append((Author.OLLAMA, response))
+                self.images = []
+
+                # Save to db
+                await self.app.store.save_context(  # type: ignore
+                    id=self.db_id,
+                    context=json.dumps(self.ollama.context),
+                )
+                await self.app.store.save_message(  # type: ignore
+                    chat_id=self.db_id,
+                    author=Author.USER.value,
+                    text=message,
+                )
+                await self.app.store.save_message(  # type: ignore
+                    chat_id=self.db_id,
+                    author=Author.OLLAMA.value,
+                    text=response,
+                )
+            except asyncio.CancelledError:
+                user_chat_item.remove()
+                response_chat_item.remove()
+                input.text = message
+            finally:
+                loading.remove()
+                input.focus()
+
+        self.inference_task = asyncio.create_task(response_task())
+
+    def key_escape(self) -> None:
+        if hasattr(self, "inference_task"):
+            self.inference_task.cancel()
 
     async def action_rename_chat(self) -> None:
         async def on_chat_rename(name: str) -> None:
@@ -197,7 +215,7 @@ class ChatItem(Widget):
         """A chat item."""
         with Horizontal(classes=f"{self.author.name} chatItem"):
             yield Static(self.author.value, classes="author", markup=False)
-            yield Markdown(self.text, classes="text txt")
+            yield Markdown(self.text, classes="text")
 
 
 class Notification(Widget):
