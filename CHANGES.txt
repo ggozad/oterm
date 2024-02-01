@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.1.22 - 
+-------------------
+
+- Speed up initial loading of the app by mounting past messages lazily
+  only when a chat pane is viewed.
+  [ggozad]
+
 0.1.21 - 2024-01-24
 -------------------
 

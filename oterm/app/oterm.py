@@ -1,5 +1,6 @@
 import json
 
+from textual import on
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
@@ -70,7 +71,7 @@ class OTerm(App):
             for id, name, model, context, template, system, format in saved_chats:
                 messages = await self.store.get_messages(id)
                 pane = TabPane(name, id=f"chat-{id}")
-                pane.compose_add_child(
+                await pane.mount(
                     ChatContainer(
                         db_id=id,
                         chat_name=name,
@@ -83,8 +84,12 @@ class OTerm(App):
                     )
                 )
                 tabs.add_pane(pane)
-                tabs.active = f"chat-{id}"
         await self.push_screen(SplashScreen())
+
+    @on(TabbedContent.TabActivated)
+    async def on_tab_activated(self, event: TabbedContent.TabActivated) -> None:
+        container = event.pane.query_one(ChatContainer)
+        await container.load_messages()
 
     def compose(self) -> ComposeResult:
         yield Header()

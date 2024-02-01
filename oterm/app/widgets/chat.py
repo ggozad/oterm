@@ -10,12 +10,7 @@ from textual.containers import Horizontal, Vertical
 from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import (
-    LoadingIndicator,
-    Markdown,
-    Static,
-    TabbedContent,
-)
+from textual.widgets import LoadingIndicator, Markdown, Static, TabbedContent
 
 from oterm.app.chat_rename import ChatRename
 from oterm.app.widgets.image import ImageAdded
@@ -69,16 +64,22 @@ class ChatContainer(Widget):
         self.system = system
         self.template = template
         self.format = format
+        self.loaded = False
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
+
+    async def load_messages(self) -> None:
+        if self.loaded:
+            return
         message_container = self.query_one("#messageContainer")
         for author, message in self.messages:
             chat_item = ChatItem()
             chat_item.text = message
             chat_item.author = author
-            message_container.mount(chat_item)
+            await message_container.mount(chat_item)
         message_container.scroll_end()
+        self.loaded = True
 
     @on(FlexibleInput.Submitted)
     async def on_submit(self, event: FlexibleInput.Submitted) -> None:
