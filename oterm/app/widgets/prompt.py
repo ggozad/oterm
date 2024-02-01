@@ -108,6 +108,15 @@ class FlexibleInput(Widget):
                 self.query_one("#toggle-multiline", Button).disabled = True
             else:
                 self.query_one("#toggle-multiline", Button).disabled = False
+
+            input = self.query_one("#promptInput", PastableInput)
+            textarea = self.query_one("#promptArea", TextArea)
+            if self.is_multiline:
+                if textarea.text != self.text:
+                    textarea.text = self.text
+            else:
+                if input.value != self.text:
+                    input.value = self.text
         except NoMatches:
             pass
 

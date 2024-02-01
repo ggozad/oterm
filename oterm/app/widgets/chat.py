@@ -142,7 +142,6 @@ class ChatContainer(Widget):
                 user_chat_item.remove()
                 response_chat_item.remove()
                 input.text = message
-                print("Cancelled inference task", message)
             finally:
                 loading.remove()
                 input.focus()
@@ -216,7 +215,7 @@ class ChatItem(Widget):
         """A chat item."""
         with Horizontal(classes=f"{self.author.name} chatItem"):
             yield Static(self.author.value, classes="author", markup=False)
-            yield Markdown(self.text, classes="text txt")
+            yield Markdown(self.text, classes="text")
 
 
 class Notification(Widget):

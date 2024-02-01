@@ -4,6 +4,9 @@ Changelog
 0.1.22 - 
 -------------------
 
+- Cancel inference when the user presses ESC.
+  [ggozad]
+
 - Speed up initial loading of the app by mounting past messages lazily
   only when a chat pane is viewed.
   [ggozad]
