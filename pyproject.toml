@@ -29,7 +29,7 @@ oterm = "oterm.cli.oterm:cli"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-textual = "^0.47.1"
+textual = "^0.50.1"
 typer = "^0.9.0"
 python-dotenv = "^1.0.0"
 httpx = "^0.25.0"
@@ -51,7 +51,6 @@ textual-dev = "^1.4.0"
 
 [tool.black]
 line-length = 88
-target-versions = ["py310"]
 
 [tool.ruff]
 line-length = 88
