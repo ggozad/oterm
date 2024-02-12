@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.1.23 -
+-------------------
+
+- Update textual and remove our own monkey patching
+  for Markdown. Increase Markdown size from 20 lines to 50.
+  [ggozad]
+
 0.1.22 - 2024-02-01 
 -------------------
 

@@ -190,3 +190,7 @@ Notification {
     width: 100%;
     content-align: center middle;
 }
+
+MarkdownFence {
+    max-height: 50;
+}
