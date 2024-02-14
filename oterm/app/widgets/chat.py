@@ -162,7 +162,24 @@ class ChatContainer(Widget):
     async def action_edit_chat(self) -> None:
         async def on_model_select(model_info: str) -> None:
             model: dict = json.loads(model_info)
-            print(model)
+            self.template = model.get("template")
+            self.system = model.get("system")
+            self.format = model.get("format")
+            await self.app.store.edit_chat(
+                id=self.db_id,
+                name=self.chat_name,
+                template=model["template"],
+                system=model["system"],
+                format=model["format"],
+            )
+            _, _, _, context, _, _, _ = await self.app.store.get_chat(self.db_id)
+            self.ollama = OllamaLLM(
+                model=model["name"],
+                context=context,
+                template=model["template"],
+                system=model["system"],
+                format=model["format"],
+            )
 
         screen = ChatEdit()
         screen.model_name = self.ollama.model
