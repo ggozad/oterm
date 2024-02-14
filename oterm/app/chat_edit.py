@@ -23,7 +23,6 @@ class ChatEdit(ModalScreen[str]):
     tag: reactive[str] = reactive("")
     bytes: reactive[int] = reactive(0)
     model_info: dict[str, str] = {}
-    template: reactive[str] = reactive("")
     system: reactive[str] = reactive("")
     params: reactive[list[tuple[str, str]]] = reactive([])
     json_format: reactive[bool] = reactive(False)
@@ -37,15 +36,12 @@ class ChatEdit(ModalScreen[str]):
 
     def _return_chat_meta(self) -> None:
         model = f"{self.model_name}:{self.tag}"
-        template = self.query_one(".template", TextArea).text
-        template = template if template != self.model_info.get("template", "") else None
         system = self.query_one(".system", TextArea).text
         system = system if system != self.model_info.get("system", "") else None
         jsn = self.query_one(".json-format", Checkbox).value
         result = json.dumps(
             {
                 "name": model,
-                "template": template,
                 "system": system,
                 "format": "json" if jsn else None,
             }
@@ -114,8 +110,6 @@ class ChatEdit(ModalScreen[str]):
             try:
                 widget = self.query_one(".parameters", Pretty)
                 widget.update(self.params)
-                widget = self.query_one(".template", TextArea)
-                widget.load_text(self.template or self.model_info.get("template", ""))
                 widget = self.query_one(".system", TextArea)
                 widget.load_text(self.system or self.model_info.get("system", ""))
             except NoMatches:
@@ -157,13 +151,6 @@ class ChatEdit(ModalScreen[str]):
         except NoMatches:
             pass
 
-    def watch_template(self, template: str) -> None:
-        try:
-            widget = self.query_one(".template", TextArea)
-            widget.load_text(template)
-        except NoMatches:
-            pass
-
     def watch_system(self, system: str) -> None:
         try:
             widget = self.query_one(".system", TextArea)
@@ -190,8 +177,6 @@ class ChatEdit(ModalScreen[str]):
                         yield Label("", classes="tag")
                         yield Label("", classes="size")
                 with Vertical():
-                    yield Label("Template:", classes="title")
-                    yield TextArea(classes="template log")
                     yield Label("System:", classes="title")
                     yield TextArea("", classes="system log")
                     yield Label("Parameters:", classes="title")
