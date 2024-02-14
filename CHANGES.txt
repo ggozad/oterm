@@ -4,6 +4,9 @@ Changelog
 0.1.23 -
 -------------------
 
+- Add support for "editing" a chat, allowing for changing system prompt and template.
+  [ggozad]
+
 - Update textual and remove our own monkey patching
   for Markdown. Increase Markdown size from 20 lines to 50.
   [ggozad]
