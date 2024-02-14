@@ -8,6 +8,8 @@ VALUES(:id, :name, :model, :context, :template, :system, :format) RETURNING id;
 UPDATE chat SET context = :context WHERE id = :id;
 -- name: rename_chat
 UPDATE chat SET name = :name WHERE id = :id;
+-- name: edit_chat
+UPDATE chat SET name = :name, template = :template, system = :system, format = :format WHERE id = :id;
 -- name: get_chats
 SELECT id, name, model, context, template, system, format FROM chat;
 -- name: get_chat

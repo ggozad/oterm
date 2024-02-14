@@ -96,6 +96,25 @@ class Store(object):
             )
             await connection.commit()
 
+    async def edit_chat(
+        self,
+        id: int,
+        name: str,
+        template: str | None,
+        system: str | None,
+        format: str | None,
+    ) -> None:
+        async with aiosqlite.connect(self.db_path) as connection:
+            await chat_queries.edit_chat(  # type: ignore
+                connection,
+                id=id,
+                name=name,
+                template=template,
+                system=system,
+                format=format,
+            )
+            await connection.commit()
+
     async def get_chats(
         self,
     ) -> list[
@@ -111,9 +130,10 @@ class Store(object):
 
     async def get_chat(
         self, id
-    ) -> tuple[
-        int, str, str, list[int], str | None, str | None, Literal["json"] | None
-    ] | None:
+    ) -> (
+        tuple[int, str, str, list[int], str | None, str | None, Literal["json"] | None]
+        | None
+    ):
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
             if chat:

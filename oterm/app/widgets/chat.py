@@ -12,8 +12,14 @@ from textual.containers import Horizontal, Vertical
 from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import LoadingIndicator, Markdown, Static, TabbedContent
+from textual.widgets import (
+    LoadingIndicator,
+    Markdown,
+    Static,
+    TabbedContent,
+)
 
+from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_rename import ChatRename
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
@@ -35,8 +41,9 @@ class ChatContainer(Widget):
     images: list[tuple[Path, str]] = []
 
     BINDINGS = [
-        ("ctrl+r", "rename_chat", "rename chat"),
-        ("ctrl+x", "forget_chat", "forget chat"),
+        Binding("ctrl+e", "edit_chat", "edit", priority=True),
+        ("ctrl+r", "rename_chat", "rename"),
+        ("ctrl+x", "forget_chat", "forget"),
         Binding(
             "escape", "cancel_inference", "cancel inference", show=False, priority=True
         ),
@@ -151,6 +158,41 @@ class ChatContainer(Widget):
     def key_escape(self) -> None:
         if hasattr(self, "inference_task"):
             self.inference_task.cancel()
+
+    async def action_edit_chat(self) -> None:
+        async def on_model_select(model_info: str) -> None:
+            model: dict = json.loads(model_info)
+            self.template = model.get("template")
+            self.system = model.get("system")
+            self.format = model.get("format")
+            await self.app.store.edit_chat(
+                id=self.db_id,
+                name=self.chat_name,
+                template=model["template"],
+                system=model["system"],
+                format=model["format"],
+            )
+            _, _, _, context, _, _, _ = await self.app.store.get_chat(self.db_id)
+            self.ollama = OllamaLLM(
+                model=model["name"],
+                context=context,
+                template=model["template"],
+                system=model["system"],
+                format=model["format"],
+            )
+
+        screen = ChatEdit()
+        screen.model_name = self.ollama.model
+
+        await self.app.push_screen(screen, on_model_select)
+        screen.edit_mode = True
+        screen.select_model(self.ollama.model)
+
+        if self.template:
+            screen.template = self.template
+
+        if self.system:
+            screen.system = self.system
 
     async def action_rename_chat(self) -> None:
         async def on_chat_rename(name: str) -> None:
