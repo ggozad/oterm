@@ -102,6 +102,9 @@ LoadingIndicator {
     color: $secondary;
 }
 
+#model-select-container .system , .parameters {
+    margin: 1;
+}
 #model-select-container .button-container {    
     height: 3;
 }

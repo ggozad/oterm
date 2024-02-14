@@ -36,7 +36,6 @@ class ChatContainer(Widget):
     messages: reactive[list[tuple[Author, str]]] = reactive([])
     chat_name: str
     system: str | None
-    template: str | None
     format: Literal["json"] | None
     images: list[tuple[Path, str]] = []
 
@@ -58,7 +57,6 @@ class ChatContainer(Widget):
         context: list[int] = [],
         messages: list[tuple[Author, str]] = [],
         system: str | None = None,
-        template: str | None = None,
         format: Literal["json"] | None = None,
         **kwargs,
     ) -> None:
@@ -66,7 +64,6 @@ class ChatContainer(Widget):
         self.ollama = OllamaLLM(
             model=model,
             context=context,
-            template=template,
             system=system,
             format=format,
         )  # We do this to reset the context
@@ -74,7 +71,6 @@ class ChatContainer(Widget):
         self.db_id = db_id
         self.messages = messages
         self.system = system
-        self.template = template
         self.format = format
         self.loaded = False
 
@@ -162,21 +158,18 @@ class ChatContainer(Widget):
     async def action_edit_chat(self) -> None:
         async def on_model_select(model_info: str) -> None:
             model: dict = json.loads(model_info)
-            self.template = model.get("template")
             self.system = model.get("system")
             self.format = model.get("format")
             await self.app.store.edit_chat(
                 id=self.db_id,
                 name=self.chat_name,
-                template=model["template"],
                 system=model["system"],
                 format=model["format"],
             )
-            _, _, _, context, _, _, _ = await self.app.store.get_chat(self.db_id)
+            _, _, _, context, _, _ = await self.app.store.get_chat(self.db_id)
             self.ollama = OllamaLLM(
                 model=model["name"],
                 context=context,
-                template=model["template"],
                 system=model["system"],
                 format=model["format"],
             )
@@ -187,9 +180,6 @@ class ChatContainer(Widget):
         await self.app.push_screen(screen, on_model_select)
         screen.edit_mode = True
         screen.select_model(self.ollama.model)
-
-        if self.template:
-            screen.template = self.template
 
         if self.system:
             screen.system = self.system

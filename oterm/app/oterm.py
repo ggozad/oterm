@@ -39,7 +39,6 @@ class OTerm(App):
                 name=name,
                 model=model["name"],
                 context="[]",
-                template=model["template"],
                 system=model["system"],
                 format=model["format"],
             )
@@ -50,7 +49,6 @@ class OTerm(App):
                     chat_name=name,
                     model=model["name"],
                     system=model["system"],
-                    template=model["template"],
                     format=model["format"],
                     messages=[],
                 )
@@ -68,7 +66,7 @@ class OTerm(App):
             self.action_new_chat()
         else:
             tabs = self.query_one(TabbedContent)
-            for id, name, model, context, template, system, format in saved_chats:
+            for id, name, model, context, system, format in saved_chats:
                 messages = await self.store.get_messages(id)
                 pane = TabPane(name, id=f"chat-{id}")
                 await pane.mount(
@@ -78,7 +76,6 @@ class OTerm(App):
                         model=model,
                         context=context,
                         messages=messages,  # type: ignore
-                        template=template,
                         system=system,
                         format=format,
                     )

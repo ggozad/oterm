@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "oterm"
-version = "0.1.22"
+version = "0.2.0"
 description = "A text-based terminal client for Ollama."
 authors = ["Yiorgis Gozadinos <ggozadinos@gmail.com>"]
 homepage = "https://github.com/ggozad/oterm"
