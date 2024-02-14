@@ -16,7 +16,7 @@ class OTerm(App):
     SUB_TITLE = "A terminal-based Ollama client."
     CSS_PATH = "oterm.tcss"
     BINDINGS = [
-        ("ctrl+n", "new_chat", "new chat"),
+        ("ctrl+n", "new_chat", "new"),
         ("ctrl+t", "toggle_dark", "toggle theme"),
         ("ctrl+q", "quit", "quit"),
     ]

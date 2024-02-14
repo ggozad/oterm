@@ -26,19 +26,13 @@ class ModelSelection(ModalScreen[str]):
     system: reactive[str] = reactive("")
     params: reactive[list[tuple[str, str]]] = reactive([], layout=True)
     json_format: reactive[bool] = reactive(False)
-
+    edit_mode: reactive[bool] = reactive(False)
     last_highlighted_index = None
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
         ("enter", "create", "Create"),
     ]
-
-    def action_cancel(self) -> None:
-        self.dismiss()
-
-    def action_create(self) -> None:
-        self._create_chat()
 
     def _create_chat(self) -> None:
         model = f"{self.model_name}:{self.tag}"
@@ -56,6 +50,19 @@ class ModelSelection(ModalScreen[str]):
             }
         )
         self.dismiss(result)
+
+    def action_cancel(self) -> None:
+        self.dismiss()
+
+    def action_create(self) -> None:
+        self._create_chat()
+
+    def select_model(self, model: str) -> None:
+        select = self.query_one("#model-select", OptionList)
+        for index, option in enumerate(select._options):
+            if str(option.prompt) == model:
+                select.highlighted = index
+                break
 
     async def on_mount(self) -> None:
         self.models = await self.api.get_models()
@@ -148,6 +155,13 @@ class ModelSelection(ModalScreen[str]):
             widget.load_text(self.template)
             widget = self.query_one(".system", TextArea)
             widget.load_text(self.system)
+        except NoMatches:
+            pass
+
+    def watch_edit_mode(self, edit_mode: bool) -> None:
+        try:
+            widget = self.query_one("#model-select", OptionList)
+            widget.disabled = edit_mode
         except NoMatches:
             pass
 

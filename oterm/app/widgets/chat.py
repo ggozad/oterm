@@ -12,9 +12,15 @@ from textual.containers import Horizontal, Vertical
 from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import LoadingIndicator, Markdown, Static, TabbedContent
+from textual.widgets import (
+    LoadingIndicator,
+    Markdown,
+    Static,
+    TabbedContent,
+)
 
 from oterm.app.chat_rename import ChatRename
+from oterm.app.model_selection import ModelSelection
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
@@ -35,8 +41,9 @@ class ChatContainer(Widget):
     images: list[tuple[Path, str]] = []
 
     BINDINGS = [
-        ("ctrl+r", "rename_chat", "rename chat"),
-        ("ctrl+x", "forget_chat", "forget chat"),
+        Binding("ctrl+e", "edit_chat", "edit", priority=True),
+        ("ctrl+r", "rename_chat", "rename"),
+        ("ctrl+x", "forget_chat", "forget"),
         Binding(
             "escape", "cancel_inference", "cancel inference", show=False, priority=True
         ),
@@ -151,6 +158,17 @@ class ChatContainer(Widget):
     def key_escape(self) -> None:
         if hasattr(self, "inference_task"):
             self.inference_task.cancel()
+
+    async def action_edit_chat(self) -> None:
+        async def on_model_select(model_info: str) -> None:
+            model: dict = json.loads(model_info)
+            print(model)
+
+        screen = ModelSelection()
+        screen.model_name = self.ollama.model
+        await self.app.push_screen(screen, on_model_select)
+        screen.select_model(self.ollama.model)
+        screen.edit_mode = True
 
     async def action_rename_chat(self) -> None:
         async def on_chat_rename(name: str) -> None:
