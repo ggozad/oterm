@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS "chat" (
 	"name"		TEXT,
 	"model"		TEXT NOT NULL,
 	"context"	TEXT NOT NULL,
-	"template"	TEXT,
 	"system"	TEXT,
 	"format"	TEXT,
 	PRIMARY KEY("id" AUTOINCREMENT)

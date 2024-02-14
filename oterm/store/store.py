@@ -69,7 +69,6 @@ class Store(object):
                 name=name,
                 model=model,
                 context=context,
-                template=None,
                 system=system,
                 format=format,
             )
@@ -99,7 +98,6 @@ class Store(object):
         self,
         id: int,
         name: str,
-        template: str | None,
         system: str | None,
         format: str | None,
     ) -> None:
@@ -108,7 +106,6 @@ class Store(object):
                 connection,
                 id=id,
                 name=name,
-                template=template,
                 system=system,
                 format=format,
             )
@@ -116,30 +113,25 @@ class Store(object):
 
     async def get_chats(
         self,
-    ) -> list[
-        tuple[int, str, str, list[int], str | None, str | None, Literal["json"] | None]
-    ]:
+    ) -> list[tuple[int, str, str, list[int], str | None, Literal["json"] | None]]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore
             chats = [
-                (id, name, model, json.loads(context), template, system, format)
-                for id, name, model, context, template, system, format in chats
+                (id, name, model, json.loads(context), system, format)
+                for id, name, model, context, system, format in chats
             ]
             return chats
 
     async def get_chat(
         self, id
-    ) -> (
-        tuple[int, str, str, list[int], str | None, str | None, Literal["json"] | None]
-        | None
-    ):
+    ) -> tuple[int, str, str, list[int], str | None, Literal["json"] | None] | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
             if chat:
                 chat = chat[0]
-                id, name, model, context, template, system, format = chat
+                id, name, model, context, system, format = chat
                 context = json.loads(context)
-                return id, name, model, context, template, system, format
+                return id, name, model, context, system, format
 
     async def delete_chat(self, id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:

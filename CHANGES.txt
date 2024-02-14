@@ -4,6 +4,9 @@ Changelog
 0.2.0 -
 -------------------
 
+- Remove the template from the chat configuration.
+  [ggozad]
+
 - Add support for "editing" a chat, allowing for changing system prompt and template.
   [ggozad]
 
