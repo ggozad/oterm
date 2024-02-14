@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.1.23 -
+0.2.0 -
 -------------------
 
 - Add support for "editing" a chat, allowing for changing system prompt and template.

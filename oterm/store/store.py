@@ -59,7 +59,6 @@ class Store(object):
         name: str,
         model: str,
         context: str,
-        template: str | None,
         system: str | None,
         format: str | None,
     ) -> int:
@@ -70,7 +69,7 @@ class Store(object):
                 name=name,
                 model=model,
                 context=context,
-                template=template,
+                template=None,
                 system=system,
                 format=format,
             )
