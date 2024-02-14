@@ -19,8 +19,8 @@ from textual.widgets import (
     TabbedContent,
 )
 
+from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_rename import ChatRename
-from oterm.app.model_selection import ModelSelection
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
@@ -164,11 +164,18 @@ class ChatContainer(Widget):
             model: dict = json.loads(model_info)
             print(model)
 
-        screen = ModelSelection()
+        screen = ChatEdit()
         screen.model_name = self.ollama.model
+
         await self.app.push_screen(screen, on_model_select)
-        screen.select_model(self.ollama.model)
         screen.edit_mode = True
+        screen.select_model(self.ollama.model)
+
+        if self.template:
+            screen.template = self.template
+
+        if self.system:
+            screen.system = self.system
 
     async def action_rename_chat(self) -> None:
         async def on_chat_rename(name: str) -> None:

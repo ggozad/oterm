@@ -4,7 +4,7 @@ from textual import on
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
-from oterm.app.model_selection import ModelSelection
+from oterm.app.chat_edit import ChatEdit
 from oterm.app.splash import SplashScreen
 from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
@@ -58,7 +58,7 @@ class OTerm(App):
             tabs.add_pane(pane)
             tabs.active = f"chat-{id}"
 
-        self.push_screen(ModelSelection(), on_model_select)
+        self.push_screen(ChatEdit(), on_model_select)
 
     async def on_mount(self) -> None:
         self.store = await Store.create()
