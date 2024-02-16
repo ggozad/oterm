@@ -36,6 +36,7 @@ The following keyboard shortcuts are available:
 * `ctrl+n` - create a new chat session
 * `ctrl+e` - edit the chat session (change template, system prompt or format)
 * `ctrl+r` - rename the current chat session
+* `ctrl+s` - export the current chat session as markdown
 * `ctrl+x` - delete the current chat session
 * `ctrl+t` - toggle between dark/light theme
 * `ctrl+q` - quit
