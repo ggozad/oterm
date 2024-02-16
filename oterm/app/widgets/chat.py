@@ -20,6 +20,7 @@ from textual.widgets import (
 )
 
 from oterm.app.chat_edit import ChatEdit
+from oterm.app.chat_export import ChatExport, slugify
 from oterm.app.chat_rename import ChatRename
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
@@ -41,6 +42,7 @@ class ChatContainer(Widget):
 
     BINDINGS = [
         Binding("ctrl+e", "edit_chat", "edit", priority=True),
+        Binding("ctrl+s", "export", "export", priority=True),
         ("ctrl+r", "rename_chat", "rename"),
         ("ctrl+x", "forget_chat", "forget"),
         Binding(
@@ -183,6 +185,12 @@ class ChatContainer(Widget):
 
         if self.system:
             screen.system = self.system
+
+    async def action_export(self) -> None:
+        screen = ChatExport()
+        screen.chat_id = self.db_id
+        screen.file_name = f"{slugify(self.chat_name)}.md"
+        self.app.push_screen(screen)
 
     async def action_rename_chat(self) -> None:
         async def on_chat_rename(name: str) -> None:

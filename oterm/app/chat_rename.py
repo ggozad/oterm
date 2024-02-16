@@ -22,4 +22,4 @@ class ChatRename(ModalScreen[str]):
     def compose(self) -> ComposeResult:
         with Container(id="chat-rename-container"):
             yield Label("Rename chat", classes="title")
-            yield Input(id="chat-rename-input", value=self.old_name)
+            yield Input(id="chat-name-input", value=self.old_name)
