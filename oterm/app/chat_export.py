@@ -5,8 +5,9 @@ from textual.screen import ModalScreen
 from textual.widgets import Input, Label
 
 
-class ChatRename(ModalScreen[str]):
-    old_name: str = ""
+class ChatExport(ModalScreen[str]):
+    chat_id: int
+    file_name: str = ""
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]
@@ -16,10 +17,12 @@ class ChatRename(ModalScreen[str]):
 
     @on(Input.Submitted)
     async def on_submit(self, event: Input.Submitted) -> None:
-        if event.value:
-            self.dismiss(event.value)
+        if not event.value:
+            return
+
+        self.dismiss()
 
     def compose(self) -> ComposeResult:
-        with Container(id="chat-rename-container"):
-            yield Label("Rename chat", classes="title")
-            yield Input(id="chat-name-input", value=self.old_name)
+        with Container(id="chat-export-container"):
+            yield Label("Export chat", classes="title")
+            yield Input(id="chat-name-input", value=self.file_name)

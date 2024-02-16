@@ -130,7 +130,7 @@ LoadingIndicator {
     color: $secondary;
 }
 
-#chat-rename-container {
+#chat-rename-container, #chat-export-container {
     width: 80%;
     height: 10;
     background: $panel;
@@ -140,11 +140,11 @@ LoadingIndicator {
     padding: 1;
 }
 
-#chat-rename-container .title {
+#chat-rename-container .title, #chat-export-container .title {
     color: $secondary;
 }
 
-#chat-rename-input {
+#chat-name-input {
     margin: 2;
 }
 #image-select-container {
