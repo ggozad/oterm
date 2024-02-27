@@ -66,13 +66,12 @@ ChatItem .text{
 }
 
 #prompt #promptInput #promptArea {
-    width: 70%;
     dock: left;
 }
 
 #prompt #button-container {
     padding-left: 1;
-    width: 35;
+    width: 24;
     dock: right;
 }
 
@@ -196,4 +195,8 @@ Notification {
 
 MarkdownFence {
     max-height: 50;
+}
+
+Button.icon {
+    min-width: 5;
 }

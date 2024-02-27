@@ -164,4 +164,6 @@ class FlexibleInput(Widget):
             yield TextArea(id="promptArea")
             with Horizontal(id="button-container"):
                 yield Button("post", id="post", variant="primary")
-                yield Button("↕", id="toggle-multiline", variant="success")
+                yield Button(
+                    "↕", id="toggle-multiline", classes="icon", variant="success"
+                )
