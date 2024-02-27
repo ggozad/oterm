@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.2 - 
+------------------
+
+- Allow user to navigate through the prompt history in a chat.
+  [ggozad]
+
 0.2.1 - 2024-02-16
 ------------------
 

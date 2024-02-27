@@ -129,7 +129,7 @@ LoadingIndicator {
     color: $secondary;
 }
 
-#chat-rename-container, #chat-export-container {
+#chat-rename-container, #chat-export-container, #prompt-history-container {
     width: 80%;
     height: 10;
     background: $panel;
@@ -139,8 +139,12 @@ LoadingIndicator {
     padding: 1;
 }
 
-#chat-rename-container .title, #chat-export-container .title {
+#chat-rename-container .title, #chat-export-container .title, #prompt-history-container .title {
     color: $secondary;
+}
+
+#prompt-history-container .title {
+    margin-bottom: 1;
 }
 
 #chat-name-input {

@@ -31,20 +31,23 @@ In order to use `oterm` you will need to have the Ollama server running. By defa
 OLLAMA_URL=http://host:port/api
 ```
 
-The following keyboard shortcuts are available:
+The following keyboard shortcuts are supported:
 
-* `ctrl+n` - create a new chat session
-* `ctrl+e` - edit the chat session (change template, system prompt or format)
-* `ctrl+r` - rename the current chat session
-* `ctrl+s` - export the current chat session as markdown
-* `ctrl+x` - delete the current chat session
-* `ctrl+t` - toggle between dark/light theme
-* `ctrl+q` - quit
+* <kbd>^ Ctrl</kbd>+<kbd>N</kbd> - create a new chat session
+* <kbd>^ Ctrl</kbd>+<kbd>E</kbd> - edit the chat session (change template, system prompt or format)
+* <kbd>^ Ctrl</kbd>+<kbd>R</kbd> - rename the current chat session
+* <kbd>^ Ctrl</kbd>+<kbd>S</kbd> - export the current chat session as markdown
+* <kbd>^ Ctrl</kbd>+<kbd>X</kbd> - delete the current chat session
+* <kbd>^ Ctrl</kbd>+<kbd>T</kbd> - toggle between dark/light theme
+* <kbd>^ Ctrl</kbd>+<kbd>Q</kbd> - quit
 
-* `ctrl+l` - switch to multiline input mode
-* `ctrl+p` - select an image to include with the next message
+* <kbd>^ Ctrl</kbd>+<kbd>L</kbd> - switch to multiline input mode
+* <kbd>^ Ctrl</kbd>+<kbd>P</kbd> - select an image to include with the next message
+* <kbd>↑</kbd>     - navigate through prompt history
 
-While Ollama is inferring the next message, you can press `ESC` to cancel the inference.
+While Ollama is inferring the next message, you can press <kbd>Esc</kbd> to cancel the inference.
+
+Note that some of the shortcuts may not work in a certain context, for example pressing <kbd>↑</kbd> while the prompt is in multi-line mode.
 
 ### Customizing models
 

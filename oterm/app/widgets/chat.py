@@ -22,6 +22,7 @@ from textual.widgets import (
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_export import ChatExport, slugify
 from oterm.app.chat_rename import ChatRename
+from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
@@ -45,6 +46,7 @@ class ChatContainer(Widget):
         Binding("ctrl+s", "export", "export", priority=True),
         ("ctrl+r", "rename_chat", "rename"),
         ("ctrl+x", "forget_chat", "forget"),
+        Binding("up", "history", "history"),
         Binding(
             "escape", "cancel_inference", "cancel inference", show=False, priority=True
         ),
@@ -206,6 +208,21 @@ class ChatContainer(Widget):
         tabs = self.app.query_one(TabbedContent)
         await self.app.store.delete_chat(self.db_id)
         tabs.remove_pane(tabs.active)
+
+    async def action_history(self) -> None:
+        def on_history_selected(text: str) -> None:
+            prompt = self.query_one("#prompt", FlexibleInput)
+            if "\n" in text and not prompt.is_multiline:
+                prompt.toggle_multiline()
+            prompt.text = text
+            prompt.focus()
+
+        prompts = [
+            message for author, message in self.messages if author == Author.USER
+        ]
+        prompts.reverse()
+        screen = PromptHistory(prompts)
+        self.app.push_screen(screen, on_history_selected)
 
     @on(ImageAdded)
     def on_image_added(self, ev: ImageAdded) -> None:
