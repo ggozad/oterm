@@ -43,7 +43,7 @@ The following keyboard shortcuts are supported:
 
 * <kbd>^ Ctrl</kbd>+<kbd>L</kbd> - switch to multiline input mode
 * <kbd>^ Ctrl</kbd>+<kbd>P</kbd> - select an image to include with the next message
-* <kbd>↑</kbd>     - navigate through prompt history
+* <kbd>↑</kbd>     - navigate through history of previous prompts
 
 While Ollama is inferring the next message, you can press <kbd>Esc</kbd> to cancel the inference.
 

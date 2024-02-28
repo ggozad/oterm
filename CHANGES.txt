@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.2.2 - 
+0.2.2 - 2024-02-28
 ------------------
 
 - Allow user to navigate through the prompt history in a chat.
