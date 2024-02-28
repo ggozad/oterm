@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.3 - 2024-02-28
+------------------
+
+- Minor fix for the chat history styling.
+  [ggozad]
+
 0.2.2 - 2024-02-28
 ------------------
 

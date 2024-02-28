@@ -131,13 +131,17 @@ LoadingIndicator {
 
 #chat-rename-container, #chat-export-container, #prompt-history-container {
     width: 80%;
-    height: 10;
     background: $panel;
     border: $panel-lighten-2;
     margin-top: 2;
     margin-left: 2;
     padding: 1;
 }
+
+#chat-rename-container, #chat-export-container {
+    height: 10;
+}
+
 
 #chat-rename-container .title, #chat-export-container .title, #prompt-history-container .title {
     color: $secondary;
@@ -146,6 +150,14 @@ LoadingIndicator {
 #prompt-history-container .title {
     margin-bottom: 1;
 }
+
+#prompt-history-container #prompt-history {
+    height: 90%;
+}
+#prompt-history-container {
+    height: 70%;
+}
+
 
 #chat-name-input {
     margin: 2;
