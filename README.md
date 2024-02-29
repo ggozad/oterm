@@ -1,4 +1,5 @@
 # oterm
+
 the text-based terminal client for [Ollama](https://github.com/jmorganca/ollama).
 
 ## Features
@@ -57,10 +58,12 @@ You can also "edit" the chat to change the template, system prompt or format. No
 
 ### Chat session storage
 
-All your chat sessions are stored locally in a sqlite database.
+All your chat sessions are stored locally in a sqlite database. You can customize the directory where the database is stored by setting the `OTERM_DATA_DIR` environment variable.
+
 You can find the location of the database by running `oterm --db`.
 
 ### Screenshots
+
 ![Chat](screenshots/chat.png)
 ![Model selection](./screenshots/model_selection.png)
 ![Image selection](./screenshots/image_selection.png)
