@@ -8,3 +8,4 @@ __pycache__/
 dist/
 oterm.rb
 photos/
+.vscode

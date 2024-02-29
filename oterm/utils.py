@@ -1,18 +1,24 @@
 import sys
 from pathlib import Path
+import os
 
 
 def get_data_dir() -> Path:
     """
     Get the user data directory for the current system platform.
 
+    First checks the OTERM_DATA_DIR environment variable. If not set, defaults to:
     Linux: ~/.local/share/oterm
     macOS: ~/Library/Application Support/oterm
     Windows: C:/Users/<USER>/AppData/Roaming/oterm
 
     :return: User Data Path
-    :rtype: str
+    :rtype: Path
     """
+    oterm_data_dir = os.environ.get("OTERM_DATA_DIR")
+    if oterm_data_dir:
+        return Path(oterm_data_dir)
+
     home = Path.home()
 
     system_paths = {
