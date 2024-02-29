@@ -10,7 +10,11 @@ from oterm.app.widgets.chat import Author
 from oterm.store.chat import queries as chat_queries
 from oterm.store.setup import queries as setup_queries
 from oterm.store.upgrades import upgrades
-from oterm.utils import get_data_dir, int_to_semantic_version, semantic_version_to_int
+from oterm.utils import (
+    int_to_semantic_version,
+    semantic_version_to_int,
+)
+from oterm.config import envConfig
 
 
 class Store(object):
@@ -19,7 +23,7 @@ class Store(object):
     @classmethod
     async def create(cls) -> "Store":
         self = Store()
-        data_path = get_data_dir()
+        data_path = envConfig.OTERM_DATA_DIR
         data_path.mkdir(parents=True, exist_ok=True)
         self.db_path = data_path / "store.db"
 

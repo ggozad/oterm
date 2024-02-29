@@ -5,7 +5,8 @@ from typing import Union, get_type_hints
 
 from dotenv import load_dotenv
 
-from oterm.utils import get_data_dir
+from oterm.utils import get_default_data_dir
+
 
 load_dotenv()
 
@@ -29,6 +30,7 @@ class EnvConfig:
     OLLAMA_HOST: str = "0.0.0.0:11434"
     OLLAMA_URL: str = ""
     OTERM_VERIFY_SSL: bool = True
+    OTERM_DATA_DIR: Path = get_default_data_dir()
 
     def __init__(self, env):
         for field in self.__annotations__:
@@ -67,10 +69,14 @@ class EnvConfig:
         return str(self.__dict__)
 
 
+# Expose EnvConfig object for app to import
+envConfig = EnvConfig(os.environ)
+
+
 class AppConfig:
     def __init__(self, path: Path = None):
         if path is None:
-            path = get_data_dir() / "config.json"
+            path = envConfig.OTERM_DATA_DIR / "config.json"
         self._path = path
         self._data = {
             "theme": "dark",
@@ -95,6 +101,5 @@ class AppConfig:
             json.dump(self._data, f)
 
 
-# Expose Config object for app to import
-envConfig = EnvConfig(os.environ)
+# Expose AppConfig object for app to import
 appConfig = AppConfig()
