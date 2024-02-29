@@ -1,8 +1,9 @@
 import sys
 from pathlib import Path
+import os
 
 
-def get_data_dir() -> Path:
+def get_default_data_dir() -> Path:
     """
     Get the user data directory for the current system platform.
 
@@ -11,7 +12,7 @@ def get_data_dir() -> Path:
     Windows: C:/Users/<USER>/AppData/Roaming/oterm
 
     :return: User Data Path
-    :rtype: str
+    :rtype: Path
     """
     home = Path.home()
 

@@ -5,7 +5,7 @@ import typer
 
 from oterm.app.oterm import app
 from oterm.store.store import Store
-from oterm.utils import get_data_dir
+from oterm.config import envConfig
 
 cli = typer.Typer()
 
@@ -27,7 +27,7 @@ def oterm(
         asyncio.run(upgrade_db())
         exit(0)
     if sqlite:
-        typer.echo(get_data_dir() / "store.db")
+        typer.echo(envConfig.OTERM_DATA_DIR / "store.db")
         exit(0)
     app.run()
 
