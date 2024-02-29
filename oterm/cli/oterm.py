@@ -4,8 +4,8 @@ from importlib import metadata
 import typer
 
 from oterm.app.oterm import app
-from oterm.store.store import Store
 from oterm.config import envConfig
+from oterm.store.store import Store
 
 cli = typer.Typer()
 

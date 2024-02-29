@@ -7,7 +7,6 @@ from dotenv import load_dotenv
 
 from oterm.utils import get_default_data_dir
 
-
 load_dotenv()
 
 

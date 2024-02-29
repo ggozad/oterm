@@ -7,14 +7,11 @@ import aiosqlite
 from packaging.version import parse
 
 from oterm.app.widgets.chat import Author
+from oterm.config import envConfig
 from oterm.store.chat import queries as chat_queries
 from oterm.store.setup import queries as setup_queries
 from oterm.store.upgrades import upgrades
-from oterm.utils import (
-    int_to_semantic_version,
-    semantic_version_to_int,
-)
-from oterm.config import envConfig
+from oterm.utils import int_to_semantic_version, semantic_version_to_int
 
 
 class Store(object):

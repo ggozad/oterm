@@ -1,6 +1,5 @@
 import sys
 from pathlib import Path
-import os
 
 
 def get_default_data_dir() -> Path:
