@@ -73,7 +73,7 @@ envConfig = EnvConfig(os.environ)
 
 
 class AppConfig:
-    def __init__(self, path: Path = None):
+    def __init__(self, path: Path | None = None):
         if path is None:
             path = envConfig.OTERM_DATA_DIR / "config.json"
         self._path = path

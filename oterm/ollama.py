@@ -1,21 +1,8 @@
-import json
-from typing import Any, AsyncGenerator, Literal
+from typing import Any, AsyncGenerator, AsyncIterator, Literal
 
-import httpx
+from ollama import AsyncClient
 
 from oterm.config import envConfig
-
-
-class OllamaError(Exception):
-    pass
-
-
-class OllamaConnectError(OllamaError):
-    def __init__(self) -> None:
-        super().__init__(
-            f"Failed to connect to Ollama server running at {envConfig.OLLAMA_URL}. "
-            "You can set OLLAMA_URL if you want to use a different server."
-        )
 
 
 class OllamaLLM:
@@ -25,7 +12,7 @@ class OllamaLLM:
         template: str | None = None,
         system: str | None = None,
         context: list[int] = [],
-        format: Literal["json"] | None = None,
+        format: Literal["", "json"] = "",
     ):
         self.model = model
         self.template = template
@@ -34,64 +21,34 @@ class OllamaLLM:
         self.format = format
 
     async def completion(self, prompt: str, images: list[str] = []) -> str:
-        response = ""
-        context = []
-        async for text, ctx in self._agenerate(
+        client = AsyncClient(host=envConfig.OLLAMA_HOST)
+        response: dict = await client.generate(
+            model=self.model,
             prompt=prompt,
             context=self.context,
+            system=self.system,  # type: ignore
+            format=self.format,  # type: ignore
             images=images,
-        ):
-            response = text
-            context = ctx
-        self.context = context
-        return response
+        )
+        self.context = response.get("context", [])
+        return response.get("response", "")
 
     async def stream(
         self, prompt: str, images: list[str] = []
     ) -> AsyncGenerator[str, Any]:
-        context = []
-
-        async for text, ctx in self._agenerate(
+        client = AsyncClient(host=envConfig.OLLAMA_HOST)
+        stream: AsyncIterator[dict] = await client.generate(
+            model=self.model,
             prompt=prompt,
             context=self.context,
+            system=self.system,  # type: ignore
+            format=self.format,  # type: ignore
             images=images,
-        ):
-            context = ctx
+            stream=True,
+        )
+        text = ""
+        async for response in stream:
+            text = text + response.get("response", "")
+            if "context" in response:
+                self.context = response.get("context")
             yield text
-
-        self.context = context
-
-    async def _agenerate(
-        self, prompt: str, context: list[int], images: list[str] = []
-    ) -> AsyncGenerator[tuple[str, list[int]], Any]:
-        client = httpx.AsyncClient(verify=envConfig.OTERM_VERIFY_SSL)
-        jsn = {
-            "model": self.model,
-            "prompt": prompt,
-            "context": context,
-        }
-        if self.system:
-            jsn["system"] = self.system
-        if self.template:
-            jsn["template"] = self.template
-        if self.format:
-            jsn["format"] = self.format
-        if images:
-            jsn["images"] = images
-        res = ""
-
-        try:
-            async with client.stream(
-                "POST", f"{envConfig.OLLAMA_URL}/generate", json=jsn, timeout=None
-            ) as response:
-                async for line in response.aiter_lines():
-                    body = json.loads(line)
-                    res += body.get("response", "")
-                    yield res, []
-                    if "error" in body:
-                        raise OllamaError(body["error"])
-
-                    if body.get("done", False):
-                        yield res, body["context"]
-        except httpx.ConnectError:
-            raise OllamaConnectError()

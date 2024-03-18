@@ -1,8 +1,11 @@
 Changelog
 =========
 
-0.2.4 - 2024-02-29
+0.2.4 - 
 ------------------
+
+- Remove our own implementation of the Ollama client and use the official one.
+  [ggozad]
 
 - Allow user to customize the path of data dir via the OTERM_DATA_DIR env.
   [PeronGH]

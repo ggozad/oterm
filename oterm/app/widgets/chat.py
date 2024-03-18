@@ -69,7 +69,7 @@ class ChatContainer(Widget):
             model=model,
             context=context,
             system=system,
-            format=format,
+            format=format or "",
         )  # We do this to reset the context
         self.chat_name = chat_name
         self.db_id = db_id
