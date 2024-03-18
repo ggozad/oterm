@@ -95,37 +95,3 @@ class OllamaLLM:
                         yield res, body["context"]
         except httpx.ConnectError:
             raise OllamaConnectError()
-
-
-class OllamaAPI:
-    async def get_models(self) -> list[dict[str, Any]]:
-        client = httpx.AsyncClient(verify=envConfig.OTERM_VERIFY_SSL)
-        try:
-            response = await client.get(f"{envConfig.OLLAMA_URL}/tags")
-        except httpx.ConnectError:
-            raise OllamaConnectError()
-        return response.json().get("models", []) or []
-
-    async def get_model_info(self, model: str) -> dict[str, Any]:
-        client = httpx.AsyncClient(verify=envConfig.OTERM_VERIFY_SSL)
-        try:
-            response = await client.post(
-                f"{envConfig.OLLAMA_URL}/show", json={"name": model}
-            )
-        except httpx.ConnectError:
-            raise OllamaConnectError()
-        if response.json().get("error"):
-            raise OllamaError(response.json()["error"])
-        return response.json()
-
-    async def pull_model(self, model: str) -> None:
-        client = httpx.AsyncClient()
-        async with client.stream(
-            "POST", f"{envConfig.OLLAMA_URL}/pull", json={"name": model}, timeout=None
-        ) as response:
-            async for line in response.aiter_lines():
-                body = json.loads(line)
-                if "error" in body:
-                    raise OllamaError(body["error"])
-                if body.get("status", "") == "success":
-                    return
