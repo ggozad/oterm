@@ -42,7 +42,7 @@ class ChatEdit(ModalScreen[str]):
             {
                 "name": model,
                 "system": system,
-                "format": "json" if jsn else None,
+                "format": "json" if jsn else "",
             }
         )
         self.dismiss(result)
@@ -154,6 +154,13 @@ class ChatEdit(ModalScreen[str]):
         try:
             widget = self.query_one(".system", TextArea)
             widget.load_text(system)
+        except NoMatches:
+            pass
+
+    def watch_json_format(self, jsn: bool) -> None:
+        try:
+            widget = self.query_one(".json-format", Checkbox)
+            widget.value = jsn
         except NoMatches:
             pass
 

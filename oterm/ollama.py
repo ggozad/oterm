@@ -9,13 +9,11 @@ class OllamaLLM:
     def __init__(
         self,
         model="nous-hermes:13b",
-        template: str | None = None,
         system: str | None = None,
         context: list[int] = [],
         format: Literal["", "json"] = "",
     ):
         self.model = model
-        self.template = template
         self.system = system
         self.context = context
         self.format = format

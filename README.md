@@ -5,9 +5,9 @@ the text-based terminal client for [Ollama](https://github.com/jmorganca/ollama)
 ## Features
 
 * intuitive and simple terminal UI, no need to run servers, frontends, just type `oterm` in your terminal.
-* multiple persistent chat sessions, stored together with the context embeddings and template/system prompt customizations in sqlite.
+* multiple persistent chat sessions, stored together with the context embeddings and system prompt customizations in sqlite.
 * can use any of the models you have pulled in Ollama, or your own custom models.
-* allows for easy customization of the model's template, system prompt and parameters.
+* allows for easy customization of the model's system prompt and parameters.
 
 ## Installation
 

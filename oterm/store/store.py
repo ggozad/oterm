@@ -61,7 +61,7 @@ class Store(object):
         model: str,
         context: str,
         system: str | None,
-        format: str | None,
+        format: Literal["", "json"],
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res: list[tuple[int]] = await chat_queries.save_chat(  # type: ignore
@@ -96,11 +96,7 @@ class Store(object):
             await connection.commit()
 
     async def edit_chat(
-        self,
-        id: int,
-        name: str,
-        system: str | None,
-        format: str | None,
+        self, id: int, name: str, system: str | None, format: Literal["", "json"]
     ) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
             await chat_queries.edit_chat(  # type: ignore
@@ -114,7 +110,7 @@ class Store(object):
 
     async def get_chats(
         self,
-    ) -> list[tuple[int, str, str, list[int], str | None, Literal["json"] | None]]:
+    ) -> list[tuple[int, str, str, list[int], str | None, Literal["", "json"]]]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore
             chats = [
@@ -125,7 +121,7 @@ class Store(object):
 
     async def get_chat(
         self, id
-    ) -> tuple[int, str, str, list[int], str | None, Literal["json"] | None] | None:
+    ) -> tuple[int, str, str, list[int], str | None, Literal["", "json"]] | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
             if chat:

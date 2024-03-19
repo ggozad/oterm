@@ -38,7 +38,7 @@ class ChatContainer(Widget):
     messages: reactive[list[tuple[Author, str]]] = reactive([])
     chat_name: str
     system: str | None
-    format: Literal["json"] | None
+    format: Literal["", "json"]
     images: list[tuple[Path, str]] = []
 
     BINDINGS = [
@@ -61,7 +61,7 @@ class ChatContainer(Widget):
         context: list[int] = [],
         messages: list[tuple[Author, str]] = [],
         system: str | None = None,
-        format: Literal["json"] | None = None,
+        format: Literal["", "json"] = "",
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
@@ -69,7 +69,7 @@ class ChatContainer(Widget):
             model=model,
             context=context,
             system=system,
-            format=format or "",
+            format=format,
         )  # We do this to reset the context
         self.chat_name = chat_name
         self.db_id = db_id
@@ -163,7 +163,7 @@ class ChatContainer(Widget):
         async def on_model_select(model_info: str) -> None:
             model: dict = json.loads(model_info)
             self.system = model.get("system")
-            self.format = model.get("format")
+            self.format = model.get("format", "")
             await self.app.store.edit_chat(
                 id=self.db_id,
                 name=self.chat_name,
@@ -187,6 +187,7 @@ class ChatContainer(Widget):
 
         if self.system:
             screen.system = self.system
+        screen.json_format = self.format == "json"
 
     async def action_export(self) -> None:
         screen = ChatExport()
