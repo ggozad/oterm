@@ -1,8 +1,11 @@
 Changelog
 =========
 
-0.2.4 - 
+0.2.4 - 2024-03-19
 ------------------
+
+- Minor bug fixes.
+  [ggozad]
 
 - Remove our own implementation of the Ollama client and use the official one.
   [ggozad]
