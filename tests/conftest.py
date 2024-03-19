@@ -1,20 +1,18 @@
 from base64 import b64encode
 from io import BytesIO
 
+import ollama
 import pytest
 import pytest_asyncio
 from PIL import Image
 
-from oterm.ollama import OllamaAPI, OllamaError
-
 
 @pytest_asyncio.fixture(autouse=True)
 async def load_test_models():
-    api = OllamaAPI()
     try:
-        await api.get_model_info("nous-hermes:13b")
-    except OllamaError:
-        await api.pull_model("nous-hermes:13b")
+        ollama.show("nous-hermes:13b")
+    except ollama.ResponseError:
+        ollama.pull("nous-hermes:13b")
     yield
 
 

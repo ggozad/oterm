@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "oterm"
-version = "0.2.3"
+version = "0.2.4"
 description = "A text-based terminal client for Ollama."
 authors = ["Yiorgis Gozadinos <ggozadinos@gmail.com>"]
 homepage = "https://github.com/ggozad/oterm"
@@ -32,7 +32,6 @@ python = "^3.10"
 textual = "^0.50.1"
 typer = "^0.9.0"
 python-dotenv = "^1.0.0"
-httpx = "^0.25.0"
 aiosql = "^9.2"
 aiosqlite = "^0.19.0"
 pyperclip = "^1.8.2"
@@ -40,6 +39,7 @@ packaging = "^23.2"
 rich-pixels = "^2.2.0"
 pillow = "^10.2.0"
 aiohttp = "^3.9.1"
+ollama = "^0.1.7"
 
 [tool.poetry.group.dev.dependencies]
 pdbpp = "^0.10.3"

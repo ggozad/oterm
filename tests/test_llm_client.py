@@ -1,6 +1,7 @@
 import pytest
+from ollama import ResponseError
 
-from oterm.ollama import OllamaError, OllamaLLM
+from oterm.ollama import OllamaLLM
 
 
 @pytest.mark.asyncio
@@ -32,7 +33,7 @@ async def test_errors():
     llm = OllamaLLM(model="non-existent-model")
     try:
         await llm.completion("This should fail.")
-    except OllamaError as e:
+    except ResponseError as e:
         assert "model 'non-existent-model' not found" in str(e)
 
 
