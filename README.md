@@ -50,6 +50,19 @@ While Ollama is inferring the next message, you can press <kbd>Esc</kbd> to canc
 
 Note that some of the shortcuts may not work in a certain context, for example pressing <kbd>↑</kbd> while the prompt is in multi-line mode.
 
+### Copy / Paste
+
+It is difficult to properly support copy/paste in terminal applications. You can copy blocks to your clipboard as such:
+
+* clicking a message will copy it to the clipboard.
+* clicking a code block will only copy the code block to the clipboard.
+
+For most terminals there exists a key modifier you can use to click and drag to manually select text. For example:
+* `iTerm`  <kbd>Option</kbd> key.
+* `Gnome Terminal` <kbd>Shift</kbd> key.
+* `Windows Terminal` <kbd>Shift</kbd> key.
+
+
 ### Customizing models
 
 When creating a new chat, you may not only select the model, but also customize the `template` as well as the `system` instruction to pass to the model. Checking the `JSON output` checkbox will cause the model reply in JSON format. Please note that `oterm` will not (yet) pull models for you, use `ollama` to do that. All the models you have pulled or created will be available to `oterm`.
