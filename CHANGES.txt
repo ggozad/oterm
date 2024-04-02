@@ -1,10 +1,10 @@
 Changelog
 =========
 
-0.2.5 - 
+0.2.5 - 2024-04-02
 ------------------
 
-- Monkey patch MarkdownFence to capture click.
+- Copy code block when a Markdown block is clicked instead of the entire bot reply.
   [ggozad]
 
 0.2.4 - 2024-03-19
