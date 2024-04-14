@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.6 - 
+------------------
+
+- Fix handling of OLLAMA_HOST, OLLAMA_URL, OTERM_VERIFY_SSL env variables.
+  [ggozad]
+
 0.2.5 - 2024-04-02
 ------------------
 

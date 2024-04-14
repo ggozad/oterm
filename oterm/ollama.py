@@ -19,7 +19,9 @@ class OllamaLLM:
         self.format = format
 
     async def completion(self, prompt: str, images: list[str] = []) -> str:
-        client = AsyncClient(host=envConfig.OLLAMA_HOST)
+        client = AsyncClient(
+            host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
+        )
         response: dict = await client.generate(
             model=self.model,
             prompt=prompt,
@@ -34,7 +36,9 @@ class OllamaLLM:
     async def stream(
         self, prompt: str, images: list[str] = []
     ) -> AsyncGenerator[str, Any]:
-        client = AsyncClient(host=envConfig.OLLAMA_HOST)
+        client = AsyncClient(
+            host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
+        )
         stream: AsyncIterator[dict] = await client.generate(
             model=self.model,
             prompt=prompt,

@@ -26,7 +26,7 @@ pip install oterm
 
 ## Using
 
-In order to use `oterm` you will need to have the Ollama server running. By default it expects to find the Ollama API running on `http://0.0.0.0:11434/api`. If you are running Ollama inside docker or on a different host/port, use the `OLLAMA_HOST` environment variable to customize the host/port. Alternatively you can use `OLLAMA_URL` to specify the full http(s) url. Setting `OTERM_VERIFY_SSL` to `False` will disable SSL verification.
+In order to use `oterm` you will need to have the Ollama server running. By default it expects to find the Ollama API running on `http://0.0.0.0:11434`. If you are running Ollama inside docker or on a different host/port, use the `OLLAMA_HOST` environment variable to customize the host/port. Alternatively you can use `OLLAMA_URL` to specify the full http(s) url. Setting `OTERM_VERIFY_SSL` to `False` will disable SSL verification.
 
 ```bash
 OLLAMA_URL=http://host:port/api

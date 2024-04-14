@@ -62,7 +62,7 @@ class EnvConfig:
                     )
                 )
         if self.OLLAMA_URL == "":
-            self.OLLAMA_URL = f"http://{self.OLLAMA_HOST}/api"
+            self.OLLAMA_URL = f"http://{self.OLLAMA_HOST}"
 
     def __repr__(self):
         return str(self.__dict__)
