@@ -7,12 +7,15 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.splash import SplashScreen
 from oterm.app.widgets.chat import ChatContainer
+from oterm.app.widgets.knowledge import KnowledgeSelectingCommands, KnowledgeScreen
 from oterm.config import appConfig
 from oterm.store.store import Store
 
 
 class OTerm(App):
     TITLE = "oTerm"
+    COMMANDS = App.COMMANDS | {KnowledgeSelectingCommands}
+
     SUB_TITLE = "A terminal-based Ollama client."
     CSS_PATH = "oterm.tcss"
     BINDINGS = [
@@ -60,6 +63,9 @@ class OTerm(App):
             tabs.active = f"chat-{id}"
 
         self.push_screen(ChatEdit(), on_model_select)
+
+    def action_browse_dirs(self) -> None:
+        self.push_screen(KnowledgeScreen())
 
     async def on_mount(self) -> None:
         self.store = await Store.create()
