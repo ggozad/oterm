@@ -53,7 +53,7 @@ class OTerm(App):
                     messages=[],
                 )
             )
-            tabs.add_pane(pane)
+            await tabs.add_pane(pane)
             tabs.active = f"chat-{id}"
 
         self.push_screen(ChatEdit(), on_model_select)
