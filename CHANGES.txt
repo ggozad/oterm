@@ -1,10 +1,13 @@
 Changelog
 =========
 
-0.2.6 - 
+0.2.6 - 2024-04-20
 ------------------
 
 - Fix handling of OLLAMA_HOST, OLLAMA_URL, OTERM_VERIFY_SSL env variables.
+  [ggozad]
+
+- Fix windows crash when switching chat panes on slow machines.
   [ggozad]
 
 0.2.5 - 2024-04-02
