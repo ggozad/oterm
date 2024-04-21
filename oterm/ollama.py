@@ -1,10 +1,8 @@
-from typing import Any, AsyncGenerator, AsyncIterator, Literal
+from typing import Any, AsyncGenerator, AsyncIterator, Literal, Mapping
 
-from ollama import AsyncClient
+from ollama import AsyncClient, Client
 
 from oterm.config import envConfig
-
-ollama_client = AsyncClient(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
 
 
 class OllamaLLM:
@@ -56,3 +54,17 @@ class OllamaLLM:
             if "context" in response:
                 self.context = response.get("context")
             yield text
+
+    @staticmethod
+    def list() -> Mapping[str, Any]:
+        client = Client(
+            host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
+        )
+        return client.list()
+
+    @staticmethod
+    def show(model: str) -> Mapping[str, Any]:
+        client = Client(
+            host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
+        )
+        return client.show(model)

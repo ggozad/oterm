@@ -11,7 +11,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Label, OptionList, Pretty
 
 from oterm.app.widgets.text_area import TextArea
-from oterm.ollama import ollama_client
+from oterm.ollama import OllamaLLM
 
 
 class ChatEdit(ModalScreen[str]):
@@ -74,10 +74,10 @@ class ChatEdit(ModalScreen[str]):
                 break
 
     async def on_mount(self) -> None:
-        self.models = (await ollama_client.list())["models"]
+        self.models = OllamaLLM.list()["models"]
         models = [model["name"] for model in self.models]
         for model in models:
-            info = dict(await ollama_client.show(model))
+            info = dict(OllamaLLM.show(model))
             for key in ["modelfile", "license"]:
                 if key in info.keys():
                     del info[key]
