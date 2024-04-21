@@ -2,7 +2,6 @@ import json
 from ast import literal_eval
 from typing import Any
 
-import ollama
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
@@ -12,6 +11,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Label, OptionList, Pretty
 
 from oterm.app.widgets.text_area import TextArea
+from oterm.ollama import ollama_client
 
 
 class ChatEdit(ModalScreen[str]):
@@ -74,10 +74,10 @@ class ChatEdit(ModalScreen[str]):
                 break
 
     async def on_mount(self) -> None:
-        self.models = ollama.list()["models"]
+        self.models = (await ollama_client.list())["models"]
         models = [model["name"] for model in self.models]
         for model in models:
-            info = dict(ollama.show(model))
+            info = dict(await ollama_client.show(model))
             for key in ["modelfile", "license"]:
                 if key in info.keys():
                     del info[key]

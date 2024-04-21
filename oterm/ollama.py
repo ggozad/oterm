@@ -4,6 +4,8 @@ from ollama import AsyncClient
 
 from oterm.config import envConfig
 
+ollama_client = AsyncClient(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
+
 
 class OllamaLLM:
     def __init__(
