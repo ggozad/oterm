@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.7 - 2024-04-22
+------------------
+
+- Fixed a bug that ChatEdit screen did not use environment variables to request ollama.
+  [habaneraa]
+
 0.2.6 - 2024-04-20
 ------------------
 
