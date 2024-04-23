@@ -3,7 +3,6 @@ import re
 from ast import literal_eval
 from typing import Any
 
-import ollama
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, HorizontalScroll, Vertical, VerticalScroll
