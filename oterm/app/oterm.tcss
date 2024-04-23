@@ -109,6 +109,41 @@ LoadingIndicator {
 }
 #model-select-container .button-container Button {    
     margin-right: 1;
+    padding-bottom: 4;
+}
+
+#model-settings {
+    height: 30%;
+}
+
+#model-keep-alive {
+    height: 3;
+}
+
+#model-keep-alive .keep-alive-value, .keep-alive-unit, Select {
+    background: $panel;
+    color: $secondary;
+    height: 3;
+    width: 12;
+}
+
+#model-options {
+    height: 24;
+}
+
+#model-options .model-options-label {
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+#model-options .model-num-ctx, .model-temperature, .model-seed, .model-top-k, .model-top-p {
+    background: $panel;
+    height: 3;
+    width: 12;
+}
+
+#model-options .model-num-ctx-label, .model-temperature-label, .model-seed-label, .model-top-k-label, .model-top-p-label {
+    width: 12;
 }
 
 #model-select {

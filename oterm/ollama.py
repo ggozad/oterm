@@ -12,11 +12,15 @@ class OllamaLLM:
         system: str | None = None,
         context: list[int] = [],
         format: Literal["", "json"] = "",
+        keep_alive: str | None = None,
+        model_options: dict[str, str] = {},
     ):
         self.model = model
         self.system = system
         self.context = context
         self.format = format
+        self.keep_alive = keep_alive
+        self.model_options = model_options
 
     async def completion(self, prompt: str, images: list[str] = []) -> str:
         client = AsyncClient(
@@ -29,6 +33,8 @@ class OllamaLLM:
             system=self.system,  # type: ignore
             format=self.format,  # type: ignore
             images=images,
+            keep_alive=self.keep_alive,
+            options=self.model_options,
         )
         self.context = response.get("context", [])
         return response.get("response", "")
@@ -46,6 +52,8 @@ class OllamaLLM:
             system=self.system,  # type: ignore
             format=self.format,  # type: ignore
             images=images,
+            keep_alive=self.keep_alive,
+            options=self.model_options,
             stream=True,
         )
         text = ""

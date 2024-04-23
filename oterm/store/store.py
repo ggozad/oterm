@@ -54,6 +54,24 @@ class Store(object):
                 f"PRAGMA user_version = {semantic_version_to_int(version)};"
             )
 
+    @classmethod
+    async def get_journal_mode(cls, db_path: str) -> str:
+        async with aiosqlite.connect(db_path) as connection:
+            res: list[tuple[int]] = await setup_queries.get_journal_mode(connection)
+            return res[0][0]
+
+    @classmethod
+    async def set_journal_mode(cls, db_path: str, mode: str) -> bool:
+        async with aiosqlite.connect(db_path) as connection:
+            res = await connection.execute(
+                f"PRAGMA journal_mode = {mode.upper()};"
+            )
+            status = await res.fetchall()
+            if status[0][0].lower() == mode.lower():
+                return True
+            else:
+                return False
+
     async def save_chat(
         self,
         id: int | None,
@@ -62,6 +80,8 @@ class Store(object):
         context: str,
         system: str | None,
         format: Literal["", "json"],
+        keep_alive: str | None,
+        model_options: dict,
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res: list[tuple[int]] = await chat_queries.save_chat(  # type: ignore
@@ -72,6 +92,8 @@ class Store(object):
                 context=context,
                 system=system,
                 format=format,
+                keep_alive=keep_alive,
+                model_options=json.dumps(model_options),
             )
 
             await connection.commit()
@@ -96,7 +118,7 @@ class Store(object):
             await connection.commit()
 
     async def edit_chat(
-        self, id: int, name: str, system: str | None, format: Literal["", "json"]
+        self, id: int, name: str, system: str | None, format: Literal["", "json"], keep_alive: str | None, model_options: dict,
     ) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
             await chat_queries.edit_chat(  # type: ignore
@@ -105,30 +127,33 @@ class Store(object):
                 name=name,
                 system=system,
                 format=format,
+                keep_alive=keep_alive,
+                model_options=json.dumps(model_options),
             )
             await connection.commit()
 
     async def get_chats(
         self,
-    ) -> list[tuple[int, str, str, list[int], str | None, Literal["", "json"]]]:
+    ) -> list[tuple[int, str, str, list[int], str | None, Literal["", "json"], str | None, str]]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore
             chats = [
-                (id, name, model, json.loads(context), system, format)
-                for id, name, model, context, system, format in chats
+                (id, name, model, json.loads(context), system, format, keep_alive, json.loads(model_options))
+                for id, name, model, context, system, format, keep_alive, model_options in chats
             ]
             return chats
 
     async def get_chat(
         self, id
-    ) -> tuple[int, str, str, list[int], str | None, Literal["", "json"]] | None:
+    ) -> tuple[int, str, str, list[int], str | None, Literal["", "json"], str | None, str] | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
             if chat:
                 chat = chat[0]
-                id, name, model, context, system, format = chat
+                id, name, model, context, system, format, keep_alive, model_options = chat
                 context = json.loads(context)
-                return id, name, model, context, system, format
+                model_options = json.loads(model_options)
+                return id, name, model, context, system, format, keep_alive, model_options
 
     async def delete_chat(self, id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:

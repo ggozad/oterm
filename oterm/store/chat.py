@@ -2,18 +2,18 @@ import aiosql
 
 chat_sqlite = """
 -- name: save_chat
-INSERT OR REPLACE INTO chat(id, name, model, context, system, format) 
-VALUES(:id, :name, :model, :context, :system, :format) RETURNING id;
+INSERT OR REPLACE INTO chat(id, name, model, context, system, format, keep_alive, model_options) 
+VALUES(:id, :name, :model, :context, :system, :format, :keep_alive, :model_options) RETURNING id;
 -- name: save_context
 UPDATE chat SET context = :context WHERE id = :id;
 -- name: rename_chat
 UPDATE chat SET name = :name WHERE id = :id;
 -- name: edit_chat
-UPDATE chat SET name = :name, system = :system, format = :format WHERE id = :id;
+UPDATE chat SET name = :name, system = :system, format = :format, keep_alive = :keep_alive, model_options = :model_options WHERE id = :id;
 -- name: get_chats
-SELECT id, name, model, context, system, format FROM chat;
+SELECT id, name, model, context, system, format, keep_alive, model_options FROM chat;
 -- name: get_chat
-SELECT id, name, model, context, system, format FROM chat WHERE id = :id;
+SELECT id, name, model, context, system, format, keep_alive, model_options FROM chat WHERE id = :id;
 -- name: delete_chat
 DELETE FROM chat WHERE id = :id;
 -- name: save_message

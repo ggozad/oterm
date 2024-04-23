@@ -9,6 +9,8 @@ CREATE TABLE IF NOT EXISTS "chat" (
 	"context"	TEXT NOT NULL,
 	"system"	TEXT,
 	"format"	TEXT,
+	"keep_alive"	TEXT,
+	"model_options"	TEXT NOT NULL DEFAULT '{}',
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
@@ -22,6 +24,9 @@ CREATE TABLE IF NOT EXISTS "message" (
 
 -- name: get_user_version
 PRAGMA user_version;
+
+-- name: get_journal_mode
+PRAGMA journal_mode;
 """
 
 queries = aiosql.from_str(create_sqlite, "aiosqlite")

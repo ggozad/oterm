@@ -40,6 +40,8 @@ class ChatContainer(Widget):
     system: str | None
     format: Literal["", "json"]
     images: list[tuple[Path, str]] = []
+    keep_alive: str | None
+    model_options: dict = {}
 
     BINDINGS = [
         Binding("ctrl+e", "edit_chat", "edit", priority=True),
@@ -62,6 +64,8 @@ class ChatContainer(Widget):
         messages: list[tuple[Author, str]] = [],
         system: str | None = None,
         format: Literal["", "json"] = "",
+        keep_alive: str | None = None,
+        model_options: dict = {},
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
@@ -70,12 +74,16 @@ class ChatContainer(Widget):
             context=context,
             system=system,
             format=format,
+            keep_alive=keep_alive,
+            model_options=model_options,
         )  # We do this to reset the context
         self.chat_name = chat_name
         self.db_id = db_id
         self.messages = messages
         self.system = system
         self.format = format
+        self.keep_alive = keep_alive
+        self.model_options = model_options
         self.loaded = False
 
     def on_mount(self) -> None:
@@ -164,18 +172,24 @@ class ChatContainer(Widget):
             model: dict = json.loads(model_info)
             self.system = model.get("system")
             self.format = model.get("format", "")
+            self.keep_alive = model.get("keep_alive", "")
+            self.model_options = model.get("model_options", {})
             await self.app.store.edit_chat(
                 id=self.db_id,
                 name=self.chat_name,
                 system=model["system"],
                 format=model["format"],
+                keep_alive=model["keep_alive"],
+                model_options=model["model_options"],
             )
-            _, _, _, context, _, _ = await self.app.store.get_chat(self.db_id)
+            _, _, _, context, _, _, _, _ = await self.app.store.get_chat(self.db_id)
             self.ollama = OllamaLLM(
                 model=model["name"],
                 context=context,
                 system=model["system"],
                 format=model["format"],
+                keep_alive=model["keep_alive"],
+                model_options=model["model_options"],
             )
 
         screen = ChatEdit()
@@ -188,6 +202,8 @@ class ChatContainer(Widget):
         if self.system:
             screen.system = self.system
         screen.json_format = self.format == "json"
+        screen.keep_alive = self.keep_alive
+        screen.model_options = self.model_options
 
     async def action_export(self) -> None:
         screen = ChatExport()
