@@ -90,8 +90,6 @@ class ChatContainer(Widget):
             chat_item.text = message
             chat_item.author = author
             await message_container.mount(chat_item)
-        autoscroll_static = Static("", classes="autoscroll", disabled=True)
-        message_container.mount(autoscroll_static)
         message_container.scroll_end()
         self.loaded = True
 
@@ -100,7 +98,6 @@ class ChatContainer(Widget):
         message = event.value
         input = event.input
         message_container = self.query_one("#messageContainer")
-        autoscroll = message_container.query_one(".autoscroll", Static)
 
         if not message.strip():
             input.clear()
@@ -119,9 +116,8 @@ class ChatContainer(Widget):
             response_chat_item.author = Author.OLLAMA
             message_container.mount(response_chat_item)
             loading = LoadingIndicator()
-            message_container.mount(loading)
-            if autoscroll.parent.can_view(autoscroll):
-                message_container.scroll_end()
+            await message_container.mount(loading)
+            message_container.scroll_end()
 
             try:
                 response = ""
@@ -130,7 +126,7 @@ class ChatContainer(Widget):
                 ):
                     response = text
                     response_chat_item.text = text
-                    if autoscroll.parent.can_view(autoscroll):
+                    if message_container.can_view(response_chat_item):
                         message_container.scroll_end()
                 self.messages.append((Author.OLLAMA, response))
                 self.images = []
@@ -156,7 +152,6 @@ class ChatContainer(Widget):
                 input.text = message
             finally:
                 loading.remove()
-                autoscroll.parent.move_child(autoscroll, after=-1)
                 input.focus()
 
         self.inference_task = asyncio.create_task(response_task())
