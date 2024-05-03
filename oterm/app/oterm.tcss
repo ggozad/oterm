@@ -216,3 +216,11 @@ MarkdownFence {
 Button.icon {
     min-width: 5;
 }
+
+Input.keep-alive {
+    width: 10;
+}
+
+Label.keep-alive-label {
+    margin-top: 1;
+}

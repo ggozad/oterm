@@ -8,7 +8,7 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Label, OptionList, Pretty
+from textual.widgets import Button, Checkbox, Input, Label, OptionList, Pretty
 
 from oterm.app.widgets.text_area import TextArea
 from oterm.ollama import OllamaLLM
@@ -187,8 +187,18 @@ class ChatEdit(ModalScreen[str]):
                     yield TextArea("", classes="system log")
                     yield Label("Parameters:", classes="title")
                     yield Pretty("", classes="parameters")
-                    yield Label("Format", classes="title")
-                    yield Checkbox("JSON output", value=False, classes="json-format")
+                    with Horizontal():
+                        yield Checkbox(
+                            "JSON output",
+                            value=False,
+                            classes="json-format",
+                            button_first=False,
+                        )
+                        with Horizontal():
+                            yield Label(
+                                "Keep-alive (min)", classes="title keep-alive-label"
+                            )
+                            yield Input(classes="keep-alive", value="5")
 
             with Horizontal(classes="button-container"):
                 yield Button(
