@@ -4,6 +4,9 @@ Changelog
 0.2.8 - 
 ------------------
 
+- Do not scroll to the bottom of the chat when the user is reading past messages.
+  [lainedfles, ggozad]
+
 - Allow customizing keep-alive parameter.
   [ggozad]
 

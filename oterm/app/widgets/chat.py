@@ -120,7 +120,7 @@ class ChatContainer(Widget):
             response_chat_item.author = Author.OLLAMA
             message_container.mount(response_chat_item)
             loading = LoadingIndicator()
-            message_container.mount(loading)
+            await message_container.mount(loading)
             message_container.scroll_end()
 
             try:
@@ -130,7 +130,8 @@ class ChatContainer(Widget):
                 ):
                     response = text
                     response_chat_item.text = text
-                    message_container.scroll_end()
+                    if message_container.can_view(response_chat_item):
+                        message_container.scroll_end()
                 self.messages.append((Author.OLLAMA, response))
                 self.images = []
 
