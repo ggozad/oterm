@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.2.8 - 
+0.2.8 - 2024-05-03
 ------------------
 
 - Do not scroll to the bottom of the chat when the user is reading past messages.
