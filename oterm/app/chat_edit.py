@@ -8,7 +8,7 @@ from textual.containers import Container, Horizontal, Vertical
 from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Label, OptionList, Pretty
+from textual.widgets import Button, Checkbox, Input, Label, OptionList, Pretty
 
 from oterm.app.widgets.text_area import TextArea
 from oterm.ollama import OllamaLLM
@@ -27,6 +27,7 @@ class ChatEdit(ModalScreen[str]):
     json_format: reactive[bool] = reactive(False)
     edit_mode: reactive[bool] = reactive(False)
     last_highlighted_index = None
+    keep_alive: reactive[int] = reactive(5)
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -38,11 +39,13 @@ class ChatEdit(ModalScreen[str]):
         system = self.query_one(".system", TextArea).text
         system = system if system != self.model_info.get("system", "") else None
         jsn = self.query_one(".json-format", Checkbox).value
+        keep_alive = int(self.query_one(".keep-alive", Input).value)
         result = json.dumps(
             {
                 "name": model,
                 "system": system,
                 "format": "json" if jsn else "",
+                "keep_alive": keep_alive,
             }
         )
         self.dismiss(result)
@@ -164,6 +167,13 @@ class ChatEdit(ModalScreen[str]):
         except NoMatches:
             pass
 
+    def watch_keep_alive(self, keep_alive: int) -> None:
+        try:
+            widget = self.query_one(".keep-alive", Input)
+            widget.value = str(keep_alive)
+        except NoMatches:
+            pass
+
     def watch_edit_mode(self, edit_mode: bool) -> None:
         try:
             widget = self.query_one("#model-select", OptionList)
@@ -187,8 +197,18 @@ class ChatEdit(ModalScreen[str]):
                     yield TextArea("", classes="system log")
                     yield Label("Parameters:", classes="title")
                     yield Pretty("", classes="parameters")
-                    yield Label("Format", classes="title")
-                    yield Checkbox("JSON output", value=False, classes="json-format")
+                    with Horizontal():
+                        yield Checkbox(
+                            "JSON output",
+                            value=False,
+                            classes="json-format",
+                            button_first=False,
+                        )
+                        with Horizontal():
+                            yield Label(
+                                "Keep-alive (min)", classes="title keep-alive-label"
+                            )
+                            yield Input(classes="keep-alive", value="5")
 
             with Horizontal(classes="button-container"):
                 yield Button(
