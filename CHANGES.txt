@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.8 - 
+------------------
+
+- Allow customizing keep-alive parameter.
+  [ggozad]
+
 0.2.7 - 2024-04-22
 ------------------
 
