@@ -27,6 +27,7 @@ class ChatEdit(ModalScreen[str]):
     json_format: reactive[bool] = reactive(False)
     edit_mode: reactive[bool] = reactive(False)
     last_highlighted_index = None
+    keep_alive: reactive[int] = reactive(5)
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -38,11 +39,13 @@ class ChatEdit(ModalScreen[str]):
         system = self.query_one(".system", TextArea).text
         system = system if system != self.model_info.get("system", "") else None
         jsn = self.query_one(".json-format", Checkbox).value
+        keep_alive = int(self.query_one(".keep-alive", Input).value)
         result = json.dumps(
             {
                 "name": model,
                 "system": system,
                 "format": "json" if jsn else "",
+                "keep_alive": keep_alive,
             }
         )
         self.dismiss(result)
@@ -161,6 +164,13 @@ class ChatEdit(ModalScreen[str]):
         try:
             widget = self.query_one(".json-format", Checkbox)
             widget.value = jsn
+        except NoMatches:
+            pass
+
+    def watch_keep_alive(self, keep_alive: int) -> None:
+        try:
+            widget = self.query_one(".keep-alive", Input)
+            widget.value = str(keep_alive)
         except NoMatches:
             pass
 
