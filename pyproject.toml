@@ -39,6 +39,9 @@ packaging = "^24.0"
 rich-pixels = "^2.2.0"
 pillow = "^10.2.0"
 ollama = "^0.1.7"
+sentence-transformers = "^2.7.0"
+semantic-text-splitter = "^0.13.0"
+inscriptis = "^2.5.0"
 
 [tool.poetry.group.dev.dependencies]
 pdbpp = "^0.10.3"

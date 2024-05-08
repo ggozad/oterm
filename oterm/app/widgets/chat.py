@@ -2,7 +2,7 @@ import asyncio
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Iterable
 
 import pyperclip
 from textual import on
@@ -26,6 +26,8 @@ from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
+from oterm.app.widgets.knowledge import ContextSelectingCommands, ContextScreen
+from oterm.embeddings import VectorStore
 
 
 class Author(Enum):
@@ -35,12 +37,14 @@ class Author(Enum):
 
 class ChatContainer(Widget):
     ollama = OllamaLLM()
+
     messages: reactive[list[tuple[Author, str]]] = reactive([])
     chat_name: str
     system: str | None
     format: Literal["", "json"]
     keep_alive: int = 5
     images: list[tuple[Path, str]] = []
+    contexts: list[VectorStore] = []
 
     BINDINGS = [
         Binding("ctrl+e", "edit_chat", "edit", priority=True),
@@ -48,9 +52,8 @@ class ChatContainer(Widget):
         ("ctrl+r", "rename_chat", "rename"),
         ("ctrl+x", "forget_chat", "forget"),
         Binding("up", "history", "history"),
-        Binding(
-            "escape", "cancel_inference", "cancel inference", show=False, priority=True
-        ),
+        Binding("escape", "cancel_inference", "cancel inference", show=False, priority=True),
+        Binding("ctrl+k", "manage_context", "manage context", show=False, priority=True),
     ]
 
     def __init__(
@@ -108,8 +111,17 @@ class ChatContainer(Widget):
             input.focus()
             return
 
+        total_context = ""
+        sources = ""
+        for i, context_source in enumerate(self.contexts):
+            async for distance, source, context in context_source.get_nearest(message, n_nearest=3):
+                total_context = f"{total_context} Context {i + 1}) {context}\n" 
+
+        message = f"{total_context}\n{message}"
+
         async def response_task() -> None:
             input.clear()
+
             self.messages.append((Author.USER, message))
             user_chat_item = ChatItem()
             user_chat_item.text = message
@@ -125,9 +137,7 @@ class ChatContainer(Widget):
 
             try:
                 response = ""
-                async for text in self.ollama.stream(
-                    message, [img for _, img in self.images]
-                ):
+                async for text in self.ollama.stream(message, [img for _, img in self.images]):
                     response = text
                     response_chat_item.text = text
                     if message_container.can_view(response_chat_item):
@@ -199,6 +209,15 @@ class ChatContainer(Widget):
         screen.json_format = self.format == "json"
         screen.keep_alive = self.keep_alive
 
+    async def action_manage_context(self) -> None:
+        async def on_context_found(context_paths: Iterable[Path]) -> None:
+            self.contexts.clear()
+            for path in context_paths:
+                store = VectorStore()
+                await store.load(path)
+                self.contexts.append(store)
+        self.app.push_screen(ContextScreen(), on_context_found)
+
     async def action_export(self) -> None:
         screen = ChatExport()
         screen.chat_id = self.db_id
@@ -228,9 +247,7 @@ class ChatContainer(Widget):
             prompt.text = text
             prompt.focus()
 
-        prompts = [
-            message for author, message in self.messages if author == Author.USER
-        ]
+        prompts = [message for author, message in self.messages if author == Author.USER]
         prompts.reverse()
         screen = PromptHistory(prompts)
         self.app.push_screen(screen, on_history_selected)

@@ -9,10 +9,9 @@ from textual.types import IgnoreReturnCallbackType, DirEntry
 from textual.containers import Container, Vertical
 from textual import on
 from rich.text import Text
+from oterm.embeddings import CONTEXT_DIRECTORY
 
-CONTEXT_DIRECTORY = ".rtfm"
-
-class KnowledgeSelectingCommands(Provider):
+class ContextSelectingCommands(Provider):
     """A command provider to open a Python file in the current working directory."""
 
     @property
@@ -25,7 +24,7 @@ class KnowledgeSelectingCommands(Provider):
             ),
         )
 
-    async def search(self, query: str) -> Hits:
+    async def search(self, query: str) -> Hits: 
         matcher = self.matcher(query)
         for name, action, description in self._commands:
             if (match := matcher.match(name)) > 0:
@@ -41,7 +40,7 @@ class KnowledgeSelectingCommands(Provider):
             yield DiscoveryHit(name, action, help=description)
 
 
-class KnowledgeScreen(ModalScreen[list[Path]]):
+class ContextScreen(ModalScreen[list[Path]]):
     contexts: set[Path] = []
     BINDINGS = [
         ("+", "add_context", "add context"),
@@ -108,7 +107,7 @@ class ContextSelect(ModalScreen[Path]):
     @on(DirectoryTree.DirectorySelected)
     async def on_directory_selected(self, event: DirectoryTree.FileSelected):
         if event.path.stem == CONTEXT_DIRECTORY:
-            self.dismiss(event.path)
+            self.dismiss(event.path.parent)
 
     @on(Input.Changed)
     async def on_root_changed(self, ev: Input.Changed) -> None:
