@@ -23,6 +23,7 @@ classifiers = [
 
 [tool.poetry.scripts]
 oterm = "oterm.cli.oterm:cli"
+rtfm-init = "oterm.embeddings:main"
 
 [tool.poetry.urls]
 "Bug Tracker" = "https://github.com/ggozad/oterm/issues"

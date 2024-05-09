@@ -13,7 +13,26 @@ from tqdm import tqdm
 from inscriptis import get_text
 
 
-async def main():
+def main():
+    asyncio.run(async_main())
+
+
+async def async_main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "directory",
+        help="Directory in which to initialize the store.",
+        type=Path,
+        default=Path(".").resolve(),
+    )
+    args = parser.parse_args()
+
+    root = Path(args.directory)
+    store = VectorStore()
+    await store.create(root)
+
+
+async def get_output():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "directory",
@@ -27,13 +46,36 @@ async def main():
     store = VectorStore()
     await store.load(root)
 
-    for distance, source, context in store.get_nearest("DataFrame?"):
-        print(context)
+    message, chat_message = await format_output((store,), "What is a Dataframe")
+    print(chat_message)
+    print(message)
 
 
 CONTEXT_DIRECTORY = ".rtfm"
 DB_NAME = "embeddings.db"
 VECTOR_NAME = "vectors.npy"
+
+
+async def format_output(stores: Iterable["VectorStore"], message: str, n_documents: int = 3) -> tuple[str, str]:
+    retrieved = sorted(
+        [
+            (distance, source, context)
+            for store in stores
+            async for (distance, source, context) in store.get_nearest(message, n_nearest=n_documents)
+        ]
+    )
+    chosen = retrieved[:n_documents]
+
+    total_context = ""
+    sources = ""
+    for _, source, context in chosen:
+        total_context = f"{total_context}{context}\n"
+        sources = f"{sources}{source}\n"
+
+    chat_message = f"{message}\n\nReading from:\n\n{sources}"
+    message = f"{total_context}\n{message}"
+
+    return message, chat_message
 
 
 class VectorStore:
@@ -170,4 +212,4 @@ SELECT COUNT(*) FROM documents;
 queries = aiosql.from_str(embedding_sqlite, "aiosqlite")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(get_output())

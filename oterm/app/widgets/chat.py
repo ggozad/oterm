@@ -27,7 +27,7 @@ from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollama import OllamaLLM
 from oterm.app.widgets.knowledge import ContextSelectingCommands, ContextScreen
-from oterm.embeddings import VectorStore
+from oterm.embeddings import VectorStore, format_output
 
 
 class Author(Enum):
@@ -110,21 +110,15 @@ class ChatContainer(Widget):
             input.clear()
             input.focus()
             return
-
-        total_context = ""
-        sources = ""
-        for i, context_source in enumerate(self.contexts):
-            async for distance, source, context in context_source.get_nearest(message, n_nearest=3):
-                total_context = f"{total_context} Context {i + 1}) {context}\n" 
-
-        message = f"{total_context}\n{message}"
+        
+        message, chat_message = await format_output(self.contexts, message)
 
         async def response_task() -> None:
             input.clear()
 
             self.messages.append((Author.USER, message))
             user_chat_item = ChatItem()
-            user_chat_item.text = message
+            user_chat_item.text = chat_message
             user_chat_item.author = Author.USER
             message_container.mount(user_chat_item)
 
