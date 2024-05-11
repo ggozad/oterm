@@ -1,3 +1,37 @@
+### Adding RAG
+
+#### Why?
+I hate SEO. Usually, when trying to Google while developing I keep coming back to a couple of trusted sources of
+documentation, while the top search results are usually short blog posts barely scratching the surface of my question.
+I like Ollama, I like oterm and I wanted to test how it would be if I had local copies of the documentation which
+get fed into a local LLM.
+
+#### How?
+Install from source, preferably through [pipx](https://github.com/pypa/pipx). Aside from the `oterm` command, 
+it also exposes `rtfm-init`. This command takes in a directory and creates a database of text chunks and embeddings, which
+can later be linked into your chat session.
+
+To link it, press `CTRL+k` (keybind not shown in the footer due to space). This opens a screen where `+` adds a context source, 
+while `-` removes it. `ESC` exits the screen and these directories are then stored.
+
+When posting a query, top 3 chunks (by similarity) are fed alongside your query to the model.
+
+#### Tinkering
+I've tried to localize the changes and dependencies as much as possible. 
+`oterm.embeddings` contains code to generate the DB and embeddings (just a `np.memmap`).
+`oterm.app.widgets.knowledge` defines the extra screens to show when browsing for stores.
+Rest of the differences with oterm source is just integration for these two modules with the rest.
+
+[sentence-transformers](https://pypi.org/project/sentence-transformers/) is used to fetch the text embedding model,
+[inscriptis](https://pypi.org/project/inscriptis/) is to provide support with web pages,
+while [semantic-text-splitter](https://pypi.org/project/semantic-text-splitter/) is used for the chunking code.
+
+Huge thanks to the developers and maintainers of these projects.
+
+#### Final notes
+Probably won't update the RAG changes much, only if the API of dependencies changes somewhat. Other than that,
+I'll try to ensure that all the other changes in oterm are reflected in this fork.
+
 # oterm
 
 the text-based terminal client for [Ollama](https://github.com/jmorganca/ollama).
