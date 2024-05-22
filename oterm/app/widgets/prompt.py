@@ -16,6 +16,35 @@ from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.text_area import TextArea
 
 
+class PostableTextArea(TextArea):
+    """
+    A text area that submits on Enter.
+    """
+
+    BINDINGS = TextArea.BINDINGS + [
+        Binding(
+            key="enter",
+            action="submit",
+            description="submit",
+            show=True,
+            key_display=None,
+            priority=True,
+        ),
+    ]
+
+    @dataclass
+    class Submitted(Message):
+        input: "PostableTextArea"
+        value: str
+
+        @property
+        def control(self) -> "PostableTextArea":
+            return self.input
+
+    def action_submit(self) -> None:
+        self.post_message(PostableTextArea.Submitted(self, self.text))
+
+
 class PastableInput(Input):
     BINDINGS = Input.BINDINGS + [
         Binding(
@@ -136,6 +165,12 @@ class FlexibleInput(Widget):
         event.stop()
         event.prevent_default()
 
+    @on(PostableTextArea.Submitted, "#promptArea")
+    def on_textarea_submitted(self, event: PostableTextArea.Submitted):
+        self.post_message(self.Submitted(self, event.input.text))
+        event.stop()
+        event.prevent_default()
+
     @on(Button.Pressed, "#toggle-multiline")
     def on_toggle_multiline_pressed(self):
         self.toggle_multiline()
@@ -163,7 +198,7 @@ class FlexibleInput(Widget):
                 id="promptInput",
                 placeholder="Message Ollama…",
             )
-            yield TextArea(id="promptArea")
+            yield PostableTextArea(id="promptArea")
             with Horizontal(id="button-container"):
                 yield Button("post", id="post", variant="primary")
                 yield Button(
