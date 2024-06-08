@@ -30,6 +30,14 @@ class PostableTextArea(TextArea):
             key_display=None,
             priority=True,
         ),
+        Binding(
+            key="shift+enter",
+            action="newline",
+            description="newline",
+            show=True,
+            key_display=None,
+            priority=True,
+        ),
     ]
 
     @dataclass
@@ -43,6 +51,11 @@ class PostableTextArea(TextArea):
 
     def action_submit(self) -> None:
         self.post_message(PostableTextArea.Submitted(self, self.text))
+
+    def action_newline(self) -> None:
+        cur = self.cursor_location
+        self.text = self.text[: cur[0] + cur[1]] + "\n" + self.text[cur[0] + cur[1] :]
+        self.cursor_location = (cur[0] + 1, 0)
 
 
 class PastableInput(Input):
