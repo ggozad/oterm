@@ -29,7 +29,9 @@ class OTerm(App):
         return self.exit()
 
     def action_new_chat(self) -> None:
-        async def on_model_select(model_info: str) -> None:
+        async def on_model_select(model_info: str | None) -> None:
+            if model_info is None:
+                return
             model: dict = json.loads(model_info)
             print(model)
             tabs = self.query_one(TabbedContent)
@@ -71,19 +73,17 @@ class OTerm(App):
             tabs = self.query_one(TabbedContent)
             for id, name, model, context, system, format, keep_alive in saved_chats:
                 messages = await self.store.get_messages(id)
-                pane = TabPane(name, id=f"chat-{id}")
-                await pane.mount(
-                    ChatContainer(
-                        db_id=id,
-                        chat_name=name,
-                        model=model,
-                        context=context,
-                        messages=messages,  # type: ignore
-                        system=system,
-                        format=format,
-                        keep_alive=keep_alive,
-                    )
+                container = ChatContainer(
+                    db_id=id,
+                    chat_name=name,
+                    model=model,
+                    context=context,
+                    messages=messages,  # type: ignore
+                    system=system,
+                    format=format,
+                    keep_alive=keep_alive,
                 )
+                pane = TabPane(name, container, id=f"chat-{id}")
                 tabs.add_pane(pane)
         await self.push_screen(SplashScreen())
 

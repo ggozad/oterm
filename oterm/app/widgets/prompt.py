@@ -122,6 +122,8 @@ class FlexibleInput(Widget):
 
     def action_add_image(self) -> None:
         async def on_image_selected(image) -> None:
+            if image is None:
+                return
             path, b64 = image
             self.post_message(ImageAdded(path, b64))
 

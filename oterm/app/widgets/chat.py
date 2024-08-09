@@ -165,7 +165,9 @@ class ChatContainer(Widget):
             self.inference_task.cancel()
 
     async def action_edit_chat(self) -> None:
-        async def on_model_select(model_info: str) -> None:
+        async def on_model_select(model_info: str | None) -> None:
+            if model_info is None:
+                return
             model: dict = json.loads(model_info)
             self.system = model.get("system")
             self.format = model.get("format", "")
@@ -206,7 +208,9 @@ class ChatContainer(Widget):
         self.app.push_screen(screen)
 
     async def action_rename_chat(self) -> None:
-        async def on_chat_rename(name: str) -> None:
+        async def on_chat_rename(name: str | None) -> None:
+            if name is None:
+                return
             tabs = self.app.query_one(TabbedContent)
             await self.app.store.rename_chat(self.db_id, name)
             tabs.get_tab(f"chat-{self.db_id}").update(name)
@@ -221,7 +225,9 @@ class ChatContainer(Widget):
         tabs.remove_pane(tabs.active)
 
     async def action_history(self) -> None:
-        def on_history_selected(text: str) -> None:
+        def on_history_selected(text: str | None) -> None:
+            if text is None:
+                return
             prompt = self.query_one("#prompt", FlexibleInput)
             if "\n" in text and not prompt.is_multiline:
                 prompt.toggle_multiline()
