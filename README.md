@@ -46,6 +46,8 @@ The following keyboard shortcuts are supported:
 * <kbd>^ Ctrl</kbd>+<kbd>P</kbd> - select an image to include with the next message
 * <kbd>↑</kbd>     - navigate through history of previous prompts
 
+In multiline mode, you can press <kbd>Enter</kbd> to send the message, or <kbd>Shift</kbd>+<kbd>Enter</kbd> to add a new line at the cursor.
+
 While Ollama is inferring the next message, you can press <kbd>Esc</kbd> to cancel the inference.
 
 Note that some of the shortcuts may not work in a certain context, for example pressing <kbd>↑</kbd> while the prompt is in multi-line mode.
