@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.2.10 - 2024-08-09
+------------------- 
+
+- Enter posts while Shift+Enter injects a newline in the multiline-widget.
+  [ggozad]
+
+- Minor bug fixes & updates.
+  [ggozad]
+
 0.2.9 - 2024-05-03
 ------------------
 
