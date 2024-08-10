@@ -1,17 +1,17 @@
 import json
 from ast import literal_eval
-from typing import Any
 
+from ollama import Options
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Input, Label, OptionList, Pretty
+from textual.widgets import Button, Checkbox, Input, Label, OptionList
 
 from oterm.app.widgets.text_area import TextArea
-from oterm.ollama import OllamaLLM
+from oterm.ollamaclient import OllamaLLM
 
 
 class ChatEdit(ModalScreen[str]):
@@ -23,7 +23,7 @@ class ChatEdit(ModalScreen[str]):
     bytes: reactive[int] = reactive(0)
     model_info: dict[str, str] = {}
     system: reactive[str] = reactive("")
-    params: reactive[list[tuple[str, str]]] = reactive([])
+    params: reactive[Options] = reactive({})
     json_format: reactive[bool] = reactive(False)
     edit_mode: reactive[bool] = reactive(False)
     last_highlighted_index = None
@@ -50,9 +50,9 @@ class ChatEdit(ModalScreen[str]):
         )
         self.dismiss(result)
 
-    def _parse_model_params(self, parameter_text: str) -> list[tuple[str, Any]]:
+    def _parse_model_params(self, parameter_text: str) -> Options:
         lines = parameter_text.split("\n")
-        params = []
+        params = Options()
         for line in lines:
             if line:
                 key, value = line.split(maxsplit=1)
@@ -60,7 +60,13 @@ class ChatEdit(ModalScreen[str]):
                     value = literal_eval(value)
                 except (SyntaxError, ValueError):
                     pass
-                params.append((key, value))
+                if params.get(key):
+                    if not isinstance(params[key], list):
+                        params[key] = [params[key], value]
+                    else:
+                        params[key].append(value)
+                else:
+                    params[key] = value
         return params
 
     def action_cancel(self) -> None:
@@ -110,8 +116,8 @@ class ChatEdit(ModalScreen[str]):
                 self.model_info.get("parameters", "")
             )
             try:
-                widget = self.query_one(".parameters", Pretty)
-                widget.update(self.params)
+                widget = self.query_one(".parameters", TextArea)
+                widget.load_text(json.dumps(self.params, indent=2))
                 widget = self.query_one(".system", TextArea)
                 widget.load_text(self.system or self.model_info.get("system", ""))
             except NoMatches:
@@ -196,7 +202,7 @@ class ChatEdit(ModalScreen[str]):
                     yield Label("System:", classes="title")
                     yield TextArea("", classes="system log")
                     yield Label("Parameters:", classes="title")
-                    yield Pretty("", classes="parameters")
+                    yield TextArea("", classes="parameters log", language="python")
                     with Horizontal():
                         yield Checkbox(
                             "JSON output",

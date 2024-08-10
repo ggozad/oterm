@@ -25,7 +25,7 @@ from oterm.app.chat_rename import ChatRename
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
-from oterm.ollama import OllamaLLM
+from oterm.ollamaclient import OllamaLLM
 
 
 class Author(Enum):

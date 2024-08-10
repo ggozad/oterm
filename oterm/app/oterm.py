@@ -48,7 +48,6 @@ class OTerm(App):
             if model_info is None:
                 return
             model: dict = json.loads(model_info)
-            print(model)
             tabs = self.query_one(TabbedContent)
             tab_count = tabs.tab_count
             name = f"chat #{tab_count+1} - {model['name']}"

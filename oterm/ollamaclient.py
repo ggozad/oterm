@@ -1,6 +1,6 @@
 from typing import Any, AsyncGenerator, AsyncIterator, Literal, Mapping
 
-from ollama import AsyncClient, Client
+from ollama import AsyncClient, Client, Options
 
 from oterm.config import envConfig
 
@@ -12,6 +12,7 @@ class OllamaLLM:
         system: str | None = None,
         context: list[int] = [],
         format: Literal["", "json"] = "",
+        options: Options = Options(),
         keep_alive: int = 5,
     ):
         self.model = model
@@ -19,6 +20,7 @@ class OllamaLLM:
         self.context = context
         self.format = format
         self.keep_alive = keep_alive
+        self.options = options
 
     async def completion(self, prompt: str, images: list[str] = []) -> str:
         client = AsyncClient(
@@ -30,6 +32,7 @@ class OllamaLLM:
             context=self.context,
             system=self.system,  # type: ignore
             format=self.format,  # type: ignore
+            options=self.options,
             images=images,
             keep_alive=f"{self.keep_alive}m",
         )
@@ -48,6 +51,7 @@ class OllamaLLM:
             context=self.context,
             system=self.system,  # type: ignore
             format=self.format,  # type: ignore
+            options=self.options,
             images=images,
             stream=True,
             keep_alive=f"{self.keep_alive}m",
