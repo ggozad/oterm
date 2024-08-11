@@ -202,7 +202,7 @@ class ChatEdit(ModalScreen[str]):
                     yield Label("System:", classes="title")
                     yield TextArea("", classes="system log")
                     yield Label("Parameters:", classes="title")
-                    yield TextArea("", classes="parameters log", language="python")
+                    yield TextArea("", classes="parameters log", language="json")
                     with Horizontal():
                         yield Checkbox(
                             "JSON output",
