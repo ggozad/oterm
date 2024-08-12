@@ -1,6 +1,9 @@
 Changelog
 =========
 
+- Cycle saved chats with Ctrl+Tab and Ctrl+Shift+Tab
+  [yilmaz08]
+
 0.2.10 - 2024-08-09
 ------------------- 
 
