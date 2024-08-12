@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Literal
 
 import aiosqlite
+from ollama import Options
 from packaging.version import parse
 
 from oterm.app.widgets.chat import Author
@@ -123,7 +124,7 @@ class Store(object):
     async def get_chats(
         self,
     ) -> list[
-        tuple[int, str, str, list[int], str | None, Literal["", "json"], str, int]
+        tuple[int, str, str, list[int], str | None, Literal["", "json"], Options, int]
     ]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore
@@ -135,7 +136,7 @@ class Store(object):
                     json.loads(context),
                     system,
                     format,
-                    parameters,
+                    json.loads(parameters),
                     keep_alive,
                 )
                 for id, name, model, context, system, format, parameters, keep_alive in chats
@@ -145,7 +146,7 @@ class Store(object):
     async def get_chat(
         self, id
     ) -> (
-        tuple[int, str, str, list[int], str | None, Literal["", "json"], str, int]
+        tuple[int, str, str, list[int], str | None, Literal["", "json"], Options, int]
         | None
     ):
         async with aiosqlite.connect(self.db_path) as connection:
@@ -153,8 +154,16 @@ class Store(object):
             if chat:
                 chat = chat[0]
                 id, name, model, context, system, format, parameters, keep_alive = chat
-                context = json.loads(context)
-                return id, name, model, context, system, format, parameters, keep_alive
+                return (
+                    id,
+                    name,
+                    model,
+                    json.loads(context),
+                    system,
+                    format,
+                    json.loads(parameters),
+                    keep_alive,
+                )
 
     async def delete_chat(self, id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:

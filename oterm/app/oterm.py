@@ -58,7 +58,7 @@ class OTerm(App):
                 context="[]",
                 system=model["system"],
                 format=model["format"],
-                parameters="{}",
+                parameters=json.dumps(model["parameters"]),
                 keep_alive=model["keep_alive"],
             )
             pane = TabPane(name, id=f"chat-{id}")
@@ -69,6 +69,7 @@ class OTerm(App):
                     model=model["name"],
                     system=model["system"],
                     format=model["format"],
+                    parameters=model["parameters"],
                     keep_alive=model["keep_alive"],
                     messages=[],
                 )
@@ -105,6 +106,7 @@ class OTerm(App):
                     messages=messages,  # type: ignore
                     system=system,
                     format=format,
+                    parameters=parameters,
                     keep_alive=keep_alive,
                 )
                 pane = TabPane(name, container, id=f"chat-{id}")
