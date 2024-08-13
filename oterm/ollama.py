@@ -10,13 +10,13 @@ class OllamaLLM:
         self,
         model="nous-hermes:13b",
         system: str | None = None,
-        context: list[int] = [],
+        history: list[str] = [],
         format: Literal["", "json"] = "",
         keep_alive: int = 5,
     ):
         self.model = model
         self.system = system
-        self.context = context
+        self.history = history
         self.format = format
         self.keep_alive = keep_alive
 
@@ -24,17 +24,20 @@ class OllamaLLM:
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
         )
-        response: dict = await client.generate(
+        system_prompt = {"role": "system", "content": self.system}
+        user_prompt = {'role': 'user', 'content': prompt}
+        if images:
+            user_prompt['images'] = images
+        self.history.append(user_prompt)
+        response: dict = await client.chat(
             model=self.model,
-            prompt=prompt,
-            context=self.context,
-            system=self.system,  # type: ignore
-            format=self.format,  # type: ignore
-            images=images,
+            messages=[system_prompt] + self.history,
             keep_alive=f"{self.keep_alive}m",
+            format=self.format,
         )
-        self.context = response.get("context", [])
-        return response.get("response", "")
+        ollama_response = response.get("message", {}).get("content", "")
+        self.history.append({'role': 'assistant', 'content': ollama_response})
+        return ollama_response
 
     async def stream(
         self, prompt: str, images: list[str] = []
@@ -42,22 +45,25 @@ class OllamaLLM:
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
         )
-        stream: AsyncIterator[dict] = await client.generate(
+        system_prompt = {"role": "system", "content": self.system}
+        user_prompt = {'role': 'user', 'content': prompt}
+        if images:
+            user_prompt['images'] = images
+        self.history.append(user_prompt)
+        stream: AsyncIterator[dict] = await client.chat(
             model=self.model,
-            prompt=prompt,
-            context=self.context,
-            system=self.system,  # type: ignore
-            format=self.format,  # type: ignore
-            images=images,
+            messages=[system_prompt] + self.history,
             stream=True,
             keep_alive=f"{self.keep_alive}m",
+            format=self.format,
         )
         text = ""
         async for response in stream:
-            text = text + response.get("response", "")
-            if "context" in response:
-                self.context = response.get("context")
+            ollama_response = response.get("message", {}).get("content", "")
+            text = text + ollama_response
             yield text
+
+        self.history.append({'role': 'assistant', 'content': text})
 
     @staticmethod
     def list() -> Mapping[str, Any]:

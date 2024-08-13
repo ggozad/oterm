@@ -59,7 +59,6 @@ class ChatContainer(Widget):
         db_id: int,
         chat_name: str,
         model: str = "nous-hermes:13b",
-        context: list[int] = [],
         messages: list[tuple[Author, str]] = [],
         system: str | None = None,
         format: Literal["", "json"] = "",
@@ -69,11 +68,19 @@ class ChatContainer(Widget):
         super().__init__(*children, **kwargs)
         self.ollama = OllamaLLM(
             model=model,
-            context=context,
             system=system,
             format=format,
             keep_alive=keep_alive,
-        )  # We do this to reset the context
+            history=[],
+        )
+        
+        # load the history from messages
+        for author, message in messages:
+            if author == Author.USER:
+                self.ollama.history.append({"role": "user", "content": message})
+            elif author == Author.OLLAMA:
+                self.ollama.history.append({"role": "assistant", "content": message})
+        
         self.chat_name = chat_name
         self.db_id = db_id
         self.messages = messages
@@ -136,10 +143,6 @@ class ChatContainer(Widget):
                 self.images = []
 
                 # Save to db
-                await self.app.store.save_context(  # type: ignore
-                    id=self.db_id,
-                    context=json.dumps(self.ollama.context),
-                )
                 await self.app.store.save_message(  # type: ignore
                     chat_id=self.db_id,
                     author=Author.USER.value,
@@ -180,14 +183,21 @@ class ChatContainer(Widget):
                 format=model["format"],
                 keep_alive=model["keep_alive"],
             )
-            _, _, _, context, _, _, _ = await self.app.store.get_chat(self.db_id)
+            
             self.ollama = OllamaLLM(
                 model=model["name"],
-                context=context,
                 system=model["system"],
                 format=model["format"],
                 keep_alive=model["keep_alive"],
+                history=[],
             )
+
+            # load the history from messages
+            for author, message in self.messages:
+                if author == Author.USER:
+                    self.ollama.history.append({"role": "user", "content": message})
+                elif author == Author.OLLAMA:
+                    self.ollama.history.append({"role": "assistant", "content": message})
 
         screen = ChatEdit()
         screen.model_name = self.ollama.model

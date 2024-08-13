@@ -59,7 +59,6 @@ class Store(object):
         id: int | None,
         name: str,
         model: str,
-        context: str,
         system: str | None,
         format: Literal["", "json"],
         keep_alive: int,
@@ -70,7 +69,6 @@ class Store(object):
                 id=id,
                 name=name,
                 model=model,
-                context=context,
                 system=system,
                 format=format,
                 keep_alive=keep_alive,
@@ -78,15 +76,6 @@ class Store(object):
 
             await connection.commit()
             return res[0][0]
-
-    async def save_context(self, id: int, context: str) -> None:
-        async with aiosqlite.connect(self.db_path) as connection:
-            await chat_queries.save_context(  # type: ignore
-                connection,
-                id=id,
-                context=context,
-            )
-            await connection.commit()
 
     async def rename_chat(self, id: int, name: str) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
@@ -122,8 +111,8 @@ class Store(object):
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore
             chats = [
-                (id, name, model, json.loads(context), system, format, keep_alive)
-                for id, name, model, context, system, format, keep_alive in chats
+                (id, name, model, system, format, keep_alive)
+                for id, name, model, system, format, keep_alive in chats
             ]
             return chats
 
@@ -134,9 +123,9 @@ class Store(object):
             chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
             if chat:
                 chat = chat[0]
-                id, name, model, context, system, format, keep_alive = chat
-                context = json.loads(context)
-                return id, name, model, context, system, format, keep_alive
+                id, name, model, system, format, keep_alive = chat
+                
+                return id, name, model, system, format, keep_alive
 
     async def delete_chat(self, id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:

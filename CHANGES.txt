@@ -1,6 +1,9 @@
 Changelog
 =========
 
+- Use ollama chat instead of generate
+  [yilmaz08]
+
 - Cycle saved chats with Ctrl+Tab and Ctrl+Shift+Tab
   [yilmaz08]
 
