@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.3.0 -
+-------------------
+
+- Support customizing model parameters.
+  [ggozad]
+
 - Cycle saved chats with Ctrl+Tab and Ctrl+Shift+Tab
   [yilmaz08]
 

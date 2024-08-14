@@ -1,17 +1,16 @@
 import json
-from ast import literal_eval
-from typing import Any
 
+from ollama import Options
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Input, Label, OptionList, Pretty
+from textual.widgets import Button, Checkbox, Input, Label, OptionList
 
 from oterm.app.widgets.text_area import TextArea
-from oterm.ollama import OllamaLLM
+from oterm.ollamaclient import OllamaLLM, parse_ollama_parameters
 
 
 class ChatEdit(ModalScreen[str]):
@@ -23,7 +22,7 @@ class ChatEdit(ModalScreen[str]):
     bytes: reactive[int] = reactive(0)
     model_info: dict[str, str] = {}
     system: reactive[str] = reactive("")
-    params: reactive[list[tuple[str, str]]] = reactive([])
+    parameters: reactive[Options] = reactive({})
     json_format: reactive[bool] = reactive(False)
     edit_mode: reactive[bool] = reactive(False)
     last_highlighted_index = None
@@ -40,28 +39,30 @@ class ChatEdit(ModalScreen[str]):
         system = system if system != self.model_info.get("system", "") else None
         jsn = self.query_one(".json-format", Checkbox).value
         keep_alive = int(self.query_one(".keep-alive", Input).value)
+        p_area = self.query_one(".parameters", TextArea)
+        try:
+            parameters = json.loads(p_area.text)
+            if not isinstance(parameters, dict):
+                raise TypeError("Parameters must be a JSON object.")
+            if not set(parameters.keys()).issubset(set(Options.__annotations__.keys())):
+                raise TypeError(
+                    f"Parameters must be a subset of {Options.__annotations__.keys()}"
+                )
+        except (json.JSONDecodeError, TypeError):
+            p_area = self.query_one(".parameters", TextArea)
+            p_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
+            return
+
         result = json.dumps(
             {
                 "name": model,
                 "system": system,
                 "format": "json" if jsn else "",
                 "keep_alive": keep_alive,
+                "parameters": parameters,
             }
         )
         self.dismiss(result)
-
-    def _parse_model_params(self, parameter_text: str) -> list[tuple[str, Any]]:
-        lines = parameter_text.split("\n")
-        params = []
-        for line in lines:
-            if line:
-                key, value = line.split(maxsplit=1)
-                try:
-                    value = literal_eval(value)
-                except (SyntaxError, ValueError):
-                    pass
-                params.append((key, value))
-        return params
 
     def action_cancel(self) -> None:
         self.dismiss()
@@ -106,12 +107,13 @@ class ChatEdit(ModalScreen[str]):
             self.bytes = model_meta["size"]
 
             self.model_info = self.models_info[model_meta["name"]]
-            self.params = self._parse_model_params(
-                self.model_info.get("parameters", "")
-            )
+            if not self.edit_mode:
+                self.parameters = parse_ollama_parameters(
+                    self.model_info.get("parameters", "")
+                )
             try:
-                widget = self.query_one(".parameters", Pretty)
-                widget.update(self.params)
+                widget = self.query_one(".parameters", TextArea)
+                widget.load_text(json.dumps(self.parameters, indent=2))
                 widget = self.query_one(".system", TextArea)
                 widget.load_text(self.system or self.model_info.get("system", ""))
             except NoMatches:
@@ -174,6 +176,13 @@ class ChatEdit(ModalScreen[str]):
         except NoMatches:
             pass
 
+    def watch_parameters(self, parameters: Options) -> None:
+        try:
+            widget = self.query_one(".parameters", TextArea)
+            widget.load_text(json.dumps(parameters, indent=2))
+        except NoMatches:
+            pass
+
     def watch_edit_mode(self, edit_mode: bool) -> None:
         try:
             widget = self.query_one("#model-select", OptionList)
@@ -196,7 +205,7 @@ class ChatEdit(ModalScreen[str]):
                     yield Label("System:", classes="title")
                     yield TextArea("", classes="system log")
                     yield Label("Parameters:", classes="title")
-                    yield Pretty("", classes="parameters")
+                    yield TextArea("", classes="parameters log", language="json")
                     with Horizontal():
                         yield Checkbox(
                             "JSON output",

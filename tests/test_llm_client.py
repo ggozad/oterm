@@ -1,7 +1,7 @@
 import pytest
 from ollama import ResponseError
 
-from oterm.ollama import OllamaLLM
+from oterm.ollamaclient import OllamaLLM
 
 
 @pytest.mark.asyncio
