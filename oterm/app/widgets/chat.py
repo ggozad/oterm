@@ -25,7 +25,7 @@ from oterm.app.chat_rename import ChatRename
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
-from oterm.ollama import OllamaLLM
+from oterm.ollamaclient import OllamaLLM, Options
 
 
 class Author(Enum):
@@ -39,6 +39,7 @@ class ChatContainer(Widget):
     chat_name: str
     system: str | None
     format: Literal["", "json"]
+    parameters: Options
     keep_alive: int = 5
     images: list[tuple[Path, str]] = []
 
@@ -62,6 +63,7 @@ class ChatContainer(Widget):
         messages: list[tuple[Author, str]] = [],
         system: str | None = None,
         format: Literal["", "json"] = "",
+        parameters: Options,
         keep_alive: int = 5,
         **kwargs,
     ) -> None:
@@ -70,6 +72,7 @@ class ChatContainer(Widget):
             model=model,
             system=system,
             format=format,
+            options=parameters,
             keep_alive=keep_alive,
             history=[],
         )
@@ -86,6 +89,7 @@ class ChatContainer(Widget):
         self.messages = messages
         self.system = system
         self.format = format
+        self.parameters = parameters
         self.keep_alive = keep_alive
         self.loaded = False
 
@@ -181,6 +185,7 @@ class ChatContainer(Widget):
                 name=self.chat_name,
                 system=model["system"],
                 format=model["format"],
+                parameters=json.dumps(model["parameters"]),
                 keep_alive=model["keep_alive"],
             )
             
@@ -188,6 +193,7 @@ class ChatContainer(Widget):
                 model=model["name"],
                 system=model["system"],
                 format=model["format"],
+                options=model["parameters"],
                 keep_alive=model["keep_alive"],
                 history=[],
             )
@@ -210,6 +216,7 @@ class ChatContainer(Widget):
             screen.system = self.system
         screen.json_format = self.format == "json"
         screen.keep_alive = self.keep_alive
+        screen.parameters = self.parameters
 
     async def action_export(self) -> None:
         screen = ChatExport()

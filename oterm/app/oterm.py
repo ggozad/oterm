@@ -48,7 +48,6 @@ class OTerm(App):
             if model_info is None:
                 return
             model: dict = json.loads(model_info)
-            print(model)
             tabs = self.query_one(TabbedContent)
             tab_count = tabs.tab_count
             name = f"chat #{tab_count+1} - {model['name']}"
@@ -58,6 +57,7 @@ class OTerm(App):
                 model=model["name"],
                 system=model["system"],
                 format=model["format"],
+                parameters=json.dumps(model["parameters"]),
                 keep_alive=model["keep_alive"],
             )
             pane = TabPane(name, id=f"chat-{id}")
@@ -68,6 +68,7 @@ class OTerm(App):
                     model=model["name"],
                     system=model["system"],
                     format=model["format"],
+                    parameters=model["parameters"],
                     keep_alive=model["keep_alive"],
                     messages=[],
                 )
@@ -85,7 +86,7 @@ class OTerm(App):
             self.action_new_chat()
         else:
             tabs = self.query_one(TabbedContent)
-            for id, name, model, system, format, keep_alive in saved_chats:
+            for id, name, model, system, format, parameters, keep_alive in saved_chats:
                 messages = await self.store.get_messages(id)
                 container = ChatContainer(
                     db_id=id,
@@ -94,6 +95,7 @@ class OTerm(App):
                     messages=messages,  # type: ignore
                     system=system,
                     format=format,
+                    parameters=parameters,
                     keep_alive=keep_alive,
                 )
                 pane = TabPane(name, container, id=f"chat-{id}")

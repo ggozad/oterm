@@ -1,6 +1,7 @@
+from ast import literal_eval
 from typing import Any, AsyncGenerator, AsyncIterator, Literal, Mapping
 
-from ollama import AsyncClient, Client
+from ollama import AsyncClient, Client, Options
 
 from oterm.config import envConfig
 
@@ -12,6 +13,7 @@ class OllamaLLM:
         system: str | None = None,
         history: list[str] = [],
         format: Literal["", "json"] = "",
+        options: Options = Options(),
         keep_alive: int = 5,
     ):
         self.model = model
@@ -19,6 +21,7 @@ class OllamaLLM:
         self.history = history
         self.format = format
         self.keep_alive = keep_alive
+        self.options = options
 
     async def completion(self, prompt: str, images: list[str] = []) -> str:
         client = AsyncClient(
@@ -33,6 +36,7 @@ class OllamaLLM:
             model=self.model,
             messages=[system_prompt] + self.history,
             keep_alive=f"{self.keep_alive}m",
+	    options=self.options,
             format=self.format,
         )
         ollama_response = response.get("message", {}).get("content", "")
@@ -54,6 +58,7 @@ class OllamaLLM:
             model=self.model,
             messages=[system_prompt] + self.history,
             stream=True,
+	    options=self.options,
             keep_alive=f"{self.keep_alive}m",
             format=self.format,
         )
@@ -74,3 +79,23 @@ class OllamaLLM:
     def show(model: str) -> Mapping[str, Any]:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
         return client.show(model)
+
+
+def parse_ollama_parameters(parameter_text: str) -> Options:
+    lines = parameter_text.split("\n")
+    params = Options()
+    for line in lines:
+        if line:
+            key, value = line.split(maxsplit=1)
+            try:
+                value = literal_eval(value)
+            except (SyntaxError, ValueError):
+                pass
+            if params.get(key):
+                if not isinstance(params[key], list):
+                    params[key] = [params[key], value]
+                else:
+                    params[key].append(value)
+            else:
+                params[key] = value
+    return params
