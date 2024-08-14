@@ -1,5 +1,4 @@
 import json
-from ast import literal_eval
 
 from ollama import Options
 from rich.text import Text
@@ -11,7 +10,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, OptionList
 
 from oterm.app.widgets.text_area import TextArea
-from oterm.ollamaclient import OllamaLLM
+from oterm.ollamaclient import OllamaLLM, parse_ollama_parameters
 
 
 class ChatEdit(ModalScreen[str]):
@@ -65,25 +64,6 @@ class ChatEdit(ModalScreen[str]):
         )
         self.dismiss(result)
 
-    def _parse_model_params(self, parameter_text: str) -> Options:
-        lines = parameter_text.split("\n")
-        params = Options()
-        for line in lines:
-            if line:
-                key, value = line.split(maxsplit=1)
-                try:
-                    value = literal_eval(value)
-                except (SyntaxError, ValueError):
-                    pass
-                if params.get(key):
-                    if not isinstance(params[key], list):
-                        params[key] = [params[key], value]
-                    else:
-                        params[key].append(value)
-                else:
-                    params[key] = value
-        return params
-
     def action_cancel(self) -> None:
         self.dismiss()
 
@@ -128,7 +108,7 @@ class ChatEdit(ModalScreen[str]):
 
             self.model_info = self.models_info[model_meta["name"]]
             if not self.edit_mode:
-                self.parameters = self._parse_model_params(
+                self.parameters = parse_ollama_parameters(
                     self.model_info.get("parameters", "")
                 )
             try:

@@ -1,3 +1,4 @@
+from ast import literal_eval
 from typing import Any, AsyncGenerator, AsyncIterator, Literal, Mapping
 
 from ollama import AsyncClient, Client, Options
@@ -72,3 +73,23 @@ class OllamaLLM:
     def show(model: str) -> Mapping[str, Any]:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
         return client.show(model)
+
+
+def parse_ollama_parameters(parameter_text: str) -> Options:
+    lines = parameter_text.split("\n")
+    params = Options()
+    for line in lines:
+        if line:
+            key, value = line.split(maxsplit=1)
+            try:
+                value = literal_eval(value)
+            except (SyntaxError, ValueError):
+                pass
+            if params.get(key):
+                if not isinstance(params[key], list):
+                    params[key] = [params[key], value]
+                else:
+                    params[key].append(value)
+            else:
+                params[key] = value
+    return params
