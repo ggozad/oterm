@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.3.1 - 2024-08-14
+------------------
+
+- Remove dependency on tree-sitter, tree-sitter-languages since they require pre-compiled wheels.
+  [ggozad]
+
 0.3.0 - 2024-08-14
 ------------------
 
