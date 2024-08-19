@@ -1,8 +1,11 @@
 Changelog
 =========
 
-- Use ollama chat instead of generate
-  [yilmaz08]
+0.4.0 -
+------------------
+
+- Use stored messages and chat API instead of context and generate API.
+  [yilmaz08, ggozad]
 
 0.3.1 - 2024-08-14
 ------------------

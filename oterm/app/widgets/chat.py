@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 import pyperclip
+from ollama import Message
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -68,22 +69,25 @@ class ChatContainer(Widget):
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
+
+        history: list[Message] = [
+            (
+                {"role": "user", "content": message}
+                if author == Author.USER
+                else {"role": "assistant", "content": message}
+            )
+            for author, message in messages
+        ]
+
         self.ollama = OllamaLLM(
             model=model,
             system=system,
             format=format,
             options=parameters,
             keep_alive=keep_alive,
-            history=[],
+            history=history,
         )
-        
-        # load the history from messages
-        for author, message in messages:
-            if author == Author.USER:
-                self.ollama.history.append({"role": "user", "content": message})
-            elif author == Author.OLLAMA:
-                self.ollama.history.append({"role": "assistant", "content": message})
-        
+
         self.chat_name = chat_name
         self.db_id = db_id
         self.messages = messages
@@ -188,22 +192,25 @@ class ChatContainer(Widget):
                 parameters=json.dumps(model["parameters"]),
                 keep_alive=model["keep_alive"],
             )
-            
+
+            # load the history from messages
+            history: list[Message] = [
+                (
+                    {"role": "user", "content": message}
+                    if author == Author.USER
+                    else {"role": "assistant", "content": message}
+                )
+                for author, message in self.messages
+            ]
+
             self.ollama = OllamaLLM(
                 model=model["name"],
                 system=model["system"],
                 format=model["format"],
                 options=model["parameters"],
                 keep_alive=model["keep_alive"],
-                history=[],
+                history=history,
             )
-
-            # load the history from messages
-            for author, message in self.messages:
-                if author == Author.USER:
-                    self.ollama.history.append({"role": "user", "content": message})
-                elif author == Author.OLLAMA:
-                    self.ollama.history.append({"role": "assistant", "content": message})
 
         screen = ChatEdit()
         screen.model_name = self.ollama.model

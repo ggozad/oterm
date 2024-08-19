@@ -5,7 +5,7 @@ the text-based terminal client for [Ollama](https://github.com/jmorganca/ollama)
 ## Features
 
 * intuitive and simple terminal UI, no need to run servers, frontends, just type `oterm` in your terminal.
-* multiple persistent chat sessions, stored together with the context embeddings and system prompt customizations in sqlite.
+* multiple persistent chat sessions, stored together with system prompt & parameter customizations in sqlite.
 * can use any of the models you have pulled in Ollama, or your own custom models.
 * allows for easy customization of the model's system prompt and parameters.
 
@@ -78,7 +78,7 @@ For most terminals there exists a key modifier you can use to click and drag to 
 
 When creating a new chat, you may not only select the model, but also customize the the `system` instruction as well as the `parameters` (such as context length, seed, temperature etc) passed to the model. For a list of all supported parameters refer to the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values). Checking the `JSON output` checkbox will force the model to reply in JSON format. Please note that `oterm` will not (yet) pull models for you, use `ollama` to do that. All the models you have pulled or created will be available to `oterm`.
 
-You can also "edit" the chat to change the system prompt, parameters or format. Note, that the model cannot be changed once the chat has started. In addition whatever "context" the chat had (an embedding of the previous messages) will be kept.
+You can also "edit" the chat to change the system prompt, parameters or format. Note, that the model cannot be changed once the chat has started.
 
 ### Chat session storage
 
