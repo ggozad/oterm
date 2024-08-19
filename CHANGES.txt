@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.4.0 -
+0.4.0 - 2024-08-19
 ------------------
 
 - Use stored messages and chat API instead of context and generate API.
