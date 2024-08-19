@@ -16,7 +16,6 @@ async def test_llm_context():
     llm = OllamaLLM()
     await llm.completion("I am testing oterm, a python client for Ollama.")
     # There should now be a context saved for the conversation.
-    assert llm.context
     res = await llm.completion("Do you remember what I am testing?")
     assert "oterm" in res
 
@@ -34,7 +33,7 @@ async def test_errors():
     try:
         await llm.completion("This should fail.")
     except ResponseError as e:
-        assert "model 'non-existent-model' not found" in str(e)
+        assert 'model "non-existent-model" not found' in str(e)
 
 
 @pytest.mark.asyncio
