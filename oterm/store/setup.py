@@ -6,7 +6,6 @@ CREATE TABLE IF NOT EXISTS "chat" (
 	"id"		INTEGER,
 	"name"		TEXT,
 	"model"		TEXT NOT NULL,
-	"context"	TEXT NOT NULL,
 	"system"	TEXT,
 	"format"	TEXT,
 	"parameters"	TEXT,

@@ -60,7 +60,6 @@ class Store(object):
         id: int | None,
         name: str,
         model: str,
-        context: str,
         system: str | None,
         format: Literal["", "json"],
         parameters: str,
@@ -72,7 +71,6 @@ class Store(object):
                 id=id,
                 name=name,
                 model=model,
-                context=context,
                 system=system,
                 format=format,
                 parameters=parameters,
@@ -81,15 +79,6 @@ class Store(object):
 
             await connection.commit()
             return res[0][0]
-
-    async def save_context(self, id: int, context: str) -> None:
-        async with aiosqlite.connect(self.db_path) as connection:
-            await chat_queries.save_context(  # type: ignore
-                connection,
-                id=id,
-                context=context,
-            )
-            await connection.commit()
 
     async def rename_chat(self, id: int, name: str) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
@@ -124,7 +113,7 @@ class Store(object):
     async def get_chats(
         self,
     ) -> list[
-        tuple[int, str, str, list[int], str | None, Literal["", "json"], Options, int]
+        tuple[int, str, str, str | None, Literal["", "json"], Options, int]
     ]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore
@@ -133,32 +122,30 @@ class Store(object):
                     id,
                     name,
                     model,
-                    json.loads(context),
                     system,
                     format,
                     json.loads(parameters),
                     keep_alive,
                 )
-                for id, name, model, context, system, format, parameters, keep_alive in chats
+                for id, name, model, system, format, parameters, keep_alive in chats
             ]
             return chats
 
     async def get_chat(
         self, id
     ) -> (
-        tuple[int, str, str, list[int], str | None, Literal["", "json"], Options, int]
+        tuple[int, str, str, str | None, Literal["", "json"], Options, int]
         | None
     ):
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
             if chat:
                 chat = chat[0]
-                id, name, model, context, system, format, parameters, keep_alive = chat
+                id, name, model, system, format, parameters, keep_alive = chat
                 return (
                     id,
                     name,
                     model,
-                    json.loads(context),
                     system,
                     format,
                     json.loads(parameters),

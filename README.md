@@ -18,6 +18,12 @@ brew tap ggozad/formulas
 brew install ggozad/formulas/oterm
 ```
 
+Using `yay` (or any AUR helper) for Arch Linux:
+
+```bash
+yay -S oterm
+```
+
 Using `pip`:
 
 ```bash

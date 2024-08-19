@@ -1,6 +1,9 @@
 Changelog
 =========
 
+- Use ollama chat instead of generate
+  [yilmaz08]
+
 0.3.1 - 2024-08-14
 ------------------
 
