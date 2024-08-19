@@ -81,7 +81,7 @@ class OTerm(App):
     async def on_mount(self) -> None:
         self.store = await Store.create()
         self.dark = appConfig.get("theme") == "dark"
-        saved_chats = await self.store.get_chats()  # type: ignore
+        saved_chats = await self.store.get_chats()
         if not saved_chats:
             self.action_new_chat()
         else:
@@ -92,7 +92,7 @@ class OTerm(App):
                     db_id=id,
                     chat_name=name,
                     model=model,
-                    messages=messages,  # type: ignore
+                    messages=messages,
                     system=system,
                     format=format,
                     parameters=parameters,

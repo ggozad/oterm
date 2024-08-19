@@ -1,7 +1,13 @@
 from ast import literal_eval
-from typing import Any, AsyncGenerator, AsyncIterator, Literal, Mapping
+from typing import (
+    Any,
+    AsyncGenerator,
+    AsyncIterator,
+    Literal,
+    Mapping,
+)
 
-from ollama import AsyncClient, Client, Options
+from ollama import AsyncClient, Client, Message, Options
 
 from oterm.config import envConfig
 
@@ -11,7 +17,7 @@ class OllamaLLM:
         self,
         model="nous-hermes:13b",
         system: str | None = None,
-        history: list[str] = [],
+        history: list[Message] = [],
         format: Literal["", "json"] = "",
         options: Options = Options(),
         keep_alive: int = 5,
@@ -23,24 +29,27 @@ class OllamaLLM:
         self.keep_alive = keep_alive
         self.options = options
 
+        if system:
+            system_prompt: Message = {"role": "system", "content": system}
+            self.history = [system_prompt] + self.history
+
     async def completion(self, prompt: str, images: list[str] = []) -> str:
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
         )
-        system_prompt = {"role": "system", "content": self.system}
-        user_prompt = {'role': 'user', 'content': prompt}
+        user_prompt: Message = {"role": "user", "content": prompt}
         if images:
-            user_prompt['images'] = images
+            user_prompt["images"] = images
         self.history.append(user_prompt)
-        response: dict = await client.chat(
+        response = await client.chat(
             model=self.model,
-            messages=[system_prompt] + self.history,
+            messages=self.history,
             keep_alive=f"{self.keep_alive}m",
-	    options=self.options,
-            format=self.format,
+            options=self.options,
+            format=self.format,  # type: ignore
         )
         ollama_response = response.get("message", {}).get("content", "")
-        self.history.append({'role': 'assistant', 'content': ollama_response})
+        self.history.append({"role": "assistant", "content": ollama_response})
         return ollama_response
 
     async def stream(
@@ -49,18 +58,18 @@ class OllamaLLM:
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
         )
-        system_prompt = {"role": "system", "content": self.system}
-        user_prompt = {'role': 'user', 'content': prompt}
+        user_prompt: Message = {"role": "user", "content": prompt}
         if images:
-            user_prompt['images'] = images
+            user_prompt["images"] = images
         self.history.append(user_prompt)
+
         stream: AsyncIterator[dict] = await client.chat(
             model=self.model,
-            messages=[system_prompt] + self.history,
+            messages=self.history,
             stream=True,
-	    options=self.options,
+            options=self.options,
             keep_alive=f"{self.keep_alive}m",
-            format=self.format,
+            format=self.format,  # type: ignore
         )
         text = ""
         async for response in stream:
@@ -68,7 +77,7 @@ class OllamaLLM:
             text = text + ollama_response
             yield text
 
-        self.history.append({'role': 'assistant', 'content': text})
+        self.history.append({"role": "assistant", "content": text})
 
     @staticmethod
     def list() -> Mapping[str, Any]:

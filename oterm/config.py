@@ -44,7 +44,7 @@ class EnvConfig:
             # Cast env var value to expected type and raise AppConfigError on failure
             try:
                 var_type = get_type_hints(EnvConfig)[field]
-                if var_type == bool:
+                if var_type is bool:
                     value = _parse_bool(env.get(field, default_value))
                 elif var_type == list[str]:
                     value = env.get(field)
