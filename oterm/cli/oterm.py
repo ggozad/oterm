@@ -2,6 +2,7 @@ import asyncio
 from importlib import metadata
 
 import typer
+from rich.pretty import pprint
 
 from oterm.app.oterm import app
 from oterm.config import envConfig
@@ -18,6 +19,7 @@ async def upgrade_db():
 def oterm(
     version: bool = typer.Option(None, "--version", "-v"),
     upgrade: bool = typer.Option(None, "--upgrade"),
+    config: bool = typer.Option(None, "--config"),
     sqlite: bool = typer.Option(None, "--db"),
 ):
     if version:
@@ -28,6 +30,9 @@ def oterm(
         exit(0)
     if sqlite:
         typer.echo(envConfig.OTERM_DATA_DIR / "store.db")
+        exit(0)
+    if config:
+        typer.echo(pprint(envConfig))
         exit(0)
     app.run()
 
