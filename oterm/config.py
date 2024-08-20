@@ -26,7 +26,7 @@ class EnvConfig:
     """
 
     ENV: str = "development"
-    OLLAMA_HOST: str = "0.0.0.0:11434"
+    OLLAMA_HOST: str = "127.0.0.1:11434"
     OLLAMA_URL: str = ""
     OTERM_VERIFY_SSL: bool = True
     OTERM_DATA_DIR: Path = get_default_data_dir()
