@@ -9,11 +9,10 @@ from textual.css.query import NoMatches
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Button, Input
+from textual.widgets import Button, Input, TextArea
 
 from oterm.app.image_browser import ImageSelect
 from oterm.app.widgets.image import ImageAdded
-from oterm.app.widgets.text_area import TextArea
 
 
 class PostableTextArea(TextArea):
