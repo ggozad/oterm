@@ -15,7 +15,7 @@ from oterm.config import envConfig
 class OllamaLLM:
     def __init__(
         self,
-        model="nous-hermes:13b",
+        model="llama3.1",
         system: str | None = None,
         history: list[Message] = [],
         format: Literal["", "json"] = "",

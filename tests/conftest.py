@@ -10,9 +10,9 @@ from PIL import Image
 @pytest_asyncio.fixture(autouse=True)
 async def load_test_models():
     try:
-        ollama.show("nous-hermes:13b")
+        ollama.show("llama3.1")
     except ollama.ResponseError:
-        ollama.pull("nous-hermes:13b")
+        ollama.pull("llama3.1")
     yield
 
 

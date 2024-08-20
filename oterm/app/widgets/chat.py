@@ -60,7 +60,7 @@ class ChatContainer(Widget):
         *children: Widget,
         db_id: int,
         chat_name: str,
-        model: str = "nous-hermes:13b",
+        model: str = "llama3.1",
         messages: list[tuple[Author, str]] = [],
         system: str | None = None,
         format: Literal["", "json"] = "",
