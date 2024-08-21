@@ -7,16 +7,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-      - uses: abatilo/actions-poetry@v2
-      - run: poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
+      - uses: actions/checkout@v4
+      - name: Set up uv
+        run: curl -LsSf https://astral.sh/uv/0.3.0/install.sh | sh
+      - name: Set up Python 3.10
+        run: uv python install 3.10
+      - name: Build package
+        run: uvx --from build pyproject-build --installer uv
       - name: Publish package
-        run: poetry publish --build
-    # For testing locally, replace pypi with testpypi
-    #   - run: poetry config repositories.testpypi https://test.pypi.org/legacy/
-    #   - run: poetry config pypi-token.testpypi ${{ secrets.PYPI_API_TOKEN }}
-    #   - name: Publish package
-    #     run: poetry publish --build -r testpypi
+        run: uvx twine upload -u __token__ -p ${{ secrets.PYPI_API_TOKEN }} dist/* --non-interactive
