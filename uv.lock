@@ -551,7 +551,6 @@ dependencies = [
     { name = "pyperclip" },
     { name = "python-dotenv" },
     { name = "rich-pixels" },
-    { name = "ruff" },
     { name = "textual" },
     { name = "typer" },
 ]
@@ -576,7 +575,6 @@ requires-dist = [
     { name = "pyperclip", specifier = ">=1.9.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "rich-pixels", specifier = ">=3.0.1" },
-    { name = "ruff", specifier = ">=0.6.1" },
     { name = "textual", specifier = ">=0.76.0" },
     { name = "typer", specifier = ">=0.12.4" },
 ]

@@ -20,7 +20,6 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "ruff>=0.6.1",
     "textual>=0.76.0",
     "typer>=0.12.4",
     "python-dotenv>=1.0.1",
@@ -40,10 +39,6 @@ Issues = "https://github.com/ggozad/oterm/issues"
 
 [project.scripts]
 oterm = "oterm.cli.oterm:cli"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = [
@@ -78,3 +73,7 @@ exclude = [
     "dist",
     "venv",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
