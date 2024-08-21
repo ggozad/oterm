@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.4.3 - 
+------------------
+
+- Migrate to using uv instead of poetry for packaging/dependency management.
+  [ggozad]
+
 0.4.2 - 2024-08-20
 ------------------
 

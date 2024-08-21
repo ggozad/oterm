@@ -1,12 +1,10 @@
-[tool.poetry]
+[project]
 name = "oterm"
 version = "0.4.2"
 description = "A text-based terminal client for Ollama."
-authors = ["Yiorgis Gozadinos <ggozadinos@gmail.com>"]
-homepage = "https://github.com/ggozad/oterm"
-repository = "https://github.com/ggozad/oterm"
-license = "MIT"
-readme = "README.md"
+authors = [{ name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }]
+license = { text = "MIT" }
+readme = { file = "README.md", content-type = "text/markdown" }
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
@@ -20,38 +18,51 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Typing :: Typed",
 ]
+requires-python = ">=3.10"
+dependencies = [
+    "ruff>=0.6.1",
+    "textual>=0.76.0",
+    "typer>=0.12.4",
+    "python-dotenv>=1.0.1",
+    "aiosql>=11.1",
+    "aiosqlite>=0.20.0",
+    "pyperclip>=1.9.0",
+    "packaging>=24.1",
+    "rich-pixels>=3.0.1",
+    "pillow>=10.4.0",
+    "ollama>=0.3.1",
+]
 
-[tool.poetry.scripts]
+[project.urls]
+Homepage = "https://github.com/ggozad/oterm"
+Repository = "https://github.com/ggozad/oterm"
+Issues = "https://github.com/ggozad/oterm/issues"
+
+[project.scripts]
 oterm = "oterm.cli.oterm:cli"
 
-[tool.poetry.urls]
-"Bug Tracker" = "https://github.com/ggozad/oterm/issues"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-textual = { version = "^0.76.0" }
-typer = "^0.12.3"
-python-dotenv = "^1.0.1"
-aiosql = "^10.4"
-aiosqlite = "^0.20.0"
-pyperclip = "^1.9.0"
-packaging = "^24.0"
-rich-pixels = "^3.0.1"
-pillow = "^10.4.0"
-ollama = "^0.3.1"
-
-[tool.poetry.group.dev.dependencies]
-pdbpp = "^0.10.3"
-pytest = "^8.3.2"
-pytest-asyncio = "^0.23.8"
-textual-dev = "^1.5.1"
-ruff = "^0.5.7"
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.6.1",
+    "pdbpp",
+    "pytest>=8.3.2",
+    "pytest-asyncio>=0.23.8",
+    "textual-dev>=1.5.1",
+    "homebrew-pypi-poet>=0.10.0",
+]
 
 [tool.ruff]
 line-length = 88
 # Enable Flake's "E" and "F" codes by default and "I" for sorting imports.
 lint.select = ["E", "F", "I"]
-lint.ignore = ["E501", "E741"] # E741 should not be ignored
+lint.ignore = ["E501", "E741"]                               # E741 should not be ignored
+lint.per-file-ignores = { "__init__.py" = ["F401", "F403"] }
+# Allow unused variables when underscore-prefixed.
+lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # Exclude a variety of commonly ignored directories.
 exclude = [
     ".direnv",
@@ -67,12 +78,3 @@ exclude = [
     "dist",
     "venv",
 ]
-lint.per-file-ignores = { "__init__.py" = ["F401", "F403"] }
-# Allow unused variables when underscore-prefixed.
-lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
-# Assume Python 3.10.
-target-version = "py310"
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
