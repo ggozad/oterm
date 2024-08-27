@@ -41,7 +41,7 @@ class ChatExport(ModalScreen[str]):
         messages: Sequence[tuple[Author, str]] = await self.app.store.get_messages(
             self.chat_id
         )
-        with open(event.value, "w") as file:
+        with open(event.value, "w", encoding="utf-8") as file:
             for message in messages:
                 author, text = message
                 file.write(f"*{author.value}*\n")
