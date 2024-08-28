@@ -1,8 +1,11 @@
 Changelog
 =========
 
-0.4.3 - 
+0.4.3 -
 ------------------
+
+- Force utf-8 when exporting messages to a file.
+  [ggozad]
 
 - Migrate to using uv instead of poetry for packaging/dependency management.
   [ggozad]
