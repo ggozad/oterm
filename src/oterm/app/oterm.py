@@ -1,7 +1,9 @@
 import json
+from typing import Iterable
 
 from textual import on
-from textual.app import App, ComposeResult
+from textual.app import App, ComposeResult, SystemCommand
+from textual.screen import Screen
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat_edit import ChatEdit
@@ -23,6 +25,9 @@ class OTerm(App):
         ("ctrl+q", "quit", "quit"),
     ]
     COMMAND_PALETTE_BINDING = "ctrl+backslash"
+
+    def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
+        yield from super().get_system_commands(screen)
 
     def action_toggle_dark(self) -> None:
         self.dark = not self.dark
