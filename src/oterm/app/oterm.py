@@ -1,7 +1,7 @@
 import json
 from typing import Iterable
 
-from textual import on
+from textual import on, work
 from textual.app import App, ComposeResult, SystemCommand
 from textual.screen import Screen
 from textual.widgets import Footer, Header, TabbedContent, TabPane
@@ -18,20 +18,14 @@ class OTerm(App):
     SUB_TITLE = "A terminal-based Ollama client."
     CSS_PATH = "oterm.tcss"
     BINDINGS = [
-        ("ctrl+n", "new_chat", "new"),
         ("ctrl+tab", "cycle_chat(+1)", "next chat"),
         ("ctrl+shift+tab", "cycle_chat(-1)", "prev chat"),
-        ("ctrl+t", "toggle_dark", "toggle theme"),
         ("ctrl+q", "quit", "quit"),
     ]
-    COMMAND_PALETTE_BINDING = "ctrl+backslash"
 
     def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
         yield from super().get_system_commands(screen)
-
-    def action_toggle_dark(self) -> None:
-        self.dark = not self.dark
-        appConfig.set("theme", "dark" if self.dark else "light")
+        yield SystemCommand("New chat", "Creates a new chat", self.action_new_chat)
 
     async def action_quit(self) -> None:
         return self.exit()
@@ -50,41 +44,41 @@ class OTerm(App):
                 tabs.active = f"chat-{next_id}"
                 break
 
-    def action_new_chat(self) -> None:
-        async def on_model_select(model_info: str | None) -> None:
-            store = await Store.get_store()
-            if model_info is None:
-                return
-            model: dict = json.loads(model_info)
-            tabs = self.query_one(TabbedContent)
-            tab_count = tabs.tab_count
-            name = f"chat #{tab_count+1} - {model['name']}"
-            id = await store.save_chat(
-                id=None,
-                name=name,
+    @work
+    async def action_new_chat(self) -> None:
+
+        store = await Store.get_store()
+        model_info: str | None = await self.push_screen_wait(ChatEdit())
+        if not model_info:
+            return
+        model: dict = json.loads(model_info)
+        tabs = self.query_one(TabbedContent)
+        tab_count = tabs.tab_count
+        name = f"chat #{tab_count+1} - {model['name']}"
+        id = await store.save_chat(
+            id=None,
+            name=name,
+            model=model["name"],
+            system=model["system"],
+            format=model["format"],
+            parameters=json.dumps(model["parameters"]),
+            keep_alive=model["keep_alive"],
+        )
+        pane = TabPane(name, id=f"chat-{id}")
+        pane.compose_add_child(
+            ChatContainer(
+                db_id=id,
+                chat_name=name,
                 model=model["name"],
                 system=model["system"],
                 format=model["format"],
-                parameters=json.dumps(model["parameters"]),
+                parameters=model["parameters"],
                 keep_alive=model["keep_alive"],
+                messages=[],
             )
-            pane = TabPane(name, id=f"chat-{id}")
-            pane.compose_add_child(
-                ChatContainer(
-                    db_id=id,
-                    chat_name=name,
-                    model=model["name"],
-                    system=model["system"],
-                    format=model["format"],
-                    parameters=model["parameters"],
-                    keep_alive=model["keep_alive"],
-                    messages=[],
-                )
-            )
-            await tabs.add_pane(pane)
-            tabs.active = f"chat-{id}"
-
-        self.push_screen(ChatEdit(), on_model_select)
+        )
+        await tabs.add_pane(pane)
+        tabs.active = f"chat-{id}"
 
     async def on_mount(self) -> None:
         store = await Store.get_store()
