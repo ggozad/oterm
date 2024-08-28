@@ -8,6 +8,9 @@ from textual.containers import Container
 from textual.screen import ModalScreen
 from textual.widgets import Input, Label
 
+from oterm.store.store import Store
+from oterm.types import Author
+
 
 def slugify(value):
     """
@@ -33,14 +36,12 @@ class ChatExport(ModalScreen[str]):
 
     @on(Input.Submitted)
     async def on_submit(self, event: Input.Submitted) -> None:
-        from oterm.app.widgets.chat import Author
+        store = await Store.get_store()
 
         if not event.value:
             return
 
-        messages: Sequence[tuple[Author, str]] = await self.app.store.get_messages(
-            self.chat_id
-        )
+        messages: Sequence[tuple[Author, str]] = await store.get_messages(self.chat_id)
         with open(event.value, "w", encoding="utf-8") as file:
             for message in messages:
                 author, text = message

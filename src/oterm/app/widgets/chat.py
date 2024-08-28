@@ -1,6 +1,5 @@
 import asyncio
 import json
-from enum import Enum
 from pathlib import Path
 from typing import Literal
 
@@ -27,11 +26,8 @@ from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollamaclient import OllamaLLM, Options
-
-
-class Author(Enum):
-    USER = "me"
-    OLLAMA = "ollama"
+from oterm.store.store import Store
+from oterm.types import Author
 
 
 class ChatContainer(Widget):
@@ -151,12 +147,13 @@ class ChatContainer(Widget):
                 self.images = []
 
                 # Save to db
-                await self.app.store.save_message(  # type: ignore
+                store = await Store.get_store()
+                await store.save_message(  # type: ignore
                     chat_id=self.db_id,
                     author=Author.USER.value,
                     text=message,
                 )
-                await self.app.store.save_message(  # type: ignore
+                await store.save_message(  # type: ignore
                     chat_id=self.db_id,
                     author=Author.OLLAMA.value,
                     text=response,
@@ -183,8 +180,8 @@ class ChatContainer(Widget):
             self.system = model.get("system")
             self.format = model.get("format", "")
             self.keep_alive = model.get("keep_alive", 5)
-
-            await self.app.store.edit_chat(
+            store = await Store.get_store()
+            await store.edit_chat(
                 id=self.db_id,
                 name=self.chat_name,
                 system=model["system"],
@@ -233,10 +230,11 @@ class ChatContainer(Widget):
 
     async def action_rename_chat(self) -> None:
         async def on_chat_rename(name: str | None) -> None:
+            store = await Store.get_store()
             if name is None:
                 return
             tabs = self.app.query_one(TabbedContent)
-            await self.app.store.rename_chat(self.db_id, name)
+            await store.rename_chat(self.db_id, name)
             tabs.get_tab(f"chat-{self.db_id}").update(name)
 
         screen = ChatRename()
@@ -245,7 +243,8 @@ class ChatContainer(Widget):
 
     async def action_forget_chat(self) -> None:
         tabs = self.app.query_one(TabbedContent)
-        await self.app.store.delete_chat(self.db_id)
+        store = await Store.get_store()
+        await store.delete_chat(self.db_id)
         tabs.remove_pane(tabs.active)
 
     async def action_history(self) -> None:

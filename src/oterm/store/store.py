@@ -7,19 +7,23 @@ import aiosqlite
 from ollama import Options
 from packaging.version import parse
 
-from oterm.app.widgets.chat import Author
 from oterm.config import envConfig
 from oterm.store.chat import queries as chat_queries
 from oterm.store.setup import queries as setup_queries
 from oterm.store.upgrades import upgrades
+from oterm.types import Author
 from oterm.utils import int_to_semantic_version, semantic_version_to_int
 
 
 class Store(object):
     db_path: Path
 
+    _store: "Store | None" = None
+
     @classmethod
-    async def create(cls) -> "Store":
+    async def get_store(cls) -> "Store":
+        if cls._store is not None:
+            return cls._store
         self = Store()
         data_path = envConfig.OTERM_DATA_DIR
         data_path.mkdir(parents=True, exist_ok=True)
@@ -42,6 +46,7 @@ class Store(object):
                     for step in steps:
                         await step(self.db_path)
             await self.set_user_version(current_version)
+        cls._store = self
         return self
 
     async def get_user_version(self) -> str:
@@ -112,9 +117,7 @@ class Store(object):
 
     async def get_chats(
         self,
-    ) -> list[
-        tuple[int, str, str, str | None, Literal["", "json"], Options, int]
-    ]:
+    ) -> list[tuple[int, str, str, str | None, Literal["", "json"], Options, int]]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore
             chats = [
@@ -133,10 +136,7 @@ class Store(object):
 
     async def get_chat(
         self, id
-    ) -> (
-        tuple[int, str, str, str | None, Literal["", "json"], Options, int]
-        | None
-    ):
+    ) -> tuple[int, str, str, str | None, Literal["", "json"], Options, int] | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
             if chat:
@@ -168,6 +168,7 @@ class Store(object):
             await connection.commit()
 
     async def get_messages(self, chat_id: int) -> list[tuple[Author, str]]:
+
         async with aiosqlite.connect(self.db_path) as connection:
             messages = await chat_queries.get_messages(connection, chat_id=chat_id)  # type: ignore
             messages = [(Author(author), text) for author, text in messages]

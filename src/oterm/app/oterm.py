@@ -32,7 +32,8 @@ class OTerm(App):
 
     async def action_cycle_chat(self, change: int) -> None:
         tabs = self.query_one(TabbedContent)
-        saved_chats = await self.store.get_chats()
+        store = await Store.get_store()
+        saved_chats = await store.get_chats()
         if tabs.active_pane is None:
             return
         active_id = int(str(tabs.active_pane.id).split("-")[1])
@@ -45,13 +46,14 @@ class OTerm(App):
 
     def action_new_chat(self) -> None:
         async def on_model_select(model_info: str | None) -> None:
+            store = await Store.get_store()
             if model_info is None:
                 return
             model: dict = json.loads(model_info)
             tabs = self.query_one(TabbedContent)
             tab_count = tabs.tab_count
             name = f"chat #{tab_count+1} - {model['name']}"
-            id = await self.store.save_chat(
+            id = await store.save_chat(
                 id=None,
                 name=name,
                 model=model["name"],
@@ -79,15 +81,15 @@ class OTerm(App):
         self.push_screen(ChatEdit(), on_model_select)
 
     async def on_mount(self) -> None:
-        self.store = await Store.create()
+        store = await Store.get_store()
         self.dark = appConfig.get("theme") == "dark"
-        saved_chats = await self.store.get_chats()
+        saved_chats = await store.get_chats()
         if not saved_chats:
             self.action_new_chat()
         else:
             tabs = self.query_one(TabbedContent)
             for id, name, model, system, format, parameters, keep_alive in saved_chats:
-                messages = await self.store.get_messages(id)
+                messages = await store.get_messages(id)
                 container = ChatContainer(
                     db_id=id,
                     chat_name=name,

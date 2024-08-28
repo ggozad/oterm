@@ -12,7 +12,7 @@ cli = typer.Typer()
 
 
 async def upgrade_db():
-    await Store.create()
+    await Store.get_store()
 
 
 @cli.command()
