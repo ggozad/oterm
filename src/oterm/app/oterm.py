@@ -25,7 +25,12 @@ class OTerm(App):
 
     def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
         yield from super().get_system_commands(screen)
-        yield SystemCommand("New chat", "Creates a new chat", self.action_new_chat)
+        yield SystemCommand("New chat", "Creates a new chat.", self.action_new_chat)
+        yield SystemCommand(
+            "Edit chat parameters",
+            "Allows to redefine model parameters and system prompt.",
+            self.action_edit_chat,
+        )
 
     async def action_quit(self) -> None:
         return self.exit()
@@ -46,7 +51,6 @@ class OTerm(App):
 
     @work
     async def action_new_chat(self) -> None:
-
         store = await Store.get_store()
         model_info: str | None = await self.push_screen_wait(ChatEdit())
         if not model_info:
@@ -79,6 +83,13 @@ class OTerm(App):
         )
         await tabs.add_pane(pane)
         tabs.active = f"chat-{id}"
+
+    async def action_edit_chat(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        if tabs.active_pane is None:
+            return
+        chat = tabs.active_pane.query_one(ChatContainer)
+        chat.action_edit_chat()
 
     async def on_mount(self) -> None:
         store = await Store.get_store()

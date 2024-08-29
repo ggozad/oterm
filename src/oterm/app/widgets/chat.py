@@ -5,7 +5,7 @@ from typing import Literal
 
 import pyperclip
 from ollama import Message
-from textual import on
+from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
@@ -41,7 +41,6 @@ class ChatContainer(Widget):
     images: list[tuple[Path, str]] = []
 
     BINDINGS = [
-        Binding("ctrl+e", "edit_chat", "edit", priority=True),
         Binding("ctrl+s", "export", "export", priority=True),
         ("ctrl+r", "rename_chat", "rename"),
         ("ctrl+x", "forget_chat", "forget"),
@@ -172,55 +171,53 @@ class ChatContainer(Widget):
         if hasattr(self, "inference_task"):
             self.inference_task.cancel()
 
+    @work
     async def action_edit_chat(self) -> None:
-        async def on_model_select(model_info: str | None) -> None:
-            if model_info is None:
-                return
-            model: dict = json.loads(model_info)
-            self.system = model.get("system")
-            self.format = model.get("format", "")
-            self.keep_alive = model.get("keep_alive", 5)
-            store = await Store.get_store()
-            await store.edit_chat(
-                id=self.db_id,
-                name=self.chat_name,
-                system=model["system"],
-                format=model["format"],
-                parameters=json.dumps(model["parameters"]),
-                keep_alive=model["keep_alive"],
+
+        screen = ChatEdit(
+            model=self.ollama.model,
+            system=self.system or "",
+            parameters=self.parameters,
+            json_format=self.format == "json",
+            keep_alive=self.keep_alive,
+            edit_mode=True,
+        )
+
+        model_info = await self.app.push_screen_wait(screen)
+        if model_info is None:
+            return
+        model: dict = json.loads(model_info)
+        self.system = model.get("system")
+        self.format = model.get("format", "")
+        self.keep_alive = model.get("keep_alive", 5)
+        store = await Store.get_store()
+        await store.edit_chat(
+            id=self.db_id,
+            name=self.chat_name,
+            system=model["system"],
+            format=model["format"],
+            parameters=json.dumps(model["parameters"]),
+            keep_alive=model["keep_alive"],
+        )
+
+        # load the history from messages
+        history: list[Message] = [
+            (
+                {"role": "user", "content": message}
+                if author == Author.USER
+                else {"role": "assistant", "content": message}
             )
+            for author, message in self.messages
+        ]
 
-            # load the history from messages
-            history: list[Message] = [
-                (
-                    {"role": "user", "content": message}
-                    if author == Author.USER
-                    else {"role": "assistant", "content": message}
-                )
-                for author, message in self.messages
-            ]
-
-            self.ollama = OllamaLLM(
-                model=model["name"],
-                system=model["system"],
-                format=model["format"],
-                options=model["parameters"],
-                keep_alive=model["keep_alive"],
-                history=history,
-            )
-
-        screen = ChatEdit()
-        screen.model_name = self.ollama.model
-
-        await self.app.push_screen(screen, on_model_select)
-        screen.edit_mode = True
-        screen.select_model(self.ollama.model)
-
-        if self.system:
-            screen.system = self.system
-        screen.json_format = self.format == "json"
-        screen.keep_alive = self.keep_alive
-        screen.parameters = self.parameters
+        self.ollama = OllamaLLM(
+            model=model["name"],
+            system=model["system"],
+            format=model["format"],
+            options=model["parameters"],
+            keep_alive=model["keep_alive"],
+            history=history,
+        )
 
     async def action_export(self) -> None:
         screen = ChatExport()
