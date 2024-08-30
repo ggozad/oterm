@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.4.4 - 2024-08-30
+------------------
+
+- Restore shortcut for command palette that overrided our choice for adding images.
+  [ggozad]
+
 0.4.3 - 2024-08-28
 ------------------
 
