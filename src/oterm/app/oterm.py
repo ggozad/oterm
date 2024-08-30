@@ -22,6 +22,7 @@ class OTerm(App):
         ("ctrl+t", "toggle_dark", "toggle theme"),
         ("ctrl+q", "quit", "quit"),
     ]
+    COMMAND_PALETTE_BINDING = "ctrl+backslash"
 
     def action_toggle_dark(self) -> None:
         self.dark = not self.dark
