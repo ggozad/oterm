@@ -38,18 +38,30 @@ In order to use `oterm` you will need to have the Ollama server running. By defa
 OLLAMA_URL=http://host:port/api
 ```
 
+To start `oterm` simply run:
+
+```bash
+oterm
+```
+
+### Commands
+By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette from where you can perform most of the chat management. The following commands are available:
+
+* `New chat` - create a new chat session
+* `Edit chat parameters` - edit the current chat session (change system prompt, parameters or format)
+* `Rename chat` - rename the current chat session
+* `Export chat` - export the current chat session as markdown
+* `Delete chat` - delete the current chat session  
+
+### Keyboard shortcuts
+
 The following keyboard shortcuts are supported:
 
-* <kbd>^ Ctrl</kbd>+<kbd>N</kbd> - create a new chat session
-* <kbd>^ Ctrl</kbd>+<kbd>E</kbd> - edit the chat session (change template, system prompt or format)
-* <kbd>^ Ctrl</kbd>+<kbd>R</kbd> - rename the current chat session
-* <kbd>^ Ctrl</kbd>+<kbd>S</kbd> - export the current chat session as markdown
-* <kbd>^ Ctrl</kbd>+<kbd>X</kbd> - delete the current chat session
-* <kbd>^ Ctrl</kbd>+<kbd>T</kbd> - toggle between dark/light theme
-* <kbd>^ Ctrl</kbd>+<kbd>Q</kbd> - quit
+* <kbd>^ Ctrl</kbd>+<kbd>t</kbd> - toggle between dark/light theme
+* <kbd>^ Ctrl</kbd>+<kbd>q</kbd> - quit
 
-* <kbd>^ Ctrl</kbd>+<kbd>L</kbd> - switch to multiline input mode
-* <kbd>^ Ctrl</kbd>+<kbd>P</kbd> - select an image to include with the next message
+* <kbd>^ Ctrl</kbd>+<kbd>l</kbd> - switch to multiline input mode
+* <kbd>^ Ctrl</kbd>+<kbd>i</kbd> - select an image to include with the next message
 * <kbd>↑</kbd>     - navigate through history of previous prompts
 
 * <kbd>^ Ctrl</kbd>+<kbd>Tab</kbd> - open the next chat

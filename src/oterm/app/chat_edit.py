@@ -4,7 +4,6 @@ from ollama import Options
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
-from textual.css.query import NoMatches
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
@@ -23,14 +22,31 @@ class ChatEdit(ModalScreen[str]):
     system: reactive[str] = reactive("")
     parameters: reactive[Options] = reactive({})
     json_format: reactive[bool] = reactive(False)
+    keep_alive: reactive[int] = reactive(5)
     edit_mode: reactive[bool] = reactive(False)
     last_highlighted_index = None
-    keep_alive: reactive[int] = reactive(5)
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
         ("enter", "save", "Save"),
     ]
+
+    def __init__(
+        self,
+        model: str = "",
+        system: str = "",
+        parameters: Options = {},
+        keep_alive: int = 5,
+        json_format: bool = False,
+        edit_mode: bool = False,
+    ) -> None:
+        super().__init__()
+        self.model_name, self.tag = model.split(":") if model else ("", "")
+        self.system = system
+        self.parameters = parameters
+        self.keep_alive = keep_alive
+        self.json_format = json_format
+        self.edit_mode = edit_mode
 
     def _return_chat_meta(self) -> None:
         model = f"{self.model_name}:{self.tag}"
@@ -90,6 +106,12 @@ class ChatEdit(ModalScreen[str]):
         for model in models:
             option_list.add_option(item=self.model_option(model))
         option_list.highlighted = self.last_highlighted_index
+        if self.model_name and self.tag:
+            self.select_model(f"{self.model_name}:{self.tag}")
+
+        # Disable the model select widget if we are in edit mode.
+        widget = self.query_one("#model-select", OptionList)
+        widget.disabled = self.edit_mode
 
     def on_option_list_option_selected(self, option: OptionList.OptionSelected) -> None:
         self._return_chat_meta()
@@ -102,21 +124,26 @@ class ChatEdit(ModalScreen[str]):
         if model_meta:
             name, tag = model_meta["name"].split(":")
             self.model_name = name
+            widget = self.query_one(".name", Label)
+            widget.update(f"Name: {self.model_name}")
+
             self.tag = tag
+            widget = self.query_one(".tag", Label)
+            widget.update(f"Tag: {self.tag}")
+
             self.bytes = model_meta["size"]
+            widget = self.query_one(".size", Label)
+            widget.update(f"Size: {(self.bytes / 1.0e9):.2f} GB")
 
             self.model_info = self.models_info[model_meta["name"]]
             if not self.edit_mode:
                 self.parameters = parse_ollama_parameters(
                     self.model_info.get("parameters", "")
                 )
-            try:
-                widget = self.query_one(".parameters", TextArea)
-                widget.load_text(json.dumps(self.parameters, indent=2))
-                widget = self.query_one(".system", TextArea)
-                widget.load_text(self.system or self.model_info.get("system", ""))
-            except NoMatches:
-                pass
+            widget = self.query_one(".parameters", TextArea)
+            widget.load_text(json.dumps(self.parameters, indent=2))
+            widget = self.query_one(".system", TextArea)
+            widget.load_text(self.system or self.model_info.get("system", ""))
 
         # Now that there is a model selected we can save the chat.
         save_button = self.query_one("#save-btn", Button)
@@ -133,62 +160,6 @@ class ChatEdit(ModalScreen[str]):
     def model_option(model: str) -> Text:
         return Text(model)
 
-    def watch_name(self, name: str) -> None:
-        try:
-            widget = self.query_one(".name", Label)
-            widget.update(f"Name: {self.model_name}")
-        except NoMatches:
-            pass
-
-    def watch_tag(self, tag: str) -> None:
-        try:
-            widget = self.query_one(".tag", Label)
-            widget.update(f"Tag: {self.tag}")
-        except NoMatches:
-            pass
-
-    def watch_bytes(self, size: int) -> None:
-        try:
-            widget = self.query_one(".size", Label)
-            widget.update(f"Size: {(self.bytes / 1.0e9):.2f} GB")
-        except NoMatches:
-            pass
-
-    def watch_system(self, system: str) -> None:
-        try:
-            widget = self.query_one(".system", TextArea)
-            widget.load_text(system)
-        except NoMatches:
-            pass
-
-    def watch_json_format(self, jsn: bool) -> None:
-        try:
-            widget = self.query_one(".json-format", Checkbox)
-            widget.value = jsn
-        except NoMatches:
-            pass
-
-    def watch_keep_alive(self, keep_alive: int) -> None:
-        try:
-            widget = self.query_one(".keep-alive", Input)
-            widget.value = str(keep_alive)
-        except NoMatches:
-            pass
-
-    def watch_parameters(self, parameters: Options) -> None:
-        try:
-            widget = self.query_one(".parameters", TextArea)
-            widget.load_text(json.dumps(parameters, indent=2))
-        except NoMatches:
-            pass
-
-    def watch_edit_mode(self, edit_mode: bool) -> None:
-        try:
-            widget = self.query_one("#model-select", OptionList)
-            widget.disabled = edit_mode
-        except NoMatches:
-            pass
-
     def compose(self) -> ComposeResult:
         with Container(id="model-select-container"):
             yield Label("Select a model:", classes="title")
@@ -197,18 +168,22 @@ class ChatEdit(ModalScreen[str]):
                     yield OptionList(id="model-select")
                     with Vertical(id="model-details"):
                         yield Label("Model info:", classes="title")
-                        yield Label("", classes="name")
-                        yield Label("", classes="tag")
-                        yield Label("", classes="size")
+                        yield Label(f"Name: {self.model_name}", classes="name")
+                        yield Label(f"Tag: {self.tag}", classes="tag")
+                        yield Label(f"Size: {self.size}", classes="size")
                 with Vertical():
                     yield Label("System:", classes="title")
-                    yield TextArea("", classes="system log")
+                    yield TextArea(self.system, classes="system log")
                     yield Label("Parameters:", classes="title")
-                    yield TextArea("", classes="parameters log", language="json")
+                    yield TextArea(
+                        json.dumps(self.parameters, indent=2),
+                        classes="parameters log",
+                        language="json",
+                    )
                     with Horizontal():
                         yield Checkbox(
                             "JSON output",
-                            value=False,
+                            value=self.json_format,
                             classes="json-format",
                             button_first=False,
                         )

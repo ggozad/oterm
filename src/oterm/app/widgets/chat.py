@@ -5,7 +5,7 @@ from typing import Literal
 
 import pyperclip
 from ollama import Message
-from textual import on
+from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
@@ -20,7 +20,6 @@ from textual.widgets import (
 )
 
 from oterm.app.chat_edit import ChatEdit
-from oterm.app.chat_export import ChatExport, slugify
 from oterm.app.chat_rename import ChatRename
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
@@ -41,10 +40,6 @@ class ChatContainer(Widget):
     images: list[tuple[Path, str]] = []
 
     BINDINGS = [
-        Binding("ctrl+e", "edit_chat", "edit", priority=True),
-        Binding("ctrl+s", "export", "export", priority=True),
-        ("ctrl+r", "rename_chat", "rename"),
-        ("ctrl+x", "forget_chat", "forget"),
         Binding("up", "history", "history"),
         Binding(
             "escape", "cancel_inference", "cancel inference", show=False, priority=True
@@ -172,80 +167,65 @@ class ChatContainer(Widget):
         if hasattr(self, "inference_task"):
             self.inference_task.cancel()
 
+    @work
     async def action_edit_chat(self) -> None:
-        async def on_model_select(model_info: str | None) -> None:
-            if model_info is None:
-                return
-            model: dict = json.loads(model_info)
-            self.system = model.get("system")
-            self.format = model.get("format", "")
-            self.keep_alive = model.get("keep_alive", 5)
-            store = await Store.get_store()
-            await store.edit_chat(
-                id=self.db_id,
-                name=self.chat_name,
-                system=model["system"],
-                format=model["format"],
-                parameters=json.dumps(model["parameters"]),
-                keep_alive=model["keep_alive"],
-            )
 
-            # load the history from messages
-            history: list[Message] = [
-                (
-                    {"role": "user", "content": message}
-                    if author == Author.USER
-                    else {"role": "assistant", "content": message}
-                )
-                for author, message in self.messages
-            ]
+        screen = ChatEdit(
+            model=self.ollama.model,
+            system=self.system or "",
+            parameters=self.parameters,
+            json_format=self.format == "json",
+            keep_alive=self.keep_alive,
+            edit_mode=True,
+        )
 
-            self.ollama = OllamaLLM(
-                model=model["name"],
-                system=model["system"],
-                format=model["format"],
-                options=model["parameters"],
-                keep_alive=model["keep_alive"],
-                history=history,
-            )
-
-        screen = ChatEdit()
-        screen.model_name = self.ollama.model
-
-        await self.app.push_screen(screen, on_model_select)
-        screen.edit_mode = True
-        screen.select_model(self.ollama.model)
-
-        if self.system:
-            screen.system = self.system
-        screen.json_format = self.format == "json"
-        screen.keep_alive = self.keep_alive
-        screen.parameters = self.parameters
-
-    async def action_export(self) -> None:
-        screen = ChatExport()
-        screen.chat_id = self.db_id
-        screen.file_name = f"{slugify(self.chat_name)}.md"
-        self.app.push_screen(screen)
-
-    async def action_rename_chat(self) -> None:
-        async def on_chat_rename(name: str | None) -> None:
-            store = await Store.get_store()
-            if name is None:
-                return
-            tabs = self.app.query_one(TabbedContent)
-            await store.rename_chat(self.db_id, name)
-            tabs.get_tab(f"chat-{self.db_id}").update(name)
-
-        screen = ChatRename()
-        screen.old_name = self.chat_name
-        self.app.push_screen(screen, on_chat_rename)
-
-    async def action_forget_chat(self) -> None:
-        tabs = self.app.query_one(TabbedContent)
+        model_info = await self.app.push_screen_wait(screen)
+        if model_info is None:
+            return
+        model: dict = json.loads(model_info)
+        self.system = model.get("system")
+        self.format = model.get("format", "")
+        self.keep_alive = model.get("keep_alive", 5)
         store = await Store.get_store()
-        await store.delete_chat(self.db_id)
-        tabs.remove_pane(tabs.active)
+        await store.edit_chat(
+            id=self.db_id,
+            name=self.chat_name,
+            system=model["system"],
+            format=model["format"],
+            parameters=json.dumps(model["parameters"]),
+            keep_alive=model["keep_alive"],
+        )
+
+        # load the history from messages
+        history: list[Message] = [
+            (
+                {"role": "user", "content": message}
+                if author == Author.USER
+                else {"role": "assistant", "content": message}
+            )
+            for author, message in self.messages
+        ]
+
+        self.ollama = OllamaLLM(
+            model=model["name"],
+            system=model["system"],
+            format=model["format"],
+            options=model["parameters"],
+            keep_alive=model["keep_alive"],
+            history=history,
+        )
+
+    @work
+    async def action_rename_chat(self) -> None:
+        store = await Store.get_store()
+
+        screen = ChatRename(self.chat_name)
+        new_name = await self.app.push_screen_wait(screen)
+        if new_name is None:
+            return
+        tabs = self.app.query_one(TabbedContent)
+        await store.rename_chat(self.db_id, new_name)
+        tabs.get_tab(f"chat-{self.db_id}").update(new_name)
 
     async def action_history(self) -> None:
         def on_history_selected(text: str | None) -> None:

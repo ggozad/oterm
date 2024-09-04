@@ -90,7 +90,7 @@ class FlexibleInput(Widget):
     text = reactive("")
 
     BINDINGS = [
-        ("ctrl+p", "add_image", "add image"),
+        ("ctrl+i", "add_image", "add image"),
     ]
 
     @dataclass
