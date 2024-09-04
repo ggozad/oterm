@@ -225,18 +225,17 @@ class ChatContainer(Widget):
         screen.file_name = f"{slugify(self.chat_name)}.md"
         self.app.push_screen(screen)
 
+    @work
     async def action_rename_chat(self) -> None:
-        async def on_chat_rename(name: str | None) -> None:
-            store = await Store.get_store()
-            if name is None:
-                return
-            tabs = self.app.query_one(TabbedContent)
-            await store.rename_chat(self.db_id, name)
-            tabs.get_tab(f"chat-{self.db_id}").update(name)
+        store = await Store.get_store()
 
-        screen = ChatRename()
-        screen.old_name = self.chat_name
-        self.app.push_screen(screen, on_chat_rename)
+        screen = ChatRename(self.chat_name)
+        new_name = await self.app.push_screen_wait(screen)
+        if new_name is None:
+            return
+        tabs = self.app.query_one(TabbedContent)
+        await store.rename_chat(self.db_id, new_name)
+        tabs.get_tab(f"chat-{self.db_id}").update(new_name)
 
     async def action_forget_chat(self) -> None:
         tabs = self.app.query_one(TabbedContent)

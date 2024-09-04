@@ -31,6 +31,9 @@ class OTerm(App):
             "Allows to redefine model parameters and system prompt.",
             self.action_edit_chat,
         )
+        yield SystemCommand(
+            "Rename chat", "Renames the current chat.", self.action_rename_chat
+        )
 
     async def action_quit(self) -> None:
         return self.exit()
@@ -90,6 +93,13 @@ class OTerm(App):
             return
         chat = tabs.active_pane.query_one(ChatContainer)
         chat.action_edit_chat()
+
+    async def action_rename_chat(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        if tabs.active_pane is None:
+            return
+        chat = tabs.active_pane.query_one(ChatContainer)
+        chat.action_rename_chat()
 
     async def on_mount(self) -> None:
         store = await Store.get_store()
