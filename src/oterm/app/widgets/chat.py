@@ -20,7 +20,6 @@ from textual.widgets import (
 )
 
 from oterm.app.chat_edit import ChatEdit
-from oterm.app.chat_export import ChatExport, slugify
 from oterm.app.chat_rename import ChatRename
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
@@ -41,7 +40,6 @@ class ChatContainer(Widget):
     images: list[tuple[Path, str]] = []
 
     BINDINGS = [
-        Binding("ctrl+s", "export", "export", priority=True),
         Binding("up", "history", "history"),
         Binding(
             "escape", "cancel_inference", "cancel inference", show=False, priority=True
@@ -216,12 +214,6 @@ class ChatContainer(Widget):
             keep_alive=model["keep_alive"],
             history=history,
         )
-
-    async def action_export(self) -> None:
-        screen = ChatExport()
-        screen.chat_id = self.db_id
-        screen.file_name = f"{slugify(self.chat_name)}.md"
-        self.app.push_screen(screen)
 
     @work
     async def action_rename_chat(self) -> None:

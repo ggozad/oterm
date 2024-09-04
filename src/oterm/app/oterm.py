@@ -7,6 +7,7 @@ from textual.screen import Screen
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat_edit import ChatEdit
+from oterm.app.chat_export import ChatExport, slugify
 from oterm.app.splash import SplashScreen
 from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
@@ -25,17 +26,22 @@ class OTerm(App):
 
     def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
         yield from super().get_system_commands(screen)
-        yield SystemCommand("New chat", "Creates a new chat.", self.action_new_chat)
+        yield SystemCommand("New chat", "Creates a new chat", self.action_new_chat)
         yield SystemCommand(
             "Edit chat parameters",
-            "Allows to redefine model parameters and system prompt.",
+            "Allows to redefine model parameters and system prompt",
             self.action_edit_chat,
         )
         yield SystemCommand(
-            "Rename chat", "Renames the current chat.", self.action_rename_chat
+            "Rename chat", "Renames the current chat", self.action_rename_chat
         )
         yield SystemCommand(
-            "Delete chat", "Deletes the current chat.", self.action_delete_chat
+            "Delete chat", "Deletes the current chat", self.action_delete_chat
+        )
+        yield SystemCommand(
+            "Export chat",
+            "Exports the current chat as Markdown (in the current working directory)",
+            self.action_export_chat,
         )
 
     async def action_quit(self) -> None:
@@ -112,6 +118,16 @@ class OTerm(App):
         store = await Store.get_store()
         await store.delete_chat(chat.db_id)
         await tabs.remove_pane(tabs.active)
+
+    async def action_export_chat(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        if tabs.active_pane is None:
+            return
+        chat = tabs.active_pane.query_one(ChatContainer)
+        screen = ChatExport()
+        screen.chat_id = chat.db_id
+        screen.file_name = f"{slugify(chat.chat_name)}.md"
+        self.push_screen(screen)
 
     async def on_mount(self) -> None:
         store = await Store.get_store()
