@@ -42,8 +42,6 @@ class ChatContainer(Widget):
 
     BINDINGS = [
         Binding("ctrl+s", "export", "export", priority=True),
-        ("ctrl+r", "rename_chat", "rename"),
-        ("ctrl+x", "forget_chat", "forget"),
         Binding("up", "history", "history"),
         Binding(
             "escape", "cancel_inference", "cancel inference", show=False, priority=True
@@ -236,12 +234,6 @@ class ChatContainer(Widget):
         tabs = self.app.query_one(TabbedContent)
         await store.rename_chat(self.db_id, new_name)
         tabs.get_tab(f"chat-{self.db_id}").update(new_name)
-
-    async def action_forget_chat(self) -> None:
-        tabs = self.app.query_one(TabbedContent)
-        store = await Store.get_store()
-        await store.delete_chat(self.db_id)
-        tabs.remove_pane(tabs.active)
 
     async def action_history(self) -> None:
         def on_history_selected(text: str | None) -> None:
