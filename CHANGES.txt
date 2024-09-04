@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.5.0 -
+0.5.0 - 2024-09-04
 ------------------
 
 - Add support for the command palette. Move most chat-related actions there.
