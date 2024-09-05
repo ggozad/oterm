@@ -5,6 +5,7 @@ from oterm.store.upgrades.v0_2_4 import upgrades as v0_2_4_upgrades
 from oterm.store.upgrades.v0_2_8 import upgrades as v0_2_8_upgrades
 from oterm.store.upgrades.v0_3_0 import upgrades as v0_3_0_upgrades
 from oterm.store.upgrades.v0_4_0 import upgrades as v0_4_0_upgrades
+from oterm.store.upgrades.v0_5_1 import upgrades as v0_5_1_upgrades
 
 upgrades = (
     v0_1_6_upgrades
@@ -14,4 +15,5 @@ upgrades = (
     + v0_2_8_upgrades
     + v0_3_0_upgrades
     + v0_4_0_upgrades
+    + v0_5_1_upgrades
 )

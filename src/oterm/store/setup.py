@@ -15,9 +15,11 @@ CREATE TABLE IF NOT EXISTS "chat" (
 
 -- name: create_message_table
 CREATE TABLE IF NOT EXISTS "message" (
+	"id"		INTEGER,
 	"chat_id"	INTEGER NOT NULL,
 	"author"	TEXT NOT NULL,
 	"text"		TEXT NOT NULL,
+	PRIMARY KEY("id" AUTOINCREMENT)
 	FOREIGN KEY("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE
 );
 
