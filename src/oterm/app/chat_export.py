@@ -41,10 +41,12 @@ class ChatExport(ModalScreen[str]):
         if not event.value:
             return
 
-        messages: Sequence[tuple[Author, str]] = await store.get_messages(self.chat_id)
+        messages: Sequence[tuple[int, Author, str]] = await store.get_messages(
+            self.chat_id
+        )
         with open(event.value, "w", encoding="utf-8") as file:
             for message in messages:
-                author, text = message
+                _, author, text = message
                 file.write(f"*{author.value}*\n")
                 file.write(f"{text}\n")
                 file.write("\n---\n")

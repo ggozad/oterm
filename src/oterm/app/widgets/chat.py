@@ -31,7 +31,7 @@ from oterm.types import Author
 
 class ChatContainer(Widget):
     ollama = OllamaLLM()
-    messages: reactive[list[tuple[Author, str]]] = reactive([])
+    messages: reactive[list[tuple[int, Author, str]]] = reactive([])
     chat_name: str
     system: str | None
     format: Literal["", "json"]
@@ -52,7 +52,7 @@ class ChatContainer(Widget):
         db_id: int,
         chat_name: str,
         model: str = "llama3.1",
-        messages: list[tuple[Author, str]] = [],
+        messages: list[tuple[int, Author, str]] = [],
         system: str | None = None,
         format: Literal["", "json"] = "",
         parameters: Options,
@@ -67,7 +67,7 @@ class ChatContainer(Widget):
                 if author == Author.USER
                 else {"role": "assistant", "content": message}
             )
-            for author, message in messages
+            for _, author, message in messages
         ]
 
         self.ollama = OllamaLLM(
@@ -95,7 +95,7 @@ class ChatContainer(Widget):
         if self.loaded:
             return
         message_container = self.query_one("#messageContainer")
-        for author, message in self.messages:
+        for _, author, message in self.messages:
             chat_item = ChatItem()
             chat_item.text = message
             chat_item.author = author
@@ -116,7 +116,6 @@ class ChatContainer(Widget):
 
         async def response_task() -> None:
             input.clear()
-            self.messages.append((Author.USER, message))
             user_chat_item = ChatItem()
             user_chat_item.text = message
             user_chat_item.author = Author.USER
@@ -138,21 +137,25 @@ class ChatContainer(Widget):
                     response_chat_item.text = text
                     if message_container.can_view(response_chat_item):
                         message_container.scroll_end()
-                self.messages.append((Author.OLLAMA, response))
                 self.images = []
 
                 # Save to db
                 store = await Store.get_store()
-                await store.save_message(  # type: ignore
+                id = await store.save_message(
+                    id=None,
                     chat_id=self.db_id,
                     author=Author.USER.value,
                     text=message,
                 )
-                await store.save_message(  # type: ignore
+                self.messages.append((id, Author.USER, message))
+
+                id = await store.save_message(
+                    id=None,
                     chat_id=self.db_id,
                     author=Author.OLLAMA.value,
                     text=response,
                 )
+                self.messages.append((id, Author.OLLAMA, response))
             except asyncio.CancelledError:
                 user_chat_item.remove()
                 response_chat_item.remove()
@@ -203,7 +206,7 @@ class ChatContainer(Widget):
                 if author == Author.USER
                 else {"role": "assistant", "content": message}
             )
-            for author, message in self.messages
+            for _, author, message in self.messages
         ]
 
         self.ollama = OllamaLLM(
@@ -238,7 +241,7 @@ class ChatContainer(Widget):
             prompt.focus()
 
         prompts = [
-            message for author, message in self.messages if author == Author.USER
+            message for _, author, message in self.messages if author == Author.USER
         ]
         prompts.reverse()
         screen = PromptHistory(prompts)

@@ -5,7 +5,6 @@ import aiosqlite
 
 
 async def add_id_to_messages(db_path: Path) -> None:
-    print("KAKAKAKAAKAK")
     async with aiosqlite.connect(db_path) as connection:
         try:
             await connection.executescript(
