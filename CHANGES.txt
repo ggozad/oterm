@@ -7,6 +7,9 @@ Changelog
 - Add (id) column to message table.
   [ggozad]
 
+- Command to regenerate last ollama response.
+  [ggozad]
+
 0.5.0 - 2024-09-04
 ------------------
 

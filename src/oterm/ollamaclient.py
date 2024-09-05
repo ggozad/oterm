@@ -53,7 +53,10 @@ class OllamaLLM:
         return ollama_response
 
     async def stream(
-        self, prompt: str, images: list[str] = []
+        self,
+        prompt: str,
+        images: list[str] = [],
+        additional_options: Options = Options(),
     ) -> AsyncGenerator[str, Any]:
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
@@ -62,12 +65,11 @@ class OllamaLLM:
         if images:
             user_prompt["images"] = images
         self.history.append(user_prompt)
-
         stream: AsyncIterator[dict] = await client.chat(
             model=self.model,
             messages=self.history,
             stream=True,
-            options=self.options,
+            options={**self.options, **additional_options},
             keep_alive=f"{self.keep_alive}m",
             format=self.format,  # type: ignore
         )
