@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Iterable
 
@@ -145,7 +146,12 @@ class OTerm(App):
         store = await Store.get_store()
         self.dark = appConfig.get("theme") == "dark"
         saved_chats = await store.get_chats()
+        await self.push_screen(SplashScreen())
+        await asyncio.sleep(1.0)
+        self.pop_screen()
+
         if not saved_chats:
+            print("No saved chats, creating a new one.")
             self.action_new_chat()
         else:
             tabs = self.query_one(TabbedContent)
@@ -163,7 +169,6 @@ class OTerm(App):
                 )
                 pane = TabPane(name, container, id=f"chat-{id}")
                 tabs.add_pane(pane)
-        await self.push_screen(SplashScreen())
 
     @on(TabbedContent.TabActivated)
     async def on_tab_activated(self, event: TabbedContent.TabActivated) -> None:
