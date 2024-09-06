@@ -13,7 +13,7 @@ Changelog
 0.5.2 - 2024-09-06
 ------------------
 
-- Fix crash when starting the app an existing db.
+- Fix crash when starting the app without an existing db.
   [ggozad]
 
 0.5.1 - 2024-09-06
