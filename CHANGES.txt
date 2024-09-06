@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.5.1 - 
+0.5.1 - 2024-09-06
 ------------------
 
 - Persist changed parameters when editing a chat.
