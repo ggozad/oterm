@@ -157,19 +157,23 @@ class Store(object):
             await chat_queries.delete_chat(connection, id=id)  # type: ignore
             await connection.commit()
 
-    async def save_message(self, chat_id: int, author: str, text: str) -> None:
+    async def save_message(
+        self, id: int | None, chat_id: int, author: str, text: str
+    ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
-            await chat_queries.save_message(  # type: ignore
+            res = await chat_queries.save_message(  # type: ignore
                 connection,
+                id=id,
                 chat_id=chat_id,
                 author=author,
                 text=text,
             )
             await connection.commit()
+            return res[0][0]
 
-    async def get_messages(self, chat_id: int) -> list[tuple[Author, str]]:
+    async def get_messages(self, chat_id: int) -> list[tuple[int, Author, str]]:
 
         async with aiosqlite.connect(self.db_path) as connection:
             messages = await chat_queries.get_messages(connection, chat_id=chat_id)  # type: ignore
-            messages = [(Author(author), text) for author, text in messages]
+            messages = [(id, Author(author), text) for id, author, text in messages]
             return messages

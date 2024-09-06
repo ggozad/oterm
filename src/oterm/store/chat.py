@@ -15,10 +15,10 @@ SELECT id, name, model, system, format, parameters, keep_alive FROM chat WHERE i
 -- name: delete_chat
 DELETE FROM chat WHERE id = :id;
 -- name: save_message
-INSERT INTO message(chat_id, author, text)
-VALUES(:chat_id, :author, :text);
+INSERT OR REPLACE INTO message(id, chat_id, author, text) 
+VALUES(:id, :chat_id, :author, :text) RETURNING id;
 -- name: get_messages
-SELECT author, text FROM message WHERE chat_id = :chat_id;
+SELECT id, author, text FROM message WHERE chat_id = :chat_id;
 """
 
 queries = aiosql.from_str(chat_sqlite, "aiosqlite")
