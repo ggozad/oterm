@@ -1,6 +1,6 @@
 # oterm
 
-the text-based terminal client for [Ollama](https://github.com/jmorganca/ollama).
+the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
 
 ## Features
 
@@ -45,13 +45,14 @@ oterm
 ```
 
 ### Commands
-By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette from where you can perform most of the chat management. The following commands are available:
+By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette from where you can perform most of the chat actions. The following commands are available:
 
 * `New chat` - create a new chat session
 * `Edit chat parameters` - edit the current chat session (change system prompt, parameters or format)
 * `Rename chat` - rename the current chat session
 * `Export chat` - export the current chat session as markdown
 * `Delete chat` - delete the current chat session  
+* `Regenerate last Ollama message` - regenerates the last message from Ollama (will override the `seed` for the specific message with a random one.) Useful if you want to change the system prompt or parameters or just want to try again.
 
 ### Keyboard shortcuts
 

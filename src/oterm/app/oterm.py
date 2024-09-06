@@ -43,6 +43,11 @@ class OTerm(App):
             "Exports the current chat as Markdown (in the current working directory)",
             self.action_export_chat,
         )
+        yield SystemCommand(
+            "Regenerate last Ollama message",
+            "Regenerates the last Ollama message (setting a random seed for the message)",
+            self.action_regenerate_last_message,
+        )
 
     async def action_quit(self) -> None:
         return self.exit()
@@ -128,6 +133,13 @@ class OTerm(App):
         screen.chat_id = chat.db_id
         screen.file_name = f"{slugify(chat.chat_name)}.md"
         self.push_screen(screen)
+
+    async def action_regenerate_last_message(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        if tabs.active_pane is None:
+            return
+        chat = tabs.active_pane.query_one(ChatContainer)
+        await chat.action_regenerate_llm_message()
 
     async def on_mount(self) -> None:
         store = await Store.get_store()

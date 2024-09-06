@@ -1,5 +1,6 @@
 import asyncio
 import json
+import random
 from pathlib import Path
 from typing import Literal
 
@@ -229,6 +230,52 @@ class ChatContainer(Widget):
         tabs = self.app.query_one(TabbedContent)
         await store.rename_chat(self.db_id, new_name)
         tabs.get_tab(f"chat-{self.db_id}").update(new_name)
+
+    async def action_regenerate_llm_message(self) -> None:
+        if not self.messages[-1:]:
+            return
+
+        # Remove last Ollama response from UI and regenerate it
+        response_message_id = self.messages[-1][0]
+        self.messages.pop()
+        message_container = self.query_one("#messageContainer")
+        message_container.children[-1].remove()
+        response_chat_item = ChatItem()
+        response_chat_item.author = Author.OLLAMA
+        message_container.mount(response_chat_item)
+        loading = LoadingIndicator()
+        await message_container.mount(loading)
+        message_container.scroll_end()
+
+        # Remove the last two messages from chat history, we will regenerate them
+        self.ollama.history = self.ollama.history[:-2]
+        message = self.messages[-1][2]
+
+        async def response_task() -> None:
+            response = ""
+            async for text in self.ollama.stream(
+                message,
+                [img for _, img in self.images],
+                additional_options={"seed": random.randint(0, 32768)},
+            ):
+                response = text
+                response_chat_item.text = text
+                if message_container.can_view(response_chat_item):
+                    message_container.scroll_end()
+            self.images = []
+
+            # Save to db
+            store = await Store.get_store()
+            await store.save_message(
+                id=response_message_id,
+                chat_id=self.db_id,
+                author=Author.OLLAMA.value,
+                text=response,
+            )
+            self.messages.append((response_message_id, Author.OLLAMA, response))
+            loading.remove()
+
+        asyncio.create_task(response_task())
 
     async def action_history(self) -> None:
         def on_history_selected(text: str | None) -> None:
