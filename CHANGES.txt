@@ -4,6 +4,9 @@ Changelog
 0.5.1 - 
 ------------------
 
+- Persist changed parameters when editing a chat.
+  [ggozad]
+
 - Add (id) column to message table.
   [ggozad]
 

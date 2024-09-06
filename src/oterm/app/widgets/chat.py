@@ -190,6 +190,7 @@ class ChatContainer(Widget):
         self.system = model.get("system")
         self.format = model.get("format", "")
         self.keep_alive = model.get("keep_alive", 5)
+        self.parameters = model.get("parameters", {})
         store = await Store.get_store()
         await store.edit_chat(
             id=self.db_id,
