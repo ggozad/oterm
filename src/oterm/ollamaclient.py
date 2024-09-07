@@ -3,13 +3,16 @@ from typing import (
     Any,
     AsyncGenerator,
     AsyncIterator,
+    Awaitable,
     Literal,
     Mapping,
+    Sequence,
 )
 
 from ollama import AsyncClient, Client, Message, Options
 
 from oterm.config import envConfig
+from oterm.tools import ToolDefinition
 
 
 class OllamaLLM:
@@ -21,6 +24,7 @@ class OllamaLLM:
         format: Literal["", "json"] = "",
         options: Options = Options(),
         keep_alive: int = 5,
+        tool_defs: Sequence[ToolDefinition] = [],
     ):
         self.model = model
         self.system = system
@@ -28,6 +32,8 @@ class OllamaLLM:
         self.format = format
         self.keep_alive = keep_alive
         self.options = options
+        self.tool_defs = tool_defs
+        self.tools = [tool["tool"] for tool in tool_defs]
 
         if system:
             system_prompt: Message = {"role": "system", "content": system}
@@ -47,10 +53,37 @@ class OllamaLLM:
             keep_alive=f"{self.keep_alive}m",
             options=self.options,
             format=self.format,  # type: ignore
+            tools=self.tools,
         )
-        ollama_response = response.get("message", {}).get("content", "")
-        self.history.append({"role": "assistant", "content": ollama_response})
-        return ollama_response
+        message = response.get("message", {})
+        tool_calls = message.get("tool_calls", [])
+
+        if tool_calls:
+            for tool_call in tool_calls:
+                tool_name = tool_call["function"]["name"]
+                for tool_def in self.tool_defs:
+                    if tool_def["tool"]["function"]["name"] == tool_name:
+                        tool_callable = tool_def["callable"]
+                        tool_arguments = tool_call["function"]["arguments"]
+
+                        if type(tool_callable) is Awaitable:
+                            tool_response = await tool_callable(**tool_arguments)  # type: ignore
+                        else:
+                            tool_response = tool_callable(**tool_arguments)  # type: ignore
+                        self.history.append({"role": "tool", "content": tool_response})
+            response = await client.chat(
+                model=self.model,
+                messages=self.history,
+                keep_alive=f"{self.keep_alive}m",
+                options=self.options,
+                format=self.format,  # type: ignore
+                tools=self.tools,
+            )
+            message = response.get("message", {})
+
+        text_response = message.get("content", "")
+        self.history.append({"role": "assistant", "content": text_response})
+        return text_response
 
     async def stream(
         self,
@@ -72,6 +105,7 @@ class OllamaLLM:
             options={**self.options, **additional_options},
             keep_alive=f"{self.keep_alive}m",
             format=self.format,  # type: ignore
+            tools=self.tools,
         )
         text = ""
         async for response in stream:

@@ -151,7 +151,6 @@ class OTerm(App):
         self.pop_screen()
 
         if not saved_chats:
-            print("No saved chats, creating a new one.")
             self.action_new_chat()
         else:
             tabs = self.query_one(TabbedContent)
