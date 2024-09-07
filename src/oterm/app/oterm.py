@@ -1,4 +1,3 @@
-import asyncio
 import json
 from typing import Iterable
 
@@ -9,7 +8,7 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_export import ChatExport, slugify
-from oterm.app.splash import SplashScreen
+from oterm.app.splash import splash
 from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
 from oterm.store.store import Store
@@ -148,38 +147,38 @@ class OTerm(App):
         store = await Store.get_store()
         self.dark = appConfig.get("theme") == "dark"
         saved_chats = await store.get_chats()
-        await self.push_screen(SplashScreen())
-        await asyncio.sleep(1.0)
-        self.pop_screen()
 
-        if not saved_chats:
-            self.action_new_chat()
-        else:
-            tabs = self.query_one(TabbedContent)
-            for (
-                id,
-                name,
-                model,
-                system,
-                format,
-                parameters,
-                keep_alive,
-                tools,
-            ) in saved_chats:
-                messages = await store.get_messages(id)
-                container = ChatContainer(
-                    db_id=id,
-                    chat_name=name,
-                    model=model,
-                    messages=messages,
-                    system=system,
-                    format=format,
-                    parameters=parameters,
-                    keep_alive=keep_alive,
-                    tools=tools,
-                )
-                pane = TabPane(name, container, id=f"chat-{id}")
-                tabs.add_pane(pane)
+        async def on_splash_done(message) -> None:
+            if not saved_chats:
+                await self.action_new_chat()
+            else:
+                tabs = self.query_one(TabbedContent)
+                for (
+                    id,
+                    name,
+                    model,
+                    system,
+                    format,
+                    parameters,
+                    keep_alive,
+                    tools,
+                ) in saved_chats:
+                    messages = await store.get_messages(id)
+                    container = ChatContainer(
+                        db_id=id,
+                        chat_name=name,
+                        model=model,
+                        messages=messages,
+                        system=system,
+                        format=format,
+                        parameters=parameters,
+                        keep_alive=keep_alive,
+                        tools=tools,
+                    )
+                    pane = TabPane(name, container, id=f"chat-{id}")
+                    tabs.add_pane(pane)
+
+        self.push_screen(splash, callback=on_splash_done)
 
     @on(TabbedContent.TabActivated)
     async def on_tab_activated(self, event: TabbedContent.TabActivated) -> None:
