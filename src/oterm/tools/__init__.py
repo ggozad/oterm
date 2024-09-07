@@ -10,6 +10,7 @@ from ollama._types import (
 )
 
 from oterm.tools.date_time import DateTimeTool, date_time
+from oterm.tools.shell import ShellTool, shell_command
 
 
 class ToolDefinition(TypedDict):
@@ -17,4 +18,7 @@ class ToolDefinition(TypedDict):
     callable: Callable | Awaitable
 
 
-available: Sequence[ToolDefinition] = [{"tool": DateTimeTool, "callable": date_time}]
+available: Sequence[ToolDefinition] = [
+    {"tool": DateTimeTool, "callable": date_time},
+    {"tool": ShellTool, "callable": shell_command},
+]
