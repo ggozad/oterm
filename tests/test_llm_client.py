@@ -7,8 +7,8 @@ from oterm.ollamaclient import OllamaLLM
 @pytest.mark.asyncio
 async def test_generate():
     llm = OllamaLLM()
-    res = await llm.completion("Please add 2 and 2")
-    assert "4" in res
+    res = await llm.completion(prompt="Please add 42 and 42")
+    assert "84" in res
 
 
 @pytest.mark.asyncio

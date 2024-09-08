@@ -8,7 +8,9 @@ from oterm.tools.date_time import DateTimeTool, date_time
 
 @pytest.mark.asyncio
 async def test_date_time():
-    llm = OllamaLLM(tool_defs=[{"tool": DateTimeTool, "callable": date_time}])
+    llm = OllamaLLM(
+        model="mistral-nemo", tool_defs=[{"tool": DateTimeTool, "callable": date_time}]
+    )
     res = await llm.completion(
         "What is the current date in YYYY-MM-DD format?. Reply with no other text, just the date."
     )

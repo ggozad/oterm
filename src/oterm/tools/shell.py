@@ -6,12 +6,12 @@ ShellTool = Tool(
     type="function",
     function=ToolFunction(
         name="shell",
-        description="Function to execute commands in the user's shell and return the output",
+        description="Function to execute commands in the user's shell and return the output.",
         parameters=Parameters(
             type="object",
             properties={
                 "command": Property(
-                    type="string", description="The shell command to execute"
+                    type="string", description="The shell command to execute."
                 )
             },
             required=["command"],

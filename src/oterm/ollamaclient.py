@@ -39,14 +39,15 @@ class OllamaLLM:
             system_prompt: Message = {"role": "system", "content": system}
             self.history = [system_prompt] + self.history
 
-    async def completion(self, prompt: str, images: list[str] = []) -> str:
+    async def completion(self, prompt: str = "", images: list[str] = []) -> str:
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
         )
-        user_prompt: Message = {"role": "user", "content": prompt}
-        if images:
-            user_prompt["images"] = images
-        self.history.append(user_prompt)
+        if prompt:
+            user_prompt: Message = {"role": "user", "content": prompt}
+            if images:
+                user_prompt["images"] = images
+            self.history.append(user_prompt)
         response = await client.chat(
             model=self.model,
             messages=self.history,
@@ -55,12 +56,13 @@ class OllamaLLM:
             format=self.format,  # type: ignore
             tools=self.tools,
         )
+
         message = response.get("message", {})
         tool_calls = message.get("tool_calls", [])
-
         if tool_calls:
             for tool_call in tool_calls:
                 tool_name = tool_call["function"]["name"]
+                self.history.append(message)
                 for tool_def in self.tool_defs:
                     if tool_def["tool"]["function"]["name"] == tool_name:
                         tool_callable = tool_def["callable"]
@@ -71,18 +73,10 @@ class OllamaLLM:
                         else:
                             tool_response = tool_callable(**tool_arguments)  # type: ignore
                         self.history.append({"role": "tool", "content": tool_response})
-            response = await client.chat(
-                model=self.model,
-                messages=self.history,
-                keep_alive=f"{self.keep_alive}m",
-                options=self.options,
-                format=self.format,  # type: ignore
-                tools=self.tools,
-            )
-            message = response.get("message", {})
+            return await self.completion()
 
+        self.history.append(message)
         text_response = message.get("content", "")
-        self.history.append({"role": "assistant", "content": text_response})
         return text_response
 
     async def stream(
