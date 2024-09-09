@@ -30,6 +30,7 @@ class EnvConfig:
     OLLAMA_URL: str = ""
     OTERM_VERIFY_SSL: bool = True
     OTERM_DATA_DIR: Path = get_default_data_dir()
+    OPEN_WEATHER_MAP_API_KEY: str
 
     def __init__(self, env):
         for field in self.__annotations__:
