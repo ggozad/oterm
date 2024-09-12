@@ -26,22 +26,23 @@ WeatherTool = Tool(
 )
 
 
-def get_current_weather(latitude: float, longitude: float) -> str:
-    try:
-        api_key = envConfig.OPEN_WEATHER_MAP_API_KEY
-        if not api_key:
-            raise Exception("OpenWeatherMap API key not found")
+async def get_current_weather(latitude: float, longitude: float) -> str:
+    async with httpx.AsyncClient() as client:
+        try:
+            api_key = envConfig.OPEN_WEATHER_MAP_API_KEY
+            if not api_key:
+                raise Exception("OpenWeatherMap API key not found")
 
-        response = httpx.get(
-            f"https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={api_key}"
-        )
-
-        if response.status_code == 200:
-            data = response.json()
-            return json.dumps(data)
-        else:
-            return json.dumps(
-                {"error": f"{response.status_code}: {response.reason_phrase}"}
+            response = await client.get(
+                f"https://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={api_key}"
             )
-    except Exception as e:
-        return json.dumps({"error": str(e)})
+
+            if response.status_code == 200:
+                data = response.json()
+                return json.dumps(data)
+            else:
+                return json.dumps(
+                    {"error": f"{response.status_code}: {response.reason_phrase}"}
+                )
+        except Exception as e:
+            return json.dumps({"error": str(e)})

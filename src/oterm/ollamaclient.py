@@ -1,9 +1,9 @@
+import inspect
 from ast import literal_eval
 from typing import (
     Any,
     AsyncGenerator,
     AsyncIterator,
-    Awaitable,
     Literal,
     Mapping,
     Sequence,
@@ -67,8 +67,7 @@ class OllamaLLM:
                     if tool_def["tool"]["function"]["name"] == tool_name:
                         tool_callable = tool_def["callable"]
                         tool_arguments = tool_call["function"]["arguments"]
-
-                        if type(tool_callable) is Awaitable:
+                        if inspect.iscoroutinefunction(tool_callable):
                             tool_response = await tool_callable(**tool_arguments)  # type: ignore
                         else:
                             tool_response = tool_callable(**tool_arguments)  # type: ignore

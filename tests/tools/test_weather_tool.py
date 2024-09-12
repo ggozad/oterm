@@ -14,7 +14,7 @@ async def test_weather():
             {"tool": WeatherTool, "callable": get_current_weather},
         ],
     )
-    weather = json.loads(get_current_weather(latitude=59.2675, longitude=10.4076))
+    weather = json.loads(await get_current_weather(latitude=59.2675, longitude=10.4076))
     temperature = weather.get("main").get("temp") - 273.15
 
     res = await llm.completion(
@@ -33,9 +33,9 @@ async def test_weather_with_location():
             {"tool": WeatherTool, "callable": get_current_weather},
         ],
     )
-    current_location = json.loads(get_current_location())
+    current_location = json.loads(await get_current_location())
     weather = json.loads(
-        get_current_weather(
+        await get_current_weather(
             latitude=current_location.get("latitude"),
             longitude=current_location.get("longitude"),
         )

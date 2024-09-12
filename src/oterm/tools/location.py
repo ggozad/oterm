@@ -18,35 +18,36 @@ LocationTool = Tool(
 )
 
 
-def get_current_location():
+async def get_current_location():
 
-    try:
-        response = httpx.get("https://ipinfo.io/")
-        if response.status_code == 200:
-            data = response.json()
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get("https://ipinfo.io/")
+            if response.status_code == 200:
+                data = response.json()
 
-            # Extract latitude and longitude from the location information
-            city = data.get("city", "N/A")
-            region = data.get("region", "N/A")
-            country = data.get("country", "N/A")
-            loc = data.get("loc", "N/A").split(",")
-            if len(loc) == 2:
-                latitude, longitude = float(loc[0]), float(loc[1])
+                # Extract latitude and longitude from the location information
+                city = data.get("city", "N/A")
+                region = data.get("region", "N/A")
+                country = data.get("country", "N/A")
+                loc = data.get("loc", "N/A").split(",")
+                if len(loc) == 2:
+                    latitude, longitude = float(loc[0]), float(loc[1])
+                else:
+                    latitude, longitude = None, None
+
+                return json.dumps(
+                    {
+                        "city": city,
+                        "region": region,
+                        "country": country,
+                        "latitude": latitude,
+                        "longitude": longitude,
+                    }
+                )
             else:
-                latitude, longitude = None, None
-
-            return json.dumps(
-                {
-                    "city": city,
-                    "region": region,
-                    "country": country,
-                    "latitude": latitude,
-                    "longitude": longitude,
-                }
-            )
-        else:
-            return json.dumps(
-                {"error": f"{response.status_code}: {response.reason_phrase}"}
-            )
-    except httpx.HTTPError as e:
-        return json.dumps({"error": str(e)})
+                return json.dumps(
+                    {"error": f"{response.status_code}: {response.reason_phrase}"}
+                )
+        except httpx.HTTPError as e:
+            return json.dumps({"error": str(e)})
