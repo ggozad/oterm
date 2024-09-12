@@ -90,43 +90,54 @@ LoadingIndicator {
     height: 3;
 }
 
-#model-select-container {
+#edit-chat-container {
     background: $panel;
     border: $panel-lighten-2;
     margin: 2;
     padding: 1;
 }
 
-#model-select-container .title {
+#edit-chat-container .title {
     color: $secondary;
 }
 
-#model-select-container .system , .parameters {
+#edit-chat-container .system , .parameters {
     margin: 1;
 }
-#model-select-container .button-container {    
+
+#edit-chat-container .button-container {    
     height: 3;
 }
-#model-select-container .button-container Button {    
+
+#edit-chat-container .button-container Button {    
     margin-right: 1;
 }
 
 #model-select {
     margin-top: 1;
-    max-height: 70%;
+    max-height: 60%;
 }
 
-#model-details {
+#model-info {
+    height: 1;
+}
+
+#model-info .title, .name, .tag, .size {
+    margin-right: 1;
+}
+
+#edit-chat-container .button-container  {
     margin: 1;
 }
 
-#model-select-container .button-container  {
-    margin: 1;
-}
-
-#model-select-container .json-format {
+#edit-chat-container .json-format {
     background: $panel;
     color: $secondary;
+}
+
+#tool-list {
+    margin: 1;
+    padding-right:3;
 }
 
 #chat-rename-container, #chat-export-container, #prompt-history-container {

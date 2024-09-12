@@ -1,14 +1,22 @@
 import json
+from typing import Sequence
 
 from ollama import Options
 from rich.text import Text
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import (
+    Container,
+    Horizontal,
+    ScrollableContainer,
+    Vertical,
+)
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
 
 from oterm.ollamaclient import OllamaLLM, parse_ollama_parameters
+from oterm.tools import ToolDefinition
+from oterm.tools import available as available_tools
 
 
 class ChatEdit(ModalScreen[str]):
@@ -25,6 +33,7 @@ class ChatEdit(ModalScreen[str]):
     keep_alive: reactive[int] = reactive(5)
     edit_mode: reactive[bool] = reactive(False)
     last_highlighted_index = None
+    tool_defs: reactive[Sequence[ToolDefinition]] = reactive([])
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -125,15 +134,15 @@ class ChatEdit(ModalScreen[str]):
             name, tag = model_meta["name"].split(":")
             self.model_name = name
             widget = self.query_one(".name", Label)
-            widget.update(f"Name: {self.model_name}")
+            widget.update(f"{self.model_name}")
 
             self.tag = tag
             widget = self.query_one(".tag", Label)
-            widget.update(f"Tag: {self.tag}")
+            widget.update(f"{self.tag}")
 
             self.bytes = model_meta["size"]
             widget = self.query_one(".size", Label)
-            widget.update(f"Size: {(self.bytes / 1.0e9):.2f} GB")
+            widget.update(f"{(self.bytes / 1.0e9):.2f} GB")
 
             self.model_info = self.models_info[model_meta["name"]]
             if not self.edit_mode:
@@ -161,16 +170,28 @@ class ChatEdit(ModalScreen[str]):
         return Text(model)
 
     def compose(self) -> ComposeResult:
-        with Container(id="model-select-container"):
-            yield Label("Select a model:", classes="title")
+        with Container(id="edit-chat-container"):
+
             with Horizontal():
                 with Vertical():
+                    with Horizontal(id="model-info"):
+                        yield Label("Model:", classes="title")
+                        yield Label(f"{self.model_name}", classes="name")
+                        yield Label("Tag:", classes="title")
+                        yield Label(f"{self.tag}", classes="tag")
+                        yield Label("Size:", classes="title")
+                        yield Label(f"{self.size}", classes="size")
+
                     yield OptionList(id="model-select")
-                    with Vertical(id="model-details"):
-                        yield Label("Model info:", classes="title")
-                        yield Label(f"Name: {self.model_name}", classes="name")
-                        yield Label(f"Tag: {self.tag}", classes="tag")
-                        yield Label(f"Size: {self.size}", classes="size")
+                    yield Label("Tools:", classes="title")
+                    with ScrollableContainer(id="tool-list"):
+                        for tool_def in available_tools:
+                            yield Checkbox(
+                                label=f"{tool_def["tool"]['function']['name']}",
+                                tooltip= f"{tool_def['tool']['function']['description']}",
+                                value=tool_def["tool"] in self.tool_defs,
+                            )
+
                 with Vertical():
                     yield Label("System:", classes="title")
                     yield TextArea(self.system, classes="system log")
@@ -182,7 +203,7 @@ class ChatEdit(ModalScreen[str]):
                     )
                     with Horizontal():
                         yield Checkbox(
-                            "JSON output",
+                            "JSON",
                             value=self.json_format,
                             classes="json-format",
                             button_first=False,
