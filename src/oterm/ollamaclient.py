@@ -83,7 +83,16 @@ class OllamaLLM:
         prompt: str,
         images: list[str] = [],
         additional_options: Options = Options(),
+        tool_defs: Sequence[ToolDefinition] = [],
     ) -> AsyncGenerator[str, Any]:
+
+        # stream() should not be called with tools till Ollama supports streaming with tools.
+        # See https://github.com/ollama/ollama-python/issues/279
+        if tool_defs:
+            raise NotImplementedError(
+                "stream() should not be called with tools till Ollama supports streaming with tools."
+            )
+
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
         )

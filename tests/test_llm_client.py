@@ -2,6 +2,7 @@ import pytest
 from ollama import ResponseError
 
 from oterm.ollamaclient import OllamaLLM
+from oterm.tools.location import LocationTool
 
 
 @pytest.mark.asyncio
@@ -43,3 +44,24 @@ async def test_iterator():
     async for text in llm.stream("Please add 2 and 2"):
         response = text
     assert "4" in response
+
+
+@pytest.mark.skip(
+    reason="Skipped till https://github.com/ollama/ollama-python/issues/279 is fixed."
+)
+@pytest.mark.asyncio
+async def test_tool_streaming():
+    # This test will fail until Ollama supports streaming with tools.
+    # See https://github.com/ollama/ollama-python/issues/279
+
+    llm = OllamaLLM(
+        tool_defs=[
+            {"tool": LocationTool, "callable": lambda: "New York"},
+        ],
+    )
+    response = ""
+    async for text in llm.stream(
+        "In which city am I currently located?. Reply with no other text, just the city."
+    ):
+        response = text
+    assert "New York" in response
