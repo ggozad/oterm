@@ -31,9 +31,9 @@ class ChatEdit(ModalScreen[str]):
     parameters: reactive[Options] = reactive({})
     json_format: reactive[bool] = reactive(False)
     keep_alive: reactive[int] = reactive(5)
-    edit_mode: reactive[bool] = reactive(False)
     last_highlighted_index = None
     tool_defs: reactive[Sequence[ToolDefinition]] = reactive([])
+    edit_mode: reactive[bool] = reactive(False)
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -154,6 +154,12 @@ class ChatEdit(ModalScreen[str]):
             widget = self.query_one(".system", TextArea)
             widget.load_text(self.system or self.model_info.get("system", ""))
 
+            # Deduce from the model's template if the model is tool-capable.
+            tools_supported = ".Tools" in self.model_info["template"]
+            widgets = self.query(".tool")
+            for widget in widgets:
+                widget.disabled = not tools_supported
+
         # Now that there is a model selected we can save the chat.
         save_button = self.query_one("#save-btn", Button)
         save_button.disabled = False
@@ -171,7 +177,6 @@ class ChatEdit(ModalScreen[str]):
 
     def compose(self) -> ComposeResult:
         with Container(id="edit-chat-container"):
-
             with Horizontal():
                 with Vertical():
                     with Horizontal(id="model-info"):
@@ -188,8 +193,9 @@ class ChatEdit(ModalScreen[str]):
                         for tool_def in available_tools:
                             yield Checkbox(
                                 label=f"{tool_def["tool"]['function']['name']}",
-                                tooltip= f"{tool_def['tool']['function']['description']}",
+                                tooltip=f"{tool_def['tool']['function']['description']}",
                                 value=tool_def["tool"] in self.tool_defs,
+                                classes="tool",
                             )
 
                 with Vertical():
