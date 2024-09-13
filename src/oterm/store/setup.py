@@ -8,8 +8,9 @@ CREATE TABLE IF NOT EXISTS "chat" (
 	"model"		TEXT NOT NULL,
 	"system"	TEXT,
 	"format"	TEXT,
-	"parameters"	TEXT,
+	"parameters"	TEXT DEFAULT "{}",
     "keep_alive" INTEGER DEFAULT 5,
+    "tools" 	TEXT DEFAULT "[]",
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
 
