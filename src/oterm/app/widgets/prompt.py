@@ -53,7 +53,9 @@ class PostableTextArea(TextArea):
 
     def action_newline(self) -> None:
         cur = self.cursor_location
-        self.text = self.text[: cur[0] + cur[1]] + "\n" + self.text[cur[0] + cur[1] :]
+        lines = self.text.split("\n")
+        lines[cur[0]] = lines[cur[0]][:cur[1]] + "\n" + lines[cur[0]][cur[1]:]
+        self.text = "\n".join(lines)
         self.cursor_location = (cur[0] + 1, 0)
 
 

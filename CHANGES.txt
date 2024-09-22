@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.5.3 -
+------------------
+
+- Fix newline insertion in multi-line widget.
+  [ggozad]
+
 0.5.2 - 2024-09-06
 ------------------
 
