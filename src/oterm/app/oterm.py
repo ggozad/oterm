@@ -83,9 +83,9 @@ class OTerm(App):
             model=model["name"],
             system=model["system"],
             format=model["format"],
-            parameters=json.dumps(model["parameters"]),
+            parameters=model["parameters"],
             keep_alive=model["keep_alive"],
-            tools=json.dumps(model["tools"]),
+            tools=model["tools"],
         )
         pane = TabPane(name, id=f"chat-{id}")
         pane.compose_add_child(

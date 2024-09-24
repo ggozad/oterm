@@ -68,9 +68,9 @@ class Store(object):
         model: str,
         system: str | None,
         format: Literal["", "json"],
-        parameters: str,
+        parameters: Options,
         keep_alive: int,
-        tools: str,
+        tools: list[Tool],
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res: list[tuple[int]] = await chat_queries.save_chat(  # type: ignore
@@ -80,9 +80,9 @@ class Store(object):
                 model=model,
                 system=system,
                 format=format,
-                parameters=parameters,
+                parameters=json.dumps(parameters),
                 keep_alive=keep_alive,
-                tools=tools,
+                tools=json.dumps(tools),
             )
 
             await connection.commit()
@@ -103,9 +103,9 @@ class Store(object):
         name: str,
         system: str | None,
         format: Literal["", "json"],
-        parameters: str,
+        parameters: Options,
         keep_alive: int,
-        tools: str,
+        tools: list[Tool],
     ) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
             await chat_queries.edit_chat(  # type: ignore
@@ -114,9 +114,9 @@ class Store(object):
                 name=name,
                 system=system,
                 format=format,
-                parameters=parameters,
+                parameters=json.dumps(parameters),
                 keep_alive=keep_alive,
-                tools=tools,
+                tools=json.dumps(tools),
             )
             await connection.commit()
 
