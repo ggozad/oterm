@@ -1,8 +1,11 @@
 Changelog
 =========
 
-0.5.3 -
+0.6.0 - 
 ------------------
+
+- Add support for tools/function calling.
+  [ggozad]
 
 - Fix newline insertion in multi-line widget.
   [ggozad]

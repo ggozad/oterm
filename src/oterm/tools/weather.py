@@ -8,7 +8,7 @@ from oterm.tools import Parameters, Property, Tool, ToolFunction
 WeatherTool = Tool(
     type="function",
     function=ToolFunction(
-        name="get_weather_info",
+        name="current_weather",
         description="Function to return the current weather for the given location in Standard Units.",
         parameters=Parameters(
             type="object",
@@ -26,7 +26,7 @@ WeatherTool = Tool(
 )
 
 
-async def get_current_weather(latitude: float, longitude: float) -> str:
+async def current_weather(latitude: float, longitude: float) -> str:
     async with httpx.AsyncClient() as client:
         try:
             api_key = envConfig.OPEN_WEATHER_MAP_API_KEY

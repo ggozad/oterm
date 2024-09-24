@@ -7,7 +7,7 @@ from oterm.tools import Parameters, Tool, ToolFunction
 LocationTool = Tool(
     type="function",
     function=ToolFunction(
-        name="get_current_location",
+        name="current_location",
         description="Function to return the current location, city, region, country, latitude, and longitude.",
         parameters=Parameters(
             type="object",
@@ -18,7 +18,7 @@ LocationTool = Tool(
 )
 
 
-async def get_current_location():
+async def current_location():
 
     async with httpx.AsyncClient() as client:
         try:

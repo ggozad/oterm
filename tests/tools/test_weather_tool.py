@@ -3,18 +3,18 @@ import json
 import pytest
 
 from oterm.ollamaclient import OllamaLLM
-from oterm.tools.location import LocationTool, get_current_location
-from oterm.tools.weather import WeatherTool, get_current_weather
+from oterm.tools.location import LocationTool, current_location
+from oterm.tools.weather import WeatherTool, current_weather
 
 
 @pytest.mark.asyncio
 async def test_weather():
     llm = OllamaLLM(
         tool_defs=[
-            {"tool": WeatherTool, "callable": get_current_weather},
+            {"tool": WeatherTool, "callable": current_weather},
         ],
     )
-    weather = json.loads(await get_current_weather(latitude=59.2675, longitude=10.4076))
+    weather = json.loads(await current_weather(latitude=59.2675, longitude=10.4076))
     temperature = weather.get("main").get("temp") - 273.15
 
     res = await llm.completion(
@@ -29,15 +29,15 @@ async def test_weather():
 async def test_weather_with_location():
     llm = OllamaLLM(
         tool_defs=[
-            {"tool": LocationTool, "callable": get_current_location},
-            {"tool": WeatherTool, "callable": get_current_weather},
+            {"tool": LocationTool, "callable": current_location},
+            {"tool": WeatherTool, "callable": current_weather},
         ],
     )
-    current_location = json.loads(await get_current_location())
+    location = json.loads(await current_location())
     weather = json.loads(
-        await get_current_weather(
-            latitude=current_location.get("latitude"),
-            longitude=current_location.get("longitude"),
+        await current_weather(
+            latitude=location.get("latitude"),
+            longitude=location.get("longitude"),
         )
     )
     temperature = weather.get("main").get("temp") - 273.15
