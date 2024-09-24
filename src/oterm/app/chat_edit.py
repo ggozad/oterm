@@ -2,13 +2,21 @@ import json
 
 from ollama import Options
 from rich.text import Text
+from textual import on
 from textual.app import ComposeResult
-from textual.containers import Container, Horizontal, Vertical
+from textual.containers import (
+    Container,
+    Horizontal,
+    ScrollableContainer,
+    Vertical,
+)
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
 
 from oterm.ollamaclient import OllamaLLM, parse_ollama_parameters
+from oterm.tools import Tool
+from oterm.tools import available as available_tool_defs
 
 
 class ChatEdit(ModalScreen[str]):
@@ -23,8 +31,9 @@ class ChatEdit(ModalScreen[str]):
     parameters: reactive[Options] = reactive({})
     json_format: reactive[bool] = reactive(False)
     keep_alive: reactive[int] = reactive(5)
-    edit_mode: reactive[bool] = reactive(False)
     last_highlighted_index = None
+    tools: reactive[list[Tool]] = reactive([])
+    edit_mode: reactive[bool] = reactive(False)
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -39,6 +48,7 @@ class ChatEdit(ModalScreen[str]):
         keep_alive: int = 5,
         json_format: bool = False,
         edit_mode: bool = False,
+        tools: list[Tool] = [],
     ) -> None:
         super().__init__()
         self.model_name, self.tag = model.split(":") if model else ("", "")
@@ -47,6 +57,7 @@ class ChatEdit(ModalScreen[str]):
         self.keep_alive = keep_alive
         self.json_format = json_format
         self.edit_mode = edit_mode
+        self.tools = tools
 
     def _return_chat_meta(self) -> None:
         model = f"{self.model_name}:{self.tag}"
@@ -75,6 +86,7 @@ class ChatEdit(ModalScreen[str]):
                 "format": "json" if jsn else "",
                 "keep_alive": keep_alive,
                 "parameters": parameters,
+                "tools": self.tools
             }
         )
         self.dismiss(result)
@@ -116,6 +128,19 @@ class ChatEdit(ModalScreen[str]):
     def on_option_list_option_selected(self, option: OptionList.OptionSelected) -> None:
         self._return_chat_meta()
 
+    @on(Checkbox.Changed)
+    def on_tool_toggled(self, ev: Checkbox.Changed):
+        tool_name = ev.control.label
+        checked = ev.value
+        for tool_def in available_tool_defs:
+            if tool_def["tool"]["function"]["name"] == str(tool_name):
+                tool = tool_def["tool"]
+                if checked:
+                    self.tools.append(tool)
+                else:
+                    self.tools.remove(tool)
+                break
+
     def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
     ) -> None:
@@ -125,15 +150,15 @@ class ChatEdit(ModalScreen[str]):
             name, tag = model_meta["name"].split(":")
             self.model_name = name
             widget = self.query_one(".name", Label)
-            widget.update(f"Name: {self.model_name}")
+            widget.update(f"{self.model_name}")
 
             self.tag = tag
             widget = self.query_one(".tag", Label)
-            widget.update(f"Tag: {self.tag}")
+            widget.update(f"{self.tag}")
 
             self.bytes = model_meta["size"]
             widget = self.query_one(".size", Label)
-            widget.update(f"Size: {(self.bytes / 1.0e9):.2f} GB")
+            widget.update(f"{(self.bytes / 1.0e9):.2f} GB")
 
             self.model_info = self.models_info[model_meta["name"]]
             if not self.edit_mode:
@@ -144,6 +169,14 @@ class ChatEdit(ModalScreen[str]):
             widget.load_text(json.dumps(self.parameters, indent=2))
             widget = self.query_one(".system", TextArea)
             widget.load_text(self.system or self.model_info.get("system", ""))
+
+            # Deduce from the model's template if the model is tool-capable.
+            tools_supported = ".Tools" in self.model_info["template"]
+            widgets = self.query(".tool")
+            for widget in widgets:
+                widget.disabled = not tools_supported
+                if not tools_supported:
+                    widget.value = False # type: ignore
 
         # Now that there is a model selected we can save the chat.
         save_button = self.query_one("#save-btn", Button)
@@ -161,16 +194,28 @@ class ChatEdit(ModalScreen[str]):
         return Text(model)
 
     def compose(self) -> ComposeResult:
-        with Container(id="model-select-container"):
-            yield Label("Select a model:", classes="title")
+        with Container(id="edit-chat-container"):
             with Horizontal():
                 with Vertical():
+                    with Horizontal(id="model-info"):
+                        yield Label("Model:", classes="title")
+                        yield Label(f"{self.model_name}", classes="name")
+                        yield Label("Tag:", classes="title")
+                        yield Label(f"{self.tag}", classes="tag")
+                        yield Label("Size:", classes="title")
+                        yield Label(f"{self.size}", classes="size")
+
                     yield OptionList(id="model-select")
-                    with Vertical(id="model-details"):
-                        yield Label("Model info:", classes="title")
-                        yield Label(f"Name: {self.model_name}", classes="name")
-                        yield Label(f"Tag: {self.tag}", classes="tag")
-                        yield Label(f"Size: {self.size}", classes="size")
+                    yield Label("Tools:", classes="title")
+                    with ScrollableContainer(id="tool-list"):
+                        for tool_def in available_tool_defs:
+                            yield Checkbox(
+                                label=f"{tool_def["tool"]['function']['name']}",
+                                tooltip=f"{tool_def['tool']['function']['description']}",
+                                value=tool_def["tool"] in self.tools,
+                                classes="tool",
+                            )
+
                 with Vertical():
                     yield Label("System:", classes="title")
                     yield TextArea(self.system, classes="system log")
@@ -182,7 +227,7 @@ class ChatEdit(ModalScreen[str]):
                     )
                     with Horizontal():
                         yield Checkbox(
-                            "JSON output",
+                            "JSON",
                             value=self.json_format,
                             classes="json-format",
                             button_first=False,

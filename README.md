@@ -74,6 +74,21 @@ While Ollama is inferring the next message, you can press <kbd>Esc</kbd> to canc
 
 Note that some of the shortcuts may not work in a certain context, for example pressing <kbd>↑</kbd> while the prompt is in multi-line mode.
 
+### Tools
+
+Since version `0.6.0` `oterm` supports integration with tools. Tools are special "functions" that can provide external information to the LLM model that it does not otherwise have access to.
+
+The following tools are currently supported:
+
+* `date_time` - provides the current date and time in ISO format.
+* `current_location` - provides the current location of the user (longitude, latitude, city, region, country). Uses [ipinfo.io](https://ipinfo.io) to determine the location.
+* `current_weather` - provides the current weather in the user's location. Uses [OpenWeatherMap](https://openweathermap.org) to determine the weather.
+* `shell` - allows you to run shell commands and use the output as input to the model. Obviously this can be dangerous, so use with caution.
+
+The tooling API in Ollama does not currently support streaming. When using tools, you will have to wait for the tools & model to finish before you see the response.
+
+Note that tools integration is **experimental** and may change in the future. I particularly welcome contributions for new tools, but please bear in mind that any additional requirements in terms of dependencies or paid-for API usage should be kept to a minimum.
+
 ### Copy / Paste
 
 It is difficult to properly support copy/paste in terminal applications. You can copy blocks to your clipboard as such:
@@ -86,10 +101,9 @@ For most terminals there exists a key modifier you can use to click and drag to 
 * `Gnome Terminal` <kbd>Shift</kbd> key.
 * `Windows Terminal` <kbd>Shift</kbd> key.
 
-
 ### Customizing models
 
-When creating a new chat, you may not only select the model, but also customize the the `system` instruction as well as the `parameters` (such as context length, seed, temperature etc) passed to the model. For a list of all supported parameters refer to the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values). Checking the `JSON output` checkbox will force the model to reply in JSON format. Please note that `oterm` will not (yet) pull models for you, use `ollama` to do that. All the models you have pulled or created will be available to `oterm`.
+When creating a new chat, you may not only select the model, but also customize the the `system` instruction, `tools` used, as well as the `parameters` (such as context length, seed, temperature etc) passed to the model. For a list of all supported parameters refer to the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values). Checking the `JSON output` checkbox will force the model to reply in JSON format. Please note that `oterm` will not (yet) pull models for you, use `ollama` to do that. All the models you have pulled or created will be available to `oterm`.
 
 You can also "edit" the chat to change the system prompt, parameters or format. Note, that the model cannot be changed once the chat has started.
 

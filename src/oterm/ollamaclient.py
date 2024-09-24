@@ -1,3 +1,4 @@
+import inspect
 from ast import literal_eval
 from typing import (
     Any,
@@ -5,11 +6,13 @@ from typing import (
     AsyncIterator,
     Literal,
     Mapping,
+    Sequence,
 )
 
 from ollama import AsyncClient, Client, Message, Options
 
 from oterm.config import envConfig
+from oterm.tools import ToolDefinition
 
 
 class OllamaLLM:
@@ -21,6 +24,7 @@ class OllamaLLM:
         format: Literal["", "json"] = "",
         options: Options = Options(),
         keep_alive: int = 5,
+        tool_defs: Sequence[ToolDefinition] = [],
     ):
         self.model = model
         self.system = system
@@ -28,36 +32,67 @@ class OllamaLLM:
         self.format = format
         self.keep_alive = keep_alive
         self.options = options
+        self.tool_defs = tool_defs
+        self.tools = [tool["tool"] for tool in tool_defs]
 
         if system:
             system_prompt: Message = {"role": "system", "content": system}
             self.history = [system_prompt] + self.history
 
-    async def completion(self, prompt: str, images: list[str] = []) -> str:
+    async def completion(self, prompt: str = "", images: list[str] = []) -> str:
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
         )
-        user_prompt: Message = {"role": "user", "content": prompt}
-        if images:
-            user_prompt["images"] = images
-        self.history.append(user_prompt)
+        if prompt:
+            user_prompt: Message = {"role": "user", "content": prompt}
+            if images:
+                user_prompt["images"] = images
+            self.history.append(user_prompt)
         response = await client.chat(
             model=self.model,
             messages=self.history,
             keep_alive=f"{self.keep_alive}m",
             options=self.options,
             format=self.format,  # type: ignore
+            tools=self.tools,
         )
-        ollama_response = response.get("message", {}).get("content", "")
-        self.history.append({"role": "assistant", "content": ollama_response})
-        return ollama_response
+
+        message = response.get("message", {})
+        tool_calls = message.get("tool_calls", [])
+        if tool_calls:
+            for tool_call in tool_calls:
+                tool_name = tool_call["function"]["name"]
+                self.history.append(message)
+                for tool_def in self.tool_defs:
+                    if tool_def["tool"]["function"]["name"] == tool_name:
+                        tool_callable = tool_def["callable"]
+                        tool_arguments = tool_call["function"]["arguments"]
+                        if inspect.iscoroutinefunction(tool_callable):
+                            tool_response = await tool_callable(**tool_arguments)  # type: ignore
+                        else:
+                            tool_response = tool_callable(**tool_arguments)  # type: ignore
+                        self.history.append({"role": "tool", "content": tool_response})
+            return await self.completion()
+
+        self.history.append(message)
+        text_response = message.get("content", "")
+        return text_response
 
     async def stream(
         self,
         prompt: str,
         images: list[str] = [],
         additional_options: Options = Options(),
+        tool_defs: Sequence[ToolDefinition] = [],
     ) -> AsyncGenerator[str, Any]:
+
+        # stream() should not be called with tools till Ollama supports streaming with tools.
+        # See https://github.com/ollama/ollama-python/issues/279
+        if tool_defs:
+            raise NotImplementedError(
+                "stream() should not be called with tools till Ollama supports streaming with tools."
+            )
+
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
         )
@@ -72,6 +107,7 @@ class OllamaLLM:
             options={**self.options, **additional_options},
             keep_alive=f"{self.keep_alive}m",
             format=self.format,  # type: ignore
+            tools=self.tools,
         )
         text = ""
         async for response in stream:

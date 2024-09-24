@@ -1,7 +1,7 @@
 import json
 from importlib import metadata
 from pathlib import Path
-from typing import Literal
+from typing import Literal, Sequence
 
 import aiosqlite
 from ollama import Options
@@ -11,6 +11,7 @@ from oterm.config import envConfig
 from oterm.store.chat import queries as chat_queries
 from oterm.store.setup import queries as setup_queries
 from oterm.store.upgrades import upgrades
+from oterm.tools import Tool
 from oterm.types import Author
 from oterm.utils import int_to_semantic_version, semantic_version_to_int
 
@@ -67,8 +68,9 @@ class Store(object):
         model: str,
         system: str | None,
         format: Literal["", "json"],
-        parameters: str,
+        parameters: Options,
         keep_alive: int,
+        tools: list[Tool],
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res: list[tuple[int]] = await chat_queries.save_chat(  # type: ignore
@@ -78,8 +80,9 @@ class Store(object):
                 model=model,
                 system=system,
                 format=format,
-                parameters=parameters,
+                parameters=json.dumps(parameters),
                 keep_alive=keep_alive,
+                tools=json.dumps(tools),
             )
 
             await connection.commit()
@@ -100,8 +103,9 @@ class Store(object):
         name: str,
         system: str | None,
         format: Literal["", "json"],
-        parameters: str,
+        parameters: Options,
         keep_alive: int,
+        tools: list[Tool],
     ) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
             await chat_queries.edit_chat(  # type: ignore
@@ -110,14 +114,17 @@ class Store(object):
                 name=name,
                 system=system,
                 format=format,
-                parameters=parameters,
+                parameters=json.dumps(parameters),
                 keep_alive=keep_alive,
+                tools=json.dumps(tools),
             )
             await connection.commit()
 
     async def get_chats(
         self,
-    ) -> list[tuple[int, str, str, str | None, Literal["", "json"], Options, int]]:
+    ) -> list[
+        tuple[int, str, str, str | None, Literal["", "json"], Options, int, list[Tool]]
+    ]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore
             chats = [
@@ -129,19 +136,25 @@ class Store(object):
                     format,
                     json.loads(parameters),
                     keep_alive,
+                    json.loads(tools),
                 )
-                for id, name, model, system, format, parameters, keep_alive in chats
+                for id, name, model, system, format, parameters, keep_alive, tools in chats
             ]
             return chats
 
     async def get_chat(
         self, id
-    ) -> tuple[int, str, str, str | None, Literal["", "json"], Options, int] | None:
+    ) -> (
+        tuple[
+            int, str, str, str | None, Literal["", "json"], Options, int, Sequence[Tool]
+        ]
+        | None
+    ):
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
             if chat:
                 chat = chat[0]
-                id, name, model, system, format, parameters, keep_alive = chat
+                id, name, model, system, format, parameters, keep_alive, tools = chat
                 return (
                     id,
                     name,
@@ -150,6 +163,7 @@ class Store(object):
                     format,
                     json.loads(parameters),
                     keep_alive,
+                    json.loads(tools),
                 )
 
     async def delete_chat(self, id: int) -> None:
