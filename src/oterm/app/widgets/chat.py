@@ -28,6 +28,7 @@ from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
 from oterm.tools import Tool
+from oterm.tools import available as available_tool_defs
 from oterm.types import Author
 
 
@@ -73,6 +74,10 @@ class ChatContainer(Widget):
             for _, author, message in messages
         ]
 
+        used_tool_defs = [
+            tool_def for tool_def in available_tool_defs if tool_def["tool"] in tools
+        ]
+
         self.ollama = OllamaLLM(
             model=model,
             system=system,
@@ -80,6 +85,7 @@ class ChatContainer(Widget):
             options=parameters,
             keep_alive=keep_alive,
             history=history,
+            tool_defs=used_tool_defs,
         )
 
         self.chat_name = chat_name
@@ -134,13 +140,23 @@ class ChatContainer(Widget):
 
             try:
                 response = ""
-                async for text in self.ollama.stream(
-                    message, [img for _, img in self.images]
-                ):
-                    response = text
-                    response_chat_item.text = text
-                    if message_container.can_view(response_chat_item):
-                        message_container.scroll_end()
+
+                # Ollama does not support streaming with tools, so we need to use completion
+                if self.tools:
+                    response = await self.ollama.completion(
+                        prompt=message, images=[img for _, img in self.images]
+                    )
+                    response_chat_item.text = response
+
+                else:
+                    async for text in self.ollama.stream(
+                        message, [img for _, img in self.images]
+                    ):
+                        response = text
+                        response_chat_item.text = text
+                if message_container.can_view(response_chat_item):
+                    message_container.scroll_end()
+
                 self.images = []
 
                 # Save to db
@@ -197,6 +213,7 @@ class ChatContainer(Widget):
         self.parameters = model.get("parameters", {})
         self.tools = model.get("tools", [])
         store = await Store.get_store()
+
         await store.edit_chat(
             id=self.db_id,
             name=self.chat_name,
@@ -216,6 +233,11 @@ class ChatContainer(Widget):
             )
             for _, author, message in self.messages
         ]
+        used_tool_defs = [
+            tool_def
+            for tool_def in available_tool_defs
+            if tool_def["tool"] in self.tools
+        ]
 
         self.ollama = OllamaLLM(
             model=model["name"],
@@ -224,6 +246,7 @@ class ChatContainer(Widget):
             options=model["parameters"],
             keep_alive=model["keep_alive"],
             history=history,
+            tool_defs=used_tool_defs,
         )
 
     @work

@@ -16,7 +16,7 @@ from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
 
 from oterm.ollamaclient import OllamaLLM, parse_ollama_parameters
 from oterm.tools import Tool
-from oterm.tools import available as available_tools
+from oterm.tools import available as available_tool_defs
 
 
 class ChatEdit(ModalScreen[str]):
@@ -132,7 +132,7 @@ class ChatEdit(ModalScreen[str]):
     def on_tool_toggled(self, ev: Checkbox.Changed):
         tool_name = ev.control.label
         checked = ev.value
-        for tool_def in available_tools:
+        for tool_def in available_tool_defs:
             if tool_def["tool"]["function"]["name"] == str(tool_name):
                 tool = tool_def["tool"]
                 if checked:
@@ -206,7 +206,7 @@ class ChatEdit(ModalScreen[str]):
                     yield OptionList(id="model-select")
                     yield Label("Tools:", classes="title")
                     with ScrollableContainer(id="tool-list"):
-                        for tool_def in available_tools:
+                        for tool_def in available_tool_defs:
                             yield Checkbox(
                                 label=f"{tool_def["tool"]['function']['name']}",
                                 tooltip=f"{tool_def['tool']['function']['description']}",
