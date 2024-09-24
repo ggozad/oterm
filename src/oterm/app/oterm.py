@@ -98,6 +98,7 @@ class OTerm(App):
                 parameters=model["parameters"],
                 keep_alive=model["keep_alive"],
                 messages=[],
+                tools=model["tools"],
             )
         )
         await tabs.add_pane(pane)

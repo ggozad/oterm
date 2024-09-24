@@ -175,6 +175,8 @@ class ChatEdit(ModalScreen[str]):
             widgets = self.query(".tool")
             for widget in widgets:
                 widget.disabled = not tools_supported
+                if not tools_supported:
+                    widget.value = False # type: ignore
 
         # Now that there is a model selected we can save the chat.
         save_button = self.query_one("#save-btn", Button)
