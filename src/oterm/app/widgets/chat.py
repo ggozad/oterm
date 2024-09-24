@@ -27,6 +27,7 @@ from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
+from oterm.tools import Tool
 from oterm.types import Author
 
 
@@ -39,7 +40,7 @@ class ChatContainer(Widget):
     parameters: Options
     keep_alive: int = 5
     images: list[tuple[Path, str]] = []
-
+    tools: list[Tool] = []
     BINDINGS = [
         Binding("up", "history", "history"),
         Binding(
@@ -58,6 +59,7 @@ class ChatContainer(Widget):
         format: Literal["", "json"] = "",
         parameters: Options,
         keep_alive: int = 5,
+        tools: list[Tool] = [],
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
@@ -87,6 +89,7 @@ class ChatContainer(Widget):
         self.format = format
         self.parameters = parameters
         self.keep_alive = keep_alive
+        self.tools = tools
         self.loaded = False
 
     def on_mount(self) -> None:
@@ -181,6 +184,7 @@ class ChatContainer(Widget):
             json_format=self.format == "json",
             keep_alive=self.keep_alive,
             edit_mode=True,
+            tools=self.tools,
         )
 
         model_info = await self.app.push_screen_wait(screen)
@@ -191,6 +195,7 @@ class ChatContainer(Widget):
         self.format = model.get("format", "")
         self.keep_alive = model.get("keep_alive", 5)
         self.parameters = model.get("parameters", {})
+        self.tools = model.get("tools", [])
         store = await Store.get_store()
         await store.edit_chat(
             id=self.db_id,
@@ -199,6 +204,7 @@ class ChatContainer(Widget):
             format=model["format"],
             parameters=json.dumps(model["parameters"]),
             keep_alive=model["keep_alive"],
+            tools=json.dumps(model["tools"]),
         )
 
         # load the history from messages

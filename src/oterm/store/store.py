@@ -123,9 +123,7 @@ class Store(object):
     async def get_chats(
         self,
     ) -> list[
-        tuple[
-            int, str, str, str | None, Literal["", "json"], Options, int, Sequence[Tool]
-        ]
+        tuple[int, str, str, str | None, Literal["", "json"], Options, int, list[Tool]]
     ]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await chat_queries.get_chats(connection)  # type: ignore

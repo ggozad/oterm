@@ -85,6 +85,7 @@ class OTerm(App):
             format=model["format"],
             parameters=json.dumps(model["parameters"]),
             keep_alive=model["keep_alive"],
+            tools=json.dumps(model["tools"]),
         )
         pane = TabPane(name, id=f"chat-{id}")
         pane.compose_add_child(
@@ -154,7 +155,16 @@ class OTerm(App):
             self.action_new_chat()
         else:
             tabs = self.query_one(TabbedContent)
-            for id, name, model, system, format, parameters, keep_alive in saved_chats:
+            for (
+                id,
+                name,
+                model,
+                system,
+                format,
+                parameters,
+                keep_alive,
+                tools,
+            ) in saved_chats:
                 messages = await store.get_messages(id)
                 container = ChatContainer(
                     db_id=id,
@@ -165,6 +175,7 @@ class OTerm(App):
                     format=format,
                     parameters=parameters,
                     keep_alive=keep_alive,
+                    tools=tools,
                 )
                 pane = TabPane(name, container, id=f"chat-{id}")
                 tabs.add_pane(pane)
