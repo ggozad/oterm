@@ -114,7 +114,7 @@ All your chat sessions are stored locally in a sqlite database. You can customiz
 You can find the location of the database by running `oterm --db`.
 
 ### Screenshots
-
+![Splash](screenshots/splash.gif)
 ![Chat](screenshots/chat.png)
 ![Model selection](./screenshots/model_selection.png)
 ![Image selection](./screenshots/image_selection.png)
