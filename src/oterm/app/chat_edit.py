@@ -210,7 +210,7 @@ class ChatEdit(ModalScreen[str]):
                     with ScrollableContainer(id="tool-list"):
                         for tool_def in available_tool_defs:
                             yield Checkbox(
-                                label=f"{tool_def["tool"]['function']['name']}",
+                                label=f"{tool_def['tool']['function']['name']}",
                                 tooltip=f"{tool_def['tool']['function']['description']}",
                                 value=tool_def["tool"] in self.tools,
                                 classes="tool",
