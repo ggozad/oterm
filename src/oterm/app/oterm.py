@@ -180,7 +180,10 @@ class OTerm(App):
                     pane = TabPane(name, container, id=f"chat-{id}")
                     tabs.add_pane(pane)
 
-        self.push_screen(splash, callback=on_splash_done)
+        if appConfig.get("splash-screen"):
+            self.push_screen(splash, callback=on_splash_done)
+        else:
+            await on_splash_done("")
 
     @on(TabbedContent.TabActivated)
     async def on_tab_activated(self, event: TabbedContent.TabActivated) -> None:

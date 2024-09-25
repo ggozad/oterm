@@ -21,6 +21,7 @@ def oterm(
     upgrade: bool = typer.Option(None, "--upgrade"),
     config: bool = typer.Option(None, "--config"),
     sqlite: bool = typer.Option(None, "--db"),
+    data_dir: str = typer.Option(None, "--data-dir"),
 ):
     if version:
         typer.echo(f"oterm v{metadata.version('oterm')}")
@@ -30,6 +31,9 @@ def oterm(
         exit(0)
     if sqlite:
         typer.echo(envConfig.OTERM_DATA_DIR / "store.db")
+        exit(0)
+    if data_dir:
+        typer.echo(envConfig.OTERM_DATA_DIR)
         exit(0)
     if config:
         typer.echo(pprint(envConfig))
