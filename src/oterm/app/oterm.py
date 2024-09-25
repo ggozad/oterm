@@ -150,7 +150,9 @@ class OTerm(App):
 
         async def on_splash_done(message) -> None:
             if not saved_chats:
-                self.action_new_chat()
+                # Pyright suggests awaiting here which has bitten me twice
+                # so I'm ignoring it
+                self.action_new_chat()  # type: ignore
             else:
                 tabs = self.query_one(TabbedContent)
                 for (
