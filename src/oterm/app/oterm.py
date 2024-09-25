@@ -150,7 +150,7 @@ class OTerm(App):
 
         async def on_splash_done(message) -> None:
             if not saved_chats:
-                await self.action_new_chat()
+                self.action_new_chat()
             else:
                 tabs = self.query_one(TabbedContent)
                 for (

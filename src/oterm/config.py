@@ -80,6 +80,7 @@ class AppConfig:
         self._path = path
         self._data = {
             "theme": "dark",
+            "splash-screen": True,
         }
         try:
             with open(self._path, "r") as f:
