@@ -82,7 +82,7 @@ The following tools are currently supported:
 
 * `date_time` - provides the current date and time in ISO format.
 * `current_location` - provides the current location of the user (longitude, latitude, city, region, country). Uses [ipinfo.io](https://ipinfo.io) to determine the location.
-* `current_weather` - provides the current weather in the user's location. Uses [OpenWeatherMap](https://openweathermap.org) to determine the weather.
+* `current_weather` - provides the current weather in the user's location. Uses [OpenWeatherMap](https://openweathermap.org) to determine the weather. You need to provide your (free) API key in the OPEN_WEATHER_MAP_API_KEY environment variable.
 * `shell` - allows you to run shell commands and use the output as input to the model. Obviously this can be dangerous, so use with caution.
 
 The tooling API in Ollama does not currently support streaming. When using tools, you will have to wait for the tools & model to finish before you see the response.
