@@ -1,8 +1,11 @@
 Changelog
 =========
 
-0.6.3 - 
+0.6.3 - 2024-09-25
 ------------------
+
+- Fix typo preventing build on FreeBSD.
+  [nivit]
 
 - Allow disabling the splash screen.
   [ggozad]
