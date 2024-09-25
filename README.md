@@ -113,6 +113,23 @@ All your chat sessions are stored locally in a sqlite database. You can customiz
 
 You can find the location of the database by running `oterm --db`.
 
+### App configuration
+
+The app configuration is stored in a directory specific to your operating system, by default:
+
+* Linux: `~/.local/share/oterm/config.json`
+* macOS: `~/Library/Application Support/oterm/config.json`
+* Windows: `C:/Users/<USER>/AppData/Roaming/oterm/config.json`
+
+If in doubt you can get the directory where `config.json` can be found by running `oterm --data-dir`.
+
+You can set the following options in the configuration file:
+```json
+{ "theme": "dark", "splash-screen": true }
+```
+
+`theme` can be either `dark` or `light`. `splash-screen` controls whether the splash screen is shown on startup.
+
 ### Screenshots
 ![Splash](screenshots/splash.gif)
 ![Chat](screenshots/chat.png)
