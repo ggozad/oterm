@@ -1,8 +1,11 @@
 Changelog
 =========
 
-0.6.2 - 
+0.6.2 - 2024-09-25
 ------------------
+
+- Fix creating a new chat when no chats are available.
+  [ggozad]
 
 - Fancy splash screen using textualeffects.
   [ggozad]
