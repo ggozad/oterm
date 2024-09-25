@@ -1,9 +1,8 @@
 import random
 from typing import Any, Tuple
 
+from textualeffects.effects import EffectType
 from textualeffects.widgets import SplashScreen
-
-from oterm.app.widgets.effect import EffectType
 
 logo = """
          @@@@@@.                      :@@@@@@

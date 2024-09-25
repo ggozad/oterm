@@ -577,7 +577,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "rich-pixels", specifier = ">=3.0.1" },
     { name = "textual", specifier = ">=0.78.0" },
-    { name = "textualeffects", directory = "../textualeffects" },
+    { name = "textualeffects", specifier = ">=0.1.1" },
     { name = "typer", specifier = ">=0.12.4" },
 ]
 
@@ -877,20 +877,14 @@ wheels = [
 [[package]]
 name = "textualeffects"
 version = "0.1.1"
-source = { directory = "../textualeffects" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "terminaltexteffects" },
-    { name = "textual" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "terminaltexteffects", specifier = ">=0.11.0" },
-    { name = "textual", specifier = ">=0.79.1" },
+sdist = { url = "https://files.pythonhosted.org/packages/a2/14/b5d68b9503800f752c85b5f909805e0f020e835b9b1816e78f302397f371/textualeffects-0.1.1.tar.gz", hash = "sha256:86833ef011dec6fa3643db6094b574d872b29dee56e80818cabfe41200986b76", size = 3151106 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/52/22/ddb15f92c5fdf3d2e7c6e377020932738cfc8f66406f2881841729016aca/textualeffects-0.1.1-py3-none-any.whl", hash = "sha256:bd6284d71d4b466b1d04040d9b9284198da3ca8b030bdc09968cb7749ea9e25e", size = 4773 },
 ]
-
-[package.metadata.requires-dev]
-dev = [{ name = "textual-dev", specifier = ">=1.6.1" }]
 
 [[package]]
 name = "tomli"

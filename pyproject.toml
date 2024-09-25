@@ -30,7 +30,7 @@ dependencies = [
     "rich-pixels>=3.0.1",
     "pillow>=10.4.0",
     "ollama>=0.3.1",
-    "textualeffects",
+    "textualeffects>=0.1.1",
 ]
 
 [project.urls]
@@ -52,7 +52,6 @@ dev-dependencies = [
 ]
 
 [tool.uv.sources]
-textualeffects = { path = "../textualeffects" }
 
 [tool.ruff]
 line-length = 88

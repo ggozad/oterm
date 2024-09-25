@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6.2 - 
+------------------
+
+- Fancy splash screen using textualeffects.
+  [ggozad]
+
 0.6.1 - 2024-09-24
 ------------------
 
