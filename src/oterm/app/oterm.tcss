@@ -207,17 +207,9 @@ Notification {
     height: 3;
 }
 
-#splash-container {
-    height: 100%;
-    width: 100%;
-    background: $panel;
-}
 
-#splash {
-    color: $secondary;
-    height: 100%;
-    width: 100%;
-    content-align: center middle;
+TabbedContent {
+    layer: below;
 }
 
 MarkdownFence {
