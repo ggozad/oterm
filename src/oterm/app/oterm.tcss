@@ -140,7 +140,7 @@ LoadingIndicator {
     padding-right:3;
 }
 
-#chat-rename-container, #chat-export-container, #prompt-history-container {
+#chat-rename-container, #chat-export-container, #prompt-history-container, #pull-model-container{
     width: 80%;
     background: $panel;
     border: $panel-lighten-2;
@@ -154,7 +154,7 @@ LoadingIndicator {
 }
 
 
-#chat-rename-container .title, #chat-export-container .title, #prompt-history-container .title {
+#chat-rename-container .title, #chat-export-container .title, #prompt-history-container, #pull-model-container .title {
     color: $secondary;
 }
 
@@ -196,6 +196,19 @@ LoadingIndicator {
 #image-select-container Input {
     margin: 1;
     padding: 0;
+}   
+
+#pull-model-container {
+    max-height: 80%;
+}
+
+#pull-model-container Horizontal {
+    margin-top: 1;
+    height: 3;
+}
+
+#pull-model-container Input {
+    width: 60;
 }
 
 Notification {

@@ -5,13 +5,13 @@ def test_list():
     llm = OllamaLLM()
     response = llm.list()
     models = response.get("models", [])
-    found = [model for model in models if model["name"] == "llama3.1:latest"]
+    found = [model for model in models if model["name"] == "llama3.2:latest"]
     assert found
 
 
 def test_show():
     llm = OllamaLLM()
-    response = llm.show("llama3.1")
+    response = llm.show("llama3.2")
     print(response.keys())
     for key in [
         "modelfile",

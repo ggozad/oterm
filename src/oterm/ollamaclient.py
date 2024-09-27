@@ -19,7 +19,7 @@ from oterm.tools import ToolDefinition
 class OllamaLLM:
     def __init__(
         self,
-        model="llama3.1",
+        model="llama3.2",
         system: str | None = None,
         history: list[Message] = [],
         format: Literal["", "json"] = "",

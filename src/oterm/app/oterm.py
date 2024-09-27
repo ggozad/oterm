@@ -8,6 +8,7 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_export import ChatExport, slugify
+from oterm.app.pull_model import PullModel
 from oterm.app.splash import splash
 from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
@@ -47,6 +48,12 @@ class OTerm(App):
             "Regenerate last Ollama message",
             "Regenerates the last Ollama message (setting a random seed for the message)",
             self.action_regenerate_last_message,
+        )
+
+        yield SystemCommand(
+            "Pull model",
+            "Pulls (or updates) the model from the Ollama server",
+            self.action_pull_model,
         )
 
     async def action_quit(self) -> None:
@@ -142,6 +149,15 @@ class OTerm(App):
             return
         chat = tabs.active_pane.query_one(ChatContainer)
         await chat.action_regenerate_llm_message()
+
+    async def action_pull_model(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        if tabs.active_pane is None:
+            screen = PullModel("")
+        else:
+            chat = tabs.active_pane.query_one(ChatContainer)
+            screen = PullModel(chat.ollama.model)
+        self.push_screen(screen)
 
     async def on_mount(self) -> None:
         store = await Store.get_store()
