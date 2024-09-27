@@ -4,12 +4,13 @@ from typing import (
     Any,
     AsyncGenerator,
     AsyncIterator,
+    Iterator,
     Literal,
     Mapping,
     Sequence,
 )
 
-from ollama import AsyncClient, Client, Message, Options
+from ollama import AsyncClient, Client, Message, Options, ResponseError
 
 from oterm.config import envConfig
 from oterm.tools import ToolDefinition
@@ -126,6 +127,16 @@ class OllamaLLM:
     def show(model: str) -> Mapping[str, Any]:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
         return client.show(model)
+
+    @staticmethod
+    def pull(model: str) -> Iterator[Mapping[str, Any]]:
+        client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
+        try:
+            stream: Iterator[Mapping[str, Any]] = client.pull(model, stream=True)
+            for response in stream:
+                yield response
+        except ResponseError as e:
+            yield {"status": "error", "message": str(e)}
 
 
 def parse_ollama_parameters(parameter_text: str) -> Options:

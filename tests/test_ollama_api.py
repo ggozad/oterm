@@ -26,3 +26,19 @@ def test_show():
         parse_ollama_parameters(response["parameters"])
     except Exception as e:
         assert False, "Failed to parse parameters: " + str(e)
+
+
+def test_pull():
+    llm = OllamaLLM()
+    stream = llm.pull("llama3.2:latest")
+    entries = [entry for entry in stream]
+    assert {"status": "pulling manifest"} in entries
+    assert {"status": "success"} in entries
+
+    stream = llm.pull("non-existing:latest")
+    entries = [entry for entry in stream]
+    assert {
+        "status": "error",
+        "message": "pull model manifest: file does not exist",
+    } in entries
+    assert {"status": "success"} not in entries
