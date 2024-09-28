@@ -1,6 +1,16 @@
 Changelog
 =========
 
+0.6.4 - 2024-09-28
+------------------
+
+- Command to pull/update model.
+  [ggozad]
+
+- ESC dismisses the splash screen.
+  [ggozad]
+
+
 0.6.3 - 2024-09-25
 ------------------
 
