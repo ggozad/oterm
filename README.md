@@ -8,6 +8,7 @@ the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
 * multiple persistent chat sessions, stored together with system prompt & parameter customizations in sqlite.
 * can use any of the models you have pulled in Ollama, or your own custom models.
 * allows for easy customization of the model's system prompt and parameters.
+* supports tools integration for providing external information to the model.
 
 ## Installation
 
@@ -53,7 +54,8 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 * `Export chat` - export the current chat session as markdown
 * `Delete chat` - delete the current chat session  
 * `Regenerate last Ollama message` - regenerates the last message from Ollama (will override the `seed` for the specific message with a random one.) Useful if you want to change the system prompt or parameters or just want to try again.
-
+* `Pull model` - pull a model or update an existing one.
+  
 ### Keyboard shortcuts
 
 The following keyboard shortcuts are supported:
@@ -103,7 +105,7 @@ For most terminals there exists a key modifier you can use to click and drag to 
 
 ### Customizing models
 
-When creating a new chat, you may not only select the model, but also customize the the `system` instruction, `tools` used, as well as the `parameters` (such as context length, seed, temperature etc) passed to the model. For a list of all supported parameters refer to the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values). Checking the `JSON output` checkbox will force the model to reply in JSON format. Please note that `oterm` will not (yet) pull models for you, use `ollama` to do that. All the models you have pulled or created will be available to `oterm`.
+When creating a new chat, you may not only select the model, but also customize the the `system` instruction, `tools` used, as well as the `parameters` (such as context length, seed, temperature etc) passed to the model. For a list of all supported parameters refer to the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values). Checking the `JSON output` checkbox will force the model to reply in JSON format. All the models you have pulled or created will be available to `oterm`.
 
 You can also "edit" the chat to change the system prompt, parameters or format. Note, that the model cannot be changed once the chat has started.
 

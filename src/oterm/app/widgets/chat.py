@@ -54,7 +54,7 @@ class ChatContainer(Widget):
         *children: Widget,
         db_id: int,
         chat_name: str,
-        model: str = "llama3.1",
+        model: str = "llama3.2",
         messages: list[tuple[int, Author, str]] = [],
         system: str | None = None,
         format: Literal["", "json"] = "",
