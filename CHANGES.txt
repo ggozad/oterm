@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.6.5 - 
+------------------
+
+- When Ollama throws an exception while generating a response, capture
+  it and show a notification to the user.
+  [ggozad]
+
 0.6.4 - 2024-09-28
 ------------------
 
