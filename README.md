@@ -35,7 +35,7 @@ the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
 
 Before running oterm, you need to have Ollama installed and running on your system. You can find installation instructions for Ollama at:
 
-[Ollama Installation Guide](https://github.com/ollama/ollama#installation)
+[Ollama Installation Guide](https://github.com/ollama/ollama?tab=readme-ov-file#ollama)
 
 Make sure Ollama is running before using oterm.
 
@@ -185,11 +185,14 @@ You can set the following options in the configuration file:
 ![Splash](screenshots/splash.gif)
 The splash screen animation that greets users when they start oterm.
 
+
 ![Chat](screenshots/chat.png)
 A view of the chat interface, showcasing the conversation between the user and the model.
 
+
 ![Model selection](./screenshots/model_selection.png)
 The model selection screen, allowing users to choose from available models.
+
 
 ![Image selection](./screenshots/image_selection.png)
 The image selection interface, demonstrating how users can include images in their conversations.
