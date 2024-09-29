@@ -2,6 +2,25 @@
 
 the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
 
+# Table of Contents
+
+1. [Features](#features)
+2. [Installation](#installation)
+   - [Using brew for MacOS](#using-brew-for-macos)
+   - [Using yay for Arch Linux](#using-yay-or-any-aur-helper-for-arch-linux)
+   - [Using pip](#using-pip)
+3. [Updating oterm](#updating-oterm)
+4. [Using](#using)
+   - [Commands](#commands)
+   - [Keyboard shortcuts](#keyboard-shortcuts)
+   - [Tools](#tools)
+   - [Copy / Paste](#copy--paste)
+   - [Customizing models](#customizing-models)
+   - [Chat session storage](#chat-session-storage)
+   - [App configuration](#app-configuration)
+5. [Screenshots](#screenshots)
+6. [License](#license)
+
 ## Features
 
 * intuitive and simple terminal UI, no need to run servers, frontends, just type `oterm` in your terminal.
@@ -11,6 +30,16 @@ the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
 * supports tools integration for providing external information to the model.
 
 ## Installation
+
+### Ollama
+
+Before running oterm, you need to have Ollama installed and running on your system. You can find installation instructions for Ollama at:
+
+[Ollama Installation Guide](https://github.com/ollama/ollama#installation)
+
+Make sure Ollama is running before using oterm.
+
+### oterm
 
 Using `brew` for MacOS:
 
@@ -29,6 +58,26 @@ Using `pip`:
 
 ```bash
 pip install oterm
+```
+
+## Updating oterm
+
+To update oterm to the latest version, you can use the same method you used for installation:
+
+Using `brew` for MacOS:
+
+```bash
+brew upgrade ggozad/formulas/oterm
+```
+Using 'yay' (or any AUR helper) for Arch Linux:
+
+```bash
+yay -Syu oterm
+```
+Using `pip`:
+
+```bash
+pip install --upgrade oterm
 ```
 
 ## Using
@@ -134,9 +183,16 @@ You can set the following options in the configuration file:
 
 ### Screenshots
 ![Splash](screenshots/splash.gif)
+The splash screen animation that greets users when they start oterm.
+
 ![Chat](screenshots/chat.png)
+A view of the chat interface, showcasing the conversation between the user and the model.
+
 ![Model selection](./screenshots/model_selection.png)
+The model selection screen, allowing users to choose from available models.
+
 ![Image selection](./screenshots/image_selection.png)
+The image selection interface, demonstrating how users can include images in their conversations.
 
 ## License
 
