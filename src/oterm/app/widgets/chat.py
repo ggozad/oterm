@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Literal
 
 import pyperclip
-from ollama import Message
+from ollama import Message, ResponseError
 from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -180,6 +180,14 @@ class ChatContainer(Widget):
                 user_chat_item.remove()
                 response_chat_item.remove()
                 input.text = message
+            except ResponseError as e:
+                user_chat_item.remove()
+                response_chat_item.remove()
+                notification = Notification()
+                notification.message = f"There was an error running your request: {e}"
+                message_container.mount(notification)
+                message_container.scroll_end()
+
             finally:
                 loading.remove()
                 input.focus()
