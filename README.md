@@ -4,22 +4,23 @@ the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
 
 # Table of Contents
 
-1. [Features](#features)
-2. [Installation](#installation)
-   - [Using brew for MacOS](#using-brew-for-macos)
-   - [Using yay for Arch Linux](#using-yay-or-any-aur-helper-for-arch-linux)
-   - [Using pip](#using-pip)
-3. [Updating oterm](#updating-oterm)
-4. [Using](#using)
-   - [Commands](#commands)
-   - [Keyboard shortcuts](#keyboard-shortcuts)
-   - [Tools](#tools)
-   - [Copy / Paste](#copy--paste)
-   - [Customizing models](#customizing-models)
-   - [Chat session storage](#chat-session-storage)
-   - [App configuration](#app-configuration)
-5. [Screenshots](#screenshots)
-6. [License](#license)
+- [oterm](#oterm)
+- [Table of Contents](#table-of-contents)
+  - [Features](#features)
+  - [Installation](#installation)
+    - [Ollama](#ollama)
+    - [oterm](#oterm-1)
+  - [Updating oterm](#updating-oterm)
+  - [Using](#using)
+    - [Commands](#commands)
+    - [Keyboard shortcuts](#keyboard-shortcuts)
+    - [Tools](#tools)
+    - [Copy / Paste](#copy--paste)
+    - [Customizing models](#customizing-models)
+    - [Chat session storage](#chat-session-storage)
+    - [App configuration](#app-configuration)
+    - [Screenshots](#screenshots)
+  - [License](#license)
 
 ## Features
 
@@ -33,11 +34,7 @@ the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
 
 ### Ollama
 
-Before running oterm, you need to have Ollama installed and running on your system. You can find installation instructions for Ollama at:
-
-[Ollama Installation Guide](https://github.com/ollama/ollama?tab=readme-ov-file#ollama)
-
-Make sure Ollama is running before using oterm.
+Ollama needs to be installed and running in order to use `oterm`. Please follow the [Ollama Installation Guide](https://github.com/ollama/ollama?tab=readme-ov-file#ollama).
 
 ### oterm
 

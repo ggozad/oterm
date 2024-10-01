@@ -4,6 +4,9 @@ Changelog
 0.6.5 - 
 ------------------
 
+- Documentation improvements.
+  [tylerlocnguyen]
+
 - When Ollama throws an exception while generating a response, capture
   it and show a notification to the user.
   [ggozad]
