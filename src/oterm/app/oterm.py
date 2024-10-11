@@ -165,6 +165,11 @@ class OTerm(App):
         self.dark = appConfig.get("theme") == "dark"
         saved_chats = await store.get_chats()
 
+        # Apply any remap of key bindings.
+        keymap = appConfig.get("keymap")
+        if keymap:
+            self.set_keymap(keymap)
+
         async def on_splash_done(message) -> None:
             if not saved_chats:
                 # Pyright suggests awaiting here which has bitten me twice
