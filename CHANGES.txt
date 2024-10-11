@@ -4,6 +4,9 @@ Changelog
 0.6.5 - 
 ------------------
 
+- Fixed erroneous OLLAMA_URL documentaion.
+  [gerroon] 
+
 - Documentation improvements.
   [tylerlocnguyen]
 
