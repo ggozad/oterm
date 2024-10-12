@@ -41,7 +41,7 @@ class ImageSelect(ModalScreen[tuple[Path, str]]):
 
     @on(DirectoryTree.NodeHighlighted)
     async def on_image_highlighted(self, ev: DirectoryTree.NodeHighlighted) -> None:
-        path = ev.node.data.path
+        path = ev.node.data.path  # type: ignore
         if path.suffix in IMAGE_EXTENSIONS:
             image = self.query_one(Image)
             image.path = path.as_posix()
