@@ -19,6 +19,7 @@ the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
     - [Customizing models](#customizing-models)
     - [Chat session storage](#chat-session-storage)
     - [App configuration](#app-configuration)
+    - [Key bindings](#key-bindings)
     - [Screenshots](#screenshots)
   - [License](#license)
 
@@ -177,6 +178,22 @@ You can set the following options in the configuration file:
 ```
 
 `theme` can be either `dark` or `light`. `splash-screen` controls whether the splash screen is shown on startup.
+
+### Key bindings
+
+We strive to have sane default key bindings, but there will always be cases where your terminal emulator or shell will interfere. You can customize select keybindings by editing the app config `config.json` file. The following are the defaults:
+
+```json
+{
+  ...
+  "keymap": {
+    "next.chat": "ctrl+tab",
+    "prev.chat": "ctrl+shift+tab",
+    "quit": "ctrl+q",
+    "newline": "shift+enter",
+  }
+}
+```
 
 ### Screenshots
 ![Splash](screenshots/splash.gif)

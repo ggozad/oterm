@@ -4,6 +4,9 @@ Changelog
 0.6.5 - 
 ------------------
 
+- Allow customizing select key bindings.
+  [ggozad]
+
 - Fixed erroneous OLLAMA_URL documentaion.
   [gerroon] 
 

@@ -3,6 +3,7 @@ from typing import Iterable
 
 from textual import on, work
 from textual.app import App, ComposeResult, SystemCommand
+from textual.binding import Binding
 from textual.screen import Screen
 from textual.widgets import Footer, Header, TabbedContent, TabPane
 
@@ -20,9 +21,9 @@ class OTerm(App):
     SUB_TITLE = "A terminal-based Ollama client."
     CSS_PATH = "oterm.tcss"
     BINDINGS = [
-        ("ctrl+tab", "cycle_chat(+1)", "next chat"),
-        ("ctrl+shift+tab", "cycle_chat(-1)", "prev chat"),
-        ("ctrl+q", "quit", "quit"),
+        Binding("ctrl+tab", "cycle_chat(+1)", "next chat", id="next.chat"),
+        Binding("ctrl+shift+tab", "cycle_chat(-1)", "prev chat", id="prev.chat"),
+        Binding("ctrl+q", "quit", "quit", id="quit"),
     ]
 
     def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
@@ -163,6 +164,11 @@ class OTerm(App):
         store = await Store.get_store()
         self.dark = appConfig.get("theme") == "dark"
         saved_chats = await store.get_chats()
+
+        # Apply any remap of key bindings.
+        keymap = appConfig.get("keymap")
+        if keymap:
+            self.set_keymap(keymap)
 
         async def on_splash_done(message) -> None:
             if not saved_chats:

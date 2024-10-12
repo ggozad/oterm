@@ -36,6 +36,7 @@ class PostableTextArea(TextArea):
             show=True,
             key_display=None,
             priority=True,
+            id="newline",
         ),
     ]
 
@@ -54,7 +55,7 @@ class PostableTextArea(TextArea):
     def action_newline(self) -> None:
         cur = self.cursor_location
         lines = self.text.split("\n")
-        lines[cur[0]] = lines[cur[0]][:cur[1]] + "\n" + lines[cur[0]][cur[1]:]
+        lines[cur[0]] = lines[cur[0]][: cur[1]] + "\n" + lines[cur[0]][cur[1] :]
         self.text = "\n".join(lines)
         self.cursor_location = (cur[0] + 1, 0)
 
@@ -68,6 +69,7 @@ class PastableInput(Input):
             show=True,
             key_display=None,
             priority=True,
+            id="toggle.multiline",
         ),
     ]
 
@@ -92,7 +94,7 @@ class FlexibleInput(Widget):
     text = reactive("")
 
     BINDINGS = [
-        ("ctrl+i", "add_image", "add image"),
+        Binding("ctrl+i", "add_image", "add image", id="add.image"),
     ]
 
     @dataclass

@@ -12,7 +12,6 @@ def test_list():
 def test_show():
     llm = OllamaLLM()
     response = llm.show("llama3.2")
-    print(response.keys())
     for key in [
         "modelfile",
         "parameters",
