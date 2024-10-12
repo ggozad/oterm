@@ -17,5 +17,5 @@ async def test_location_tool():
     res = await llm.completion(
         "In which city am I currently located?. Reply with no other text, just the city."
     )
-    current_location = json.loads(await current_location()).get("city")
-    assert current_location in res
+    curr_loc = json.loads(await current_location()).get("city")
+    assert curr_loc in res
