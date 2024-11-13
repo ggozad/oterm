@@ -154,7 +154,7 @@ class ChatContainer(Widget):
                     ):
                         response = text
                         response_chat_item.text = text
-                if message_container.can_view(response_chat_item):
+                if message_container.can_view_partial(response_chat_item):
                     message_container.scroll_end()
 
                 self.images = []
@@ -298,7 +298,7 @@ class ChatContainer(Widget):
             ):
                 response = text
                 response_chat_item.text = text
-                if message_container.can_view(response_chat_item):
+                if message_container.can_view_partial(response_chat_item):
                     message_container.scroll_end()
             self.images = []
 
