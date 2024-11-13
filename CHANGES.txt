@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6.6 - 2024-11-13
+------------------
+
+- Replace can_view with can_view_partial following changes to Widget in textual.
+  [ggozad]
+
 0.6.5 - 2024-10-12
 ------------------
 
