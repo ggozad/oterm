@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6.7 - 
+------------------
+
+- Support all textual built-in themes.
+  [ggozad]
+
 0.6.6 - 2024-11-13
 ------------------
 

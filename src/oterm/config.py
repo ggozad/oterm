@@ -79,7 +79,7 @@ class AppConfig:
             path = envConfig.OTERM_DATA_DIR / "config.json"
         self._path = path
         self._data = {
-            "theme": "dark",
+            "theme": "textual-dark",
             "splash-screen": True,
         }
         try:
