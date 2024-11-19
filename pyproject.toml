@@ -20,7 +20,7 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "textual>=0.85.2,<0.86",
+    "textual>=0.86.3,<0.87",
     "typer>=0.13.0,<0.14",
     "python-dotenv>=1.0.1",
     "aiosql>=13.0,<14",
