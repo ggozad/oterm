@@ -211,6 +211,9 @@ The model selection screen, allowing users to choose from available models.
 ![Image selection](./screenshots/image_selection.png)
 The image selection interface, demonstrating how users can include images in their conversations.
 
+![Theme](./screenshots/theme.svg)
+oTerm supports multiple themes, allowing users to customize the appearance of the interface.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
