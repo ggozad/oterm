@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.6.7 - 
+0.6.7 - 2024-11-19
 ------------------
 
 - Support all textual built-in themes.
