@@ -102,12 +102,12 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 * `Delete chat` - delete the current chat session  
 * `Regenerate last Ollama message` - regenerates the last message from Ollama (will override the `seed` for the specific message with a random one.) Useful if you want to change the system prompt or parameters or just want to try again.
 * `Pull model` - pull a model or update an existing one.
+* `Change theme` - choose among the available themes.
   
 ### Keyboard shortcuts
 
 The following keyboard shortcuts are supported:
 
-* <kbd>^ Ctrl</kbd>+<kbd>t</kbd> - toggle between dark/light theme
 * <kbd>^ Ctrl</kbd>+<kbd>q</kbd> - quit
 
 * <kbd>^ Ctrl</kbd>+<kbd>l</kbd> - switch to multiline input mode
@@ -174,10 +174,10 @@ If in doubt you can get the directory where `config.json` can be found by runnin
 
 You can set the following options in the configuration file:
 ```json
-{ "theme": "dark", "splash-screen": true }
+{ "splash-screen": true }
 ```
 
-`theme` can be either `dark` or `light`. `splash-screen` controls whether the splash screen is shown on startup.
+`splash-screen` controls whether the splash screen is shown on startup.
 
 ### Key bindings
 

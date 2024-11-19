@@ -162,7 +162,17 @@ class OTerm(App):
 
     async def on_mount(self) -> None:
         store = await Store.get_store()
+        theme = appConfig.get("theme")
+        if theme:
+            if theme == "dark":
+                self.theme = "textual-dark"
+            elif theme == "light":
+                self.theme = "textual-light"
+            else:
+                self.theme = theme
         self.dark = appConfig.get("theme") == "dark"
+        self.watch(self.app, "theme", self.on_theme_change, init=False)
+
         saved_chats = await store.get_chats()
 
         # Apply any remap of key bindings.
@@ -206,6 +216,10 @@ class OTerm(App):
             self.push_screen(splash, callback=on_splash_done)
         else:
             await on_splash_done("")
+
+    def on_theme_change(self, old_value: str, new_value: str) -> None:
+        if appConfig.get("theme") != new_value:
+            appConfig.set("theme", new_value)
 
     @on(TabbedContent.TabActivated)
     async def on_tab_activated(self, event: TabbedContent.TabActivated) -> None:

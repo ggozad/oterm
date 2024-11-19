@@ -4,13 +4,10 @@ ChatContainer {
 #messageContainer {
     overflow-y: auto;
     padding-bottom: 1;
-    padding-right: 1;
     height: 100%;
 }
 
 ChatItem {
-    padding: 1;
-    padding-bottom: 0;
     height: auto;
 }
 
@@ -21,8 +18,7 @@ ChatItem .chatItem {
 ChatItem .author {
     width: 8%;
     padding: 1;
-    color: $secondary;
-
+    color: $foreground;
 }
 
 ChatItem .USER {
@@ -40,16 +36,12 @@ ChatItem .text{
 
 #prompt {
     background: $panel;
-    margin: 1;
-    margin-bottom: 0;
     dock: bottom;
+    padding: 1;
 }
 
 #prompt.singleline {
     height: 5;
-    margin: 1;
-    padding: 1;
-    margin-bottom: 0;
 }
 
 #prompt.multiline #promptInput {
