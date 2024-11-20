@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.6.8 - 2024-11-20
+------------------
+
+- Fixed styling bug that obscured the chat tabs.
+  [ggozad]
+
 0.6.7 - 2024-11-19
 ------------------
 
