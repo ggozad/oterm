@@ -222,7 +222,7 @@ class ChatContainer(Widget):
         self.tools = model.get("tools", [])
         store = await Store.get_store()
 
-        await store.edit_chat(
+        await store.edit_chat(  # type: ignore
             id=self.db_id,
             name=self.chat_name,
             system=model["system"],
