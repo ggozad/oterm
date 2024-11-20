@@ -8,8 +8,6 @@ from ollama import Options
 from packaging.version import parse
 
 from oterm.config import envConfig
-from oterm.store.chat import queries as chat_queries
-from oterm.store.setup import queries as setup_queries
 from oterm.store.upgrades import upgrades
 from oterm.tools import Tool
 from oterm.types import Author
@@ -33,8 +31,30 @@ class Store(object):
         if not self.db_path.exists():
             # Create tables and set user_version
             async with aiosqlite.connect(self.db_path) as connection:
-                await setup_queries.create_chat_table(connection)  # type: ignore
-                await setup_queries.create_message_table(connection)  # type: ignore
+                await connection.executescript(
+                    """
+                    CREATE TABLE IF NOT EXISTS "chat" (
+                        "id"		INTEGER,
+                        "name"		TEXT,
+                        "model"		TEXT NOT NULL,
+                        "system"	TEXT,
+                        "format"	TEXT,
+                        "parameters"	TEXT DEFAULT "{}",
+                        "keep_alive" INTEGER DEFAULT 5,
+                        "tools" 	TEXT DEFAULT "[]",
+                        PRIMARY KEY("id" AUTOINCREMENT)
+                    );
+
+                    CREATE TABLE IF NOT EXISTS "message" (
+                        "id"		INTEGER,
+                        "chat_id"	INTEGER NOT NULL,
+                        "author"	TEXT NOT NULL,
+                        "text"		TEXT NOT NULL,
+                        PRIMARY KEY("id" AUTOINCREMENT)
+                        FOREIGN KEY("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE
+                    );                           
+                """
+                )
                 await self.set_user_version(metadata.version("oterm"))
         else:
             # Upgrade database
@@ -52,8 +72,9 @@ class Store(object):
 
     async def get_user_version(self) -> str:
         async with aiosqlite.connect(self.db_path) as connection:
-            res = await setup_queries.get_user_version(connection)  # type: ignore
-            return int_to_semantic_version(res[0][0])
+            res = await connection.execute("PRAGMA user_version;")
+            res = await res.fetchone()
+            return int_to_semantic_version(res[0] if res else 0)
 
     async def set_user_version(self, version: str) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
@@ -73,27 +94,30 @@ class Store(object):
         tools: list[Tool],
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
-            res: list[tuple[int]] = await chat_queries.save_chat(  # type: ignore
-                connection,
-                id=id,
-                name=name,
-                model=model,
-                system=system,
-                format=format,
-                parameters=json.dumps(parameters),
-                keep_alive=keep_alive,
-                tools=json.dumps(tools),
+            res = await connection.execute_insert(
+                """
+                INSERT OR REPLACE 
+                INTO chat(id, name, model, system, format, parameters, keep_alive, tools) 
+                VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools) RETURNING id;""",
+                {
+                    "id": id,
+                    "name": name,
+                    "model": model,
+                    "system": system,
+                    "format": format,
+                    "parameters": json.dumps(parameters),
+                    "keep_alive": keep_alive,
+                    "tools": json.dumps(tools),
+                },
             )
-
             await connection.commit()
-            return res[0][0]
+
+        return res[0] if res else 0
 
     async def rename_chat(self, id: int, name: str) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
-            await chat_queries.rename_chat(  # type: ignore
-                connection,
-                id=id,
-                name=name,
+            await connection.execute(
+                "UPDATE chat SET name = :name WHERE id = :id;", {"id": id, "name": name}
             )
             await connection.commit()
 
@@ -108,15 +132,26 @@ class Store(object):
         tools: list[Tool],
     ) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
-            await chat_queries.edit_chat(  # type: ignore
-                connection,
-                id=id,
-                name=name,
-                system=system,
-                format=format,
-                parameters=json.dumps(parameters),
-                keep_alive=keep_alive,
-                tools=json.dumps(tools),
+            await connection.execute(
+                """
+                UPDATE chat
+                SET name = :name, 
+                    system = :system,
+                    format = :format,
+                    parameters = :parameters,
+                    keep_alive = :keep_alive,
+                    tools = :tools
+                WHERE id = :id;
+                """,
+                {
+                    "id": id,
+                    "name": name,
+                    "system": system,
+                    "format": format,
+                    "parameters": json.dumps(parameters),
+                    "keep_alive": keep_alive,
+                    "tools": json.dumps(tools),
+                },
             )
             await connection.commit()
 
@@ -126,8 +161,13 @@ class Store(object):
         tuple[int, str, str, str | None, Literal["", "json"], Options, int, list[Tool]]
     ]:
         async with aiosqlite.connect(self.db_path) as connection:
-            chats = await chat_queries.get_chats(connection)  # type: ignore
-            chats = [
+            chats = await connection.execute_fetchall(
+                """
+                SELECT id, name, model, system, format, parameters, keep_alive, tools
+                FROM chat;
+                """
+            )
+            return [
                 (
                     id,
                     name,
@@ -140,7 +180,6 @@ class Store(object):
                 )
                 for id, name, model, system, format, parameters, keep_alive, tools in chats
             ]
-            return chats
 
     async def get_chat(
         self, id
@@ -151,9 +190,16 @@ class Store(object):
         | None
     ):
         async with aiosqlite.connect(self.db_path) as connection:
-            chat = await chat_queries.get_chat(connection, id=id)  # type: ignore
+            chat = await connection.execute_fetchall(
+                """
+                SELECT id, name, model, system, format, parameters, keep_alive, tools 
+                FROM chat 
+                WHERE id = :id;
+                """,
+                {"id": id},
+            )
+            chat = next(iter(chat), None)
             if chat:
-                chat = chat[0]
                 id, name, model, system, format, parameters, keep_alive, tools = chat
                 return (
                     id,
@@ -168,26 +214,34 @@ class Store(object):
 
     async def delete_chat(self, id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
-            await chat_queries.delete_chat(connection, id=id)  # type: ignore
+            await connection.execute("DELETE FROM chat WHERE id = :id;", {"id": id})
             await connection.commit()
 
     async def save_message(
         self, id: int | None, chat_id: int, author: str, text: str
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
-            res = await chat_queries.save_message(  # type: ignore
-                connection,
-                id=id,
-                chat_id=chat_id,
-                author=author,
-                text=text,
+            res = await connection.execute_insert(
+                """
+                INSERT OR REPLACE 
+                INTO message(id, chat_id, author, text) 
+                VALUES(:id, :chat_id, :author, :text) RETURNING id;
+                """,
+                {"id": id, "chat_id": chat_id, "author": author, "text": text},
             )
             await connection.commit()
-            return res[0][0]
+            return res[0] if res else 0
 
     async def get_messages(self, chat_id: int) -> list[tuple[int, Author, str]]:
 
         async with aiosqlite.connect(self.db_path) as connection:
-            messages = await chat_queries.get_messages(connection, chat_id=chat_id)  # type: ignore
+            messages = await connection.execute_fetchall(
+                """
+                SELECT id, author, text 
+                FROM message
+                WHERE chat_id = :chat_id;
+                """,
+                {"chat_id": chat_id},
+            )
             messages = [(id, Author(author), text) for id, author, text in messages]
             return messages
