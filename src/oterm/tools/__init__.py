@@ -1,13 +1,6 @@
 from typing import Awaitable, Callable, Sequence, TypedDict
 
-from ollama._types import (
-    Parameters,
-    Property,
-    Tool,
-    ToolCall,
-    ToolCallFunction,
-    ToolFunction,
-)
+from ollama._types import Tool
 
 from oterm.tools.date_time import DateTimeTool, date_time
 from oterm.tools.location import LocationTool, current_location
