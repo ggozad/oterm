@@ -617,7 +617,7 @@ wheels = [
 
 [[package]]
 name = "oterm"
-version = "0.6.8"
+version = "0.6.9"
 source = { editable = "." }
 dependencies = [
     { name = "aiosql" },
@@ -648,7 +648,7 @@ dev = [
 requires-dist = [
     { name = "aiosql", specifier = ">=13.0,<14" },
     { name = "aiosqlite", specifier = ">=0.20.0,<0.21" },
-    { name = "ollama", specifier = ">=0.3.3" },
+    { name = "ollama", specifier = ">=0.3.3,<0.4" },
     { name = "packaging", specifier = ">=24.2,<25" },
     { name = "pillow", specifier = ">=11.0.0,<12" },
     { name = "pyperclip", specifier = ">=1.9.0,<1.10" },
