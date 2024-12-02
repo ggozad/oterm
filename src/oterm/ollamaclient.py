@@ -1,4 +1,5 @@
 import inspect
+import json
 from ast import literal_eval
 from typing import (
     Any,
@@ -166,3 +167,14 @@ def parse_ollama_parameters(parameter_text: str) -> Options:
             else:
                 params[key] = value
     return params
+
+
+def jsonify_options(options: Options) -> str:
+    return json.dumps(
+        {
+            key: value
+            for key, value in options.model_dump().items()
+            if value is not None
+        },
+        indent=2,
+    )

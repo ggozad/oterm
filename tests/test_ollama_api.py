@@ -1,4 +1,4 @@
-from oterm.ollamaclient import OllamaLLM, parse_ollama_parameters
+from oterm.ollamaclient import OllamaLLM, jsonify_options, parse_ollama_parameters
 
 
 def test_list():
@@ -21,6 +21,16 @@ def test_show():
     params = parse_ollama_parameters(response.parameters)
     assert params.stop == ["<|start_header_id|>", "<|end_header_id|>", "<|eot_id|>"]
     assert params.temperature is None
+    json = jsonify_options(params)
+    assert json == (
+        "{\n"
+        '  "stop": [\n'
+        '    "<|start_header_id|>",\n'
+        '    "<|end_header_id|>",\n'
+        '    "<|eot_id|>"\n'
+        "  ]\n"
+        "}"
+    )
 
 
 def test_pull():
