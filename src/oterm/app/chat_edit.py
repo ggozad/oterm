@@ -1,6 +1,6 @@
 import json
 
-from ollama import Options
+from ollama import Options, ShowResponse
 from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
@@ -14,21 +14,21 @@ from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
 
-from oterm.ollamaclient import OllamaLLM, parse_ollama_parameters
+from oterm.ollamaclient import OllamaLLM, jsonify_options, parse_ollama_parameters
 from oterm.tools import Tool
 from oterm.tools import available as available_tool_defs
 
 
 class ChatEdit(ModalScreen[str]):
     models = []
-    models_info: dict[str, dict] = {}
+    models_info: dict[str, ShowResponse] = {}
 
     model_name: reactive[str] = reactive("")
     tag: reactive[str] = reactive("")
     bytes: reactive[int] = reactive(0)
-    model_info: dict[str, str] = {}
+    model_info: ShowResponse
     system: reactive[str] = reactive("")
-    parameters: reactive[Options] = reactive({})
+    parameters: reactive[Options] = reactive(Options())
     json_format: reactive[bool] = reactive(False)
     keep_alive: reactive[int] = reactive(5)
     last_highlighted_index = None
@@ -44,7 +44,7 @@ class ChatEdit(ModalScreen[str]):
         self,
         model: str = "",
         system: str = "",
-        parameters: Options = {},
+        parameters: dict = {},
         keep_alive: int = 5,
         json_format: bool = False,
         edit_mode: bool = False,
@@ -53,7 +53,7 @@ class ChatEdit(ModalScreen[str]):
         super().__init__()
         self.model_name, self.tag = model.split(":") if model else ("", "")
         self.system = system
-        self.parameters = parameters
+        self.parameters = Options(**parameters)
         self.keep_alive = keep_alive
         self.json_format = json_format
         self.edit_mode = edit_mode
@@ -86,9 +86,10 @@ class ChatEdit(ModalScreen[str]):
                 "format": "json" if jsn else "",
                 "keep_alive": keep_alive,
                 "parameters": parameters,
-                "tools": self.tools
+                "tools": [tool.model_dump() for tool in self.tools],
             }
         )
+
         self.dismiss(result)
 
     def action_cancel(self) -> None:
@@ -105,13 +106,11 @@ class ChatEdit(ModalScreen[str]):
                 break
 
     async def on_mount(self) -> None:
-        self.models = OllamaLLM.list()["models"]
-        models = [model["name"] for model in self.models]
+        self.models = OllamaLLM.list().models
+
+        models = [model.model or "" for model in self.models]
         for model in models:
-            info = dict(OllamaLLM.show(model))
-            for key in ["modelfile", "license"]:
-                if key in info.keys():
-                    del info[key]
+            info = OllamaLLM.show(model)
             self.models_info[model] = info
         option_list = self.query_one("#model-select", OptionList)
         option_list.clear_options()
@@ -145,9 +144,9 @@ class ChatEdit(ModalScreen[str]):
         self, option: OptionList.OptionHighlighted
     ) -> None:
         model = option.option.prompt
-        model_meta = next((m for m in self.models if m["name"] == str(model)), None)
+        model_meta = next((m for m in self.models if m.model == str(model)), None)
         if model_meta:
-            name, tag = model_meta["name"].split(":")
+            name, tag = (model_meta.model or "").split(":")
             self.model_name = name
             widget = self.query_one(".name", Label)
             widget.update(f"{self.model_name}")
@@ -160,14 +159,18 @@ class ChatEdit(ModalScreen[str]):
             widget = self.query_one(".size", Label)
             widget.update(f"{(self.bytes / 1.0e9):.2f} GB")
 
-            self.model_info = self.models_info[model_meta["name"]]
+            meta = self.models_info.get(model_meta.model or "")
+            self.model_info = meta  # type: ignore
             if not self.edit_mode:
                 self.parameters = parse_ollama_parameters(
-                    self.model_info.get("parameters", "")
+                    self.model_info.parameters or ""
                 )
             widget = self.query_one(".parameters", TextArea)
-            widget.load_text(json.dumps(self.parameters, indent=2))
+            widget.load_text(jsonify_options(self.parameters))
             widget = self.query_one(".system", TextArea)
+            print(self.model_info)
+
+            # XXX Does not work as expected, there is no longer system in model_info
             widget.load_text(self.system or self.model_info.get("system", ""))
 
             # Deduce from the model's template if the model is tool-capable.
@@ -176,7 +179,7 @@ class ChatEdit(ModalScreen[str]):
             for widget in widgets:
                 widget.disabled = not tools_supported
                 if not tools_supported:
-                    widget.value = False # type: ignore
+                    widget.value = False  # type: ignore
 
         # Now that there is a model selected we can save the chat.
         save_button = self.query_one("#save-btn", Button)
@@ -221,7 +224,7 @@ class ChatEdit(ModalScreen[str]):
                     yield TextArea(self.system, classes="system log")
                     yield Label("Parameters:", classes="title")
                     yield TextArea(
-                        json.dumps(self.parameters, indent=2),
+                        jsonify_options(self.parameters),
                         classes="parameters log",
                         language="json",
                     )
