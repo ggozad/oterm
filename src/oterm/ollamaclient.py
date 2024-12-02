@@ -10,7 +10,16 @@ from typing import (
     Sequence,
 )
 
-from ollama import AsyncClient, Client, Message, Options, ResponseError
+from ollama import (
+    AsyncClient,
+    Client,
+    ListResponse,
+    Message,
+    Options,
+    ProgressResponse,
+    ResponseError,
+    ShowResponse,
+)
 
 from oterm.config import envConfig
 from oterm.tools import ToolDefinition
@@ -119,12 +128,12 @@ class OllamaLLM:
         self.history.append({"role": "assistant", "content": text})
 
     @staticmethod
-    def list() -> Mapping[str, Any]:
+    def list() -> ListResponse:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
         return client.list()
 
     @staticmethod
-    def show(model: str) -> Mapping[str, Any]:
+    def show(model: str) -> ShowResponse:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
         return client.show(model)
 
@@ -132,9 +141,9 @@ class OllamaLLM:
     def pull(model: str) -> Iterator[Mapping[str, Any]]:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
         try:
-            stream: Iterator[Mapping[str, Any]] = client.pull(model, stream=True)
+            stream: Iterator[ProgressResponse] = client.pull(model, stream=True)
             for response in stream:
-                yield response
+                yield response.status
         except ResponseError as e:
             yield {"status": "error", "message": str(e)}
 
