@@ -1,6 +1,6 @@
 import subprocess
 
-from oterm.tools import Tool
+from oterm.types import Tool
 
 ShellTool = Tool(
     type="function",

@@ -15,8 +15,8 @@ from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
 
 from oterm.ollamaclient import OllamaLLM, jsonify_options, parse_ollama_parameters
-from oterm.tools import Tool
 from oterm.tools import available as available_tool_defs
+from oterm.types import Tool
 
 
 class ChatEdit(ModalScreen[str]):
@@ -44,7 +44,7 @@ class ChatEdit(ModalScreen[str]):
         self,
         model: str = "",
         system: str = "",
-        parameters: dict = {},
+        parameters: Options = Options(),
         keep_alive: int = 5,
         json_format: bool = False,
         edit_mode: bool = False,
@@ -53,7 +53,7 @@ class ChatEdit(ModalScreen[str]):
         super().__init__()
         self.model_name, self.tag = model.split(":") if model else ("", "")
         self.system = system
-        self.parameters = Options(**parameters)
+        self.parameters = parameters
         self.keep_alive = keep_alive
         self.json_format = json_format
         self.edit_mode = edit_mode
@@ -132,7 +132,7 @@ class ChatEdit(ModalScreen[str]):
         tool_name = ev.control.label
         checked = ev.value
         for tool_def in available_tool_defs:
-            if tool_def["tool"]["function"]["name"] == str(tool_name):
+            if tool_def["tool"].function.name == str(tool_name):  # type: ignore
                 tool = tool_def["tool"]
                 if checked:
                     self.tools.append(tool)
@@ -168,7 +168,6 @@ class ChatEdit(ModalScreen[str]):
             widget = self.query_one(".parameters", TextArea)
             widget.load_text(jsonify_options(self.parameters))
             widget = self.query_one(".system", TextArea)
-            print(self.model_info)
 
             # XXX Does not work as expected, there is no longer system in model_info
             widget.load_text(self.system or self.model_info.get("system", ""))

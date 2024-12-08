@@ -9,8 +9,7 @@ from packaging.version import parse
 
 from oterm.config import envConfig
 from oterm.store.upgrades import upgrades
-from oterm.tools import Tool
-from oterm.types import Author
+from oterm.types import Author, Tool
 from oterm.utils import int_to_semantic_version, semantic_version_to_int
 
 
@@ -174,9 +173,9 @@ class Store(object):
                     model,
                     system,
                     format,
-                    json.loads(parameters),
+                    Options(**json.loads(parameters)),
                     keep_alive,
-                    json.loads(tools),
+                    [Tool(**t) for t in json.loads(tools)],
                 )
                 for id, name, model, system, format, parameters, keep_alive, tools in chats
             ]

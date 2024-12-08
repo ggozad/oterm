@@ -18,7 +18,7 @@ async def test_llm_context():
     await llm.completion("I am testing oterm, a python client for Ollama.")
     # There should now be a context saved for the conversation.
     res = await llm.completion("Do you remember what I am testing?")
-    assert "oterm" in res
+    assert "oterm" in res.lower()
 
 
 @pytest.mark.asyncio

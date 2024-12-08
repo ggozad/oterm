@@ -1,6 +1,7 @@
 import json
 from typing import Iterable
 
+from ollama import Options, Tool
 from textual import on, work
 from textual.app import App, ComposeResult, SystemCommand
 from textual.binding import Binding
@@ -104,10 +105,10 @@ class OTerm(App):
                 model=model["name"],
                 system=model["system"],
                 format=model["format"],
-                parameters=model["parameters"],
+                parameters=Options(**model.get("parameters", {})),
                 keep_alive=model["keep_alive"],
                 messages=[],
-                tools=model["tools"],
+                tools=[Tool(**t) for t in model.get("tools", [])],
             )
         )
         await tabs.add_pane(pane)

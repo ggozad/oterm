@@ -3,7 +3,7 @@ import json
 import httpx
 
 from oterm.config import envConfig
-from oterm.tools import Tool
+from oterm.types import Tool
 
 WeatherTool = Tool(
     type="function",

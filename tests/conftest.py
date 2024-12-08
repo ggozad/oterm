@@ -1,4 +1,3 @@
-from base64 import b64encode
 from io import BytesIO
 
 import ollama
@@ -17,8 +16,8 @@ async def load_test_models():
 
 
 @pytest.fixture(scope="session")
-def llama_image():
+def llama_image() -> bytes:
     buffered = BytesIO()
     image = Image.open("tests/data/lama.jpg")
     image.save(buffered, format="JPEG")
-    return b64encode(buffered.getvalue()).decode("utf-8")
+    return buffered.getvalue()

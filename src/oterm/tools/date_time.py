@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from oterm.tools import Tool
+from oterm.types import Tool
 
 DateTimeTool = Tool(
     type="function",

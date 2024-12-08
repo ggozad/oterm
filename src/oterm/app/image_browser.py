@@ -1,8 +1,5 @@
-from base64 import b64encode
-from io import BytesIO
 from pathlib import Path
 
-from PIL import Image as PILImage
 from PIL import UnidentifiedImageError
 from textual import on
 from textual.app import ComposeResult
@@ -13,7 +10,7 @@ from textual.widgets import DirectoryTree, Input, Label
 from oterm.app.widgets.image import IMAGE_EXTENSIONS, Image, ImageDirectoryTree
 
 
-class ImageSelect(ModalScreen[tuple[Path, str]]):
+class ImageSelect(ModalScreen[Path]):
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]
@@ -29,13 +26,7 @@ class ImageSelect(ModalScreen[tuple[Path, str]]):
     @on(DirectoryTree.FileSelected)
     async def on_image_selected(self, ev: DirectoryTree.FileSelected) -> None:
         try:
-            buffer = BytesIO()
-            image = PILImage.open(ev.path)
-            if image.mode != "RGB":
-                image = image.convert("RGB")
-            image.save(buffer, format="JPEG")
-            b64 = b64encode(buffer.getvalue()).decode("utf-8")
-            self.dismiss((ev.path, b64))
+            self.dismiss(ev.path)
         except UnidentifiedImageError:
             self.dismiss()
 
