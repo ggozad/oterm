@@ -2,7 +2,7 @@ import json
 
 import httpx
 
-from oterm.tools import Tool
+from oterm.types import Tool
 
 LocationTool = Tool(
     type="function",

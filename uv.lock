@@ -615,15 +615,15 @@ wheels = [
 
 [[package]]
 name = "ollama"
-version = "0.4.0"
+version = "0.4.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/75/e3/622f0232b8e5e8144205d86f49a92881b2f272aa78bf4f03b919f056c8bc/ollama-0.4.0.tar.gz", hash = "sha256:2992242a4639e18e50254b87c45314813b61912c19b7635a2e93937b58f70c46", size = 12693 }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/55/af1d77457cbd4b0de93a6a0c4367de327c057ecfdd4efd19a428516b56d4/ollama-0.4.4.tar.gz", hash = "sha256:e1db064273c739babc2dde9ea84029c4a43415354741b6c50939ddd3dd0f7ffb", size = 13065 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/0e/aa/999aec53ce5b481abac7abbb507a86570cea5e7762c6dd42dba8ae84e0e1/ollama-0.4.0-py3-none-any.whl", hash = "sha256:b47df2619503677c18bcee85ba76269270ff61eae727750d2a093413fc30cde8", size = 12701 },
+    { url = "https://files.pythonhosted.org/packages/d3/01/815774a30d0047d464add27e2824a5b1d02ea4ad021c83590cd753e5f511/ollama-0.4.4-py3-none-any.whl", hash = "sha256:0f466e845e2205a1cbf5a2fef4640027b90beaa3b06c574426d8b6b17fd6e139", size = 13155 },
 ]
 
 [[package]]
@@ -660,7 +660,7 @@ dev = [
 requires-dist = [
     { name = "aiosql", specifier = ">=13.0,<14" },
     { name = "aiosqlite", specifier = ">=0.20.0,<0.21" },
-    { name = "ollama", specifier = ">=0.4.0,<0.5" },
+    { name = "ollama", specifier = ">=0.4.4,<0.5" },
     { name = "packaging", specifier = ">=24.2,<25" },
     { name = "pillow", specifier = ">=11.0.0,<12" },
     { name = "pydantic", specifier = ">=2.10.1,<2.11" },
