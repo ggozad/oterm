@@ -3,20 +3,20 @@ import json
 import httpx
 
 from oterm.config import envConfig
-from oterm.tools import Parameters, Property, Tool, ToolFunction
+from oterm.types import Tool
 
 WeatherTool = Tool(
     type="function",
-    function=ToolFunction(
+    function=Tool.Function(
         name="current_weather",
         description="Function to return the current weather for the given location in Standard Units.",
-        parameters=Parameters(
+        parameters=Tool.Function.Parameters(
             type="object",
             properties={
-                "latitude": Property(
+                "latitude": Tool.Function.Parameters.Property(
                     type="float", description="The latitude of the location."
                 ),
-                "longitude": Property(
+                "longitude": Tool.Function.Parameters.Property(
                     type="float", description="The longitude of the location."
                 ),
             },

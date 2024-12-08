@@ -27,9 +27,8 @@ from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
-from oterm.tools import Tool
 from oterm.tools import available as available_tool_defs
-from oterm.types import Author
+from oterm.types import Author, Tool
 
 
 class ChatContainer(Widget):
@@ -40,7 +39,7 @@ class ChatContainer(Widget):
     format: Literal["", "json"]
     parameters: Options
     keep_alive: int = 5
-    images: list[tuple[Path, str]] = []
+    images: list[Path] = []
     tools: list[Tool] = []
     BINDINGS = [
         Binding("up", "history", "history"),
@@ -67,9 +66,9 @@ class ChatContainer(Widget):
 
         history: list[Message] = [
             (
-                {"role": "user", "content": message}
+                Message(role="user", content=message)
                 if author == Author.USER
-                else {"role": "assistant", "content": message}
+                else Message(role="assistant", content=message)
             )
             for _, author, message in messages
         ]
@@ -144,14 +143,12 @@ class ChatContainer(Widget):
                 # Ollama does not support streaming with tools, so we need to use completion
                 if self.tools:
                     response = await self.ollama.completion(
-                        prompt=message, images=[img for _, img in self.images]
+                        prompt=message, images=self.images
                     )
                     response_chat_item.text = response
 
                 else:
-                    async for text in self.ollama.stream(
-                        message, [img for _, img in self.images]
-                    ):
+                    async for text in self.ollama.stream(message, self.images):
                         response = text
                         response_chat_item.text = text
                 if message_container.can_view_partial(response_chat_item):
@@ -235,9 +232,9 @@ class ChatContainer(Widget):
         # load the history from messages
         history: list[Message] = [
             (
-                {"role": "user", "content": message}
+                Message(role="user", content=message)
                 if author == Author.USER
-                else {"role": "assistant", "content": message}
+                else Message(role="assistant", content=message)
             )
             for _, author, message in self.messages
         ]
@@ -293,8 +290,8 @@ class ChatContainer(Widget):
             response = ""
             async for text in self.ollama.stream(
                 message,
-                [img for _, img in self.images],
-                additional_options={"seed": random.randint(0, 32768)},
+                [img for img in self.images],
+                Options(seed=random.randint(0, 32768)),
             ):
                 response = text
                 response_chat_item.text = text
@@ -334,7 +331,7 @@ class ChatContainer(Widget):
 
     @on(ImageAdded)
     def on_image_added(self, ev: ImageAdded) -> None:
-        self.images.append((ev.path, ev.image))
+        self.images.append(ev.path)
         message_container = self.query_one("#messageContainer")
         notification = Notification()
         notification.message = f"Image {ev.path} added."

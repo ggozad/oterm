@@ -2,14 +2,14 @@ import json
 
 import httpx
 
-from oterm.tools import Parameters, Tool, ToolFunction
+from oterm.types import Tool
 
 LocationTool = Tool(
     type="function",
-    function=ToolFunction(
+    function=Tool.Function(
         name="current_location",
         description="Function to return the current location, city, region, country, latitude, and longitude.",
-        parameters=Parameters(
+        parameters=Tool.Function.Parameters(
             type="object",
             properties={},
             required=[],
