@@ -1,6 +1,6 @@
 import asyncio
-import json
 
+from ollama import ResponseError
 from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Container, Horizontal
@@ -28,11 +28,13 @@ class PullModel(ModalScreen[str]):
     async def pull_model(self) -> None:
         log = self.query_one(".log", TextArea)
         stream = OllamaLLM.pull(self.model)
-        for line in stream:
-            log.text += json.dumps(line) + "\n"
-            await asyncio.sleep(0.1)
-        await asyncio.sleep(1.0)
-        self.dismiss()
+        try:
+            for response in stream:
+                log.text += response.model_dump_json() + "\n"
+                await asyncio.sleep(0.1)
+            await asyncio.sleep(1.0)
+        except ResponseError as e:
+            log.text += f"Error: {e}\n"
 
     @on(Input.Changed)
     async def on_model_change(self, ev: Input.Changed) -> None:
@@ -49,4 +51,4 @@ class PullModel(ModalScreen[str]):
             with Horizontal():
                 yield Input(self.model)
                 yield Button("Pull", variant="primary")
-            yield TextArea(classes="parameters log", disabled=True)
+            yield TextArea(classes="parameters log", read_only=True)

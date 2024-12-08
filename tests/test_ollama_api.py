@@ -1,3 +1,6 @@
+import pytest
+from ollama import ResponseError
+
 from oterm.ollamaclient import OllamaLLM, jsonify_options, parse_ollama_parameters
 
 
@@ -36,14 +39,12 @@ def test_show():
 def test_pull():
     llm = OllamaLLM()
     stream = llm.pull("llama3.2:latest")
-    entries = [entry for entry in stream]
+    entries = [entry.status for entry in stream]
     assert "pulling manifest" in entries
     assert "success" in entries
 
-    stream = llm.pull("non-existing:latest")
-    entries = [entry for entry in stream]
-    assert {
-        "status": "error",
-        "message": "pull model manifest: file does not exist",
-    } in entries
-    assert "success" not in entries
+    with pytest.raises(ResponseError) as excinfo:
+        stream = llm.pull("non-existing:latest")
+        entries = [entry for entry in stream]
+        assert excinfo.value == "pull model manifest: file does not exist"
+        assert "success" not in entries

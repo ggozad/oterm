@@ -18,7 +18,6 @@ from ollama import (
     Message,
     Options,
     ProgressResponse,
-    ResponseError,
     ShowResponse,
 )
 
@@ -139,14 +138,11 @@ class OllamaLLM:
         return client.show(model)
 
     @staticmethod
-    def pull(model: str) -> Iterator[Mapping[str, Any]]:
+    def pull(model: str) -> Iterator[ProgressResponse]:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
-        try:
-            stream: Iterator[ProgressResponse] = client.pull(model, stream=True)
-            for response in stream:
-                yield response.status
-        except ResponseError as e:
-            yield {"status": "error", "message": str(e)}
+        stream: Iterator[ProgressResponse] = client.pull(model, stream=True)
+        for response in stream:
+            yield response
 
 
 def parse_ollama_parameters(parameter_text: str) -> Options:
