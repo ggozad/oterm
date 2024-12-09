@@ -190,7 +190,7 @@ We strive to have sane default key bindings, but there will always be cases wher
     "next.chat": "ctrl+tab",
     "prev.chat": "ctrl+shift+tab",
     "quit": "ctrl+q",
-    "newline": "shift+enter",
+    "newline": "shift+enter"
   }
 }
 ```
