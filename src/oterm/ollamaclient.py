@@ -1,19 +1,29 @@
 import inspect
+import json
 from ast import literal_eval
+from pathlib import Path
 from typing import (
     Any,
     AsyncGenerator,
     AsyncIterator,
     Iterator,
     Literal,
-    Mapping,
     Sequence,
 )
 
-from ollama import AsyncClient, Client, Message, Options, ResponseError
+from ollama import (
+    AsyncClient,
+    ChatResponse,
+    Client,
+    ListResponse,
+    Message,
+    Options,
+    ProgressResponse,
+    ShowResponse,
+)
 
 from oterm.config import envConfig
-from oterm.tools import ToolDefinition
+from oterm.types import ToolDefinition
 
 
 class OllamaLLM:
@@ -37,19 +47,23 @@ class OllamaLLM:
         self.tools = [tool["tool"] for tool in tool_defs]
 
         if system:
-            system_prompt: Message = {"role": "system", "content": system}
+            system_prompt: Message = Message(role="system", content=system)
             self.history = [system_prompt] + self.history
 
-    async def completion(self, prompt: str = "", images: list[str] = []) -> str:
+    async def completion(
+        self, prompt: str = "", images: list[Path | bytes | str] = []
+    ) -> str:
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
         )
         if prompt:
-            user_prompt: Message = {"role": "user", "content": prompt}
+            user_prompt: Message = Message(role="user", content=prompt)
             if images:
-                user_prompt["images"] = images
+                # This is a bug in Ollama the images should be a list of Image objects
+                # user_prompt.images = [Image(value=image) for image in images]
+                user_prompt.images = images  # type: ignore
             self.history.append(user_prompt)
-        response = await client.chat(
+        response: ChatResponse = await client.chat(
             model=self.model,
             messages=self.history,
             keep_alive=f"{self.keep_alive}m",
@@ -58,8 +72,8 @@ class OllamaLLM:
             tools=self.tools,
         )
 
-        message = response.get("message", {})
-        tool_calls = message.get("tool_calls", [])
+        message = response.message
+        tool_calls = message.tool_calls
         if tool_calls:
             for tool_call in tool_calls:
                 tool_name = tool_call["function"]["name"]
@@ -72,17 +86,17 @@ class OllamaLLM:
                             tool_response = await tool_callable(**tool_arguments)  # type: ignore
                         else:
                             tool_response = tool_callable(**tool_arguments)  # type: ignore
-                        self.history.append({"role": "tool", "content": tool_response})
+                        self.history.append(Message(role="tool", content=tool_response))
             return await self.completion()
 
         self.history.append(message)
-        text_response = message.get("content", "")
-        return text_response
+        text_response = message.content
+        return text_response or ""
 
     async def stream(
         self,
         prompt: str,
-        images: list[str] = [],
+        images: list[Path] = [],
         additional_options: Options = Options(),
         tool_defs: Sequence[ToolDefinition] = [],
     ) -> AsyncGenerator[str, Any]:
@@ -97,15 +111,16 @@ class OllamaLLM:
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
         )
-        user_prompt: Message = {"role": "user", "content": prompt}
+        user_prompt: Message = Message(role="user", content=prompt)
         if images:
-            user_prompt["images"] = images
+            user_prompt.images = images  # type: ignore
+
         self.history.append(user_prompt)
         stream: AsyncIterator[dict] = await client.chat(
             model=self.model,
             messages=self.history,
             stream=True,
-            options={**self.options, **additional_options},
+            options={**self.options.model_dump(), **additional_options.model_dump()},
             keep_alive=f"{self.keep_alive}m",
             format=self.format,  # type: ignore
             tools=self.tools,
@@ -116,27 +131,24 @@ class OllamaLLM:
             text = text + ollama_response
             yield text
 
-        self.history.append({"role": "assistant", "content": text})
+        self.history.append(Message(role="assistant", content=text))
 
     @staticmethod
-    def list() -> Mapping[str, Any]:
+    def list() -> ListResponse:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
         return client.list()
 
     @staticmethod
-    def show(model: str) -> Mapping[str, Any]:
+    def show(model: str) -> ShowResponse:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
         return client.show(model)
 
     @staticmethod
-    def pull(model: str) -> Iterator[Mapping[str, Any]]:
+    def pull(model: str) -> Iterator[ProgressResponse]:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
-        try:
-            stream: Iterator[Mapping[str, Any]] = client.pull(model, stream=True)
-            for response in stream:
-                yield response
-        except ResponseError as e:
-            yield {"status": "error", "message": str(e)}
+        stream: Iterator[ProgressResponse] = client.pull(model, stream=True)
+        for response in stream:
+            yield response
 
 
 def parse_ollama_parameters(parameter_text: str) -> Options:
@@ -157,3 +169,14 @@ def parse_ollama_parameters(parameter_text: str) -> Options:
             else:
                 params[key] = value
     return params
+
+
+def jsonify_options(options: Options) -> str:
+    return json.dumps(
+        {
+            key: value
+            for key, value in options.model_dump().items()
+            if value is not None
+        },
+        indent=2,
+    )
