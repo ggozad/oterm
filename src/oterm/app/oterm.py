@@ -23,6 +23,8 @@ class OTerm(App):
     BINDINGS = [
         Binding("ctrl+tab", "cycle_chat(+1)", "next chat", id="next.chat"),
         Binding("ctrl+shift+tab", "cycle_chat(-1)", "prev chat", id="prev.chat"),
+        Binding("ctrl+backspace", "delete_chat", "delete chat", id="delete.chat"),
+        Binding("ctrl+n", "new_chat", "new chat", id="new.chat"),
         Binding("ctrl+q", "quit", "quit", id="quit"),
     ]
 
