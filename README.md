@@ -114,6 +114,9 @@ The following keyboard shortcuts are supported:
 * <kbd>^ Ctrl</kbd>+<kbd>i</kbd> - select an image to include with the next message
 * <kbd>↑</kbd>     - navigate through history of previous prompts
 
+* <kbd>^ Ctrl</kbd>+<kbd>n</kbd> - open a new chat
+* <kbd>^ Ctrl</kbd>+<kbd>Backspace</kbd> - close the current chat
+
 * <kbd>^ Ctrl</kbd>+<kbd>Tab</kbd> - open the next chat
 * <kbd>^ Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> - open the previous chat
 
