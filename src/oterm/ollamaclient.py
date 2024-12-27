@@ -8,6 +8,7 @@ from typing import (
     AsyncIterator,
     Iterator,
     Literal,
+    Mapping,
     Sequence,
 )
 
@@ -31,7 +32,7 @@ class OllamaLLM:
         self,
         model="llama3.2",
         system: str | None = None,
-        history: list[Message] = [],
+        history: list[Mapping[str, Any] | Message] = [],
         format: Literal["", "json"] = "",
         options: Options = Options(),
         keep_alive: int = 5,
@@ -76,17 +77,27 @@ class OllamaLLM:
         tool_calls = message.tool_calls
         if tool_calls:
             for tool_call in tool_calls:
+
                 tool_name = tool_call["function"]["name"]
                 self.history.append(message)
                 for tool_def in self.tool_defs:
                     if tool_def["tool"]["function"]["name"] == tool_name:
                         tool_callable = tool_def["callable"]
                         tool_arguments = tool_call["function"]["arguments"]
-                        if inspect.iscoroutinefunction(tool_callable):
-                            tool_response = await tool_callable(**tool_arguments)  # type: ignore
-                        else:
-                            tool_response = tool_callable(**tool_arguments)  # type: ignore
-                        self.history.append(Message(role="tool", content=tool_response))
+                        try:
+                            if inspect.iscoroutinefunction(tool_callable):
+                                tool_response = await tool_callable(**tool_arguments)  # type: ignore
+                            else:
+                                tool_response = tool_callable(**tool_arguments)  # type: ignore
+                        except Exception as e:
+                            tool_response = str(e)
+                        self.history.append(
+                            {
+                                "role": "tool",
+                                "content": tool_response,
+                                "name": tool_name,
+                            }
+                        )
             return await self.completion()
 
         self.history.append(message)
