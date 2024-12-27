@@ -52,7 +52,10 @@ class OllamaLLM:
             self.history = [system_prompt] + self.history
 
     async def completion(
-        self, prompt: str = "", images: list[Path | bytes | str] = []
+        self,
+        prompt: str = "",
+        images: list[Path | bytes | str] = [],
+        tool_call_messages=[],
     ) -> str:
         client = AsyncClient(
             host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL
@@ -66,7 +69,7 @@ class OllamaLLM:
             self.history.append(user_prompt)
         response: ChatResponse = await client.chat(
             model=self.model,
-            messages=self.history,
+            messages=self.history + tool_call_messages,
             keep_alive=f"{self.keep_alive}m",
             options=self.options,
             format=self.format,  # type: ignore
@@ -76,10 +79,10 @@ class OllamaLLM:
         message = response.message
         tool_calls = message.tool_calls
         if tool_calls:
+            tool_messages = [message]
             for tool_call in tool_calls:
 
                 tool_name = tool_call["function"]["name"]
-                self.history.append(message)
                 for tool_def in self.tool_defs:
                     if tool_def["tool"]["function"]["name"] == tool_name:
                         tool_callable = tool_def["callable"]
@@ -91,14 +94,16 @@ class OllamaLLM:
                                 tool_response = tool_callable(**tool_arguments)  # type: ignore
                         except Exception as e:
                             tool_response = str(e)
-                        self.history.append(
+                        tool_messages.append(
                             {
                                 "role": "tool",
                                 "content": tool_response,
                                 "name": tool_name,
                             }
                         )
-            return await self.completion()
+            return await self.completion(
+                tool_call_messages=tool_messages,
+            )
 
         self.history.append(message)
         text_response = message.content
