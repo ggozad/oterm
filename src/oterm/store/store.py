@@ -214,6 +214,7 @@ class Store(object):
 
     async def delete_chat(self, id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
+            await connection.execute("PRAGMA foreign_keys = on;")
             await connection.execute("DELETE FROM chat WHERE id = :id;", {"id": id})
             await connection.commit()
 
