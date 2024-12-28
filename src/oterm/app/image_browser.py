@@ -2,7 +2,7 @@ from base64 import b64encode
 from io import BytesIO
 from pathlib import Path
 
-from PIL import Image as PILImage
+import PIL.Image as PILImage
 from PIL import UnidentifiedImageError
 from textual import on
 from textual.app import ComposeResult

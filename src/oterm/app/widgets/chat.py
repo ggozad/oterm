@@ -27,9 +27,8 @@ from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
-from oterm.tools import Tool
 from oterm.tools import available as available_tool_defs
-from oterm.types import Author
+from oterm.types import Author, Tool
 
 
 class ChatContainer(Widget):
@@ -67,9 +66,9 @@ class ChatContainer(Widget):
 
         history: list[Message] = [
             (
-                {"role": "user", "content": message}
+                Message(role="user", content=message)
                 if author == Author.USER
-                else {"role": "assistant", "content": message}
+                else Message(role="assistant", content=message)
             )
             for _, author, message in messages
         ]
@@ -200,7 +199,6 @@ class ChatContainer(Widget):
 
     @work
     async def action_edit_chat(self) -> None:
-
         screen = ChatEdit(
             model=self.ollama.model,
             system=self.system or "",
@@ -218,10 +216,9 @@ class ChatContainer(Widget):
         self.system = model.get("system")
         self.format = model.get("format", "")
         self.keep_alive = model.get("keep_alive", 5)
-        self.parameters = model.get("parameters", {})
-        self.tools = model.get("tools", [])
+        self.parameters = Options(**model.get("parameters", {}))
+        self.tools = [Tool(**t) for t in model.get("tools", [])]
         store = await Store.get_store()
-
         await store.edit_chat(  # type: ignore
             id=self.db_id,
             name=self.chat_name,
@@ -235,9 +232,9 @@ class ChatContainer(Widget):
         # load the history from messages
         history: list[Message] = [
             (
-                {"role": "user", "content": message}
+                Message(role="user", content=message)
                 if author == Author.USER
-                else {"role": "assistant", "content": message}
+                else Message(role="assistant", content=message)
             )
             for _, author, message in self.messages
         ]
@@ -251,7 +248,7 @@ class ChatContainer(Widget):
             model=model["name"],
             system=model["system"],
             format=model["format"],
-            options=model["parameters"],
+            options=self.parameters,
             keep_alive=model["keep_alive"],
             history=history,
             tool_defs=used_tool_defs,
@@ -293,8 +290,8 @@ class ChatContainer(Widget):
             response = ""
             async for text in self.ollama.stream(
                 message,
-                [img for _, img in self.images],
-                additional_options={"seed": random.randint(0, 32768)},
+                self.images,
+                Options(seed=random.randint(0, 32768)),
             ):
                 response = text
                 response_chat_item.text = text

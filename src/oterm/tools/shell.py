@@ -1,16 +1,16 @@
 import subprocess
 
-from oterm.tools import Parameters, Property, Tool, ToolFunction
+from oterm.types import Tool
 
 ShellTool = Tool(
     type="function",
-    function=ToolFunction(
+    function=Tool.Function(
         name="shell",
         description="Function to execute commands in the user's shell and return the output.",
-        parameters=Parameters(
+        parameters=Tool.Function.Parameters(
             type="object",
             properties={
-                "command": Property(
+                "command": Tool.Function.Parameters.Property(
                     type="string", description="The shell command to execute."
                 )
             },
