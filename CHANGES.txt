@@ -1,8 +1,11 @@
 Changelog
 =========
 
-0.6.10 - 2024-12-27
+0.6.10 - 
 -------------------
+
+- Fix documentation on keymap example in the readme.
+  [bartosz]
 
 - Update the shortcuts for new chat and close chat.
   [pekcheey]
