@@ -112,7 +112,7 @@ class OllamaLLM:
     async def stream(
         self,
         prompt: str,
-        images: list[Path] = [],
+        images: list[Path | bytes | str] = [],
         additional_options: Options = Options(),
         tool_defs: Sequence[ToolDefinition] = [],
     ) -> AsyncGenerator[str, Any]:

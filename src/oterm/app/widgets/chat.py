@@ -39,7 +39,7 @@ class ChatContainer(Widget):
     format: Literal["", "json"]
     parameters: Options
     keep_alive: int = 5
-    images: list[Path] = []
+    images: list[tuple[Path, str]] = []
     tools: list[Tool] = []
     BINDINGS = [
         Binding("up", "history", "history"),
@@ -143,12 +143,14 @@ class ChatContainer(Widget):
                 # Ollama does not support streaming with tools, so we need to use completion
                 if self.tools:
                     response = await self.ollama.completion(
-                        prompt=message, images=self.images
+                        prompt=message, images=[img for _, img in self.images]
                     )
                     response_chat_item.text = response
 
                 else:
-                    async for text in self.ollama.stream(message, self.images):
+                    async for text in self.ollama.stream(
+                        message, [img for _, img in self.images]
+                    ):
                         response = text
                         response_chat_item.text = text
                 if message_container.can_view_partial(response_chat_item):
@@ -288,7 +290,7 @@ class ChatContainer(Widget):
             response = ""
             async for text in self.ollama.stream(
                 message,
-                [img for img in self.images],
+                self.images,
                 Options(seed=random.randint(0, 32768)),
             ):
                 response = text
@@ -329,7 +331,7 @@ class ChatContainer(Widget):
 
     @on(ImageAdded)
     def on_image_added(self, ev: ImageAdded) -> None:
-        self.images.append(ev.path)
+        self.images.append((ev.path, ev.image))
         message_container = self.query_one("#messageContainer")
         notification = Notification()
         notification.message = f"Image {ev.path} added."
