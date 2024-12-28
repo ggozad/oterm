@@ -4,6 +4,9 @@ Changelog
 0.7.0 - 
 -------------------
 
+- Enforce foreign key constraints in the sqlite db, to allow proper cascading deletes.
+  [ggozad]
+
 - Perist images in the chat history & sqlite db.
   [ggozad]
 
