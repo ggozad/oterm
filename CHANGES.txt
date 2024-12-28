@@ -1,8 +1,14 @@
 Changelog
 =========
 
-0.6.10 - 
+0.7.0 - 
 -------------------
+
+- Update OllamaLLM client to match the use of Pydantic in olllama-python.
+  [ggozad]
+
+- Gracefully handle exceptions in tools.
+  [ggozad]
 
 - Fix documentation on keymap example in the readme.
   [bartosz]
