@@ -4,6 +4,9 @@ Changelog
 0.7.0 - 
 -------------------
 
+- Perist images in the chat history & sqlite db.
+  [ggozad]
+
 - Update OllamaLLM client to match the use of Pydantic in olllama-python.
   [ggozad]
 

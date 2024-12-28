@@ -218,7 +218,12 @@ class Store(object):
             await connection.commit()
 
     async def save_message(
-        self, id: int | None, chat_id: int, author: str, text: str, images: list[str]
+        self,
+        id: int | None,
+        chat_id: int,
+        author: str,
+        text: str,
+        images: list[str] = [],
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res = await connection.execute_insert(
