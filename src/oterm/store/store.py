@@ -49,6 +49,7 @@ class Store(object):
                         "chat_id"	INTEGER NOT NULL,
                         "author"	TEXT NOT NULL,
                         "text"		TEXT NOT NULL,
+                        "images"    TEXT DEFAULT "[]",
                         PRIMARY KEY("id" AUTOINCREMENT)
                         FOREIGN KEY("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE
                     );                           
@@ -217,30 +218,41 @@ class Store(object):
             await connection.commit()
 
     async def save_message(
-        self, id: int | None, chat_id: int, author: str, text: str
+        self, id: int | None, chat_id: int, author: str, text: str, images: list[str]
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res = await connection.execute_insert(
                 """
                 INSERT OR REPLACE 
-                INTO message(id, chat_id, author, text) 
-                VALUES(:id, :chat_id, :author, :text) RETURNING id;
+                INTO message(id, chat_id, author, text, images) 
+                VALUES(:id, :chat_id, :author, :text, :images) RETURNING id;
                 """,
-                {"id": id, "chat_id": chat_id, "author": author, "text": text},
+                {
+                    "id": id,
+                    "chat_id": chat_id,
+                    "author": author,
+                    "text": text,
+                    "images": json.dumps(images),
+                },
             )
             await connection.commit()
             return res[0] if res else 0
 
-    async def get_messages(self, chat_id: int) -> list[tuple[int, Author, str]]:
+    async def get_messages(
+        self, chat_id: int
+    ) -> list[tuple[int, Author, str, list[str]]]:
 
         async with aiosqlite.connect(self.db_path) as connection:
             messages = await connection.execute_fetchall(
                 """
-                SELECT id, author, text 
+                SELECT id, author, text, images
                 FROM message
                 WHERE chat_id = :chat_id;
                 """,
                 {"chat_id": chat_id},
             )
-            messages = [(id, Author(author), text) for id, author, text in messages]
+            messages = [
+                (id, Author(author), text, json.loads(images))
+                for id, author, text, images in messages
+            ]
             return messages
