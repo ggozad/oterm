@@ -33,7 +33,7 @@ from oterm.types import Author, Tool
 
 class ChatContainer(Widget):
     ollama = OllamaLLM()
-    messages: reactive[list[tuple[int, Author, str]]] = reactive([])
+    messages: reactive[list[tuple[int, Author, str, list[str]]]] = reactive([])
     chat_name: str
     system: str | None
     format: Literal["", "json"]
@@ -54,7 +54,7 @@ class ChatContainer(Widget):
         db_id: int,
         chat_name: str,
         model: str = "llama3.2",
-        messages: list[tuple[int, Author, str]] = [],
+        messages: list[tuple[int, Author, str, list[str]]] = [],
         system: str | None = None,
         format: Literal["", "json"] = "",
         parameters: Options,
@@ -63,15 +63,18 @@ class ChatContainer(Widget):
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
+        history = []
+        # This is wrong, the images should be a list of Image objects
+        # See https://github.com/ollama/ollama-python/issues/375
+        # Temp fix is to do msg.images = images  # type: ignore
 
-        history: list[Message] = [
-            (
-                Message(role="user", content=message)
-                if author == Author.USER
-                else Message(role="assistant", content=message)
+        for _, author, message, images in messages:
+            msg = Message(
+                role="user" if author == Author.USER else "assistant",
+                content=message,
             )
-            for _, author, message in messages
-        ]
+            msg.images = images  # type: ignore
+            history.append(msg)
 
         used_tool_defs = [
             tool_def for tool_def in available_tool_defs if tool_def["tool"] in tools
@@ -83,7 +86,7 @@ class ChatContainer(Widget):
             format=format,
             options=parameters,
             keep_alive=keep_alive,
-            history=history,
+            history=history,  # type: ignore
             tool_defs=used_tool_defs,
         )
 
@@ -96,6 +99,7 @@ class ChatContainer(Widget):
         self.keep_alive = keep_alive
         self.tools = tools
         self.loaded = False
+        self.images = []
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
@@ -104,7 +108,7 @@ class ChatContainer(Widget):
         if self.loaded:
             return
         message_container = self.query_one("#messageContainer")
-        for _, author, message in self.messages:
+        for _, author, message, images in self.messages:
             chat_item = ChatItem()
             chat_item.text = message
             chat_item.author = author
@@ -156,8 +160,6 @@ class ChatContainer(Widget):
                 if message_container.can_view_partial(response_chat_item):
                     message_container.scroll_end()
 
-                self.images = []
-
                 # Save to db
                 store = await Store.get_store()
                 id = await store.save_message(
@@ -165,8 +167,11 @@ class ChatContainer(Widget):
                     chat_id=self.db_id,
                     author=Author.USER.value,
                     text=message,
+                    images=[img for _, img in self.images],
                 )
-                self.messages.append((id, Author.USER, message))
+                self.messages.append(
+                    (id, Author.USER, message, [img for _, img in self.images])
+                )
 
                 id = await store.save_message(
                     id=None,
@@ -174,7 +179,9 @@ class ChatContainer(Widget):
                     author=Author.OLLAMA.value,
                     text=response,
                 )
-                self.messages.append((id, Author.OLLAMA, response))
+                self.messages.append((id, Author.OLLAMA, response, []))
+                self.images = []
+
             except asyncio.CancelledError:
                 user_chat_item.remove()
                 response_chat_item.remove()
@@ -230,14 +237,18 @@ class ChatContainer(Widget):
         )
 
         # load the history from messages
-        history: list[Message] = [
-            (
-                Message(role="user", content=message)
-                if author == Author.USER
-                else Message(role="assistant", content=message)
+        history: list[Message] = []
+        # This is wrong, the images should be a list of Image objects
+        # See https://github.com/ollama/ollama-python/issues/375
+        # Temp fix is to do msg.images = images  # type: ignore
+        for _, author, message, images in self.messages:
+            msg = Message(
+                role="user" if author == Author.USER else "assistant",
+                content=message,
             )
-            for _, author, message in self.messages
-        ]
+            msg.images = images  # type: ignore
+            history.append(msg)
+
         used_tool_defs = [
             tool_def
             for tool_def in available_tool_defs
@@ -250,7 +261,7 @@ class ChatContainer(Widget):
             format=model["format"],
             options=self.parameters,
             keep_alive=model["keep_alive"],
-            history=history,
+            history=history,  # type: ignore
             tool_defs=used_tool_defs,
         )
 
@@ -290,14 +301,13 @@ class ChatContainer(Widget):
             response = ""
             async for text in self.ollama.stream(
                 message,
-                self.images,
+                [img for _, img in self.images],
                 Options(seed=random.randint(0, 32768)),
             ):
                 response = text
                 response_chat_item.text = text
                 if message_container.can_view_partial(response_chat_item):
                     message_container.scroll_end()
-            self.images = []
 
             # Save to db
             store = await Store.get_store()
@@ -307,7 +317,9 @@ class ChatContainer(Widget):
                 author=Author.OLLAMA.value,
                 text=response,
             )
-            self.messages.append((response_message_id, Author.OLLAMA, response))
+            self.messages.append((response_message_id, Author.OLLAMA, response, []))
+            self.images = []
+
             loading.remove()
 
         asyncio.create_task(response_task())
@@ -323,7 +335,7 @@ class ChatContainer(Widget):
             prompt.focus()
 
         prompts = [
-            message for _, author, message in self.messages if author == Author.USER
+            message for _, author, message, _ in self.messages if author == Author.USER
         ]
         prompts.reverse()
         screen = PromptHistory(prompts)
