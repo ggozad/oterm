@@ -28,7 +28,7 @@ from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
 from oterm.tools import available as available_tool_defs
-from oterm.types import Author, Image, Tool
+from oterm.types import Author, Tool
 
 
 class ChatContainer(Widget):
@@ -63,19 +63,18 @@ class ChatContainer(Widget):
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
+        history = []
+        # This is wrong, the images should be a list of Image objects
+        # See https://github.com/ollama/ollama-python/issues/375
+        # Temp fix is to do msg.images = images  # type: ignore
 
-        history: list[Message] = [
-            (
-                Message(
-                    role="user",
-                    content=message,
-                    images=[Image(value=img) for img in images],
-                )  # type: ignore
-                if author == Author.USER
-                else Message(role="assistant", content=message)
+        for _, author, message, images in messages:
+            msg = Message(
+                role="user" if author == Author.USER else "assistant",
+                content=message,
             )
-            for _, author, message, images in messages
-        ]
+            msg.images = images  # type: ignore
+            history.append(msg)
 
         used_tool_defs = [
             tool_def for tool_def in available_tool_defs if tool_def["tool"] in tools
@@ -238,18 +237,18 @@ class ChatContainer(Widget):
         )
 
         # load the history from messages
-        history: list[Message] = [
-            (
-                Message(
-                    role="user",
-                    content=message,
-                    images=[Image(value=img) for img in images],
-                )  # type: ignore
-                if author == Author.USER
-                else Message(role="assistant", content=message)
+        history: list[Message] = []
+        # This is wrong, the images should be a list of Image objects
+        # See https://github.com/ollama/ollama-python/issues/375
+        # Temp fix is to do msg.images = images  # type: ignore
+        for _, author, message, images in self.messages:
+            msg = Message(
+                role="user" if author == Author.USER else "assistant",
+                content=message,
             )
-            for _, author, message, images in self.messages
-        ]
+            msg.images = images  # type: ignore
+            history.append(msg)
+
         used_tool_defs = [
             tool_def
             for tool_def in available_tool_defs
