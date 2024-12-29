@@ -177,7 +177,6 @@ class OTerm(App):
         self.watch(self.app, "theme", self.on_theme_change, init=False)
 
         saved_chats = await store.get_chats()
-
         # Apply any remap of key bindings.
         keymap = appConfig.get("keymap")
         if keymap:

@@ -14,7 +14,12 @@ from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
 
-from oterm.ollamaclient import OllamaLLM, jsonify_options, parse_ollama_parameters
+from oterm.ollamaclient import (
+    OllamaLLM,
+    jsonify_options,
+    parse_format,
+    parse_ollama_parameters,
+)
 from oterm.tools import available as available_tool_defs
 from oterm.types import Tool
 
@@ -29,7 +34,7 @@ class ChatEdit(ModalScreen[str]):
     model_info: ShowResponse
     system: reactive[str] = reactive("")
     parameters: reactive[Options] = reactive(Options())
-    json_format: reactive[bool] = reactive(False)
+    format: reactive[str | None] = reactive(None)
     keep_alive: reactive[int] = reactive(5)
     last_highlighted_index = None
     tools: reactive[list[Tool]] = reactive([])
@@ -45,8 +50,8 @@ class ChatEdit(ModalScreen[str]):
         model: str = "",
         system: str = "",
         parameters: Options = Options(),
+        format=None,
         keep_alive: int = 5,
-        json_format: bool = False,
         edit_mode: bool = False,
         tools: list[Tool] = [],
     ) -> None:
@@ -54,8 +59,8 @@ class ChatEdit(ModalScreen[str]):
         self.model_name, self.tag = model.split(":") if model else ("", "")
         self.system = system
         self.parameters = parameters
+        self.format = format
         self.keep_alive = keep_alive
-        self.json_format = json_format
         self.edit_mode = edit_mode
         self.tools = tools
 
@@ -63,7 +68,6 @@ class ChatEdit(ModalScreen[str]):
         model = f"{self.model_name}:{self.tag}"
         system = self.query_one(".system", TextArea).text
         system = system if system != self.model_info.get("system", "") else None
-        jsn = self.query_one(".json-format", Checkbox).value
         keep_alive = int(self.query_one(".keep-alive", Input).value)
         p_area = self.query_one(".parameters", TextArea)
         try:
@@ -78,12 +82,21 @@ class ChatEdit(ModalScreen[str]):
             p_area = self.query_one(".parameters", TextArea)
             p_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
             return
+        f_area = self.query_one(".format", TextArea)
+
+        # Try parsing the format
+        try:
+            parse_format(f_area.text)
+            format = f_area.text
+        except Exception:
+            f_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
+            return
 
         result = json.dumps(
             {
                 "name": model,
                 "system": system,
-                "format": "json" if jsn else "",
+                "format": format,
                 "keep_alive": keep_alive,
                 "parameters": parameters,
                 "tools": [tool.model_dump() for tool in self.tools],
@@ -227,13 +240,14 @@ class ChatEdit(ModalScreen[str]):
                         classes="parameters log",
                         language="json",
                     )
+                    yield Label("Format:", classes="title")
+                    yield TextArea(
+                        self.format or "",
+                        classes="format log",
+                        language="json",
+                    )
+
                     with Horizontal():
-                        yield Checkbox(
-                            "JSON",
-                            value=self.json_format,
-                            classes="json-format",
-                            button_first=False,
-                        )
                         with Horizontal():
                             yield Label(
                                 "Keep-alive (min)", classes="title keep-alive-label"

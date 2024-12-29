@@ -155,7 +155,9 @@ For most terminals there exists a key modifier you can use to click and drag to 
 
 ### Customizing models
 
-When creating a new chat, you may not only select the model, but also customize the the `system` instruction, `tools` used, as well as the `parameters` (such as context length, seed, temperature etc) passed to the model. For a list of all supported parameters refer to the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values). Checking the `JSON output` checkbox will force the model to reply in JSON format. All the models you have pulled or created will be available to `oterm`.
+When creating a new chat, you may not only select the model, but also customize the the `system` instruction, `tools` used, as well as the `parameters` (such as context length, seed, temperature etc) passed to the model. For a list of all supported parameters refer to the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values). 
+
+In the format field you can specify either the string `json`, leaving it to Ollama to determine the JSON forma, or use Ollama's *Structured Output* specifying the full format as JSON schema. See [here](https://ollama.com/blog/structured-outputs) for more information.
 
 You can also "edit" the chat to change the system prompt, parameters or format. Note, that the model cannot be changed once the chat has started.
 
