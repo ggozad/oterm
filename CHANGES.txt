@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.7.1 - 
+0.7.1 - 2025-01-02
 ------------------
 
 - Support for Ollama's structured output. 
