@@ -14,9 +14,9 @@ the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
   - [Using](#using)
     - [Commands](#commands)
     - [Keyboard shortcuts](#keyboard-shortcuts)
+    - [Customizing models](#customizing-models)
     - [Tools](#tools)
     - [Copy / Paste](#copy--paste)
-    - [Customizing models](#customizing-models)
     - [Chat session storage](#chat-session-storage)
     - [App configuration](#app-configuration)
     - [Key bindings](#key-bindings)
@@ -99,7 +99,8 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 * `Edit chat parameters` - edit the current chat session (change system prompt, parameters or format)
 * `Rename chat` - rename the current chat session
 * `Export chat` - export the current chat session as markdown
-* `Delete chat` - delete the current chat session  
+* `Delete chat` - delete the current chat session 
+* `Clear chat` - clear the chat history, preserving model and system prompt customizations
 * `Regenerate last Ollama message` - regenerates the last message from Ollama (will override the `seed` for the specific message with a random one.) Useful if you want to change the system prompt or parameters or just want to try again.
 * `Pull model` - pull a model or update an existing one.
 * `Change theme` - choose among the available themes.
@@ -125,6 +126,18 @@ In multiline mode, you can press <kbd>Enter</kbd> to send the message, or <kbd>S
 While Ollama is inferring the next message, you can press <kbd>Esc</kbd> to cancel the inference.
 
 Note that some of the shortcuts may not work in a certain context, for example pressing <kbd>↑</kbd> while the prompt is in multi-line mode.
+
+### Customizing models
+
+When creating a new chat, you may not only select the model, but also customize the following:
+* `system` instruction prompt
+* `tools` used (some sample tools are included, more to come in future versions)
+* chat `parameters` (such as context length, seed, temperature etc) passed to the model. For a list of all supported parameters refer to the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values). 
+* Ouput `format`/structured output. In the format field you can specify either
+  * nothing, in which case Ollama will return the output as text. 
+  * use Ollama's *Structured Output* specifying the full format as JSON schema. See [here](https://ollama.com/blog/structured-outputs) for more information.
+
+You can also "edit" an existing chat to change the system prompt, parameters, tools or format. Note, that the model cannot be changed once the chat has started.
 
 ### Tools
 
@@ -152,14 +165,6 @@ For most terminals there exists a key modifier you can use to click and drag to 
 * `iTerm`  <kbd>Option</kbd> key.
 * `Gnome Terminal` <kbd>Shift</kbd> key.
 * `Windows Terminal` <kbd>Shift</kbd> key.
-
-### Customizing models
-
-When creating a new chat, you may not only select the model, but also customize the the `system` instruction, `tools` used, as well as the `parameters` (such as context length, seed, temperature etc) passed to the model. For a list of all supported parameters refer to the [Ollama documentation](https://github.com/ollama/ollama/blob/main/docs/modelfile.md#valid-parameters-and-values). 
-
-In the format field you can specify either the string `json`, leaving it to Ollama to determine the JSON forma, or use Ollama's *Structured Output* specifying the full format as JSON schema. See [here](https://ollama.com/blog/structured-outputs) for more information.
-
-You can also "edit" the chat to change the system prompt, parameters or format. Note, that the model cannot be changed once the chat has started.
 
 ### Chat session storage
 
