@@ -34,7 +34,7 @@ class ChatEdit(ModalScreen[str]):
     model_info: ShowResponse
     system: reactive[str] = reactive("")
     parameters: reactive[Options] = reactive(Options())
-    format: reactive[str | None] = reactive(None)
+    format: reactive[str] = reactive("")
     keep_alive: reactive[int] = reactive(5)
     last_highlighted_index = None
     tools: reactive[list[Tool]] = reactive([])
@@ -50,7 +50,7 @@ class ChatEdit(ModalScreen[str]):
         model: str = "",
         system: str = "",
         parameters: Options = Options(),
-        format=None,
+        format="",
         keep_alive: int = 5,
         edit_mode: bool = False,
         tools: list[Tool] = [],

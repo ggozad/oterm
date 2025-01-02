@@ -35,7 +35,7 @@ class ChatContainer(Widget):
     messages: reactive[list[tuple[int, Author, str, list[str]]]] = reactive([])
     chat_name: str
     system: str | None
-    format: str | None
+    format: str
     parameters: Options
     keep_alive: int = 5
     images: list[tuple[Path, str]] = []
@@ -55,7 +55,7 @@ class ChatContainer(Widget):
         model: str = "llama3.2",
         messages: list[tuple[int, Author, str, list[str]]] = [],
         system: str | None = None,
-        format: str | None = None,
+        format: str = "",
         parameters: Options,
         keep_alive: int = 5,
         tools: list[Tool] = [],
@@ -219,7 +219,7 @@ class ChatContainer(Widget):
             return
         model: dict = json.loads(model_info)
         self.system = model.get("system")
-        self.format = model.get("format")
+        self.format = model.get("format", "")
         self.keep_alive = model.get("keep_alive", 5)
         self.parameters = Options(**model.get("parameters", {}))
         self.tools = [Tool(**t) for t in model.get("tools", [])]

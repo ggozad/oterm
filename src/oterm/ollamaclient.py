@@ -45,7 +45,7 @@ class OllamaLLM:
         model="llama3.2",
         system: str | None = None,
         history: list[Mapping[str, Any] | Message] = [],
-        format: str | None = None,
+        format: str = "",
         options: Options = Options(),
         keep_alive: int = 5,
         tool_defs: Sequence[ToolDefinition] = [],
