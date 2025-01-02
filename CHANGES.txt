@@ -6,6 +6,8 @@ Changelog
 
 - Support for Ollama's structured output. 
   Use the `format` parameter to specify the output format as a JSON schema.
+
+- Ability to clear a chat, removing all messages.
   [ggozad]
 
 0.7.0 - 2024-12-29

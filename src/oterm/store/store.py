@@ -255,3 +255,10 @@ class Store(object):
                 for id, author, text, images in messages
             ]
             return messages
+
+    async def clear_chat(self, chat_id: int) -> None:
+        async with aiosqlite.connect(self.db_path) as connection:
+            await connection.execute(
+                "DELETE FROM message WHERE chat_id = :chat_id;", {"chat_id": chat_id}
+            )
+            await connection.commit()
