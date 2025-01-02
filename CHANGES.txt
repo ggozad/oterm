@@ -1,6 +1,13 @@
 Changelog
 =========
 
+0.7.1 - 
+------------------
+
+- Support for Ollama's structured output. 
+  Use the `format` parameter to specify the output format as a JSON schema.
+  [ggozad]
+
 0.7.0 - 2024-12-29
 ------------------
 

@@ -2,7 +2,6 @@ import asyncio
 import json
 import random
 from pathlib import Path
-from typing import Literal
 
 import pyperclip
 from ollama import Message, ResponseError
@@ -36,7 +35,7 @@ class ChatContainer(Widget):
     messages: reactive[list[tuple[int, Author, str, list[str]]]] = reactive([])
     chat_name: str
     system: str | None
-    format: Literal["", "json"]
+    format: str
     parameters: Options
     keep_alive: int = 5
     images: list[tuple[Path, str]] = []
@@ -56,7 +55,7 @@ class ChatContainer(Widget):
         model: str = "llama3.2",
         messages: list[tuple[int, Author, str, list[str]]] = [],
         system: str | None = None,
-        format: Literal["", "json"] = "",
+        format: str = "",
         parameters: Options,
         keep_alive: int = 5,
         tools: list[Tool] = [],
@@ -67,7 +66,6 @@ class ChatContainer(Widget):
         # This is wrong, the images should be a list of Image objects
         # See https://github.com/ollama/ollama-python/issues/375
         # Temp fix is to do msg.images = images  # type: ignore
-
         for _, author, message, images in messages:
             msg = Message(
                 role="user" if author == Author.USER else "assistant",
@@ -210,7 +208,7 @@ class ChatContainer(Widget):
             model=self.ollama.model,
             system=self.system or "",
             parameters=self.parameters,
-            json_format=self.format == "json",
+            format=self.format,
             keep_alive=self.keep_alive,
             edit_mode=True,
             tools=self.tools,

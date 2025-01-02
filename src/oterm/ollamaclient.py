@@ -22,9 +22,21 @@ from ollama import (
     ProgressResponse,
     ShowResponse,
 )
+from pydantic.json_schema import JsonSchemaValue
 
 from oterm.config import envConfig
 from oterm.types import ToolDefinition
+
+
+def parse_format(format_text: str) -> JsonSchemaValue | Literal["", "json"]:
+    try:
+        jsn = json.loads(format_text)
+        if isinstance(jsn, dict):
+            return jsn
+    except json.JSONDecodeError:
+        if format_text in ("", "json"):
+            return format_text
+    raise Exception(f"Invalid Ollama format: '{format_text}'")
 
 
 class OllamaLLM:
@@ -33,7 +45,7 @@ class OllamaLLM:
         model="llama3.2",
         system: str | None = None,
         history: list[Mapping[str, Any] | Message] = [],
-        format: Literal["", "json"] = "",
+        format: str = "",
         options: Options = Options(),
         keep_alive: int = 5,
         tool_defs: Sequence[ToolDefinition] = [],
@@ -72,7 +84,7 @@ class OllamaLLM:
             messages=self.history + tool_call_messages,
             keep_alive=f"{self.keep_alive}m",
             options=self.options,
-            format=self.format,  # type: ignore
+            format=parse_format(self.format),
             tools=self.tools,
         )
 
@@ -138,7 +150,7 @@ class OllamaLLM:
             stream=True,
             options={**self.options.model_dump(), **additional_options.model_dump()},
             keep_alive=f"{self.keep_alive}m",
-            format=self.format,  # type: ignore
+            format=parse_format(self.format),
             tools=self.tools,
         )
         text = ""

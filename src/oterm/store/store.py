@@ -1,7 +1,7 @@
 import json
 from importlib import metadata
 from pathlib import Path
-from typing import Literal, Sequence
+from typing import Sequence
 
 import aiosqlite
 from ollama import Options
@@ -88,7 +88,7 @@ class Store(object):
         name: str,
         model: str,
         system: str | None,
-        format: Literal["", "json"],
+        format: str,
         parameters: Options,
         keep_alive: int,
         tools: list[Tool],
@@ -126,7 +126,7 @@ class Store(object):
         id: int,
         name: str,
         system: str | None,
-        format: Literal["", "json"],
+        format: str,
         parameters: Options,
         keep_alive: int,
         tools: list[Tool],
@@ -157,9 +157,7 @@ class Store(object):
 
     async def get_chats(
         self,
-    ) -> list[
-        tuple[int, str, str, str | None, Literal["", "json"], Options, int, list[Tool]]
-    ]:
+    ) -> list[tuple[int, str, str, str | None, str, Options, int, list[Tool]]]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await connection.execute_fetchall(
                 """
@@ -183,12 +181,7 @@ class Store(object):
 
     async def get_chat(
         self, id
-    ) -> (
-        tuple[
-            int, str, str, str | None, Literal["", "json"], Options, int, Sequence[Tool]
-        ]
-        | None
-    ):
+    ) -> tuple[int, str, str, str | None, str, Options, int, Sequence[Tool]] | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await connection.execute_fetchall(
                 """
