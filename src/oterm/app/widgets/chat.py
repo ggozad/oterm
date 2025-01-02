@@ -275,6 +275,24 @@ class ChatContainer(Widget):
         await store.rename_chat(self.db_id, new_name)
         tabs.get_tab(f"chat-{self.db_id}").update(new_name)
 
+    async def action_clear_chat(self) -> None:
+        self.messages = []
+        self.images = []
+        self.ollama = OllamaLLM(
+            model=self.ollama.model,
+            system=self.ollama.system,
+            format=self.ollama.format,  # type: ignore
+            options=self.parameters,
+            keep_alive=self.ollama.keep_alive,
+            history=[],  # type: ignore
+            tool_defs=self.ollama.tool_defs,
+        )
+        msg_container = self.query_one("#messageContainer")
+        for child in msg_container.children:
+            child.remove()
+        store = await Store.get_store()
+        await store.clear_chat(self.db_id)
+
     async def action_regenerate_llm_message(self) -> None:
         if not self.messages[-1:]:
             return

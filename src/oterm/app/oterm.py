@@ -41,6 +41,9 @@ class OTerm(App):
             "Rename chat", "Renames the current chat", self.action_rename_chat
         )
         yield SystemCommand(
+            "Clear chat", "Clears the current chat", self.action_clear_chat
+        )
+        yield SystemCommand(
             "Delete chat", "Deletes the current chat", self.action_delete_chat
         )
         yield SystemCommand(
@@ -127,6 +130,13 @@ class OTerm(App):
             return
         chat = tabs.active_pane.query_one(ChatContainer)
         chat.action_rename_chat()
+
+    async def action_clear_chat(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        if tabs.active_pane is None:
+            return
+        chat = tabs.active_pane.query_one(ChatContainer)
+        await chat.action_clear_chat()
 
     async def action_delete_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
