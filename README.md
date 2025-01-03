@@ -145,6 +145,7 @@ Since version `0.6.0` `oterm` supports integration with tools. Tools are special
 
 The following tools are currently supported:
 
+* `fetch_url` - allows your models access to the web, fetches a URL and provides the content as input to the model.
 * `date_time` - provides the current date and time in ISO format.
 * `current_location` - provides the current location of the user (longitude, latitude, city, region, country). Uses [ipinfo.io](https://ipinfo.io) to determine the location.
 * `current_weather` - provides the current weather in the user's location. Uses [OpenWeatherMap](https://openweathermap.org) to determine the weather. You need to provide your (free) API key in the OPEN_WEATHER_MAP_API_KEY environment variable.

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.7.2 - 
+------------------
+
+- Add a web tool, giving Ollama access to the web.
+  [ggozad] 
+
 0.7.1 - 2025-01-02
 ------------------
 
