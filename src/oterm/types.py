@@ -12,3 +12,8 @@ class Author(Enum):
 class ToolDefinition(TypedDict):
     tool: Tool
     callable: Callable | Awaitable
+
+
+class ExternalToolDefinition(TypedDict):
+    tool: str
+    callable: str

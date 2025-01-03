@@ -21,7 +21,7 @@ def oterm(
     upgrade: bool = typer.Option(None, "--upgrade"),
     config: bool = typer.Option(None, "--config"),
     sqlite: bool = typer.Option(None, "--db"),
-    data_dir: str = typer.Option(None, "--data-dir"),
+    data_dir: bool = typer.Option(None, "--data-dir"),
 ):
     if version:
         typer.echo(f"oterm v{metadata.version('oterm')}")

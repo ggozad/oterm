@@ -151,9 +151,9 @@ The following tools are currently supported:
 * `current_weather` - provides the current weather in the user's location. Uses [OpenWeatherMap](https://openweathermap.org) to determine the weather. You need to provide your (free) API key in the OPEN_WEATHER_MAP_API_KEY environment variable.
 * `shell` - allows you to run shell commands and use the output as input to the model. Obviously this can be dangerous, so use with caution.
 
-The tooling API in Ollama does not currently support streaming. When using tools, you will have to wait for the tools & model to finish before you see the response.
+When using tools, you will have to wait for the tools & model to finish before you see the response as streaming is not currently supported.
 
-Note that tools integration is **experimental** and may change in the future. I particularly welcome contributions for new tools, but please bear in mind that any additional requirements in terms of dependencies or paid-for API usage should be kept to a minimum.
+It is (relatively) easy to add your own tools. See the [tools documentation](docs/custom_tools.md) for more information.
 
 ### Copy / Paste
 
