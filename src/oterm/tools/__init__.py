@@ -3,6 +3,7 @@ from typing import Awaitable, Callable, Sequence
 
 from ollama._types import Tool
 
+from oterm.config import appConfig
 from oterm.tools.date_time import DateTimeTool, date_time
 from oterm.tools.location import LocationTool, current_location
 from oterm.tools.shell import ShellTool, shell_command
@@ -46,3 +47,7 @@ available: Sequence[ToolDefinition] = [
     {"tool": WeatherTool, "callable": current_weather},
     {"tool": WebTool, "callable": fetch_url},
 ]
+
+external_tools = appConfig.get("tools")
+if external_tools:
+    available.extend(load_tools(external_tools))
