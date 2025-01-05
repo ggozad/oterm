@@ -181,6 +181,7 @@ class OllamaLLM:
 def parse_ollama_parameters(parameter_text: str) -> Options:
     lines = parameter_text.split("\n")
     params = Options()
+    valid_params = set(Options.model_fields.keys())
     for line in lines:
         if line:
             key, value = line.split(maxsplit=1)
@@ -188,6 +189,8 @@ def parse_ollama_parameters(parameter_text: str) -> Options:
                 value = literal_eval(value)
             except (SyntaxError, ValueError):
                 pass
+            if key not in valid_params:
+                continue
             if params.get(key):
                 if not isinstance(params[key], list):
                     params[key] = [params[key], value]
