@@ -1,6 +1,7 @@
 import json
 
 from ollama import Options, ShowResponse
+from pydantic import ValidationError
 from rich.text import Text
 from textual import on
 from textual.app import ComposeResult
@@ -23,6 +24,9 @@ from oterm.ollamaclient import (
 from oterm.tools import available as available_tool_defs
 from oterm.types import Tool
 
+class OtermOllamaOptions(Options):
+    class Config:
+        extra = "forbid"
 
 class ChatEdit(ModalScreen[str]):
     models = []
@@ -71,14 +75,8 @@ class ChatEdit(ModalScreen[str]):
         keep_alive = int(self.query_one(".keep-alive", Input).value)
         p_area = self.query_one(".parameters", TextArea)
         try:
-            parameters = json.loads(p_area.text)
-            if not isinstance(parameters, dict):
-                raise TypeError("Parameters must be a JSON object.")
-            if not set(parameters.keys()).issubset(set(Options.__annotations__.keys())):
-                raise TypeError(
-                    f"Parameters must be a subset of {Options.__annotations__.keys()}"
-                )
-        except (json.JSONDecodeError, TypeError):
+            parameters = OtermOllamaOptions.model_validate_json(p_area.text, strict=True).model_dump(exclude_unset=True)
+        except ValidationError:
             p_area = self.query_one(".parameters", TextArea)
             p_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
             return
