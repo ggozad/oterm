@@ -1,29 +1,16 @@
 import json
 import os
 from pathlib import Path
-from typing import Union, get_type_hints
 
 from dotenv import load_dotenv
+from pydantic import BaseModel
 
 from oterm.utils import get_default_data_dir
 
 load_dotenv()
 
 
-class EnvConfigError(Exception):
-    pass
-
-
-def _parse_bool(val: Union[str, bool]) -> bool:
-    return val if isinstance(val, bool) else val.lower() in ["true", "yes", "1"]
-
-
-class EnvConfig:
-    """
-    Map environment variables to class fields according to these rules:
-      - Field won't be parsed unless it has a type annotation
-      - Field will be skipped if not in all caps
-    """
+class EnvConfig(BaseModel):
 
     ENV: str = "development"
     OLLAMA_HOST: str = "127.0.0.1:11434"
@@ -32,45 +19,10 @@ class EnvConfig:
     OTERM_DATA_DIR: Path = get_default_data_dir()
     OPEN_WEATHER_MAP_API_KEY: str = ""
 
-    def __init__(self, env):
-        for field in self.__annotations__:
-            if not field.isupper():
-                continue
 
-            # Raise EnvConfigError if required field not supplied
-            default_value = getattr(self, field, None)
-            if default_value is None and env.get(field) is None:
-                raise EnvConfigError("The {} field is required".format(field))
-
-            # Cast env var value to expected type and raise AppConfigError on failure
-            try:
-                var_type = get_type_hints(EnvConfig)[field]
-                if var_type is bool:
-                    value = _parse_bool(env.get(field, default_value))
-                elif var_type == list[str]:
-                    value = env.get(field)
-                    if value is None:
-                        value = default_value
-                    else:
-                        value = json.loads(value)
-                else:
-                    value = var_type(env.get(field, default_value))
-                self.__setattr__(field, value)
-            except ValueError:
-                raise EnvConfigError(
-                    'Unable to cast value of "{}" to type "{}" for "{}" field'.format(
-                        env[field], var_type, field  # type: ignore
-                    )
-                )
-        if self.OLLAMA_URL == "":
-            self.OLLAMA_URL = f"http://{self.OLLAMA_HOST}"
-
-    def __repr__(self):
-        return str(self.__dict__)
-
-
-# Expose EnvConfig object for app to import
-envConfig = EnvConfig(os.environ)
+envConfig = EnvConfig.model_validate(os.environ)
+if envConfig.OLLAMA_URL == "":
+    envConfig.OLLAMA_URL = f"http://{envConfig.OLLAMA_HOST}"
 
 
 class AppConfig:
