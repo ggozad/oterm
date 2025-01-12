@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.7.4 - 
+------------------
+
+- Simplify Config(), base it on pydantic's BaseModel.
+  [ggozad]
+
 0.7.3 - 2025-01-07
 ------------------
 
