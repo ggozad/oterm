@@ -15,6 +15,7 @@ from oterm.app.splash import splash
 from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
 from oterm.store.store import Store
+from oterm.tools import setup_mcp_servers
 
 
 class OTerm(App):
@@ -173,6 +174,10 @@ class OTerm(App):
             screen = PullModel(chat.ollama.model)
         self.push_screen(screen)
 
+    @work
+    async def load_mcp(self):
+        await setup_mcp_servers()
+
     async def on_mount(self) -> None:
         store = await Store.get_store()
         theme = appConfig.get("theme")
@@ -191,6 +196,8 @@ class OTerm(App):
         keymap = appConfig.get("keymap")
         if keymap:
             self.set_keymap(keymap)
+
+        self.load_mcp()
 
         async def on_splash_done(message) -> None:
             if not saved_chats:
