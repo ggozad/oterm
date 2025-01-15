@@ -176,7 +176,10 @@ class OTerm(App):
 
     @work
     async def load_mcp(self):
-        await setup_mcp_servers()
+        from oterm.tools import available
+
+        mcp_tool_defs = await setup_mcp_servers()
+        available += mcp_tool_defs
 
     async def on_mount(self) -> None:
         store = await Store.get_store()

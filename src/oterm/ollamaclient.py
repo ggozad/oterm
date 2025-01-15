@@ -107,7 +107,7 @@ class OllamaLLM:
                         except Exception as e:
                             tool_response = str(e)
                         tool_messages.append(
-                            {
+                            {  # type: ignore
                                 "role": "tool",
                                 "content": tool_response,
                                 "name": tool_name,
