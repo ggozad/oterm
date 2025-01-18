@@ -44,13 +44,7 @@ def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolDefi
     return tools
 
 
-available: list[ToolDefinition] = [
-    {"tool": DateTimeTool, "callable": date_time},
-    {"tool": ShellTool, "callable": shell_command},
-    {"tool": LocationTool, "callable": current_location},
-    {"tool": WeatherTool, "callable": current_weather},
-    {"tool": WebTool, "callable": fetch_url},
-]
+available: list[ToolDefinition] = []
 
 external_tools = appConfig.get("tools")
 if external_tools:

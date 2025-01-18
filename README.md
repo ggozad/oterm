@@ -16,6 +16,7 @@ the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
     - [Keyboard shortcuts](#keyboard-shortcuts)
     - [Customizing models](#customizing-models)
     - [Tools](#tools)
+    - [Model Context Protocol support](#model-context-protocol-support)
     - [Copy / Paste](#copy--paste)
     - [Chat session storage](#chat-session-storage)
     - [App configuration](#app-configuration)
@@ -141,9 +142,9 @@ You can also "edit" an existing chat to change the system prompt, parameters, to
 
 ### Tools
 
-Since version `0.6.0` `oterm` supports integration with tools. Tools are special "functions" that can provide external information to the LLM model that it does not otherwise have access to.
+`oterm` supports integration with tools. Tools are special "functions" that can provide external information to the LLM model that it does not otherwise have access to.
 
-The following tools are currently supported:
+The following example tools are currently built-in to `oterm`:
 
 * `fetch_url` - allows your models access to the web, fetches a URL and provides the content as input to the model.
 * `date_time` - provides the current date and time in ISO format.
@@ -151,9 +152,44 @@ The following tools are currently supported:
 * `current_weather` - provides the current weather in the user's location. Uses [OpenWeatherMap](https://openweathermap.org) to determine the weather. You need to provide your (free) API key in the OPEN_WEATHER_MAP_API_KEY environment variable.
 * `shell` - allows you to run shell commands and use the output as input to the model. Obviously this can be dangerous, so use with caution.
 
-When using tools, you will have to wait for the tools & model to finish before you see the response as streaming is not currently supported.
+These tools are defined in `src/oterm/tools`. You can make those tools available and enable them for selection when creating or editing a chat, by adding them to the `tools` section of the `oterm` configuration file. You can find the location of the configuration file's directory by running `oterm --data-dir`. So for example to enable the `shell` tool, you would add the following to the configuration file:
 
-It is (relatively) easy to add your own tools. See the [tools documentation](docs/custom_tools.md) for more information.
+```json
+{
+    ...
+    "tools": [{
+        "tool": "oterm.tools.shell:ShellTool",
+        "callable": "oterm.tools.shell:shell_command"
+    }]
+}
+```
+
+The above tools are meant as examples. To add your own tools, see the [tools documentation](docs/custom_tools.md).
+
+### Model Context Protocol support
+
+`oterm` has preliminary support for Anthropic's open-source [Model Context Protocol](https://modelcontextprotocol.io). While Ollama does not yet directly support the protocol, `oterm` attempts to bridge [MCP servers](https://github.com/modelcontextprotocol/servers) with Ollama by transforming MCP tools into Ollama tools.
+
+To add an MCP server to `oterm`, simply add the server shim to oterm's `config.json`. For example for the [git](https://github.com/modelcontextprotocol/servers/tree/main/src/git) MCP server you would add something like the following to the `mcpServers` section of the `oterm` configuration file:
+
+```json
+{
+  ...
+  "mcpServers": {
+    "git": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "--mount",
+        "type=bind,src=/Users/ggozad/dev/open-source/oterm,dst=/oterm",
+        "mcp/git"
+      ]
+    }
+  }
+}
+```
 
 ### Copy / Paste
 
@@ -210,14 +246,14 @@ We strive to have sane default key bindings, but there will always be cases wher
 ![Splash](screenshots/splash.gif)
 The splash screen animation that greets users when they start oterm.
 
-
 ![Chat](screenshots/chat.png)
 A view of the chat interface, showcasing the conversation between the user and the model.
-
 
 ![Model selection](./screenshots/model_selection.png)
 The model selection screen, allowing users to choose from available models.
 
+![Tool support](./screenshots/mcp.svg)
+oTerm using the `git` MCP server to access its own repo.
 
 ![Image selection](./screenshots/image_selection.png)
 The image selection interface, demonstrating how users can include images in their conversations.
