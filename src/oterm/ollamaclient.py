@@ -23,6 +23,7 @@ from ollama import (
     ShowResponse,
 )
 from pydantic.json_schema import JsonSchemaValue
+from textual import log
 
 from oterm.config import envConfig
 from oterm.types import ToolDefinition
@@ -87,7 +88,6 @@ class OllamaLLM:
             format=parse_format(self.format),
             tools=self.tools,
         )
-
         message = response.message
         tool_calls = message.tool_calls
         if tool_calls:
@@ -96,6 +96,7 @@ class OllamaLLM:
 
                 tool_name = tool_call["function"]["name"]
                 for tool_def in self.tool_defs:
+                    log.debug("Calling tool: %s", tool_name)
                     if tool_def["tool"]["function"]["name"] == tool_name:
                         tool_callable = tool_def["callable"]
                         tool_arguments = tool_call["function"]["arguments"]
@@ -104,10 +105,12 @@ class OllamaLLM:
                                 tool_response = await tool_callable(**tool_arguments)  # type: ignore
                             else:
                                 tool_response = tool_callable(**tool_arguments)  # type: ignore
+                            log.debug(f"Tool response: {tool_response}", tool_response)
                         except Exception as e:
+                            log.error(f"Error calling tool {tool_name}", e)
                             tool_response = str(e)
                         tool_messages.append(
-                            {
+                            {  # type: ignore
                                 "role": "tool",
                                 "content": tool_response,
                                 "name": tool_name,

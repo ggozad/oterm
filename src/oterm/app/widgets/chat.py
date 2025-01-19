@@ -73,7 +73,6 @@ class ChatContainer(Widget):
             )
             msg.images = images  # type: ignore
             history.append(msg)
-
         used_tool_defs = [
             tool_def for tool_def in available_tool_defs if tool_def["tool"] in tools
         ]
