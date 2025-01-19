@@ -1,8 +1,11 @@
 Changelog
 =========
 
-0.7.4 - 
+0.8.0 - 2025-01-19
 ------------------
+
+- Support for Model Context Protocol(MCP) tools.
+  [ggozad]
 
 - Simplify Config(), base it on pydantic's BaseModel.
   [ggozad]
