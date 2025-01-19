@@ -78,5 +78,4 @@ async def setup_mcp_servers():
 
                     tool_defs.append({"tool": tool, "callable": callable})
 
-    print(tool_defs)
     return tool_defs

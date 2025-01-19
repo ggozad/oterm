@@ -174,7 +174,6 @@ class OTerm(App):
             screen = PullModel(chat.ollama.model)
         self.push_screen(screen)
 
-    @work
     async def load_mcp(self):
         from oterm.tools import available
 
@@ -200,7 +199,7 @@ class OTerm(App):
         if keymap:
             self.set_keymap(keymap)
 
-        self.load_mcp()
+        await self.load_mcp()
 
         async def on_splash_done(message) -> None:
             if not saved_chats:
