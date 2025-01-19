@@ -243,6 +243,7 @@ class OTerm(App):
         if appConfig.get("theme") != new_value:
             appConfig.set("theme", new_value)
 
+    @work
     @on(TabbedContent.TabActivated)
     async def on_tab_activated(self, event: TabbedContent.TabActivated) -> None:
         container = event.pane.query_one(ChatContainer)
