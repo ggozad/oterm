@@ -28,6 +28,7 @@ from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
 from oterm.tools import available as available_tool_defs
 from oterm.types import Author, Tool
+from oterm.utils import parse_response
 
 
 class ChatContainer(Widget):
@@ -67,9 +68,10 @@ class ChatContainer(Widget):
         # See https://github.com/ollama/ollama-python/issues/375
         # Temp fix is to do msg.images = images  # type: ignore
         for _, author, message, images in messages:
+            parsed = parse_response(message)
             msg = Message(
                 role="user" if author == Author.USER else "assistant",
-                content=message,
+                content=message  if author == Author.USER else parsed["response"],
             )
             msg.images = images  # type: ignore
             history.append(msg)
@@ -96,21 +98,25 @@ class ChatContainer(Widget):
         self.keep_alive = keep_alive
         self.tools = tools
         self.loaded = False
+        self.loading = False;
         self.images = []
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
 
     async def load_messages(self) -> None:
-        if self.loaded:
+        if self.loaded or self.loading:
             return
+        self.loading = True
         message_container = self.query_one("#messageContainer")
         for _, author, message, images in self.messages:
+            parsed = parse_response(message)
             chat_item = ChatItem()
-            chat_item.text = message
+            chat_item.text = message if author == Author.USER else parsed["formatted_output"]
             chat_item.author = author
             await message_container.mount(chat_item)
         message_container.scroll_end()
+        self.loading = False
         self.loaded = True
 
     @on(FlexibleInput.Submitted)
@@ -154,6 +160,16 @@ class ChatContainer(Widget):
                     ):
                         response = text
                         response_chat_item.text = text
+
+                # Parse the response for special tags
+                parsed = parse_response(response)
+
+                # To not exhaust the tokens, remove the thought process from the history (it seems to be the common practice)
+                self.ollama.history[-1].content = parsed["response"]
+
+                # Update the text according to the new formatted response.
+                response_chat_item.text = parsed["formatted_output"]
+
                 if message_container.can_view_partial(response_chat_item):
                     message_container.scroll_end()
 

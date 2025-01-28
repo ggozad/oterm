@@ -1,6 +1,32 @@
 import sys
 from pathlib import Path
 
+from oterm.types import ParsedResponse
+
+
+def parse_response(input_text: str) -> ParsedResponse:
+    """
+    Parse a response from the chatbot.
+    """
+
+    thought = ""
+    response = input_text
+    formatted_output = input_text
+
+    # If the response contains a think tag, split the response into the thought process and the actual response
+    if input_text.startswith("<think>") and input_text.find("</think>") != -1:
+        thought = input_text[input_text.find("<think>") + 7: input_text.find("</think>")].lstrip("\n").rstrip(
+            "\n").strip()
+        response = input_text[input_text.find("</think>") + 8:].lstrip("\n").rstrip("\n")
+
+        # transform the think tag into a markdown blockquote (for clarity)
+        if len(thought) == 0:
+            formatted_output = response
+        else:
+            formatted_output = "### Thought\n" + thought + "\n\n---\n\n" + response
+
+    return ParsedResponse(thought=thought, response=response, formatted_output=formatted_output)
+
 
 def get_default_data_dir() -> Path:
     """
