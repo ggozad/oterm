@@ -68,10 +68,9 @@ class ChatContainer(Widget):
         # See https://github.com/ollama/ollama-python/issues/375
         # Temp fix is to do msg.images = images  # type: ignore
         for _, author, message, images in messages:
-            parsed = parse_response(message)
             msg = Message(
                 role="user" if author == Author.USER else "assistant",
-                content=message  if author == Author.USER else parsed["response"],
+                content=message  if author == Author.USER else parse_response(message)["response"],
             )
             msg.images = images  # type: ignore
             history.append(msg)
@@ -98,7 +97,7 @@ class ChatContainer(Widget):
         self.keep_alive = keep_alive
         self.tools = tools
         self.loaded = False
-        self.loading = False;
+        self.loading = False
         self.images = []
 
     def on_mount(self) -> None:
@@ -110,9 +109,8 @@ class ChatContainer(Widget):
         self.loading = True
         message_container = self.query_one("#messageContainer")
         for _, author, message, images in self.messages:
-            parsed = parse_response(message)
             chat_item = ChatItem()
-            chat_item.text = message if author == Author.USER else parsed["formatted_output"]
+            chat_item.text = message if author == Author.USER else parse_response(message)["formatted_output"]
             chat_item.author = author
             await message_container.mount(chat_item)
         message_container.scroll_end()
