@@ -23,7 +23,7 @@ def parse_response(input_text: str) -> ParsedResponse:
         if len(thought) == 0:
             formatted_output = response
         else:
-            formatted_output = "> ### Thought\n" + "\n".join([f"> {line}" for line in thought.split("\n")]) + "\n\n" + response
+            formatted_output = "> ### \<think\>\n" + "\n".join([f"> {line}" for line in thought.split("\n")]) + "\n> ### \</think\>\n" + response
 
     return ParsedResponse(thought=thought, response=response, formatted_output=formatted_output)
 
