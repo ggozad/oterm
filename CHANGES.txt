@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.8.1 - 2025-01-29
+------------------
+
+- Support for thinking models (e.g. DeepSeek R1).
+  [liorm]
+
 0.8.0 - 2025-01-19
 ------------------
 

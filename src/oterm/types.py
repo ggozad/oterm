@@ -9,6 +9,12 @@ class Author(Enum):
     OLLAMA = "ollama"
 
 
+class ParsedResponse(TypedDict):
+    thought: str
+    response: str
+    formatted_output: str
+
+
 class ToolDefinition(TypedDict):
     tool: Tool
     callable: Callable | Awaitable
