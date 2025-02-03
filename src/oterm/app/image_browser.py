@@ -9,8 +9,9 @@ from textual.app import ComposeResult
 from textual.containers import Container, Horizontal, Vertical
 from textual.screen import ModalScreen
 from textual.widgets import DirectoryTree, Input, Label
+from textual_image.widget import Image
 
-from oterm.app.widgets.image import IMAGE_EXTENSIONS, Image, ImageDirectoryTree
+from oterm.app.widgets.image import IMAGE_EXTENSIONS, ImageDirectoryTree
 
 
 class ImageSelect(ModalScreen[tuple[Path, str]]):
@@ -44,7 +45,10 @@ class ImageSelect(ModalScreen[tuple[Path, str]]):
         path = ev.node.data.path  # type: ignore
         if path.suffix in IMAGE_EXTENSIONS:
             image = self.query_one(Image)
-            image.path = path.as_posix()
+            try:
+                image.image = path.as_posix()
+            except UnidentifiedImageError:
+                image.image = None
 
     @on(Input.Changed)
     async def on_root_changed(self, ev: Input.Changed) -> None:
