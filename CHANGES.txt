@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.8.3 - 
+------------------
+
+- Improve visibility of labels in the modals.
+  [ggozad]
+
 0.8.2 - 2025-02-03
 ------------------
 

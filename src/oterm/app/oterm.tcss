@@ -90,7 +90,7 @@ LoadingIndicator {
 }
 
 #edit-chat-container .title {
-    color: $secondary;
+    color: $primary;
 }
 
 #edit-chat-container .system , .parameters {
@@ -147,7 +147,7 @@ LoadingIndicator {
 
 
 #chat-rename-container .title, #chat-export-container .title, #prompt-history-container, #pull-model-container .title {
-    color: $secondary;
+    color: $primary;
 }
 
 #prompt-history-container .title {
@@ -169,7 +169,7 @@ LoadingIndicator {
     background: $panel;
 }
 #image-select-container .title {
-    color: $secondary;
+    color: $primary;
     width: 100%;
     padding-top: 1;
     padding-bottom: 1;
@@ -205,7 +205,7 @@ LoadingIndicator {
 
 Notification {
     background: $panel;
-    color: $secondary;
+    color: $primary;
     margin: 1;
     border: $panel-lighten-2;
     padding-left: 1;
