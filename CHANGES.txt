@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.8.2 - 2025-02-03
+------------------
+
+- Fix merging chat and additional options properly.
+  [ggozad]
+
 0.8.1 - 2025-01-29
 ------------------
 

@@ -147,11 +147,15 @@ class OllamaLLM:
             user_prompt.images = images  # type: ignore
 
         self.history.append(user_prompt)
+        options = {
+            k: v for k, v in self.options.model_dump().items() if v is not None
+        } | {k: v for k, v in additional_options.model_dump().items() if v is not None}
+
         stream: AsyncIterator[ChatResponse] = await client.chat(
             model=self.model,
             messages=self.history,
             stream=True,
-            options={**self.options.model_dump(), **additional_options.model_dump()},
+            options=options,
             keep_alive=f"{self.keep_alive}m",
             format=parse_format(self.format),
             tools=self.tools,
