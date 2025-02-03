@@ -4,6 +4,9 @@ Changelog
 0.8.3 - 
 ------------------
 
+- Dependency updates.
+  [ggozad]
+
 - Improve visibility of labels in the modals.
   [ggozad]
 
