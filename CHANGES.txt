@@ -1,8 +1,11 @@
 Changelog
 =========
 
-0.9.6 - 
+0.10.0 - 
 ------------------
+
+- Add sixel support for images.
+  [ggozad]
 
 - Enable scrolling with keys within a chat.
   [ggozad]
@@ -18,6 +21,7 @@ Changelog
 
 - Support for MCP prompts.
   [ggozad]
+
 
 0.9.3 - 2025-03-25
 ------------------
