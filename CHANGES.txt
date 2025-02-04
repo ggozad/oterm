@@ -4,6 +4,9 @@ Changelog
 0.8.3 - 
 ------------------
 
+- Add sixel support for images.
+  [ggozad]
+
 - Dependency updates.
   [ggozad]
 
