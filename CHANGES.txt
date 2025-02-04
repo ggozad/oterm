@@ -1,6 +1,10 @@
 Changelog
 =========
 
+
+- Add sixel support for images.
+  [ggozad]
+
 0.9.3 - 2025-03-25
 ------------------
 
