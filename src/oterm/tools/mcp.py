@@ -9,25 +9,27 @@ from oterm.types import Tool
 class MCPClient:
     """Client for interacting with MCP servers"""
 
-    def __init__(self, server_params: StdioServerParameters):
+    def __init__(self, server_params: StdioServerParameters, errlog=None):
         self.server_params = server_params
         self.session = None
         self._client = None
+        self.errlog = errlog
 
     async def __aenter__(self):
         """Async context manager entry"""
-        await self.connect()
+        if not self._client:
+            await self.connect()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit"""
-        if self.session:
-            await self.session.__aexit__(exc_type, exc_val, exc_tb)
-        if self._client:
-            await self._client.__aexit__(exc_type, exc_val, exc_tb)
+#        if self.session:
+#            await self.session.__aexit__(exc_type, exc_val, exc_tb)
+#        if self._client:
+#            await self._client.__aexit__(exc_type, exc_val, exc_tb)
 
     async def connect(self):
-        self._client = stdio_client(self.server_params)
+        self._client = stdio_client(self.server_params, errlog=self.errlog)
         self.read, self.write = await self._client.__aenter__()
         session = ClientSession(self.read, self.write)
         self.session = await session.__aenter__()
