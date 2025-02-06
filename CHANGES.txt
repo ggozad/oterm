@@ -4,6 +4,9 @@ Changelog
 0.8.3 - 
 ------------------
 
+- Replace custom Notification() with textual's built-in notification.
+  [ggozad]
+
 - Dependency updates.
   [ggozad]
 
