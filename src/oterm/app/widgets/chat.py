@@ -70,7 +70,11 @@ class ChatContainer(Widget):
         for _, author, message, images in messages:
             msg = Message(
                 role="user" if author == Author.USER else "assistant",
-                content=message  if author == Author.USER else parse_response(message)["response"],
+                content=(
+                    message
+                    if author == Author.USER
+                    else parse_response(message)["response"]
+                ),
             )
             msg.images = images  # type: ignore
             history.append(msg)
@@ -110,7 +114,11 @@ class ChatContainer(Widget):
         message_container = self.query_one("#messageContainer")
         for _, author, message, images in self.messages:
             chat_item = ChatItem()
-            chat_item.text = message if author == Author.USER else parse_response(message)["formatted_output"]
+            chat_item.text = (
+                message
+                if author == Author.USER
+                else parse_response(message)["formatted_output"]
+            )
             chat_item.author = author
             await message_container.mount(chat_item)
         message_container.scroll_end()
@@ -200,9 +208,9 @@ class ChatContainer(Widget):
             except ResponseError as e:
                 user_chat_item.remove()
                 response_chat_item.remove()
-                notification = Notification()
-                notification.message = f"There was an error running your request: {e}"
-                message_container.mount(notification)
+                self.app.notify(
+                    f"There was an error running your request: {e}", severity="error"
+                )
                 message_container.scroll_end()
 
             finally:
@@ -373,11 +381,7 @@ class ChatContainer(Widget):
     @on(ImageAdded)
     def on_image_added(self, ev: ImageAdded) -> None:
         self.images.append((ev.path, ev.image))
-        message_container = self.query_one("#messageContainer")
-        notification = Notification()
-        notification.message = f"Image {ev.path} added."
-        message_container.mount(notification)
-        message_container.scroll_end()
+        self.app.notify(f"Image {ev.path} added.")
 
     def compose(self) -> ComposeResult:
         with Vertical():
@@ -422,10 +426,3 @@ class ChatItem(Widget):
         with Horizontal(classes=f"{self.author.name} chatItem"):
             yield Static(self.author.value, classes="author", markup=False)
             yield mrk_down
-
-
-class Notification(Widget):
-    message: reactive[str] = reactive("")
-
-    def compose(self) -> ComposeResult:
-        yield Static(self.message, classes="notification")
