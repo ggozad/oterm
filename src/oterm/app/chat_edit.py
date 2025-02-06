@@ -24,9 +24,11 @@ from oterm.ollamaclient import (
 from oterm.tools import available as available_tool_defs
 from oterm.types import Tool
 
+
 class OtermOllamaOptions(Options):
     class Config:
         extra = "forbid"
+
 
 class ChatEdit(ModalScreen[str]):
     models = []
@@ -75,7 +77,9 @@ class ChatEdit(ModalScreen[str]):
         keep_alive = int(self.query_one(".keep-alive", Input).value)
         p_area = self.query_one(".parameters", TextArea)
         try:
-            parameters = OtermOllamaOptions.model_validate_json(p_area.text, strict=True).model_dump(exclude_unset=True)
+            parameters = OtermOllamaOptions.model_validate_json(
+                p_area.text, strict=True
+            ).model_dump(exclude_unset=True)
         except ValidationError:
             p_area = self.query_one(".parameters", TextArea)
             p_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
@@ -134,9 +138,6 @@ class ChatEdit(ModalScreen[str]):
         # Disable the model select widget if we are in edit mode.
         widget = self.query_one("#model-select", OptionList)
         widget.disabled = self.edit_mode
-
-    def on_option_list_option_selected(self, option: OptionList.OptionSelected) -> None:
-        self._return_chat_meta()
 
     @on(Checkbox.Changed)
     def on_tool_toggled(self, ev: Checkbox.Changed):
