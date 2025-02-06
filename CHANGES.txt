@@ -3,6 +3,8 @@ Changelog
 
 0.8.3 - 
 ------------------
+- Do not save the chat when a model is selected when creating a new chat.
+  [ggozad]
 
 - Dependency updates.
   [ggozad]
