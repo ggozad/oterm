@@ -9,6 +9,9 @@ Changelog
 - Replace custom Notification() with textual's built-in notification.
   [ggozad]
 
+- Add sixel support for images.
+  [ggozad]
+
 - Dependency updates.
   [ggozad]
 
