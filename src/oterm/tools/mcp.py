@@ -29,7 +29,7 @@ class MCPClient:
 
         try:
             stdio_transport = await self.exit_stack.enter_async_context(
-                stdio_client(self.server_params, errlog=self.errlog)
+                stdio_client(self.server_params)
             )
             read, write = stdio_transport
             session = await self.exit_stack.enter_async_context(
