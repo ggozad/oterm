@@ -1,8 +1,13 @@
 Changelog
 =========
 
-0.8.3 - 
+0.8.3 - 2025-02-06
 ------------------
+- Do not save the chat when a model is selected when creating a new chat.
+  [ggozad]
+
+- Replace custom Notification() with textual's built-in notification.
+  [ggozad]
 
 - Dependency updates.
   [ggozad]
