@@ -15,6 +15,8 @@ from oterm.tools.weather import WeatherTool, current_weather
 from oterm.tools.web import WebTool, fetch_url
 from oterm.types import ExternalToolDefinition, ToolDefinition
 
+import logging
+logger = logging.getLogger(__name__)
 
 def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolDefinition]:
     tools = []
@@ -52,43 +54,62 @@ if external_tools:
 
 client_list = [ ]
 
+class McpToolCallable:
+    def __init__(self, name, server_name, client):
+        self.name = name
+        self.server_name = server_name
+        self.client = client
+
+    async def call(self, **kwargs):
+
+        print(f"==== Call Tool {self.name} in {self.server_name} ====\n")
+
+        res: CallToolResult = await self.client.call_tool(self.name, kwargs)
+        if res.isError:
+            raise Exception(f"Error call mcp tool {self.name}.")
+        text_content = [
+            m.text for m in res.content if type(m) is TextContent
+        ]
+        return "\n".join(text_content)
+
+
 async def setup_mcp_servers():
+
     mcp_servers = appConfig.get("mcpServers")
     tool_defs: list[ToolDefinition] = []
+
     if mcp_servers:
         for server, config in mcp_servers.items():
-            # OPEN A LOG FOR THIS SERVER using the same naming Claude Desktop does
-            errlog = open(f"mcp-server-{server}.log", "w")
-            print(f"==== Starting {server} ====\n", file=errlog)
-            errlog.flush()
-            async with MCPClient(
-                StdioServerParameters.model_validate(config), errlog=errlog
-            ) as client:
-                mcp_tools: list[MCPTool] = await client.get_available_tools()
-                client_list.append(client)
+            print(f"==== Starting {server} ====\n")
+            client = MCPClient(
+                StdioServerParameters.model_validate(config)
+                )
+            await client.initialize()
+            print(f"=== passed initialize ===\n")
 
-                for mcp_tool in mcp_tools:
-                    tool = mcp_tool_to_ollama_tool(mcp_tool)
+            # list of created clients
+            client_list.append(client)
 
-                    async def callable(name=mcp_tool.name, **kwargs):
-                        async with client as cl:
-                            # TO REMOVE THESE TWO LINES
-                            print(f"==== Call Tool {name} ====\n", file=errlog)
-                            errlog.flush()
-                            res: CallToolResult = await cl.call_tool(name, kwargs)
-                            if res.isError:
-                                raise Exception(f"Error call mcp tool {name}.")
-                            text_content = [
-                                m.text for m in res.content if type(m) is TextContent
-                            ]
-                            return "\n".join(text_content)
+            mcp_tools: list[MCPTool] = await client.get_available_tools()
 
-                    tool_defs.append({"tool": tool, "callable": callable})
+            for mcp_tool in mcp_tools:
+                tool = mcp_tool_to_ollama_tool(mcp_tool)
+
+                print(f"==== Defining Tool {mcp_tool.name} in {server} ====\n")
+                print(f"==== {tool}")
+
+                mcpToolCallable = McpToolCallable(mcp_tool.name, server, client)
+                tool_defs.append({"tool": tool, "callable": mcpToolCallable.call})
 
     return tool_defs
 
 
 async def teardown_mcp_servers():
+    print(f"TEARDOWN LIST {client_list}\n")
+    # Important to tear down in reverse order
+    client_list.reverse()
     for client in client_list:
-        await client.session.__aexit__(None, None, None)
-        await client._client.__aexit__(None, None, None)
+        print(f"TEARDOWN {client}\n")
+        await client.cleanup()
+
+        
