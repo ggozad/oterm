@@ -65,6 +65,7 @@ class OTerm(App):
         )
 
     async def action_quit(self) -> None:
+        self.log("Quitting...")
         await teardown_mcp_servers()
         return self.exit()
 

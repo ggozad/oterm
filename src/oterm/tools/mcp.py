@@ -1,22 +1,21 @@
-from mcp import ClientSession, ListToolsResult, StdioServerParameters
-from mcp import Tool as MCPTool
-from mcp.client.stdio import stdio_client
-from mcp.types import CallToolResult
-
+import asyncio
 from contextlib import AsyncExitStack
 from typing import Any
-import asyncio
+
+from mcp import ClientSession, StdioServerParameters
+from mcp import Tool as MCPTool
+from mcp.client.stdio import stdio_client
+from textual import log
 
 from oterm.types import Tool
 
-import logging
-logger = logging.getLogger(__name__)
 
 # adapted from mcp-python-sdk/examples/clients/simple-chatbot/mcp_simple_chatbot/main.py
 class MCPClient:
     """Manages MCP server connections and tool execution."""
 
-    def __init__(self, server_params: StdioServerParameters, errlog=None):
+    def __init__(self, name: str, server_params: StdioServerParameters, errlog=None):
+        self.name = name
         self.server_params = server_params
         self.errlog = errlog
         self.stdio_context: Any | None = None
@@ -38,9 +37,8 @@ class MCPClient:
             await session.initialize()
             self.session = session
         except Exception as e:
-            logging.error(f"Error initializing server {self.name}: {e}")
             await self.cleanup()
-            raise
+            raise e
 
     async def get_available_tools(self) -> list[MCPTool]:
         """List available tools from the server.
@@ -87,21 +85,19 @@ class MCPClient:
         attempt = 0
         while attempt < retries:
             try:
-                logging.info(f"Executing {tool_name}...")
                 result = await self.session.call_tool(tool_name, arguments)
-
                 return result
 
             except Exception as e:
                 attempt += 1
-                logging.warning(
+                log.warning(
                     f"Error executing tool: {e}. Attempt {attempt} of {retries}."
                 )
                 if attempt < retries:
-                    logging.info(f"Retrying in {delay} seconds...")
+                    log.info(f"Retrying in {delay} seconds...")
                     await asyncio.sleep(delay)
                 else:
-                    logging.error("Max retries reached. Failing.")
+                    log.error("Max retries reached. Failing.")
                     raise
 
     async def cleanup(self) -> None:
@@ -112,7 +108,8 @@ class MCPClient:
                 self.session = None
                 self.stdio_context = None
             except Exception as e:
-                logging.error(f"Error during cleanup of server {self.name}: {e}")
+                log.error(f"Error during cleanup of MCP server {self.name}.")
+                raise e
 
 
 def mcp_tool_to_ollama_tool(mcp_tool: MCPTool) -> Tool:
