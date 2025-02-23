@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.8.4 - 2025-02-23
+------------------
+
+- Keep MCP sessions alive while oterm is running. Fix running multiple MCP tools.
+  [sheffler, ggozad]
+
 0.8.3 - 2025-02-06
 ------------------
 - Do not save the chat when a model is selected when creating a new chat.
