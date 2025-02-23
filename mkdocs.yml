@@ -56,9 +56,11 @@ plugins:
   search:
 nav:
   - oterm: index.md
+  - Installation: installation.md
   - Commands & shortcuts: commands.md
-  - Chat customizations: customizations.md
-  - Tools:
-    - Tools: tools/tools.md
+  - Chat parameters: parameters.md
+  - Tools: 
+    - tools/index.md
+    - MCP tools: tools/mcp.md
     - Custom tools: tools/custom_tools.md
   - Configuration: app_config.md

@@ -249,8 +249,8 @@ The splash screen animation that greets users when they start oterm.
 ![Chat](docs/img/chat.png)
 A view of the chat interface, showcasing the conversation between the user and the model.
 
-![Model selection](./docs/img/model_selection.png)
-The model selection screen, allowing users to choose from available models.
+![Model selection](./docs/img/customizations.svg)
+The model selection screen, allowing users to choose and customize available models.
 
 ![Tool support](./docs/img/mcp.svg)
 oTerm using the `git` MCP server to access its own repo.

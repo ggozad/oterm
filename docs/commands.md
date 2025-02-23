@@ -44,3 +44,6 @@ For most terminals there exists a key modifier you can use to click and drag to 
 * `iTerm`  <kbd>Option</kbd> key.
 * `Gnome Terminal` <kbd>Shift</kbd> key.
 * `Windows Terminal` <kbd>Shift</kbd> key.
+
+![Image selection](./img/image_selection.png)
+The image selection interface.
