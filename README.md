@@ -243,22 +243,22 @@ We strive to have sane default key bindings, but there will always be cases wher
 ```
 
 ### Screenshots
-![Splash](screenshots/splash.gif)
+![Splash](docs/img/splash.gif)
 The splash screen animation that greets users when they start oterm.
 
-![Chat](screenshots/chat.png)
+![Chat](docs/img/chat.png)
 A view of the chat interface, showcasing the conversation between the user and the model.
 
-![Model selection](./screenshots/model_selection.png)
+![Model selection](./docs/img/model_selection.png)
 The model selection screen, allowing users to choose from available models.
 
-![Tool support](./screenshots/mcp.svg)
+![Tool support](./docs/img/mcp.svg)
 oTerm using the `git` MCP server to access its own repo.
 
-![Image selection](./screenshots/image_selection.png)
+![Image selection](./docs/img/image_selection.png)
 The image selection interface, demonstrating how users can include images in their conversations.
 
-![Theme](./screenshots/theme.svg)
+![Theme](./docs/img/theme.svg)
 oTerm supports multiple themes, allowing users to customize the appearance of the interface.
 
 ## License

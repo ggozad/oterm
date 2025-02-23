@@ -74,22 +74,22 @@ oterm
 
 
 ### Screenshots
-![Splash](screenshots/splash.gif)
+![Splash](img/splash.gif)
 The splash screen animation that greets users when they start oterm.
 
-![Chat](screenshots/chat.png)
+![Chat](img/chat.png)
 A view of the chat interface, showcasing the conversation between the user and the model.
 
-![Model selection](./screenshots/model_selection.png)
+![Model selection](./img/model_selection.png)
 The model selection screen, allowing users to choose from available models.
 
-![Tool support](./screenshots/mcp.svg)
+![Tool support](./img/mcp.svg)
 oTerm using the `git` MCP server to access its own repo.
 
-![Image selection](./screenshots/image_selection.png)
+![Image selection](./img/image_selection.png)
 The image selection interface, demonstrating how users can include images in their conversations.
 
-![Theme](./screenshots/theme.svg)
+![Theme](./img/theme.svg)
 oTerm supports multiple themes, allowing users to customize the appearance of the interface.
 
 ## License
