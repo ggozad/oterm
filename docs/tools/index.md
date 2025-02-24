@@ -4,4 +4,8 @@
 
 With tools, you can provide the model with access to the web, run shell commands, perform RAG and more.
 
-[Use existing Model Context Protocol servers](./mcp.md) or [create your own custom tools](./custom_tools.md).
+[Use existing Model Context Protocol servers](./mcp.md) 
+
+or 
+
+[create your own custom tools](./custom_tools.md).

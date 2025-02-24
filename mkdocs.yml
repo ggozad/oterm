@@ -1,6 +1,6 @@
 site_name: oterm
 site_description: the text-based terminal client for Ollama.
-site_url: https://oterm.ggozad.com/
+site_url: http://ggozad.github.io/oterm/
 theme:
   name: material
   palette:
@@ -55,9 +55,10 @@ plugins:
   # Material for MkDocs
   search:
 nav:
-  - oterm: index.md
-  - Installation: installation.md
-  - Commands & shortcuts: commands.md
+  - oterm: 
+    - index.md
+    - Installation: installation.md
+    - Commands & shortcuts: commands.md
   - Chat parameters: parameters.md
   - Tools: 
     - tools/index.md

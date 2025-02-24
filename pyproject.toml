@@ -39,6 +39,7 @@ dependencies = [
 Homepage = "https://github.com/ggozad/oterm"
 Repository = "https://github.com/ggozad/oterm"
 Issues = "https://github.com/ggozad/oterm/issues"
+Documentation = "https://ggozad.github.io/oterm/"
 
 [project.scripts]
 oterm = "oterm.cli.oterm:cli"
