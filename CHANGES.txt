@@ -9,6 +9,9 @@ Changelog
 - CLI command creation.
   [ggozad]
 
+- Remove pyperclip dependency.
+  [ggozad]
+
 - Documentation site.
   [ggozad]
 
