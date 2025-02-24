@@ -1,0 +1,75 @@
+site_name: oterm
+site_description: the text-based terminal client for Ollama.
+site_url: https://ggozad.github.io/oterm/
+theme:
+  name: material
+  palette:
+  - media: "(prefers-color-scheme)"
+    toggle:
+      icon: material/lightbulb-auto
+      name: Switch to light mode
+  - media: '(prefers-color-scheme: light)'
+    scheme: default
+    primary: deep purple
+    accent: amber
+    toggle:
+      icon: material/lightbulb
+      name: Switch to dark mode
+  - media: '(prefers-color-scheme: dark)'
+    scheme: slate
+    primary: deep purple
+    accent: amber
+    toggle:
+      icon: material/lightbulb-outline
+      name: Switch to system preference
+  features:
+  - content.code.annotate
+  - content.code.copy
+  - content.code.select
+  - content.footnote.tooltips
+  - content.tabs.link
+  - content.tooltips
+  - navigation.footer
+  - navigation.indexes
+  - navigation.instant
+  - navigation.instant.prefetch
+  - navigation.instant.progress
+  - navigation.path
+  - navigation.tabs
+  - navigation.tabs.sticky
+  - navigation.top
+  - navigation.tracking
+  - search.highlight
+  - search.share
+  - search.suggest
+  - toc.follow
+
+  icon:
+    repo: fontawesome/brands/github-alt
+  # logo: img/icon-white.svg
+  # favicon: img/favicon.png
+  language: en
+repo_name: ggozad/oterm
+repo_url: https://github.com/ggozad/oterm
+plugins:
+  # Material for MkDocs
+  search:
+nav:
+  - oterm: 
+    - index.md
+    - Installation: installation.md
+    - Commands & shortcuts: commands.md
+  - Chat parameters: parameters.md
+  - Tools: 
+    - tools/index.md
+    - MCP tools: tools/mcp.md
+    - Custom tools: tools/custom_tools.md
+  - Configuration: app_config.md
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences

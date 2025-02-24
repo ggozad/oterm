@@ -39,6 +39,7 @@ dependencies = [
 Homepage = "https://github.com/ggozad/oterm"
 Repository = "https://github.com/ggozad/oterm"
 Issues = "https://github.com/ggozad/oterm/issues"
+Documentation = "https://ggozad.github.io/oterm/"
 
 [project.scripts]
 oterm = "oterm.cli.oterm:cli"
@@ -51,6 +52,8 @@ dev-dependencies = [
     "pytest-asyncio>=0.25.3",
     "textual-dev>=1.7.0",
     "homebrew-pypi-poet>=0.10.0",
+    "mkdocs>=1.6.1",
+    "mkdocs-material>=9.6.5",
 ]
 
 [tool.uv.sources]
