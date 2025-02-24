@@ -1,6 +1,6 @@
 site_name: oterm
 site_description: the text-based terminal client for Ollama.
-site_url: http://ggozad.github.io/oterm/
+site_url: https://ggozad.github.io/oterm/
 theme:
   name: material
   palette:
@@ -25,7 +25,7 @@ theme:
   features:
   - content.code.annotate
   - content.code.copy
-  # - content.code.select
+  - content.code.select
   - content.footnote.tooltips
   - content.tabs.link
   - content.tooltips
@@ -65,3 +65,11 @@ nav:
     - MCP tools: tools/mcp.md
     - Custom tools: tools/custom_tools.md
   - Configuration: app_config.md
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
