@@ -1,0 +1,21 @@
+from importlib import metadata
+
+import typer
+
+from oterm.command.create import app
+
+cli = typer.Typer()
+
+
+@cli.command()
+def oterm_command(
+    version: bool = typer.Option(None, "--version", "-v"),
+):
+    if version:
+        typer.echo(f"oterm-command v{metadata.version('oterm')}")
+        exit(0)
+    app.run()
+
+
+if __name__ == "__main__":
+    cli()

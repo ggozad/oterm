@@ -43,6 +43,7 @@ Documentation = "https://ggozad.github.io/oterm/"
 
 [project.scripts]
 oterm = "oterm.cli.oterm:cli"
+oterm-command = "oterm.cli.command:cli"
 
 [tool.uv]
 dev-dependencies = [
