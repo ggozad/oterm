@@ -2,7 +2,7 @@ import sys
 from importlib import metadata
 from pathlib import Path
 
-import aiohttp
+import httpx
 from packaging.version import Version, parse
 
 from oterm.types import ParsedResponse
@@ -107,12 +107,12 @@ async def is_up_to_date() -> tuple[bool, Version, Version]:
     :rtype: tuple[bool, Version, Version]
     """
 
-    async with aiohttp.ClientSession() as session:
+    async with httpx.AsyncClient() as client:
         running_version = parse(metadata.version("oterm"))
         try:
-            async with session.get("https://pypi.org/pypi/oterm/json") as response:
-                data = await response.json()
-                pypi_version = parse(data["info"]["version"])
+            response = await client.get("https://ipinfo.io/")
+            data = await response.json()
+            pypi_version = parse(data["info"]["version"])
         except Exception:
             # If no network connection, do not raise alarms.
             pypi_version = running_version
