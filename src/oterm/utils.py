@@ -1,5 +1,9 @@
 import sys
+from importlib import metadata
 from pathlib import Path
+
+import aiohttp
+from packaging.version import Version, parse
 
 from oterm.types import ParsedResponse
 
@@ -15,17 +19,30 @@ def parse_response(input_text: str) -> ParsedResponse:
 
     # If the response contains a think tag, split the response into the thought process and the actual response
     if input_text.startswith("<think>") and input_text.find("</think>") != -1:
-        thought = input_text[input_text.find("<think>") + 7: input_text.find("</think>")].lstrip("\n").rstrip(
-            "\n").strip()
-        response = input_text[input_text.find("</think>") + 8:].lstrip("\n").rstrip("\n")
+        thought = (
+            input_text[input_text.find("<think>") + 7 : input_text.find("</think>")]
+            .lstrip("\n")
+            .rstrip("\n")
+            .strip()
+        )
+        response = (
+            input_text[input_text.find("</think>") + 8 :].lstrip("\n").rstrip("\n")
+        )
 
         # transform the think tag into a markdown blockquote (for clarity)
         if len(thought) == 0:
             formatted_output = response
         else:
-            formatted_output = "> ### \<think\>\n" + "\n".join([f"> {line}" for line in thought.split("\n")]) + "\n> ### \</think\>\n" + response
+            formatted_output = (
+                "> ### \<think\>\n"
+                + "\n".join([f"> {line}" for line in thought.split("\n")])
+                + "\n> ### \</think\>\n"
+                + response
+            )
 
-    return ParsedResponse(thought=thought, response=response, formatted_output=formatted_output)
+    return ParsedResponse(
+        thought=thought, response=response, formatted_output=formatted_output
+    )
 
 
 def get_default_data_dir() -> Path:
@@ -80,3 +97,23 @@ def int_to_semantic_version(version: int) -> str:
     minor = (version >> 8) & 255
     patch = version & 255
     return f"{major}.{minor}.{patch}"
+
+
+async def is_up_to_date() -> tuple[bool, Version, Version]:
+    """
+    Checks whether oterm is current.
+
+    :return: A tuple containing a boolean indicating whether oterm is current, the running version and the latest version
+    :rtype: tuple[bool, Version, Version]
+    """
+
+    async with aiohttp.ClientSession() as session:
+        running_version = parse(metadata.version("oterm"))
+        try:
+            async with session.get("https://pypi.org/pypi/oterm/json") as response:
+                data = await response.json()
+                pypi_version = parse(data["info"]["version"])
+        except Exception:
+            # If no network connection, do not raise alarms.
+            pypi_version = running_version
+    return running_version >= pypi_version, running_version, pypi_version
