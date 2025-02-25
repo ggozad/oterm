@@ -19,7 +19,7 @@ from oterm.tools.mcp import setup_mcp_servers, teardown_mcp_servers
 
 
 class CreateCommandApp(App):
-    TITLE = "oTerm - Create Command"
+    TITLE = "oterm - Create Command"
     SUB_TITLE = "Create custom LLM chats as commands."
     CSS_PATH = "../app/oterm.tcss"
     BINDINGS = [

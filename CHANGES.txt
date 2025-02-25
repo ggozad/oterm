@@ -1,9 +1,12 @@
 Changelog
 =========
 
-0.8.5 - 
+0.9.0 - 
 ------------------
 - Check with pypi if oterm is up to date.
+  [ggozad]
+
+- CLI command creation.
   [ggozad]
 
 - Documentation site.

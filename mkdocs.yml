@@ -64,6 +64,7 @@ nav:
     - tools/index.md
     - MCP tools: tools/mcp.md
     - Custom tools: tools/custom_tools.md
+  - CLI commands: cli_commands.md
   - Configuration: app_config.md
 markdown_extensions:
   - admonition
