@@ -41,6 +41,7 @@ class Store(object):
                         "parameters"	TEXT DEFAULT "{}",
                         "keep_alive" INTEGER DEFAULT 5,
                         "tools" 	TEXT DEFAULT "[]",
+                        "type"      TEXT DEFAULT "chat",
                         PRIMARY KEY("id" AUTOINCREMENT)
                     );
 
@@ -92,13 +93,14 @@ class Store(object):
         parameters: Options,
         keep_alive: int,
         tools: list[Tool],
+        type: str = "chat",
     ) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res = await connection.execute_insert(
                 """
                 INSERT OR REPLACE 
-                INTO chat(id, name, model, system, format, parameters, keep_alive, tools) 
-                VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools) RETURNING id;""",
+                INTO chat(id, name, model, system, format, parameters, keep_alive, tools, type) 
+                VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools, :type) RETURNING id;""",
                 {
                     "id": id,
                     "name": name,
@@ -108,6 +110,7 @@ class Store(object):
                     "parameters": json.dumps(parameters),
                     "keep_alive": keep_alive,
                     "tools": json.dumps(tools),
+                    "type": type,
                 },
             )
             await connection.commit()
@@ -156,14 +159,15 @@ class Store(object):
             await connection.commit()
 
     async def get_chats(
-        self,
+        self, type="chat"
     ) -> list[tuple[int, str, str, str | None, str, Options, int, list[Tool]]]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await connection.execute_fetchall(
                 """
                 SELECT id, name, model, system, format, parameters, keep_alive, tools
-                FROM chat;
-                """
+                FROM chat WHERE type = :type;
+                """,
+                {"type": type},
             )
             return [
                 (
@@ -180,12 +184,14 @@ class Store(object):
             ]
 
     async def get_chat(
-        self, id
-    ) -> tuple[int, str, str, str | None, str, Options, int, Sequence[Tool]] | None:
+        self, id: int
+    ) -> (
+        tuple[int, str, str, str | None, str, Options, int, Sequence[Tool], str] | None
+    ):
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await connection.execute_fetchall(
                 """
-                SELECT id, name, model, system, format, parameters, keep_alive, tools 
+                SELECT id, name, model, system, format, parameters, keep_alive, tools, type 
                 FROM chat 
                 WHERE id = :id;
                 """,
@@ -193,7 +199,9 @@ class Store(object):
             )
             chat = next(iter(chat), None)
             if chat:
-                id, name, model, system, format, parameters, keep_alive, tools = chat
+                id, name, model, system, format, parameters, keep_alive, tools, type = (
+                    chat
+                )
                 return (
                     id,
                     name,
@@ -203,6 +211,7 @@ class Store(object):
                     json.loads(parameters),
                     keep_alive,
                     json.loads(tools),
+                    type,
                 )
 
     async def delete_chat(self, id: int) -> None:

@@ -223,3 +223,8 @@ Input.keep-alive {
 Label.keep-alive-label {
     margin-top: 1;
 }
+
+#app-root {
+    height: 50vh;
+    max-height: 50vh;
+}
