@@ -1,8 +1,7 @@
 ## Installation
 
-> Ollama needs to be installed and running in order to use `oterm`. Please follow the [Ollama Installation Guide](https://github.com/ollama/ollama?tab=readme-ov-file#ollama).
-
-### oterm
+!!! note
+    Ollama needs to be installed and running in order to use `oterm`. Please follow the [Ollama Installation Guide](https://github.com/ollama/ollama?tab=readme-ov-file#ollama).
 
 Using `uvx`:
 

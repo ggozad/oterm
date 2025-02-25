@@ -37,13 +37,13 @@ A view of the chat interface, showcasing the conversation between the user and t
 The model selection screen, allowing users to choose and customize available models.
 
 ![Tool support](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/mcp.svg)
-oTerm using the `git` MCP server to access its own repo.
+oterm using the `git` MCP server to access its own repo.
 
 ![Image selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/image_selection.png)
 The image selection interface, demonstrating how users can include images in their conversations.
 
 ![Theme](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/theme.svg)
-oTerm supports multiple themes, allowing users to customize the appearance of the interface.
+oterm supports multiple themes, allowing users to customize the appearance of the interface.
 
 ## License
 

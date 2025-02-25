@@ -19,7 +19,7 @@ from oterm.tools.mcp import setup_mcp_servers, teardown_mcp_servers
 
 
 class OTerm(App):
-    TITLE = "oTerm"
+    TITLE = "oterm"
     SUB_TITLE = "A terminal-based Ollama client."
     CSS_PATH = "oterm.tcss"
     BINDINGS = [

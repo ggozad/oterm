@@ -24,4 +24,4 @@ To add an MCP server to `oterm`, simply add the server shim to oterm's `config.j
 ```
 
 ![Tool support](../img/mcp.svg)
-oTerm using the `git` MCP server to access its own repo.
+oterm using the `git` MCP server to access its own repo.

@@ -66,6 +66,9 @@ nav:
     - Custom tools: tools/custom_tools.md
   - Configuration: app_config.md
 markdown_extensions:
+  - admonition
+  - attr_list
+  - pymdownx.details
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
