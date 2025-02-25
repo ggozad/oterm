@@ -3,13 +3,14 @@ Changelog
 
 0.8.5 - 
 ------------------
+- Check with pypi if oterm is up to date.
+  [ggozad]
 
 - Documentation site.
   [ggozad]
 
 0.8.4 - 2025-02-23
 ------------------
-
 - Keep MCP sessions alive while oterm is running. Fix running multiple MCP tools.
   [sheffler, ggozad]
 

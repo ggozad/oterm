@@ -16,6 +16,7 @@ from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
 from oterm.store.store import Store
 from oterm.tools.mcp import setup_mcp_servers, teardown_mcp_servers
+from oterm.utils import is_up_to_date
 
 
 class OTerm(App):
@@ -234,6 +235,12 @@ class OTerm(App):
                     )
                     pane = TabPane(name, container, id=f"chat-{id}")
                     tabs.add_pane(pane)
+            up_to_date, current_version, latest = await is_up_to_date()
+            if not up_to_date:
+                self.notify(
+                    f"[b]oterm[/b] version [i]{latest}[/i] is available, please update.",
+                    severity="warning",
+                )
 
         if appConfig.get("splash-screen"):
             self.push_screen(splash, callback=on_splash_done)
