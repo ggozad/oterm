@@ -1,3 +1,4 @@
+import json
 from typing import Iterable
 
 from textual.app import App, ComposeResult, SystemCommand
@@ -35,6 +36,21 @@ class CreateCommandApp(App):
         async def on_done(model_info) -> None:
             if model_info is None:
                 await self.action_quit()
+            model = json.loads(model_info)
+            store = await Store.get_store()
+
+            id = await store.save_chat(
+                id=None,
+                name=self.command_name,
+                model=model["name"],
+                system=model["system"],
+                format=model["format"],
+                parameters=model["parameters"],
+                keep_alive=model["keep_alive"],
+                tools=model["tools"],
+                type="command",
+            )
+            await self.action_quit()
 
         await self.push_screen(ChatEdit(), callback=on_done)
 
@@ -59,7 +75,6 @@ class CreateCommandApp(App):
         available += mcp_tool_defs
 
     async def on_mount(self) -> None:
-        store = await Store.get_store()
         theme = appConfig.get("theme")
         if theme:
             if theme == "dark":
@@ -88,6 +103,10 @@ class CreateCommandApp(App):
     def compose(self) -> ComposeResult:
         yield Header()
         yield Footer()
+
+    def run(self, name: str):
+        self.command_name = name
+        return super().run()
 
 
 app = CreateCommandApp()
