@@ -1,6 +1,9 @@
 import json
+import stat
+from pathlib import Path
 from typing import Iterable
 
+from jinja2 import Environment, FileSystemLoader
 from textual.app import App, ComposeResult, SystemCommand
 from textual.binding import Binding
 from textual.screen import Screen
@@ -39,7 +42,7 @@ class CreateCommandApp(App):
             model = json.loads(model_info)
             store = await Store.get_store()
 
-            id = await store.save_chat(
+            db_id = await store.save_chat(
                 id=None,
                 name=self.command_name,
                 model=model["name"],
@@ -50,6 +53,14 @@ class CreateCommandApp(App):
                 tools=model["tools"],
                 type="command",
             )
+            # Load the template from the package
+            environment = Environment(loader=FileSystemLoader(Path(__file__).parent))
+            template = environment.get_template("command_template.py.jinja")
+            path = Path.home() / ".local/bin" / self.command_name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w") as f:
+                f.write(template.render(db_id=db_id, name=self.command_name))
+            path.chmod(path.stat().st_mode | stat.S_IEXEC)
             await self.action_quit()
 
         await self.push_screen(ChatEdit(), callback=on_done)
