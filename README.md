@@ -23,8 +23,9 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 
 ## What's new
 
+* Create custom commands that can be run from the terminal using oterm. Each of these commands is a chat, customized to your liking and connected to the tools of your choice.
 * Support for Model Context Protocol (MCP) tools. You can now use any of the MCP tools to provide external information to the model.
-* Support for the `<thinking/>` in reasoning models.
+* Support for the `<thinking/>` tag in reasoning models.
 
 ### Screenshots
 ![Splash](https://raw.githubusercontent.com/ggozad/oterm/refs/heads/main/docs/img/splash.gif)

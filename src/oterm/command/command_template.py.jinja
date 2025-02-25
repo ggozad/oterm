@@ -1,0 +1,69 @@
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "textual>=1.0.0,<1.1",
+#     "oterm"
+# ]
+# ///
+
+from textual.app import App, ComposeResult
+from textual.binding import Binding
+from textual.containers import Vertical
+
+from oterm.app.css import tcss
+from oterm.app.widgets.chat import ChatContainer
+from oterm.store.store import Store
+from oterm.tools.mcp import setup_mcp_servers, teardown_mcp_servers
+
+db_id = {{db_id}}
+name = "{{name}}"
+
+
+class InlineApp(App):
+    CSS = tcss
+    TITLE = f"{name}"
+    BINDINGS = [
+        Binding("ctrl+q", "quit", "quit", id="quit"),
+    ]
+
+    async def load_mcp(self):
+        from oterm.tools import available
+
+        mcp_tool_defs = await setup_mcp_servers()
+        available += mcp_tool_defs
+
+    async def action_quit(self) -> None:
+        self.log("Quitting...")
+        await teardown_mcp_servers()
+        return self.exit()
+
+    async def on_mount(self) -> None:
+        await self.load_mcp()
+        store = await Store.get_store()
+        chat_meta = await store.get_chat(db_id)
+        if chat_meta is None:
+            return
+
+        id, name, model, system, format, parameters, keep_alive, tools, _ = chat_meta
+        messages = await store.get_messages(id)
+        chat = ChatContainer(
+            db_id=id,
+            chat_name=name,
+            model=model,
+            messages=messages,
+            system=system,
+            format=format,
+            parameters=parameters,
+            keep_alive=keep_alive,
+            tools=tools,
+        )
+        await self.get_child_by_id("app-root").mount(chat)
+        await chat.load_messages()
+
+    def compose(self) -> ComposeResult:
+        yield Vertical(id="app-root")
+
+
+if __name__ == "__main__":
+    InlineApp().run(inline=True)
