@@ -10,27 +10,39 @@ the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
 * allows for easy customization of the model's system prompt and parameters.
 * supports tools integration for providing external information to the model.
 
+## Quick install
+
+```bash
+uvx oterm
+```
+See [Installation](https://ggozad.github.io/oterm/installation) for more details.
+
 ## Documentation
 
 [oterm Documentation](https://ggozad.github.io/oterm/)
 
+## What's new
+
+* Support for Model Context Protocol (MCP) tools. You can now use any of the MCP tools to provide external information to the model.
+* Support for the `<thinking/>` in reasoning models.
+
 ### Screenshots
-![Splash](docs/img/splash.gif)
+![Splash](https://raw.githubusercontent.com/ggozad/oterm/refs/heads/main/docs/img/splash.gif)
 The splash screen animation that greets users when they start oterm.
 
-![Chat](docs/img/chat.png)
+![Chat](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/chat.png)
 A view of the chat interface, showcasing the conversation between the user and the model.
 
-![Model selection](./docs/img/customizations.svg)
+![Model selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/customizations.svg)
 The model selection screen, allowing users to choose and customize available models.
 
-![Tool support](./docs/img/mcp.svg)
+![Tool support](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/mcp.svg)
 oTerm using the `git` MCP server to access its own repo.
 
-![Image selection](./docs/img/image_selection.png)
+![Image selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/image_selection.png)
 The image selection interface, demonstrating how users can include images in their conversations.
 
-![Theme](./docs/img/theme.svg)
+![Theme](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/theme.svg)
 oTerm supports multiple themes, allowing users to customize the appearance of the interface.
 
 ## License

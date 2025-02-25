@@ -1,10 +1,14 @@
 ## Installation
 
-### Ollama
-
-Ollama needs to be installed and running in order to use `oterm`. Please follow the [Ollama Installation Guide](https://github.com/ollama/ollama?tab=readme-ov-file#ollama).
+> Ollama needs to be installed and running in order to use `oterm`. Please follow the [Ollama Installation Guide](https://github.com/ollama/ollama?tab=readme-ov-file#ollama).
 
 ### oterm
+
+Using `uvx`:
+
+```bash
+uvx oterm
+```
 
 Using `brew` for MacOS:
 
@@ -28,6 +32,12 @@ pip install oterm
 ## Updating oterm
 
 To update oterm to the latest version, you can use the same method you used for installation:
+
+Using `uvx`:
+
+```bash
+uvx oterm@latest
+```
 
 Using `brew` for MacOS:
 
