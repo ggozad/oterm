@@ -1,12 +1,15 @@
 Changelog
 =========
 
-0.9.0 - 
+0.9.1 - 2025-03-25 
 ------------------
 - Check with pypi if oterm is up to date.
   [ggozad]
 
 - CLI command creation.
+  [ggozad]
+
+- Remove pyperclip dependency.
   [ggozad]
 
 - Documentation site.
