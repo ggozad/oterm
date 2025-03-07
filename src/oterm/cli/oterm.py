@@ -8,7 +8,8 @@ from oterm.app.oterm import app
 from oterm.config import envConfig
 from oterm.store.store import Store
 
-cli = typer.Typer()
+cli = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
+
 
 
 async def upgrade_db():
