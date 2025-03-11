@@ -3,6 +3,8 @@ Changelog
 
 0.9.2 - 
 ------------------
+- Enable '-h' short-form help option.
+  [brucewillke]
 
 - Fix checking latest version on pypi.
   [ggozad]
