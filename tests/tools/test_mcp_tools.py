@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import pytest
 from mcp import StdioServerParameters
 
@@ -7,21 +5,12 @@ from oterm.ollamaclient import OllamaLLM
 from oterm.tools.mcp import MCPClient, MCPToolCallable
 from oterm.types import Tool
 
-mcp_server_executable = Path(__file__).parent / "mcp_servers.py"
-
-server_config = {
-    "oracle": {
-        "command": "mcp",
-        "args": ["run", str(mcp_server_executable.absolute())],
-    }
-}
-
 
 @pytest.mark.asyncio
-async def test_mcp():
+async def test_mcp(mcp_server_config):
     client = MCPClient(
         "oracle",
-        StdioServerParameters.model_validate(server_config["oracle"]),
+        StdioServerParameters.model_validate(mcp_server_config["oracle"]),
     )
     await client.initialize()
     tools = await client.get_available_tools()
