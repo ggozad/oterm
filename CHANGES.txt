@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.9.3 - 
+------------------
+
+- Include the default environment when running an mcp server with custom env.
+  [ggozad]
+
 0.9.2 - 2025-03-25
 ------------------
 

@@ -42,7 +42,7 @@ class MCPClient:
             self.session = session
         except Exception as e:
             await self.cleanup()
-            raise e
+            log.error(f"Error initializing MCP server {self.name}: {e}")
 
     async def get_available_tools(self) -> list[MCPTool]:
         """List available tools from the server.
@@ -123,7 +123,6 @@ class MCPToolCallable:
         self.client = client
 
     async def call(self, **kwargs):
-
         log.info(f"Calling Tool {self.name} in {self.server_name} with {kwargs}")
         res: CallToolResult = await self.client.call_tool(self.name, kwargs)
         if res.isError:
@@ -134,15 +133,25 @@ class MCPToolCallable:
 
 
 async def setup_mcp_servers():
-
     mcp_servers = appConfig.get("mcpServers")
     tool_defs: list[ToolDefinition] = []
 
     if mcp_servers:
         for server, config in mcp_servers.items():
-            client = MCPClient(server, StdioServerParameters.model_validate(config))
+            # Patch the MCP server environment with the current environment
+            # This works around https://github.com/modelcontextprotocol/python-sdk/issues/99
+            from os import environ
+
+            config = StdioServerParameters.model_validate(config)
+            if config.env is not None:
+                config.env.update(dict(environ))
+
+            client = MCPClient(server, config)
             await client.initialize()
+            if not client.session:
+                continue
             mcp_clients.append(client)
+
             log.info(f"Initialized MCP server {server}")
 
             mcp_tools: list[MCPTool] = await client.get_available_tools()
@@ -157,7 +166,6 @@ async def setup_mcp_servers():
 
 
 async def teardown_mcp_servers():
-
     log.info("Tearing down MCP servers")
     # Important to tear down in reverse order
     mcp_clients.reverse()
