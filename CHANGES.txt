@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.9.2 - 
+0.9.2 - 2025-03-25
 ------------------
 
 - Override default Ollama Options() to allow for single string as a stop word. 
