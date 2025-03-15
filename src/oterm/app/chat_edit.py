@@ -1,4 +1,5 @@
 import json
+from typing import Optional, Sequence
 
 from ollama import Options, ShowResponse
 from pydantic import ValidationError
@@ -26,6 +27,11 @@ from oterm.types import Tool
 
 
 class OtermOllamaOptions(Options):
+    # Patch stop to allow for a single string.
+    # This is an issue with the gemma model which has a single stop parameter.
+    # Remove when fixed upstream and close #187
+    stop: Optional[Sequence[str] | str] = None
+
     class Config:
         extra = "forbid"
 
@@ -80,6 +86,9 @@ class ChatEdit(ModalScreen[str]):
             parameters = OtermOllamaOptions.model_validate_json(
                 p_area.text, strict=True
             ).model_dump(exclude_unset=True)
+            if isinstance(parameters.get("stop"), str):
+                parameters["stop"] = [parameters["stop"]]
+
         except ValidationError:
             p_area = self.query_one(".parameters", TextArea)
             p_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
