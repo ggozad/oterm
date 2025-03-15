@@ -93,7 +93,7 @@ class OTerm(App):
         model: dict = json.loads(model_info)
         tabs = self.query_one(TabbedContent)
         tab_count = tabs.tab_count
-        name = f"chat #{tab_count+1} - {model['name']}"
+        name = f"chat #{tab_count + 1} - {model['name']}"
         id = await store.save_chat(
             id=None,
             name=name,
@@ -179,9 +179,11 @@ class OTerm(App):
 
     async def load_mcp(self):
         from oterm.tools import available
+        from oterm.tools.mcp import mcp_prompts
 
-        mcp_tool_defs = await setup_mcp_servers()
+        mcp_tool_defs, prompts = await setup_mcp_servers()
         available += mcp_tool_defs
+        mcp_prompts += prompts
 
     async def on_mount(self) -> None:
         store = await Store.get_store()
