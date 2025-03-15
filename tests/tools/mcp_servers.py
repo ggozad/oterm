@@ -10,5 +10,4 @@ def get_config() -> str:
 
 @mcp.tool()
 async def oracle(query: str, ctx: Context) -> str:
-    await ctx.report_progress(1, 2)
     return "Oracle says: oterm"
