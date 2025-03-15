@@ -2,16 +2,17 @@ import asyncio
 from contextlib import AsyncExitStack
 from typing import Any
 
-from mcp import ClientSession, StdioServerParameters
+from mcp import ClientSession, McpError, StdioServerParameters
 from mcp import Tool as MCPTool
 from mcp.client.stdio import stdio_client
-from mcp.types import CallToolResult, TextContent
+from mcp.types import CallToolResult, Prompt, TextContent
 from textual import log
 
 from oterm.config import appConfig
 from oterm.types import Tool, ToolDefinition
 
 mcp_clients = []
+mcp_prompts = []
 
 
 # adapted from mcp-python-sdk/examples/clients/simple-chatbot/mcp_simple_chatbot/main.py
@@ -55,11 +56,37 @@ class MCPClient:
         """
         if not self.session:
             raise RuntimeError(f"Server {self.name} not initialized")
-
-        tools_response = await self.session.list_tools()
+        try:
+            tools_response = await self.session.list_tools()
+        except McpError as e:
+            log.error(f"Error listing tools for {self.name}: {e}")
+            return []
 
         # Let's just ignore pagination for now
         return tools_response.tools
+
+    async def get_available_prompts(self) -> list[Prompt]:
+        """List available prompts from the server.
+
+        Returns:
+            A list of available prompts.
+
+        Raises:
+            RuntimeError: If the server is not initialized.
+        """
+        if not self.session:
+            raise RuntimeError(f"Server {self.name} not initialized")
+
+        try:
+            prompts_response = await self.session.list_prompts()
+        except McpError as e:
+            log.error(f"Error listing prompts for {self.name}: {e}")
+            return []
+
+        for prompt in prompts_response.prompts:
+            log.info(f"Loaded prompt {prompt.name} from {self.name}")
+
+        return prompts_response.prompts
 
     async def call_tool(
         self,
@@ -132,10 +159,10 @@ class MCPToolCallable:
         return "\n".join(text_content)
 
 
-async def setup_mcp_servers():
+async def setup_mcp_servers() -> tuple[list[ToolDefinition], list[Prompt]]:
     mcp_servers = appConfig.get("mcpServers")
     tool_defs: list[ToolDefinition] = []
-
+    prompts: list[Prompt] = []
     if mcp_servers:
         for server, config in mcp_servers.items():
             # Patch the MCP server environment with the current environment
@@ -155,6 +182,8 @@ async def setup_mcp_servers():
             log.info(f"Initialized MCP server {server}")
 
             mcp_tools: list[MCPTool] = await client.get_available_tools()
+            mcp_prompts = await client.get_available_prompts()
+            prompts.extend(mcp_prompts)
 
             for mcp_tool in mcp_tools:
                 tool = mcp_tool_to_ollama_tool(mcp_tool)
@@ -162,7 +191,7 @@ async def setup_mcp_servers():
                 tool_defs.append({"tool": tool, "callable": mcpToolCallable.call})
                 log.info(f"Loaded MCP tool {mcp_tool.name} from {server}")
 
-    return tool_defs
+    return tool_defs, prompts
 
 
 async def teardown_mcp_servers():
