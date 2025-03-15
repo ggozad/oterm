@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.9.3 - 
+0.9.3 - 2025-03-25
 ------------------
 
 - Include the default environment when running an mcp server with custom env.
