@@ -10,6 +10,7 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_export import ChatExport, slugify
+from oterm.app.mcp_prompt import MCPPrompt
 from oterm.app.pull_model import PullModel
 from oterm.app.splash import splash
 from oterm.app.widgets.chat import ChatContainer
@@ -58,7 +59,11 @@ class OTerm(App):
             "Regenerates the last Ollama message (setting a random seed for the message)",
             self.action_regenerate_last_message,
         )
-
+        yield SystemCommand(
+            "Use MCP prompt",
+            "Create and copy to clipboard an MCP prompt.",
+            self.action_mcp_prompt,
+        )
         yield SystemCommand(
             "Pull model",
             "Pulls (or updates) the model from the Ollama server",
@@ -167,6 +172,10 @@ class OTerm(App):
             return
         chat = tabs.active_pane.query_one(ChatContainer)
         await chat.action_regenerate_llm_message()
+
+    async def action_mcp_prompt(self) -> None:
+        screen = MCPPrompt()
+        self.push_screen(screen)
 
     async def action_pull_model(self) -> None:
         tabs = self.query_one(TabbedContent)
