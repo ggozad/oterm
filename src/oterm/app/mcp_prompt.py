@@ -46,7 +46,7 @@ class MCPPrompt(ModalScreen[str]):
         return Text(prompt)
 
     def compose(self) -> ComposeResult:
-        with Container(id="mcp-prompt-container"):
+        with Container(classes="screen-container full-height"):
             with Horizontal():
                 with Vertical():
                     yield Label("Available MCP prompts", classes="title")

@@ -6,7 +6,6 @@ from textual.widgets import Label, OptionList
 
 
 class PromptHistory(ModalScreen[str]):
-
     history: list[str] = []
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -29,6 +28,6 @@ class PromptHistory(ModalScreen[str]):
         self.dismiss(str(option.option.prompt))
 
     def compose(self) -> ComposeResult:
-        with Container(id="prompt-history-container"):
+        with Container(classes="screen-container full-height"):
             yield Label("Prompt history", classes="title")
             yield OptionList(id="prompt-history")

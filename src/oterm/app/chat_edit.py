@@ -217,7 +217,7 @@ class ChatEdit(ModalScreen[str]):
         return Text(model)
 
     def compose(self) -> ComposeResult:
-        with Container(id="edit-chat-container"):
+        with Container(classes="screen-container full-height"):
             with Horizontal():
                 with Vertical():
                     with Horizontal(id="model-info"):
