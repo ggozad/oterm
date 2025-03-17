@@ -29,9 +29,11 @@ class InlineApp(App):
 
     async def load_mcp(self):
         from oterm.tools import available
+        from oterm.tools.mcp import mcp_prompts
 
-        mcp_tool_defs = await setup_mcp_servers()
+        mcp_tool_defs, prompts = await setup_mcp_servers()
         available += mcp_tool_defs
+        mcp_prompts += prompts
 
     async def action_quit(self) -> None:
         self.log("Quitting...")

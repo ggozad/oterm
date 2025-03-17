@@ -2,15 +2,15 @@ import pytest
 from mcp import StdioServerParameters
 
 from oterm.ollamaclient import OllamaLLM
-from oterm.tools.mcp import MCPClient, MCPToolCallable
+from oterm.tools.mcp.client import MCPClient
+from oterm.tools.mcp.tools import MCPToolCallable
 from oterm.types import Tool
 
 
 @pytest.mark.asyncio
 async def test_mcp(mcp_server_config):
     client = MCPClient(
-        "oracle",
-        StdioServerParameters.model_validate(mcp_server_config["oracle"]),
+        "oracle", StdioServerParameters.model_validate(mcp_server_config["oracle"])
     )
     await client.initialize()
     tools = await client.get_available_tools()

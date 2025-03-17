@@ -82,7 +82,7 @@ class CreateCommandApp(App):
     async def load_mcp(self):
         from oterm.tools import available
 
-        mcp_tool_defs = await setup_mcp_servers()
+        mcp_tool_defs, mcp_tool_prompts = await setup_mcp_servers()
         available += mcp_tool_defs
 
     async def on_mount(self) -> None:

@@ -5,14 +5,8 @@ from typing import Any
 from mcp import ClientSession, McpError, StdioServerParameters
 from mcp import Tool as MCPTool
 from mcp.client.stdio import stdio_client
-from mcp.types import CallToolResult, Prompt, TextContent
+from mcp.types import Prompt
 from textual import log
-
-from oterm.config import appConfig
-from oterm.types import Tool, ToolDefinition
-
-mcp_clients = []
-mcp_prompts = []
 
 
 # adapted from mcp-python-sdk/examples/clients/simple-chatbot/mcp_simple_chatbot/main.py
@@ -141,74 +135,3 @@ class MCPClient:
             except Exception as e:
                 log.error(f"Error during cleanup of MCP server {self.name}.")
                 raise e
-
-
-class MCPToolCallable:
-    def __init__(self, name, server_name, client):
-        self.name = name
-        self.server_name = server_name
-        self.client = client
-
-    async def call(self, **kwargs):
-        log.info(f"Calling Tool {self.name} in {self.server_name} with {kwargs}")
-        res: CallToolResult = await self.client.call_tool(self.name, kwargs)
-        if res.isError:
-            log.error(f"Error call mcp tool {self.name}.")
-            raise Exception(f"Error call mcp tool {self.name}.")
-        text_content = [m.text for m in res.content if type(m) is TextContent]
-        return "\n".join(text_content)
-
-
-async def setup_mcp_servers() -> tuple[list[ToolDefinition], list[Prompt]]:
-    mcp_servers = appConfig.get("mcpServers")
-    tool_defs: list[ToolDefinition] = []
-    prompts: list[Prompt] = []
-    if mcp_servers:
-        for server, config in mcp_servers.items():
-            # Patch the MCP server environment with the current environment
-            # This works around https://github.com/modelcontextprotocol/python-sdk/issues/99
-            from os import environ
-
-            config = StdioServerParameters.model_validate(config)
-            if config.env is not None:
-                config.env.update(dict(environ))
-
-            client = MCPClient(server, config)
-            await client.initialize()
-            if not client.session:
-                continue
-            mcp_clients.append(client)
-
-            log.info(f"Initialized MCP server {server}")
-
-            mcp_tools: list[MCPTool] = await client.get_available_tools()
-            mcp_prompts = await client.get_available_prompts()
-            prompts.extend(mcp_prompts)
-
-            for mcp_tool in mcp_tools:
-                tool = mcp_tool_to_ollama_tool(mcp_tool)
-                mcpToolCallable = MCPToolCallable(mcp_tool.name, server, client)
-                tool_defs.append({"tool": tool, "callable": mcpToolCallable.call})
-                log.info(f"Loaded MCP tool {mcp_tool.name} from {server}")
-
-    return tool_defs, prompts
-
-
-async def teardown_mcp_servers():
-    log.info("Tearing down MCP servers")
-    # Important to tear down in reverse order
-    mcp_clients.reverse()
-    for client in mcp_clients:
-        await client.cleanup()
-
-
-def mcp_tool_to_ollama_tool(mcp_tool: MCPTool) -> Tool:
-    """Convert an MCP tool to an Ollama tool"""
-
-    return Tool(
-        function=Tool.Function(
-            name=mcp_tool.name,
-            description=mcp_tool.description,
-            parameters=Tool.Function.Parameters.model_validate(mcp_tool.inputSchema),
-        ),
-    )

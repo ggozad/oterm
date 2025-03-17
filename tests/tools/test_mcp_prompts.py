@@ -1,7 +1,7 @@
 import pytest
 from mcp import StdioServerParameters
 
-from oterm.tools.mcp import MCPClient
+from oterm.tools.mcp.client import MCPClient
 
 
 @pytest.mark.asyncio
