@@ -22,7 +22,7 @@ class PromptHistory(ModalScreen[str]):
         option_list = self.query_one("#prompt-history", OptionList)
         option_list.clear_options()
         for prompt in self.history:
-            option_list.add_option(item=Text(prompt))
+            option_list.add_option(option=Text(prompt))
 
     def on_option_list_option_selected(self, option: OptionList.OptionSelected) -> None:
         self.dismiss(str(option.option.prompt))

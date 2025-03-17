@@ -1,12 +1,25 @@
-from rich.text import Text
-from textual.app import ComposeResult
+from mcp.types import Prompt
+from textual.app import ComposeResult, RenderResult
 from textual.containers import (
     Container,
     Horizontal,
     Vertical,
 )
 from textual.screen import ModalScreen
+from textual.widget import Widget
 from textual.widgets import Button, Label, OptionList
+from textual.widgets.option_list import Option
+
+from oterm.tools.mcp import mcp_prompts
+
+
+class PromptWidget(Widget):
+    def __init__(self, prompt: Prompt) -> None:
+        super().__init__()
+        self.prompt = prompt
+
+    def render(self) -> RenderResult:
+        return f"[b]{self.prompt.name}[/b]\n[i]{self.prompt.description}[/i]"
 
 
 class MCPPrompt(ModalScreen[str]):
@@ -14,11 +27,6 @@ class MCPPrompt(ModalScreen[str]):
         ("escape", "cancel", "Cancel"),
         ("enter", "copy", "Copy"),
     ]
-
-    def __init__(
-        self,
-    ) -> None:
-        super().__init__()
 
     def action_cancel(self) -> None:
         self.dismiss()
@@ -29,21 +37,23 @@ class MCPPrompt(ModalScreen[str]):
     async def on_mount(self) -> None:
         option_list = self.query_one("#mcp-prompt-select", OptionList)
         option_list.clear_options()
+        for prompt in mcp_prompts:
+            option_list.add_option(option=self.prompt_option(prompt))
+
+    @staticmethod
+    def prompt_option(prompt: Prompt) -> Option:
+        return Option(prompt=PromptWidget(prompt).render(), id=prompt.name)
 
     def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
     ) -> None:
-        pass
+        print(option.option.id)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.name == "copy":
             pass
         else:
             self.dismiss()
-
-    @staticmethod
-    def prompt_option(prompt: str) -> Text:
-        return Text(prompt)
 
     def compose(self) -> ComposeResult:
         with Container(classes="screen-container full-height"):

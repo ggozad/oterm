@@ -139,7 +139,7 @@ class ChatEdit(ModalScreen[str]):
         option_list = self.query_one("#model-select", OptionList)
         option_list.clear_options()
         for model in models:
-            option_list.add_option(item=self.model_option(model))
+            option_list.add_option(option=self.model_option(model))
         option_list.highlighted = self.last_highlighted_index
         if self.model_name and self.tag:
             self.select_model(f"{self.model_name}:{self.tag}")
