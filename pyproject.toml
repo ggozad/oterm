@@ -62,26 +62,22 @@ dev-dependencies = [
 [tool.ruff]
 line-length = 88
 # Enable Flake's "E" and "F" codes by default and "I" for sorting imports.
-lint.select = ["E", "F", "I"]
-lint.ignore = ["E501", "E741"]                               # E741 should not be ignored
-lint.per-file-ignores = { "__init__.py" = ["F401", "F403"] }
-# Allow unused variables when underscore-prefixed.
-lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 # Exclude a variety of commonly ignored directories.
-exclude = [
-    ".direnv",
-    ".eggs",
-    ".git",
-    ".mypy_cache",
-    ".ruff_cache",
-    ".venv",
-    "__pypackages__",
-    ".cache",
-    "_build",
-    "build",
-    "dist",
-    "venv",
-]
+extend-exclude = ["protobufs"]
+
+[tool.ruff.lint]
+# Enable Flake's "E" and "F" codes by default and "I" for sorting imports.
+select = ["E", "F", "I"]
+ignore = ["E501"]
+per-file-ignores = { "__init__.py" = ["F401", "F403"] }
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [build-system]
 requires = ["hatchling"]
