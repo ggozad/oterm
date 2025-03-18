@@ -108,6 +108,10 @@ LoadingIndicator {
     margin-bottom: 1;
 }
 
+.subtitle {
+    color: $secondary
+}
+
 .screen-container .button-container {    
     height: 3;
 }
