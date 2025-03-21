@@ -11,7 +11,6 @@ from oterm.ollamaclient import OllamaLLM
 
 
 class PullModel(ModalScreen[str]):
-
     model: str = ""
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -46,7 +45,9 @@ class PullModel(ModalScreen[str]):
         self.pull_model()
 
     def compose(self) -> ComposeResult:
-        with Container(id="pull-model-container"):
+        with Container(
+            id="pull-model-container", classes="screen-container full-height"
+        ):
             yield Label("Pull model", classes="title")
             with Horizontal():
                 yield Input(self.model)

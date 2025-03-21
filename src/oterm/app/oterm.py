@@ -10,6 +10,7 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_export import ChatExport, slugify
+from oterm.app.mcp_prompt import MCPPrompt
 from oterm.app.pull_model import PullModel
 from oterm.app.splash import splash
 from oterm.app.widgets.chat import ChatContainer
@@ -58,7 +59,11 @@ class OTerm(App):
             "Regenerates the last Ollama message (setting a random seed for the message)",
             self.action_regenerate_last_message,
         )
-
+        yield SystemCommand(
+            "Use MCP prompt",
+            "Create and copy to clipboard an MCP prompt.",
+            self.action_mcp_prompt,
+        )
         yield SystemCommand(
             "Pull model",
             "Pulls (or updates) the model from the Ollama server",
@@ -93,7 +98,7 @@ class OTerm(App):
         model: dict = json.loads(model_info)
         tabs = self.query_one(TabbedContent)
         tab_count = tabs.tab_count
-        name = f"chat #{tab_count+1} - {model['name']}"
+        name = f"chat #{tab_count + 1} - {model['name']}"
         id = await store.save_chat(
             id=None,
             name=name,
@@ -168,6 +173,10 @@ class OTerm(App):
         chat = tabs.active_pane.query_one(ChatContainer)
         await chat.action_regenerate_llm_message()
 
+    async def action_mcp_prompt(self) -> None:
+        screen = MCPPrompt()
+        self.push_screen(screen)
+
     async def action_pull_model(self) -> None:
         tabs = self.query_one(TabbedContent)
         if tabs.active_pane is None:
@@ -179,9 +188,11 @@ class OTerm(App):
 
     async def load_mcp(self):
         from oterm.tools import available
+        from oterm.tools.mcp import mcp_prompts
 
-        mcp_tool_defs = await setup_mcp_servers()
+        mcp_tool_defs, prompts = await setup_mcp_servers()
         available += mcp_tool_defs
+        mcp_prompts += prompts
 
     async def on_mount(self) -> None:
         store = await Store.get_store()

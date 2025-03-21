@@ -55,7 +55,9 @@ class ImageSelect(ModalScreen[tuple[Path, str]]):
         dt.path = path
 
     def compose(self) -> ComposeResult:
-        with Container(id="image-select-container"):
+        with Container(
+            id="image-select-container", classes="screen-container full-height"
+        ):
             with Horizontal():
                 with Vertical(id="image-directory-tree"):
                     yield Label("Select an image:", classes="title")

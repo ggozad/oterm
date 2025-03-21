@@ -41,9 +41,9 @@ class ChatExport(ModalScreen[str]):
         if not event.value:
             return
 
-        messages: Sequence[tuple[int, Author, str, list[str]]] = (
-            await store.get_messages(self.chat_id)
-        )
+        messages: Sequence[
+            tuple[int, Author, str, list[str]]
+        ] = await store.get_messages(self.chat_id)
         with open(event.value, "w", encoding="utf-8") as file:
             for message in messages:
                 _, author, text, images = message
@@ -54,6 +54,6 @@ class ChatExport(ModalScreen[str]):
         self.dismiss()
 
     def compose(self) -> ComposeResult:
-        with Container(id="chat-export-container"):
+        with Container(classes="screen-container short"):
             yield Label("Export chat", classes="title")
             yield Input(id="chat-name-input", value=self.file_name)

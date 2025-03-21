@@ -25,6 +25,6 @@ class ChatRename(ModalScreen[str]):
             self.dismiss(event.value)
 
     def compose(self) -> ComposeResult:
-        with Container(id="chat-rename-container"):
+        with Container(classes="screen-container short"):
             yield Label("Rename chat", classes="title")
             yield Input(id="chat-name-input", value=self.old_name)
