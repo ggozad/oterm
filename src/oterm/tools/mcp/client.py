@@ -86,16 +86,12 @@ class MCPClient:
         self,
         tool_name: str,
         arguments: dict[str, Any],
-        retries: int = 2,
-        delay: float = 1.0,
     ) -> Any:
-        """Execute a tool with retry mechanism.
+        """Execute a tool
 
         Args:
             tool_name: Name of the tool to execute.
             arguments: Tool arguments.
-            retries: Number of retry attempts.
-            delay: Delay between retries in seconds.
 
         Returns:
             Tool execution result.
@@ -107,23 +103,11 @@ class MCPClient:
         if not self.session:
             raise RuntimeError(f"Server {self.name} not initialized")
 
-        attempt = 0
-        while attempt < retries:
-            try:
-                result = await self.session.call_tool(tool_name, arguments)
-                return result
-
-            except Exception as e:
-                attempt += 1
-                log.warning(
-                    f"Error executing tool: {e}. Attempt {attempt} of {retries}."
-                )
-                if attempt < retries:
-                    log.info(f"Retrying in {delay} seconds...")
-                    await asyncio.sleep(delay)
-                else:
-                    log.error("Max retries reached. Failing.")
-                    raise
+        try:
+            result = await self.session.call_tool(tool_name, arguments)
+            return result
+        except Exception as e:
+            log.warning(f"Error executing tool: {e}.")
 
     async def cleanup(self) -> None:
         """Clean up server resources."""
