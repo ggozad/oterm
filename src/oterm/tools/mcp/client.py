@@ -33,7 +33,7 @@ class MCPClient:
             session = await self.exit_stack.enter_async_context(
                 ClientSession(read, write)
             )
-            await session.initialize()
+            await asyncio.wait_for(session.initialize(), timeout=5)
             self.session = session
         except Exception as e:
             await self.cleanup()
@@ -132,6 +132,5 @@ class MCPClient:
                 await self.exit_stack.aclose()
                 self.session = None
                 self.stdio_context = None
-            except Exception as e:
+            except Exception:
                 log.error(f"Error during cleanup of MCP server {self.name}.")
-                raise e
