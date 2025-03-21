@@ -4,9 +4,24 @@ from typing import Any
 
 from mcp import ClientSession, McpError, StdioServerParameters
 from mcp import Tool as MCPTool
+from mcp.client.session import LoggingFnT
 from mcp.client.stdio import stdio_client
-from mcp.types import Prompt
+from mcp.types import LoggingMessageNotificationParams, Prompt
 from textual import log
+
+
+# This is here to log the messages from the MCP server, when
+# there is an upstream fix for https://github.com/modelcontextprotocol/python-sdk/issues/341
+class Logger(LoggingFnT):
+    def __call__(self, params: LoggingMessageNotificationParams) -> None:
+        if params.level == "error" or params.level == "critical":
+            log.error(params.data)
+        elif params.level == "warning":
+            log.warning(params.data)
+        elif params.level == "info":
+            log.info(params.data)
+        elif params.level == "debug":
+            log.debug(params.data)
 
 
 # adapted from mcp-python-sdk/examples/clients/simple-chatbot/mcp_simple_chatbot/main.py
@@ -31,7 +46,7 @@ class MCPClient:
             )
             read, write = stdio_transport
             session = await self.exit_stack.enter_async_context(
-                ClientSession(read, write)
+                ClientSession(read, write, logging_callback=Logger()),
             )
             await asyncio.wait_for(session.initialize(), timeout=5)
             self.session = session
@@ -52,8 +67,7 @@ class MCPClient:
             raise RuntimeError(f"Server {self.name} not initialized")
         try:
             tools_response = await self.session.list_tools()
-        except McpError as e:
-            log.error(f"Error listing tools for {self.name}: {e}")
+        except McpError:
             return []
 
         # Let's just ignore pagination for now
@@ -73,8 +87,7 @@ class MCPClient:
 
         try:
             prompts_response = await self.session.list_prompts()
-        except McpError as e:
-            log.error(f"Error listing prompts for {self.name}: {e}")
+        except McpError:
             return []
 
         for prompt in prompts_response.prompts:
