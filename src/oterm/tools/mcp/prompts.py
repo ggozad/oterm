@@ -4,6 +4,9 @@ from ollama import Message
 from textual import log
 
 from oterm.tools.mcp.client import MCPClient
+from oterm.types import PromptCall
+
+avail_prompt_defs: list[PromptCall] = []
 
 
 class MCPPromptCallable:

@@ -22,7 +22,7 @@ from oterm.ollamaclient import (
     parse_format,
     parse_ollama_parameters,
 )
-from oterm.tools import available as available_tool_defs
+from oterm.tools import avail_tool_defs as available_tool_defs
 from oterm.types import Tool
 
 

@@ -7,18 +7,20 @@
 # ]
 # ///
 
-from textual.app import App, ComposeResult
-from textual.binding import Binding
-from textual.containers import Vertical
+from typing import Iterable
 
 from oterm.app.css import tcss
+from oterm.app.mcp_prompt import MCPPrompt
 from oterm.app.widgets.chat import ChatContainer
 from oterm.store.store import Store
-from oterm.tools.mcp import setup_mcp_servers, teardown_mcp_servers
+from oterm.tools.mcp.setup import setup_mcp_servers, teardown_mcp_servers
+from textual.app import App, ComposeResult, SystemCommand
+from textual.binding import Binding
+from textual.containers import Vertical
+from textual.screen import Screen
 
 db_id = {{db_id}}
 name = "{{name}}"
-
 
 class InlineApp(App):
     CSS = tcss
@@ -28,12 +30,24 @@ class InlineApp(App):
     ]
 
     async def load_mcp(self):
-        from oterm.tools import available
-        from oterm.tools.mcp import mcp_prompts
+        from oterm.tools import avail_tool_defs
+        from oterm.tools.mcp.prompts import avail_prompt_defs
 
-        mcp_tool_defs, prompts = await setup_mcp_servers()
-        available += mcp_tool_defs
-        mcp_prompts += prompts
+        mcp_tool_calls, mcp_prompt_calls = await setup_mcp_servers()
+        avail_tool_defs += mcp_tool_calls
+        avail_prompt_defs += mcp_prompt_calls
+
+    def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
+        yield from super().get_system_commands(screen)
+        yield SystemCommand(
+            "Use MCP prompt",
+            "Create and copy to clipboard an MCP prompt.",
+            self.action_mcp_prompt,
+        )
+
+    async def action_mcp_prompt(self) -> None:
+        screen = MCPPrompt()
+        self.push_screen(screen)
 
     async def action_quit(self) -> None:
         self.log("Quitting...")

@@ -16,7 +16,7 @@ from oterm.app.splash import splash
 from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
 from oterm.store.store import Store
-from oterm.tools.mcp import setup_mcp_servers, teardown_mcp_servers
+from oterm.tools.mcp.setup import setup_mcp_servers, teardown_mcp_servers
 from oterm.utils import is_up_to_date
 
 
@@ -187,12 +187,12 @@ class OTerm(App):
         self.push_screen(screen)
 
     async def load_mcp(self):
-        from oterm.tools import available
-        from oterm.tools.mcp import mcp_prompts
+        from oterm.tools import avail_tool_defs
+        from oterm.tools.mcp.prompts import avail_prompt_defs
 
-        mcp_tool_defs, prompts = await setup_mcp_servers()
-        available += mcp_tool_defs
-        mcp_prompts += prompts
+        mcp_tool_calls, mcp_prompt_calls = await setup_mcp_servers()
+        avail_tool_defs += mcp_tool_calls
+        avail_prompt_defs += mcp_prompt_calls
 
     async def on_mount(self) -> None:
         store = await Store.get_store()

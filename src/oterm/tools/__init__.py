@@ -4,10 +4,10 @@ from typing import Awaitable, Callable, Sequence
 from ollama._types import Tool
 
 from oterm.config import appConfig
-from oterm.types import ExternalToolDefinition, ToolDefinition
+from oterm.types import ExternalToolDefinition, ToolCall
 
 
-def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolDefinition]:
+def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolCall]:
     tools = []
     for tool_def in tool_defs:
         tool_path = tool_def["tool"]
@@ -35,8 +35,8 @@ def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolDefi
     return tools
 
 
-available: list[ToolDefinition] = []
+avail_tool_defs: list[ToolCall] = []
 
 external_tools = appConfig.get("tools")
 if external_tools:
-    available.extend(load_tools(external_tools))
+    avail_tool_defs.extend(load_tools(external_tools))

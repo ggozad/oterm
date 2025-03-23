@@ -25,7 +25,7 @@ from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
-from oterm.tools import available as available_tool_defs
+from oterm.tools import avail_tool_defs as available_tool_defs
 from oterm.types import Author, Tool
 from oterm.utils import parse_response
 
