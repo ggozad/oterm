@@ -1,3 +1,6 @@
+import inspect
+from typing import Awaitable, Callable
+
 from mcp.types import Prompt
 from textual import on
 from textual.app import ComposeResult, RenderResult
@@ -12,7 +15,8 @@ from textual.widget import Widget
 from textual.widgets import Button, Input, Label, OptionList, TextArea
 from textual.widgets.option_list import Option
 
-from oterm.tools.mcp.prompts import avail_prompt_defs
+from oterm.tools.mcp.prompts import avail_prompt_defs, mcp_prompt_to_ollama_messages
+from oterm.utils import debounce
 
 
 class PromptOptionWidget(Widget):
@@ -26,11 +30,24 @@ class PromptOptionWidget(Widget):
 
 class PromptFormWidget(Widget):
     prompt: Prompt
+    callable: Callable | Awaitable
 
     @on(Input.Changed)
+    @debounce(1.0)
     async def on_text_area_change(self, ev: Input.Changed):
-        arg_name = (ev.input.id or "").split("arg-")[1]
-        print(arg_name, ev.input.value)
+        params = {}
+        for arg in self.prompt.arguments or []:
+            params[arg.name] = self.query_one(f"#arg-{arg.name}", Input).value
+
+        prompt_result_widget = self.query_one("#prompt-result", TextArea)
+        if inspect.iscoroutinefunction(self.callable):
+            result = await self.callable(**params)
+        else:
+            result = self.callable(**params)  # type: ignore
+        result = mcp_prompt_to_ollama_messages(result)
+        prompt_result_widget.text = "\n".join(
+            [f"{m.role}: {m.content}" for m in result]
+        )
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(id="prompt-form"):
@@ -75,6 +92,7 @@ class MCPPrompt(ModalScreen[str]):
         form_container.remove_children()
         widget = PromptFormWidget()
         widget.prompt = prompt
+        widget.callable = prompt_call["callable"]
         form_container.mount(widget)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
