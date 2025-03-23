@@ -2,11 +2,11 @@ import asyncio
 from contextlib import AsyncExitStack
 from typing import Any
 
-from mcp import ClientSession, McpError, StdioServerParameters
+from mcp import ClientSession, GetPromptResult, McpError, StdioServerParameters
 from mcp import Tool as MCPTool
 from mcp.client.session import LoggingFnT
 from mcp.client.stdio import stdio_client
-from mcp.types import LoggingMessageNotificationParams, Prompt
+from mcp.types import CallToolResult, LoggingMessageNotificationParams, Prompt
 from textual import log
 
 
@@ -99,7 +99,7 @@ class MCPClient:
         self,
         tool_name: str,
         arguments: dict[str, Any],
-    ) -> Any:
+    ) -> CallToolResult:
         """Execute a tool
 
         Args:
@@ -120,7 +120,28 @@ class MCPClient:
             result = await self.session.call_tool(tool_name, arguments)
             return result
         except Exception as e:
-            log.warning(f"Error executing tool: {e}.")
+            log.error(f"Error executing tool: {e}.")
+            return CallToolResult(isError=True, content=[])
+
+    async def call_prompt(
+        self,
+        prompt_name: str,
+        arguments: dict[str, str],
+    ) -> GetPromptResult:
+        """Execute a prompt
+
+        Args:
+            prompt_name: Name of the prompt
+            arguments: Prompt arguments.
+        """
+
+        if not self.session:
+            raise RuntimeError(f"Server {self.name} not initialized")
+        try:
+            return await self.session.get_prompt(prompt_name, arguments)
+        except Exception as e:
+            log.error(f"Error getting prompt: {e}.")
+            return GetPromptResult(messages=[])
 
     async def cleanup(self) -> None:
         """Clean up server resources."""

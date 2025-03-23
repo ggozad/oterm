@@ -93,7 +93,6 @@ class OllamaLLM:
         if tool_calls:
             tool_messages = [message]
             for tool_call in tool_calls:
-
                 tool_name = tool_call["function"]["name"]
                 for tool_def in self.tool_defs:
                     log.debug("Calling tool: %s", tool_name)
@@ -131,7 +130,6 @@ class OllamaLLM:
         additional_options: Options = Options(),
         tool_defs: Sequence[ToolDefinition] = [],
     ) -> AsyncGenerator[str, Any]:
-
         # stream() should not be called with tools till Ollama supports streaming with tools.
         # See https://github.com/ollama/ollama-python/issues/279
         if tool_defs:

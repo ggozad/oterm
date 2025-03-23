@@ -28,7 +28,7 @@ def llama_image() -> bytes:
 def mcp_server_config() -> dict:
     mcp_server_executable = Path(__file__).parent / "tools" / "mcp_servers.py"
     return {
-        "oracle": {
+        "test_server": {
             "command": "mcp",
             "args": ["run", mcp_server_executable.absolute().as_posix()],
         }

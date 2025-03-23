@@ -1,7 +1,7 @@
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.fastmcp.prompts.base import AssistantMessage, Message, UserMessage
 
-mcp = FastMCP("Oracle")
+mcp = FastMCP("TestServer")
 
 
 @mcp.resource("config://app")
@@ -19,8 +19,8 @@ async def oracle_prompt(question: str) -> str:
     return f"Oracle: {question}"
 
 
-@mcp.prompt()
-def debug_error(error: str) -> list[Message]:
+@mcp.prompt(name="Debug error", description="Prompt to debug an error.")
+async def debug_error(error: str) -> list[Message]:
     return [
         UserMessage(f"I'm seeing this error: {error}"),
         AssistantMessage("I'll help debug that. What have you tried so far?"),
