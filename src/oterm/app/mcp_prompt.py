@@ -5,10 +5,11 @@ from textual.containers import (
     Container,
     Horizontal,
     Vertical,
+    VerticalScroll,
 )
 from textual.screen import ModalScreen
 from textual.widget import Widget
-from textual.widgets import Button, Label, Markdown, OptionList, TextArea
+from textual.widgets import Button, Input, Label, OptionList, TextArea
 from textual.widgets.option_list import Option
 
 from oterm.tools.mcp import mcp_prompts
@@ -26,20 +27,18 @@ class PromptOptionWidget(Widget):
 class PromptFormWidget(Widget):
     prompt: Prompt
 
-    @on(TextArea.Changed)
-    async def on_text_area_change(self, ev: TextArea.Changed):
-        arg_name = (ev.text_area.id or "").split("arg-")[1]
-        print(arg_name)
+    @on(Input.Changed)
+    async def on_text_area_change(self, ev: Input.Changed):
+        arg_name = (ev.input.id or "").split("arg-")[1]
+        print(arg_name, ev.input.value)
 
     def compose(self) -> ComposeResult:
-        yield Label(self.prompt.name)
-        yield Label(self.prompt.description or "")
-        with Vertical(id="prompt-form"):
+        with VerticalScroll(id="prompt-form"):
             for arg in self.prompt.arguments or []:
-                yield Label(arg.name, classes="subtitle")
-                yield Label(arg.description or "", classes="subtitle")
-                yield TextArea(id=f"arg-{arg.name}")
-        yield Markdown(id="prompt-result")
+                yield Label(arg.name, classes="title")
+                yield Input(id=f"arg-{arg.name}", tooltip=arg.description)
+            yield Label("Result:", classes="subtitle")
+            yield TextArea(id="prompt-result", read_only=True)
 
 
 class MCPPrompt(ModalScreen[str]):

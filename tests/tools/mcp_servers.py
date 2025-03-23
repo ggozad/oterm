@@ -20,7 +20,7 @@ async def oracle_prompt(question: str) -> str:
 
 
 @mcp.prompt(name="Debug error", description="Prompt to debug an error.")
-async def debug_error(error: str) -> list[Message]:
+async def debug_error(error: str, language: str = "python") -> list[Message]:
     return [
         UserMessage(f"I'm seeing this error: {error}"),
         AssistantMessage("I'll help debug that. What have you tried so far?"),

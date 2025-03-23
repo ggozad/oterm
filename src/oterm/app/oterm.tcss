@@ -198,6 +198,22 @@ Label.keep-alive-label {
     width: 60;
 }
 
+#prompt-form {
+    height: 100%;
+}
+
+#prompt-form .title, .subtitle {
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
+#prompt-result {
+    height: auto;
+    padding: 1;
+    margin-top: 1;
+    margin-bottom: 1;
+}
+
 TabbedContent {
     padding-top: 2;
     layer: below;

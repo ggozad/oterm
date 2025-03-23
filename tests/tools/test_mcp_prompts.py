@@ -63,10 +63,14 @@ async def test_mcp_multiple_messages_prompt(mcp_server_config):
     assert debug_prompt.name == "Debug error"
     assert debug_prompt.description == "Prompt to debug an error."
     args = debug_prompt.arguments or []
-    assert len(args) == 1
+    assert len(args) == 2
     arg = args[0]
     assert arg.name == "error"
     assert arg.required
+
+    arg = args[1]
+    assert arg.name == "language"
+    assert arg.required == False  # noqa
 
     mcpPromptCallable = MCPPromptCallable(debug_prompt.name, "test_server", client)
     res = await mcpPromptCallable.call(error="Assertion error")
