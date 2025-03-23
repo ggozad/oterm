@@ -1,9 +1,10 @@
 import pytest
 from mcp import StdioServerParameters
 from mcp.types import Prompt, PromptMessage, TextContent
+from ollama import Message
 
 from oterm.tools.mcp.client import MCPClient
-from oterm.tools.mcp.prompts import MCPPromptCallable
+from oterm.tools.mcp.prompts import MCPPromptCallable, mcp_prompt_to_ollama_messages
 
 
 @pytest.mark.asyncio
@@ -38,6 +39,10 @@ async def test_mcp_simple_string_prompt(mcp_server_config):
                 annotations=None,
             ),
         ),
+    ]
+
+    assert mcp_prompt_to_ollama_messages(res) == [
+        Message(role="user", content="Oracle: What is the best client for Ollama?")
     ]
 
     await client.cleanup()
@@ -82,6 +87,14 @@ async def test_mcp_multiple_messages_prompt(mcp_server_config):
                 text="I'll help debug that. What have you tried so far?",
                 annotations=None,
             ),
+        ),
+    ]
+
+    assert mcp_prompt_to_ollama_messages(res) == [
+        Message(role="user", content="I'm seeing this error: Assertion error"),
+        Message(
+            role="assistant",
+            content="I'll help debug that. What have you tried so far?",
         ),
     ]
 
