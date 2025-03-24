@@ -198,11 +198,11 @@ Label.keep-alive-label {
     width: 60;
 }
 
-#prompt-form {
+#prompt-form-container {
     height: 100%;
 }
 
-#prompt-form .title, .subtitle {
+#prompt-form-container .title, .subtitle {
     margin-top: 1;
     margin-bottom: 1;
 }

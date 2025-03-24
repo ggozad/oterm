@@ -10,7 +10,6 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_export import ChatExport, slugify
-from oterm.app.mcp_prompt import MCPPrompt
 from oterm.app.pull_model import PullModel
 from oterm.app.splash import splash
 from oterm.app.widgets.chat import ChatContainer
@@ -174,8 +173,11 @@ class OTerm(App):
         await chat.action_regenerate_llm_message()
 
     async def action_mcp_prompt(self) -> None:
-        screen = MCPPrompt()
-        self.push_screen(screen)
+        tabs = self.query_one(TabbedContent)
+        if tabs.active_pane is None:
+            return
+        chat = tabs.active_pane.query_one(ChatContainer)
+        chat.action_mcp_prompt()
 
     async def action_pull_model(self) -> None:
         tabs = self.query_one(TabbedContent)

@@ -1,7 +1,9 @@
 import inspect
+import json
 from typing import Awaitable, Callable
 
 from mcp.types import Prompt
+from ollama import Message
 from textual import on
 from textual.app import ComposeResult, RenderResult
 from textual.containers import (
@@ -31,6 +33,7 @@ class PromptOptionWidget(Widget):
 class PromptFormWidget(Widget):
     prompt: Prompt
     callable: Callable | Awaitable
+    messages: list[Message] = []
 
     @on(Input.Changed)
     @debounce(1.0)
@@ -41,16 +44,16 @@ class PromptFormWidget(Widget):
 
         prompt_result_widget = self.query_one("#prompt-result", TextArea)
         if inspect.iscoroutinefunction(self.callable):
-            result = await self.callable(**params)
+            messages = await self.callable(**params)
         else:
-            result = self.callable(**params)  # type: ignore
-        result = mcp_prompt_to_ollama_messages(result)
+            messages = self.callable(**params)  # type: ignore
+        self.messages = messages = mcp_prompt_to_ollama_messages(messages)
         prompt_result_widget.text = "\n".join(
-            [f"{m.role}: {m.content}" for m in result]
+            [f"{m.role}: {m.content}" for m in messages]
         )
 
     def compose(self) -> ComposeResult:
-        with VerticalScroll(id="prompt-form"):
+        with VerticalScroll(id="prompt-form-container"):
             for arg in self.prompt.arguments or []:
                 yield Label(arg.name, classes="title")
                 yield Input(id=f"arg-{arg.name}", tooltip=arg.description)
@@ -61,14 +64,11 @@ class PromptFormWidget(Widget):
 class MCPPrompt(ModalScreen[str]):
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
-        ("enter", "copy", "Copy"),
+        ("enter", "submit", "Submit"),
     ]
 
     def action_cancel(self) -> None:
         self.dismiss()
-
-    def action_copy(self) -> None:
-        pass
 
     async def on_mount(self) -> None:
         option_list = self.query_one("#mcp-prompt-select", OptionList)
@@ -88,16 +88,18 @@ class MCPPrompt(ModalScreen[str]):
             if prompt.name == option.option.id:
                 break
 
-        form_container = self.query_one("#prompt-form", Vertical)
+        form_container = self.query_one("#prompt-form-container", Vertical)
         form_container.remove_children()
-        widget = PromptFormWidget()
+        widget = PromptFormWidget(classes="prompt-form")
         widget.prompt = prompt
         widget.callable = prompt_call["callable"]
         form_container.mount(widget)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
-        if event.button.name == "copy":
-            pass
+        if event.button.name == "submit":
+            form = self.query_one(".prompt-form", PromptFormWidget)
+            jsn = json.dumps([m.model_dump() for m in form.messages])
+            self.dismiss(jsn)
         else:
             self.dismiss()
 
@@ -110,13 +112,11 @@ class MCPPrompt(ModalScreen[str]):
 
                 with Vertical():
                     yield Label("Customize prompt:", classes="title")
-                    yield Vertical(id="prompt-form")
+                    yield Vertical(id="prompt-form-container")
             with Horizontal(classes="button-container"):
                 yield Button(
-                    "Copy",
-                    id="copy-btn",
-                    name="copy",
-                    disabled=True,
+                    "Submit",
+                    name="submit",
                     variant="primary",
                 )
                 yield Button("Cancel", name="cancel")
