@@ -6,6 +6,7 @@ the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
 
 * intuitive and simple terminal UI, no need to run servers, frontends, just type `oterm` in your terminal.
 * multiple persistent chat sessions, stored together with system prompt & parameter customizations in sqlite.
+* support for Model Context Protocol (MCP) tools & prompts integration.
 * can use any of the models you have pulled in Ollama, or your own custom models.
 * allows for easy customization of the model's system prompt and parameters.
 * supports tools integration for providing external information to the model.
@@ -22,10 +23,9 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 [oterm Documentation](https://ggozad.github.io/oterm/)
 
 ## What's new
-
+* Support for Model Context Protocol (MCP) prompts!
 * Create custom commands that can be run from the terminal using oterm. Each of these commands is a chat, customized to your liking and connected to the tools of your choice.
-* Support for Model Context Protocol (MCP) tools. You can now use any of the MCP tools to provide external information to the model.
-* Support for the `<thinking/>` tag in reasoning models.
+* Support for Model Context Protocol (MCP) tools.
 
 ### Screenshots
 ![Splash](https://raw.githubusercontent.com/ggozad/oterm/refs/heads/main/docs/img/splash.gif)
