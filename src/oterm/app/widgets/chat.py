@@ -381,6 +381,8 @@ class ChatContainer(Widget):
     async def action_mcp_prompt(self) -> None:
         screen = MCPPrompt()
         messages = await self.app.push_screen_wait(screen)
+        if messages is None:
+            return
         messages = [Message(**msg) for msg in json.loads(messages)]
         message_container = self.query_one("#messageContainer")
         store = await Store.get_store()

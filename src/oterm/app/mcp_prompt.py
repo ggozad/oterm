@@ -38,10 +38,12 @@ class PromptFormWidget(Widget):
     @on(Input.Changed)
     @debounce(1.0)
     async def on_text_area_change(self, ev: Input.Changed):
+        is_valid = True
         params = {}
         for arg in self.prompt.arguments or []:
             params[arg.name] = self.query_one(f"#arg-{arg.name}", Input).value
-
+            if arg.required and not params[arg.name]:
+                is_valid = False
         prompt_result_widget = self.query_one("#prompt-result", TextArea)
         if inspect.iscoroutinefunction(self.callable):
             messages = await self.callable(**params)
@@ -51,13 +53,17 @@ class PromptFormWidget(Widget):
         prompt_result_widget.text = "\n".join(
             [f"{m.role}: {m.content}" for m in messages]
         )
+        submit_button = self.screen.query_one("#submit", Button)
+        submit_button.disabled = not is_valid
 
     def compose(self) -> ComposeResult:
         with VerticalScroll(id="prompt-form-container"):
             for arg in self.prompt.arguments or []:
-                yield Label(arg.name, classes="title")
+                yield Label(
+                    f"{arg.name}{arg.required and ' (required)' or ''}", classes="title"
+                )
                 yield Input(id=f"arg-{arg.name}", tooltip=arg.description)
-            yield Label("Result:", classes="subtitle")
+            yield Label("Messages:", classes="subtitle")
             yield TextArea(id="prompt-result", read_only=True)
 
 
@@ -116,7 +122,9 @@ class MCPPrompt(ModalScreen[str]):
             with Horizontal(classes="button-container"):
                 yield Button(
                     "Submit",
+                    id="submit",
                     name="submit",
                     variant="primary",
+                    disabled=True,
                 )
                 yield Button("Cancel", name="cancel")
