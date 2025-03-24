@@ -22,7 +22,7 @@ from oterm.ollamaclient import (
     parse_format,
     parse_ollama_parameters,
 )
-from oterm.tools import available as available_tool_defs
+from oterm.tools import avail_tool_defs as available_tool_defs
 from oterm.types import Tool
 
 
@@ -139,7 +139,7 @@ class ChatEdit(ModalScreen[str]):
         option_list = self.query_one("#model-select", OptionList)
         option_list.clear_options()
         for model in models:
-            option_list.add_option(item=self.model_option(model))
+            option_list.add_option(option=self.model_option(model))
         option_list.highlighted = self.last_highlighted_index
         if self.model_name and self.tag:
             self.select_model(f"{self.model_name}:{self.tag}")
@@ -217,7 +217,7 @@ class ChatEdit(ModalScreen[str]):
         return Text(model)
 
     def compose(self) -> ComposeResult:
-        with Container(id="edit-chat-container"):
+        with Container(classes="screen-container full-height"):
             with Horizontal():
                 with Vertical():
                     with Horizontal(id="model-info"):

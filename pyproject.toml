@@ -20,7 +20,7 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "textual>=1.0.0,<1.1",
+    "textual>=2.1.2,<2.2",
     "typer>=0.15.1,<0.16",
     "python-dotenv>=1.0.1",
     "aiosql>=13.2,<14",
@@ -31,7 +31,7 @@ dependencies = [
     "ollama>=0.4.7,<0.5",
     "textualeffects>=0.1.3",
     "pydantic>=2.10.1,<2.11",
-    "mcp[cli]>=1.3.0",
+    "mcp[cli]>=1.5.0,<1.6",
     "jinja2>=3.1.5",
 ]
 
@@ -47,7 +47,7 @@ oterm-command = "oterm.cli.command:cli"
 
 [tool.uv]
 dev-dependencies = [
-    "ruff>=0.9.4",
+    "ruff>=0.11.0",
     "pdbpp",
     "pytest>=8.3.4",
     "pytest-asyncio>=0.25.3",

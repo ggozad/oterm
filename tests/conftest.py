@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 
 import ollama
 import pytest
@@ -21,3 +22,14 @@ def llama_image() -> bytes:
     image = Image.open("tests/data/lama.jpg")
     image.save(buffered, format="JPEG")
     return buffered.getvalue()
+
+
+@pytest.fixture(scope="session")
+def mcp_server_config() -> dict:
+    mcp_server_executable = Path(__file__).parent / "tools" / "mcp_servers.py"
+    return {
+        "test_server": {
+            "command": "mcp",
+            "args": ["run", mcp_server_executable.absolute().as_posix()],
+        }
+    }

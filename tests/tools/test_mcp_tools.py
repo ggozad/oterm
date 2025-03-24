@@ -1,30 +1,23 @@
-from pathlib import Path
-
 import pytest
 from mcp import StdioServerParameters
+from mcp.types import Tool as MCPTool
 
 from oterm.ollamaclient import OllamaLLM
-from oterm.tools.mcp import MCPClient, MCPToolCallable
+from oterm.tools.mcp.client import MCPClient
+from oterm.tools.mcp.tools import MCPToolCallable
 from oterm.types import Tool
-
-mcp_server_executable = Path(__file__).parent / "mcp_servers.py"
-
-server_config = {
-    "oracle": {
-        "command": "mcp",
-        "args": ["run", str(mcp_server_executable.absolute())],
-    }
-}
 
 
 @pytest.mark.asyncio
-async def test_mcp():
+async def test_mcp(mcp_server_config):
     client = MCPClient(
-        "oracle",
-        StdioServerParameters.model_validate(server_config["oracle"]),
+        "test_server",
+        StdioServerParameters.model_validate(mcp_server_config["test_server"]),
     )
     await client.initialize()
     tools = await client.get_available_tools()
+    for tool in tools:
+        assert MCPTool.model_validate(tool)
 
     tool = tools[0]
     oterm_tool = Tool(
@@ -35,7 +28,7 @@ async def test_mcp():
         ),
     )
 
-    mcpToolCallable = MCPToolCallable(tool.name, "oracle", client)
+    mcpToolCallable = MCPToolCallable(tool.name, "test_server", client)
     llm = OllamaLLM(
         tool_defs=[{"tool": oterm_tool, "callable": mcpToolCallable.call}],
     )

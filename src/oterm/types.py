@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Awaitable, Callable, TypedDict
 
+from mcp.types import Prompt
 from ollama._types import Image, Tool  # noqa
 
 
@@ -15,8 +16,13 @@ class ParsedResponse(TypedDict):
     formatted_output: str
 
 
-class ToolDefinition(TypedDict):
+class ToolCall(TypedDict):
     tool: Tool
+    callable: Callable | Awaitable
+
+
+class PromptCall(TypedDict):
+    prompt: Prompt
     callable: Callable | Awaitable
 
 

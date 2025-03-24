@@ -1,11 +1,50 @@
+import asyncio
 import sys
+from functools import wraps
 from importlib import metadata
 from pathlib import Path
+from typing import Callable
 
 import httpx
 from packaging.version import Version, parse
 
 from oterm.types import ParsedResponse
+
+
+def debounce(wait: float) -> Callable:
+    """
+    A decorator to debounce a function, ensuring it is called only after a specified delay
+    and always executes after the last call.
+
+    Args:
+        wait (float): The debounce delay in seconds.
+
+    Returns:
+        Callable: The decorated function.
+    """
+
+    def decorator(func: Callable) -> Callable:
+        last_call = None
+        task = None
+
+        @wraps(func)
+        async def debounced(*args, **kwargs):
+            nonlocal last_call, task
+            last_call = asyncio.get_event_loop().time()
+
+            if task:
+                task.cancel()
+
+            async def call_func():
+                await asyncio.sleep(wait)
+                if asyncio.get_event_loop().time() - last_call >= wait:
+                    await func(*args, **kwargs)
+
+            task = asyncio.create_task(call_func())
+
+        return debounced
+
+    return decorator
 
 
 def parse_response(input_text: str) -> ParsedResponse:

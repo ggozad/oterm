@@ -20,12 +20,13 @@ from textual.widgets import (
 
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_rename import ChatRename
+from oterm.app.mcp_prompt import MCPPrompt
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
-from oterm.tools import available as available_tool_defs
+from oterm.tools import avail_tool_defs as available_tool_defs
 from oterm.types import Author, Tool
 from oterm.utils import parse_response
 
@@ -124,99 +125,98 @@ class ChatContainer(Widget):
         self.loading = False
         self.loaded = True
 
+    async def response_task(self, message: str) -> None:
+        message_container = self.query_one("#messageContainer")
+
+        user_chat_item = ChatItem()
+        user_chat_item.text = message
+        user_chat_item.author = Author.USER
+        message_container.mount(user_chat_item)
+
+        response_chat_item = ChatItem()
+        response_chat_item.author = Author.OLLAMA
+        message_container.mount(response_chat_item)
+        loading = LoadingIndicator()
+        await message_container.mount(loading)
+        message_container.scroll_end()
+
+        try:
+            response = ""
+
+            # Ollama does not support streaming with tools, so we need to use completion
+            if self.tools:
+                response = await self.ollama.completion(
+                    prompt=message, images=[img for _, img in self.images]
+                )
+                response_chat_item.text = response
+
+            else:
+                async for text in self.ollama.stream(
+                    message, [img for _, img in self.images]
+                ):
+                    response = text
+                    response_chat_item.text = text
+
+            # Parse the response for special tags
+            parsed = parse_response(response)
+
+            # To not exhaust the tokens, remove the thought process from the history (it seems to be the common practice)
+            self.ollama.history[-1].content = parsed["response"]
+
+            # Update the text according to the new formatted response.
+            response_chat_item.text = parsed["formatted_output"]
+
+            if message_container.can_view_partial(response_chat_item):
+                message_container.scroll_end()
+
+            # Save to db
+            store = await Store.get_store()
+            id = await store.save_message(
+                id=None,
+                chat_id=self.db_id,
+                author=Author.USER.value,
+                text=message,
+                images=[img for _, img in self.images],
+            )
+            self.messages.append(
+                (id, Author.USER, message, [img for _, img in self.images])
+            )
+
+            id = await store.save_message(
+                id=None,
+                chat_id=self.db_id,
+                author=Author.OLLAMA.value,
+                text=response,
+            )
+            self.messages.append((id, Author.OLLAMA, response, []))
+            self.images = []
+
+        except asyncio.CancelledError:
+            user_chat_item.remove()
+            response_chat_item.remove()
+            input.text = message
+        except ResponseError as e:
+            user_chat_item.remove()
+            response_chat_item.remove()
+            self.app.notify(
+                f"There was an error running your request: {e}", severity="error"
+            )
+            message_container.scroll_end()
+
+        finally:
+            loading.remove()
+
     @on(FlexibleInput.Submitted)
     async def on_submit(self, event: FlexibleInput.Submitted) -> None:
         message = event.value
         input = event.input
-        message_container = self.query_one("#messageContainer")
 
+        input.clear()
         if not message.strip():
-            input.clear()
             input.focus()
             return
 
-        async def response_task() -> None:
-            input.clear()
-            user_chat_item = ChatItem()
-            user_chat_item.text = message
-            user_chat_item.author = Author.USER
-            message_container.mount(user_chat_item)
-
-            response_chat_item = ChatItem()
-            response_chat_item.author = Author.OLLAMA
-            message_container.mount(response_chat_item)
-            loading = LoadingIndicator()
-            await message_container.mount(loading)
-            message_container.scroll_end()
-
-            try:
-                response = ""
-
-                # Ollama does not support streaming with tools, so we need to use completion
-                if self.tools:
-                    response = await self.ollama.completion(
-                        prompt=message, images=[img for _, img in self.images]
-                    )
-                    response_chat_item.text = response
-
-                else:
-                    async for text in self.ollama.stream(
-                        message, [img for _, img in self.images]
-                    ):
-                        response = text
-                        response_chat_item.text = text
-
-                # Parse the response for special tags
-                parsed = parse_response(response)
-
-                # To not exhaust the tokens, remove the thought process from the history (it seems to be the common practice)
-                self.ollama.history[-1].content = parsed["response"]
-
-                # Update the text according to the new formatted response.
-                response_chat_item.text = parsed["formatted_output"]
-
-                if message_container.can_view_partial(response_chat_item):
-                    message_container.scroll_end()
-
-                # Save to db
-                store = await Store.get_store()
-                id = await store.save_message(
-                    id=None,
-                    chat_id=self.db_id,
-                    author=Author.USER.value,
-                    text=message,
-                    images=[img for _, img in self.images],
-                )
-                self.messages.append(
-                    (id, Author.USER, message, [img for _, img in self.images])
-                )
-
-                id = await store.save_message(
-                    id=None,
-                    chat_id=self.db_id,
-                    author=Author.OLLAMA.value,
-                    text=response,
-                )
-                self.messages.append((id, Author.OLLAMA, response, []))
-                self.images = []
-
-            except asyncio.CancelledError:
-                user_chat_item.remove()
-                response_chat_item.remove()
-                input.text = message
-            except ResponseError as e:
-                user_chat_item.remove()
-                response_chat_item.remove()
-                self.app.notify(
-                    f"There was an error running your request: {e}", severity="error"
-                )
-                message_container.scroll_end()
-
-            finally:
-                loading.remove()
-                input.focus()
-
-        self.inference_task = asyncio.create_task(response_task())
+        self.inference_task = asyncio.create_task(self.response_task(message))
 
     def key_escape(self) -> None:
         if hasattr(self, "inference_task"):
@@ -376,6 +376,38 @@ class ChatContainer(Widget):
         prompts.reverse()
         screen = PromptHistory(prompts)
         self.app.push_screen(screen, on_history_selected)
+
+    @work
+    async def action_mcp_prompt(self) -> None:
+        screen = MCPPrompt()
+        messages = await self.app.push_screen_wait(screen)
+        if messages is None:
+            return
+        messages = [Message(**msg) for msg in json.loads(messages)]
+        message_container = self.query_one("#messageContainer")
+        store = await Store.get_store()
+
+        last_user_message = None
+        if messages[-1].role == "user":
+            last_user_message = messages.pop()
+
+        for message in messages:
+            author = message.role == "user" and Author.USER or Author.OLLAMA
+            text = message.content or ""
+            id = await store.save_message(
+                id=None,
+                chat_id=self.db_id,
+                author=author.value,
+                text=text,
+            )
+            self.messages.append((id, author, text, []))
+            chat_item = ChatItem()
+            chat_item.text = text
+            chat_item.author = author
+            await message_container.mount(chat_item)
+        message_container.scroll_end()
+        if last_user_message is not None and last_user_message.content:
+            await self.response_task(last_user_message.content)
 
     @on(ImageAdded)
     def on_image_added(self, ev: ImageAdded) -> None:
