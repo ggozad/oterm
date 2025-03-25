@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.9.5 - 
+0.9.5 - 2025-03-25
 ------------------
 
 - When creating a command, pin the current version of oterm as a dependency.
