@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.9.5 - 
+------------------
+
+- When creating a command, pin the current version of oterm as a dependency.
+  [ggozad]
+
 0.9.4 - 2025-03-25
 ------------------
 
