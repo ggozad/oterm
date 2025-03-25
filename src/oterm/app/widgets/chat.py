@@ -194,6 +194,7 @@ class ChatContainer(Widget):
         except asyncio.CancelledError:
             user_chat_item.remove()
             response_chat_item.remove()
+            input = self.query_one("#prompt", FlexibleInput)
             input.text = message
         except ResponseError as e:
             user_chat_item.remove()

@@ -1,5 +1,6 @@
 import json
 import stat
+from importlib import metadata
 from pathlib import Path
 from typing import Iterable
 
@@ -59,7 +60,13 @@ class CreateCommandApp(App):
             path = Path.home() / ".local/bin" / self.command_name
             path.parent.mkdir(parents=True, exist_ok=True)
             with open(path, "w") as f:
-                f.write(template.render(db_id=db_id, name=self.command_name))
+                f.write(
+                    template.render(
+                        db_id=db_id,
+                        name=self.command_name,
+                        version=metadata.version("oterm"),
+                    )
+                )
             path.chmod(path.stat().st_mode | stat.S_IEXEC)
             await self.action_quit()
 
