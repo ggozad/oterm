@@ -1,6 +1,6 @@
 [project]
 name = "oterm"
-version = "0.9.3"
+version = "0.9.4"
 description = "A text-based terminal client for Ollama."
 authors = [{ name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }]
 license = { text = "MIT" }
