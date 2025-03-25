@@ -57,27 +57,17 @@ def parse_response(input_text: str) -> ParsedResponse:
     formatted_output = input_text
 
     # If the response contains a think tag, split the response into the thought process and the actual response
-    if input_text.startswith("<think>") and input_text.find("</think>") != -1:
-        thought = (
-            input_text[input_text.find("<think>") + 7 : input_text.find("</think>")]
-            .lstrip("\n")
-            .rstrip("\n")
-            .strip()
-        )
-        response = (
-            input_text[input_text.find("</think>") + 8 :].lstrip("\n").rstrip("\n")
-        )
-
+    thought_end = input_text.find("</think>")
+    if input_text.startswith("<think>") and thought_end != -1:
+        thought = input_text[7:thought_end].lstrip("\n").rstrip("\n").strip()
+        response = input_text[thought_end + 8 :].lstrip("\n").rstrip("\n")
         # transform the think tag into a markdown blockquote (for clarity)
-        if len(thought) == 0:
-            formatted_output = response
-        else:
-            formatted_output = (
-                "> ### \<think\>\n"
-                + "\n".join([f"> {line}" for line in thought.split("\n")])
-                + "\n> ### \</think\>\n"
-                + response
-            )
+        formatted_output = (
+            "> ### \<thought\>\n"  # noqa: W605
+            + "\n".join([f"> {line}" for line in thought.split("\n")])
+            + "\n> ### \</thought\>\n"  # noqa: W605
+            + response
+        )
 
     return ParsedResponse(
         thought=thought, response=response, formatted_output=formatted_output
