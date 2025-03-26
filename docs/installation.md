@@ -16,10 +16,16 @@ brew tap ggozad/formulas
 brew install ggozad/formulas/oterm
 ```
 
-Using `yay` (or any AUR helper) for Arch Linux:
+Using `yay` (or any AUR helper) for Arch Linux, thanks goes to [Daniel Chesters](https://github.com/DanielChesters) for maintaining the package:
 
 ```bash
 yay -S oterm
+```
+
+Using `nix-env` on NixOs, thanks goes to [Gaël James](https://github.com/gaelj) for maintaining the package:
+
+```bash
+nix-env -iA nixpkgs.oterm
 ```
 
 Using `pip`:
