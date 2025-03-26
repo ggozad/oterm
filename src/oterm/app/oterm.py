@@ -16,7 +16,7 @@ from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
 from oterm.store.store import Store
 from oterm.tools.mcp.setup import setup_mcp_servers, teardown_mcp_servers
-from oterm.utils import is_up_to_date
+from oterm.utils import check_ollama, is_up_to_date
 
 
 class OTerm(App):
@@ -215,6 +215,7 @@ class OTerm(App):
         if keymap:
             self.set_keymap(keymap)
 
+        await check_ollama()
         await self.load_mcp()
 
         async def on_splash_done(message) -> None:
