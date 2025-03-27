@@ -63,9 +63,9 @@ def parse_response(input_text: str) -> ParsedResponse:
         response = input_text[thought_end + 8 :].lstrip("\n").rstrip("\n")
         # transform the think tag into a markdown blockquote (for clarity)
         formatted_output = (
-            "> ### \<thought\>\n"  # noqa: W605
+            "> ### <thought\\>\n"
             + "\n".join([f"> {line}" for line in thought.split("\n")])
-            + "\n> ### \</thought\>\n"  # noqa: W605
+            + "\n> ### </thought\\>\n"
             + response
         )
 
