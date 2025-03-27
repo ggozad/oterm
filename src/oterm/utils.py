@@ -165,7 +165,21 @@ async def check_ollama() -> bool:
             from oterm.app.oterm import app
 
             app.notify(
-                "The Ollama server is not reachable, please check your connection or set the OLLAMA_URL environment variable.",
+                f"The Ollama server is not reachable at {envConfig.OLLAMA_URL}, please check your connection or set the OLLAMA_URL environment variable. oterm will now quit.",
                 severity="error",
+                timeout=10,
             )
+
+            async def quit():
+                await asyncio.sleep(10.0)
+                try:
+                    from oterm.tools.mcp.setup import teardown_mcp_servers
+
+                    await teardown_mcp_servers()
+                    exit()
+
+                except Exception:
+                    pass
+
+            asyncio.create_task(quit())
         return up
