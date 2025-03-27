@@ -146,3 +146,40 @@ async def is_up_to_date() -> tuple[bool, Version, Version]:
             # If no network connection, do not raise alarms.
             pypi_version = running_version
     return running_version >= pypi_version, running_version, pypi_version
+
+
+async def check_ollama() -> bool:
+    """
+    Check if the Ollama server is up and running
+    """
+    from oterm.config import envConfig
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(envConfig.OLLAMA_URL)
+            up = response.status_code == 200
+    except httpx.HTTPError:
+        up = False
+    finally:
+        if not up:
+            from oterm.app.oterm import app
+
+            app.notify(
+                f"The Ollama server is not reachable at {envConfig.OLLAMA_URL}, please check your connection or set the OLLAMA_URL environment variable. oterm will now quit.",
+                severity="error",
+                timeout=10,
+            )
+
+            async def quit():
+                await asyncio.sleep(10.0)
+                try:
+                    from oterm.tools.mcp.setup import teardown_mcp_servers
+
+                    await teardown_mcp_servers()
+                    exit()
+
+                except Exception:
+                    pass
+
+            asyncio.create_task(quit())
+        return up
