@@ -905,7 +905,7 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.10.1,<2.11" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "textual", specifier = ">=2.1.2,<2.2" },
-    { name = "textual-image", specifier = ">=0.7.0" },
+    { name = "textual-image", specifier = ">=0.7.0,<0.8.0" },
     { name = "textualeffects", specifier = ">=0.1.3" },
     { name = "typer", specifier = ">=0.15.1,<0.16" },
 ]
