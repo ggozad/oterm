@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.9.6 - 
+------------------
+
+- Enable scrolling with keys within a chat.
+  [ggozad]
+
 0.9.5 - 2025-03-25
 ------------------
 

@@ -7,7 +7,7 @@ from ollama import Message, ResponseError
 from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
@@ -418,7 +418,9 @@ class ChatContainer(Widget):
     def compose(self) -> ComposeResult:
         with Vertical():
             yield Static(f"model: {self.ollama.model}", id="info")
-            yield Vertical(id="messageContainer")
+            yield VerticalScroll(
+                id="messageContainer",
+            )
             yield FlexibleInput("", id="prompt", classes="singleline")
 
 
