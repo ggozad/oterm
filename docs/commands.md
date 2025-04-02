@@ -33,7 +33,7 @@ In multiline mode, you can press <kbd>Enter</kbd> to send the message, or <kbd>S
 While Ollama is inferring the next message, you can press <kbd>Esc</kbd> to cancel the inference.
 
 !!! note
-    Some of the shortcuts may not work in a certain context, if they are overriden by the widget in focus. For example pressing <kbd>↑</kbd> while the prompt is in multi-line mode.
+    Some of the shortcuts may not work in a certain context, if they are overridden by the widget in focus. For example pressing <kbd>↑</kbd> while the prompt is in multi-line mode.
 
     If the key bindings clash with your terminal, it is possible to change them by editing the configuration file. See [Configuration](/oterm/app_config).
 
