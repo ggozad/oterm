@@ -180,8 +180,11 @@ Label.keep-alive-label {
 
 #image-preview{
     width: 70%;
-    overflow-x: auto;
-    overflow-y: auto;
+}
+
+#image-preview #image {
+    width: auto;
+    height: auto;
 }
 
 #image-select-container Input {
