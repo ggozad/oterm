@@ -73,6 +73,7 @@ That's it! You can now use the tool in `oterm` with models that support it.
 
 The following example tools are currently built-in to `oterm`:
 
+* `think` - provides the model with a way to think about a question before answering it. This is useful for complex questions that require reasoning. Use it for adding a "thinking" step to the model's response.
 * `date_time` - provides the current date and time in ISO format.
 * `shell` - allows you to run shell commands and use the output as input to the model. Obviously this can be dangerous, so use with caution.
 
@@ -82,8 +83,8 @@ These tools are defined in `src/oterm/tools`. You can make those tools available
 {
     ...
     "tools": [{
-        "tool": "oterm.tools.shell:ShellTool",
-        "callable": "oterm.tools.shell:shell_command"
+        "tool": "oterm.tools.think:ThinkTool",
+        "callable": "oterm.tools.think:think"
     }]
 }
 ```

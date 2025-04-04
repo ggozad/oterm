@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.10.1 - 
+-------------------
+
+- Add "think" tool allowing models to think before responding.
+  [ggozad]
+- Remove tools that are not that useful.
+  [ggozad]
+
 0.10.0 - 2025-04-02
 -------------------
 
