@@ -1,6 +1,6 @@
 import re
 import unicodedata
-from typing import Sequence
+from collections.abc import Sequence
 
 from textual import on
 from textual.app import ComposeResult

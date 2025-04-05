@@ -1,5 +1,5 @@
 import json
-from typing import Optional, Sequence
+from collections.abc import Sequence
 
 from ollama import Options, ShowResponse
 from pydantic import ValidationError
@@ -30,7 +30,7 @@ class OtermOllamaOptions(Options):
     # Patch stop to allow for a single string.
     # This is an issue with the gemma model which has a single stop parameter.
     # Remove when fixed upstream and close #187
-    stop: Optional[Sequence[str] | str] = None
+    stop: Sequence[str] | str | None = None
 
     class Config:
         extra = "forbid"

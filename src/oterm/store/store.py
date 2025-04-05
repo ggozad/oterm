@@ -12,7 +12,7 @@ from oterm.types import Author, Tool
 from oterm.utils import int_to_semantic_version, semantic_version_to_int
 
 
-class Store(object):
+class Store:
     db_path: Path
 
     _store: "Store | None" = None
@@ -52,7 +52,7 @@ class Store(object):
                         "images"    TEXT DEFAULT "[]",
                         PRIMARY KEY("id" AUTOINCREMENT)
                         FOREIGN KEY("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE
-                    );                           
+                    );
                 """
                 )
                 await self.set_user_version(metadata.version("oterm"))
@@ -97,8 +97,8 @@ class Store(object):
         async with aiosqlite.connect(self.db_path) as connection:
             res = await connection.execute_insert(
                 """
-                INSERT OR REPLACE 
-                INTO chat(id, name, model, system, format, parameters, keep_alive, tools, type) 
+                INSERT OR REPLACE
+                INTO chat(id, name, model, system, format, parameters, keep_alive, tools, type)
                 VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools, :type) RETURNING id;""",
                 {
                     "id": id,
@@ -137,7 +137,7 @@ class Store(object):
             await connection.execute(
                 """
                 UPDATE chat
-                SET name = :name, 
+                SET name = :name,
                     system = :system,
                     format = :format,
                     parameters = :parameters,
@@ -188,8 +188,8 @@ class Store(object):
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await connection.execute_fetchall(
                 """
-                SELECT id, name, model, system, format, parameters, keep_alive, tools, type 
-                FROM chat 
+                SELECT id, name, model, system, format, parameters, keep_alive, tools, type
+                FROM chat
                 WHERE id = :id;
                 """,
                 {"id": id},
@@ -228,8 +228,8 @@ class Store(object):
         async with aiosqlite.connect(self.db_path) as connection:
             res = await connection.execute_insert(
                 """
-                INSERT OR REPLACE 
-                INTO message(id, chat_id, author, text, images) 
+                INSERT OR REPLACE
+                INTO message(id, chat_id, author, text, images)
                 VALUES(:id, :chat_id, :author, :text, :images) RETURNING id;
                 """,
                 {
@@ -246,7 +246,6 @@ class Store(object):
     async def get_messages(
         self, chat_id: int
     ) -> list[tuple[int, Author, str, list[str]]]:
-
         async with aiosqlite.connect(self.db_path) as connection:
             messages = await connection.execute_fetchall(
                 """

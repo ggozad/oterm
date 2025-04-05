@@ -1,5 +1,6 @@
+from collections.abc import Awaitable, Callable
 from enum import Enum
-from typing import Awaitable, Callable, TypedDict
+from typing import TypedDict
 
 from mcp.types import Prompt
 from ollama import Image, Tool  # noqa

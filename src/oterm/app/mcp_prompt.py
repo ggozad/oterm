@@ -1,6 +1,6 @@
 import inspect
 import json
-from typing import Awaitable, Callable
+from collections.abc import Awaitable, Callable
 
 from mcp.types import Prompt
 from ollama import Message

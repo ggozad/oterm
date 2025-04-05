@@ -11,7 +11,6 @@ from oterm.store.store import Store
 cli = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
 
 
-
 async def upgrade_db():
     await Store.get_store()
 

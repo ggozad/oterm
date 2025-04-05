@@ -47,7 +47,7 @@ oterm-command = "oterm.cli.command:cli"
 
 [tool.uv]
 dev-dependencies = [
-    "ruff>=0.11.0",
+    "ruff>=0.11.4",
     "pdbpp",
     "pytest>=8.3.4",
     "pytest-asyncio>=0.25.3",
@@ -55,7 +55,6 @@ dev-dependencies = [
     "homebrew-pypi-poet>=0.10.0",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.5",
-    "pyright>=1.1.398",
     "pre-commit>=4.2.0",
 ]
 
@@ -68,8 +67,12 @@ line-length = 88
 extend-exclude = ["protobufs"]
 
 [tool.ruff.lint]
-# Enable Flake's "E" and "F" codes by default and "I" for sorting imports.
-select = ["E", "F", "I"]
+select = [
+    "E",
+    "F",
+    "UP",
+    "I",
+] # Enable Flake's "E" and "F" codes by default and "I" for sorting imports
 ignore = ["E501"]
 per-file-ignores = { "__init__.py" = ["F401", "F403"] }
 # Allow unused variables when underscore-prefixed.

@@ -1,8 +1,8 @@
 import asyncio
 from pathlib import Path
+from typing import Annotated
 
 import typer
-from typing_extensions import Annotated
 
 from oterm.command.create import app
 from oterm.store.store import Store
@@ -12,7 +12,7 @@ cli = typer.Typer()
 
 @cli.command("create")
 def create(
-    name: Annotated[str, typer.Argument(help="The name of the command to create.")]
+    name: Annotated[str, typer.Argument(help="The name of the command to create.")],
 ):
     app.run(name)
 
@@ -39,7 +39,7 @@ def list_commands():
 
 @cli.command("delete")
 def delete_command(
-    id: Annotated[int, typer.Argument(help="The id of the command to delete.")]
+    id: Annotated[int, typer.Argument(help="The id of the command to delete.")],
 ):
     async def delete_comm():
         store = await Store.get_store()

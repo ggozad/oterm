@@ -1,9 +1,11 @@
 Changelog
 =========
 
-0.10.1 - 
+0.10.1 -
 -------------------
 
+- Add pre-commit hooks and fix linting errors.
+  [ggozad]
 - Add "think" tool allowing models to think before responding.
   [ggozad]
 - Remove tools that are not that useful.
@@ -40,7 +42,7 @@ Changelog
 0.9.2 - 2025-03-25
 ------------------
 
-- Override default Ollama Options() to allow for single string as a stop word. 
+- Override default Ollama Options() to allow for single string as a stop word.
   [ggozad]
 
 - Enable '-h' short-form help option.
@@ -49,7 +51,7 @@ Changelog
 - Fix checking latest version on pypi.
   [ggozad]
 
-0.9.1 - 2025-03-25 
+0.9.1 - 2025-03-25
 ------------------
 - Check with pypi if oterm is up to date.
   [ggozad]
@@ -116,12 +118,12 @@ Changelog
   [ggozad]
 
 - Add a web tool, giving Ollama access to the web.
-  [ggozad] 
+  [ggozad]
 
 0.7.1 - 2025-01-02
 ------------------
 
-- Support for Ollama's structured output. 
+- Support for Ollama's structured output.
   Use the `format` parameter to specify the output format as a JSON schema.
 
 - Ability to clear a chat, removing all messages.
@@ -180,7 +182,7 @@ Changelog
   [ggozad]
 
 - Fixed erroneous OLLAMA_URL documentaion.
-  [gerroon] 
+  [gerroon]
 
 - Documentation improvements.
   [tylerlocnguyen]
@@ -299,7 +301,7 @@ Changelog
   [yilmaz08]
 
 0.2.10 - 2024-08-09
-------------------- 
+-------------------
 
 - Enter posts while Shift+Enter injects a newline in the multiline-widget.
   [ggozad]
@@ -386,7 +388,7 @@ Changelog
   for Markdown. Increase Markdown size from 20 lines to 50.
   [ggozad]
 
-0.1.22 - 2024-02-01 
+0.1.22 - 2024-02-01
 -------------------
 
 - Cancel inference when the user presses ESC.

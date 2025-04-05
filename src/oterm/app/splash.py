@@ -1,5 +1,5 @@
 import random
-from typing import Any, Tuple
+from typing import Any
 
 from textualeffects.effects import EffectType
 from textualeffects.widgets import SplashScreen
@@ -46,7 +46,7 @@ logo = """
     @.                                          .@
 """
 
-effects: list[Tuple[EffectType, dict[str, Any]]] = [
+effects: list[tuple[EffectType, dict[str, Any]]] = [
     (
         "Beams",
         {

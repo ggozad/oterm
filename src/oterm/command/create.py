@@ -1,8 +1,8 @@
 import json
 import stat
+from collections.abc import Iterable
 from importlib import metadata
 from pathlib import Path
-from typing import Iterable
 
 from jinja2 import Environment, FileSystemLoader
 from textual.app import App, ComposeResult, SystemCommand

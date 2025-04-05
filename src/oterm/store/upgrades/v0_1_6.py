@@ -1,5 +1,5 @@
+from collections.abc import Awaitable, Callable
 from pathlib import Path
-from typing import Awaitable, Callable
 
 import aiosqlite
 

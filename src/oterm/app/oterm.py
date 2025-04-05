@@ -1,5 +1,5 @@
 import json
-from typing import Iterable
+from collections.abc import Iterable
 
 from ollama import Options, Tool
 from textual import on, work

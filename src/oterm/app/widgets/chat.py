@@ -112,7 +112,7 @@ class ChatContainer(Widget):
             return
         self.loading = True
         message_container = self.query_one("#messageContainer")
-        for _, author, message, images in self.messages:
+        for _, author, message, _ in self.messages:
             chat_item = ChatItem()
             chat_item.text = (
                 message
@@ -161,7 +161,7 @@ class ChatContainer(Widget):
             parsed = parse_response(response)
 
             # To not exhaust the tokens, remove the thought process from the history (it seems to be the common practice)
-            self.ollama.history[-1].content = parsed["response"]
+            self.ollama.history[-1].content = parsed["response"]  # type: ignore
 
             # Update the text according to the new formatted response.
             response_chat_item.text = parsed["formatted_output"]

@@ -5,12 +5,12 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 * `Edit chat parameters` - edit the current chat session (change system prompt, parameters or format)
 * `Rename chat` - rename the current chat session
 * `Export chat` - export the current chat session as markdown
-* `Delete chat` - delete the current chat session 
+* `Delete chat` - delete the current chat session
 * `Clear chat` - clear the chat history, preserving model and system prompt customizations
 * `Regenerate last Ollama message` - regenerates the last message from Ollama (will override the `seed` for the specific message with a random one.) Useful if you want to change the system prompt or parameters or just want to try again.
 * `Pull model` - pull a model or update an existing one.
 * `Change theme` - choose among the available themes.
-  
+
 ### Keyboard shortcuts
 
 The following keyboard shortcuts are supported:

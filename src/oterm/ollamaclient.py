@@ -1,15 +1,11 @@
 import inspect
 import json
 from ast import literal_eval
+from collections.abc import AsyncGenerator, AsyncIterator, Iterator, Mapping, Sequence
 from pathlib import Path
 from typing import (
     Any,
-    AsyncGenerator,
-    AsyncIterator,
-    Iterator,
     Literal,
-    Mapping,
-    Sequence,
 )
 
 from ollama import (
@@ -179,8 +175,7 @@ class OllamaLLM:
     def pull(model: str) -> Iterator[ProgressResponse]:
         client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
         stream: Iterator[ProgressResponse] = client.pull(model, stream=True)
-        for response in stream:
-            yield response
+        yield from stream
 
 
 def parse_ollama_parameters(parameter_text: str) -> Options:

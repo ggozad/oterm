@@ -1,9 +1,9 @@
 import asyncio
 import sys
+from collections.abc import Callable
 from functools import wraps
 from importlib import metadata
 from pathlib import Path
-from typing import Callable
 
 import httpx
 from packaging.version import Version, parse
@@ -37,7 +37,7 @@ def debounce(wait: float) -> Callable:
 
             async def call_func():
                 await asyncio.sleep(wait)
-                if asyncio.get_event_loop().time() - last_call >= wait:
+                if asyncio.get_event_loop().time() - last_call >= wait:  # type: ignore
                     await func(*args, **kwargs)
 
             task = asyncio.create_task(call_func())
@@ -154,6 +154,7 @@ async def check_ollama() -> bool:
     """
     from oterm.config import envConfig
 
+    up = False
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(envConfig.OLLAMA_URL)
@@ -182,4 +183,4 @@ async def check_ollama() -> bool:
                     pass
 
             asyncio.create_task(quit())
-        return up
+    return up

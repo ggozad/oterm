@@ -1,7 +1,7 @@
+from collections.abc import Awaitable, Callable, Sequence
 from importlib import import_module
-from typing import Awaitable, Callable, Sequence
 
-from ollama._types import Tool
+from ollama import Tool
 
 from oterm.config import appConfig
 from oterm.types import ExternalToolDefinition, ToolCall
@@ -19,17 +19,17 @@ def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolCall
             if not isinstance(tool, Tool):
                 raise Exception(f"Expected Tool, got {type(tool)}")
         except ModuleNotFoundError as e:
-            raise Exception(f"Error loading tool {tool_path}: {str(e)}")
+            raise Exception(f"Error loading tool {tool_path}") from e
 
         callable_path = tool_def["callable"]
         try:
             module, function = callable_path.split(":")
             module = import_module(module)
             callable = getattr(module, function)
-            if not isinstance(callable, (Callable, Awaitable)):
+            if not isinstance(callable, Callable | Awaitable):
                 raise Exception(f"Expected Callable, got {type(callable)}")
         except ModuleNotFoundError as e:
-            raise Exception(f"Error loading callable {callable_path}: {str(e)}")
+            raise Exception(f"Error loading callable {callable_path}") from e
         tools.append({"tool": tool, "callable": callable})
 
     return tools

@@ -93,7 +93,7 @@ LoadingIndicator {
     padding: 1;
 }
 
-.full-height {    
+.full-height {
     margin: 1;
     padding: 1;
 }
@@ -112,11 +112,11 @@ LoadingIndicator {
     color: $secondary
 }
 
-.screen-container .button-container {    
+.screen-container .button-container {
     height: 3;
 }
 
-.screen-container .button-container Button {    
+.screen-container .button-container Button {
     margin-right: 1;
 }
 
@@ -190,7 +190,7 @@ Label.keep-alive-label {
 #image-select-container Input {
     margin: 1;
     padding: 0;
-}   
+}
 
 #pull-model-container Horizontal {
     margin-top: 1;

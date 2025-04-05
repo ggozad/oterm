@@ -1,6 +1,6 @@
+from collections.abc import AsyncGenerator
 from io import BytesIO
 from pathlib import Path
-from typing import AsyncGenerator
 
 import ollama
 import pytest

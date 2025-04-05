@@ -4,9 +4,9 @@
 
 With tools, you can provide the model with access to the web, run shell commands, perform RAG and more.
 
-[Use existing Model Context Protocol servers](../mcp/index.md) 
+[Use existing Model Context Protocol servers](../mcp/index.md)
 
-or 
+or
 
 [create your own custom tools](./custom_tools.md).
 
@@ -65,7 +65,7 @@ You can register the tool with `oterm` by adding the tool definittion and callab
     }]
 }
 ```
-Note the notation `module:object` for the tool and callable. 
+Note the notation `module:object` for the tool and callable.
 
 That's it! You can now use the tool in `oterm` with models that support it.
 
@@ -88,4 +88,3 @@ These tools are defined in `src/oterm/tools`. You can make those tools available
     }]
 }
 ```
-

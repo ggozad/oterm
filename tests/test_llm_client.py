@@ -2,7 +2,7 @@ import pytest
 from ollama import ResponseError
 
 from oterm.ollamaclient import OllamaLLM
-from oterm.tools.location import LocationTool
+from oterm.tools.date_time import DateTimeTool
 
 
 @pytest.mark.asyncio
@@ -56,12 +56,12 @@ async def test_tool_streaming():
 
     llm = OllamaLLM(
         tool_defs=[
-            {"tool": LocationTool, "callable": lambda: "New York"},
+            {"tool": DateTimeTool, "callable": lambda: "2025-01-01"},
         ],
     )
     response = ""
     async for text in llm.stream(
-        "In which city am I currently located?. Reply with no other text, just the city."
+        "What is the current date in YYYY-MM-DD format?. Reply with no other text, just the date."
     ):
         response = text
-    assert "New York" in response
+    assert "2025-01-01" in response
