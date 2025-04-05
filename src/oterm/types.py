@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Awaitable, Callable, TypedDict
 
 from mcp.types import Prompt
-from ollama._types import Image, Tool  # noqa
+from ollama import Image, Tool  # noqa
 
 
 class Author(Enum):
