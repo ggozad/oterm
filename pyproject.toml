@@ -55,6 +55,8 @@ dev-dependencies = [
     "homebrew-pypi-poet>=0.10.0",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.5",
+    "pyright>=1.1.398",
+    "pre-commit>=4.2.0",
 ]
 
 [tool.uv.sources]
