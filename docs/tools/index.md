@@ -21,7 +21,7 @@ You will need to create a python package that exports a `Tool` definition as wel
 Here is an [example](https://github.com/ggozad/oterm/tree/main/docs/oracle){:target="_blank"} of a simple tool that implements an Oracle. The tool is defined in the `oracle` package which exports the `OracleTool` tool definition and an `oracle` callable function.
 
 ```python
-from ollama._types import Tool
+from ollama import Tool
 
 OracleTool = Tool(
     type="function",
