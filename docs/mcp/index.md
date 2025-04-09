@@ -22,6 +22,25 @@ To add an MCP server to `oterm`, simply add the server shim to oterm's `config.j
   }
 }
 ```
+
+`oterm` supports the `stdio` MCP protocol. If the server you connect uses the `SSE` protocol, you can run it through a proxy by having a config like:
+
+```json
+{
+  ...
+  "mcpServers": {
+    "server_name": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote@latest",
+        "http://host/endpoint/sse",
+      ]
+    }
+  }
+}
+```
+
 ### Supported MCP Features
 #### Tools
 By transforming MCP tools into Ollama tools `oterm` provides full support.

@@ -30,7 +30,7 @@ dependencies = [
     "ollama>=0.4.7,<0.5",
     "textualeffects>=0.1.3",
     "pydantic>=2.10.1,<2.11",
-    "mcp[cli]>=1.5.0,<1.6",
+    "mcp[cli]>=1.6.0,<1.7",
     "jinja2>=3.1.5",
     "textual-image>=0.7.0,<0.8.0",
 ]
