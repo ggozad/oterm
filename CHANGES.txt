@@ -1,9 +1,11 @@
 Changelog
 =========
 
-0.10.1 -
+0.10.1 - 2025-04-09
 -------------------
 
+- More stability handling MCP servers.
+  [ggozad]
 - Add pre-commit hooks and fix linting errors.
   [ggozad]
 - Add "think" tool allowing models to think before responding.
