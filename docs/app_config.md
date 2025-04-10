@@ -6,7 +6,7 @@ The app configuration is stored in a directory specific to your operating system
 * macOS: `~/Library/Application Support/oterm/config.json`
 * Windows: `C:/Users/<USER>/AppData/Roaming/oterm/config.json`
 
-If in doubt you can get the directory where `config.json` can be found by running `oterm --data-dir`.
+If in doubt you can get the directory where `config.json` can be found by running `oterm --data-dir` or `uvx oterm --data-dir` if you installed oterm using uvx.
 
 You can set the following options in the configuration file:
 ```json
