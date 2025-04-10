@@ -29,6 +29,12 @@ To start `oterm` simply run:
 oterm
 ```
 
+If you installed oterm using `uvx`, you can also start it using:
+
+```bash
+uvx oterm
+```
+
 ### Screenshots
 ![Splash](img/splash.gif)
 The splash screen animation that greets users when they start oterm.

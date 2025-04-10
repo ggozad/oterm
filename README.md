@@ -37,7 +37,7 @@ A view of the chat interface, showcasing the conversation between the user and t
 ![Model selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/customizations.svg)
 The model selection screen, allowing users to choose and customize available models.
 
-![Tool support](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/mcp.svg)
+![Tool support](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/mcp_tools.svg)
 oterm using the `git` MCP server to access its own repo.
 
 ![Image selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/image_selection.png)

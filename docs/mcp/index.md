@@ -1,8 +1,8 @@
-### Model Context Protocol support
+# Model Context Protocol
 
 `oterm` has support for Anthropic's open-source [Model Context Protocol](https://modelcontextprotocol.io). While Ollama does not yet directly support the protocol, `oterm` attempts to bridge [MCP servers](https://github.com/modelcontextprotocol/servers) with Ollama.
 
-To add an MCP server to `oterm`, simply add the server shim to oterm's `config.json`. For example for the [git](https://github.com/modelcontextprotocol/servers/tree/main/src/git) MCP server you would add something like the following to the `mcpServers` section of the `oterm` configuration file:
+To add an MCP server to `oterm`, simply add the server shim to oterm's `config.json`. For example for the [git](https://github.com/modelcontextprotocol/servers/tree/main/src/git) MCP server you would add something like the following to the `mcpServers` section of the `oterm` [configuration file](../app_config.md):
 
 ```json
 {
@@ -46,6 +46,8 @@ To add an MCP server to `oterm`, simply add the server shim to oterm's `config.j
 By transforming MCP tools into Ollama tools `oterm` provides full support.
 
 !!! note
+    Not all models are equipped to support tools. For those models, the tool selection feature will be disabled.
+    
     A lot of the smaller LLMs are not as capable with tools as larger ones you might be used to. If you experience issues with tools, try reducing the number of tools you attach to a chat, increase the context size, or use a larger LLM.
 
 
