@@ -55,6 +55,7 @@ class ChatEdit(ModalScreen[str]):
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
         ("enter", "save", "Save"),
+        ("ctrl+e", "toggle_all_tools", "Toggle all tools"),
     ]
 
     def __init__(
@@ -158,7 +159,9 @@ class ChatEdit(ModalScreen[str]):
                 if checked:
                     self.tools.append(tool)
                 else:
-                    self.tools.remove(tool)
+                    # Check if the tool exists in the list before removing it
+                    if tool in self.tools:
+                        self.tools.remove(tool)
                 break
 
     def on_option_list_option_highlighted(
@@ -195,11 +198,7 @@ class ChatEdit(ModalScreen[str]):
 
             # Deduce from the model's template if the model is tool-capable.
             tools_supported = ".Tools" in self.model_info["template"]
-            widgets = self.query(".tool")
-            for widget in widgets:
-                widget.disabled = not tools_supported
-                if not tools_supported:
-                    widget.value = False  # type: ignore
+            self._update_tool_checkboxes_state(tools_supported)
 
         # Now that there is a model selected we can save the chat.
         save_button = self.query_one("#save-btn", Button)
@@ -211,6 +210,45 @@ class ChatEdit(ModalScreen[str]):
             self._return_chat_meta()
         else:
             self.dismiss()
+            
+    def action_toggle_all_tools(self) -> None:
+        """Toggle all tools - if any are enabled, disable all; otherwise enable all."""
+        tool_checkboxes = self.query(".tool")
+        
+        # Check if any tools are currently enabled
+        any_enabled = False
+        for checkbox in tool_checkboxes:
+            if isinstance(checkbox, Checkbox) and checkbox.value and not checkbox.disabled:
+                any_enabled = True
+                break
+                
+        if any_enabled:
+            # If any tools are enabled, disable all
+            self.tools = []
+            for checkbox in tool_checkboxes:
+                if isinstance(checkbox, Checkbox):
+                    checkbox.value = False
+            self.app.notify("All tools disabled", severity="information")
+        else:
+            # If no tools are enabled, enable all
+            for tool_def in available_tool_defs:
+                tool = tool_def["tool"]
+                if tool not in self.tools:
+                    self.tools.append(tool)
+            
+            for checkbox in tool_checkboxes:
+                if isinstance(checkbox, Checkbox) and not checkbox.disabled:
+                    checkbox.value = True
+            self.app.notify("All tools enabled", severity="information")
+            
+    def _update_tool_checkboxes_state(self, tools_supported: bool) -> None:
+        """Update tool checkboxes based on model capability."""
+        widgets = self.query(".tool")
+        for widget in widgets:
+            if isinstance(widget, Checkbox):
+                widget.disabled = not tools_supported
+                if not tools_supported:
+                    widget.value = False
 
     @staticmethod
     def model_option(model: str) -> Text:
@@ -229,7 +267,7 @@ class ChatEdit(ModalScreen[str]):
                         yield Label(f"{self.size}", classes="size")
 
                     yield OptionList(id="model-select")
-                    yield Label("Tools:", classes="title")
+                    yield Label("Tools: (Ctrl+E to toggle all on/off)", classes="title")
                     with ScrollableContainer(id="tool-list"):
                         for tool_def in available_tool_defs:
                             yield Checkbox(
