@@ -32,6 +32,7 @@ class AppConfig:
         self._data = {
             "theme": "textual-dark",
             "splash-screen": True,
+            "enable_tools_by_default": True,
         }
         try:
             with open(self._path) as f:

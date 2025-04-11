@@ -68,6 +68,11 @@ class OTerm(App):
             "Pulls (or updates) the model from the Ollama server",
             self.action_pull_model,
         )
+        yield SystemCommand(
+            "Toggle tools default state",
+            "Toggle whether tools are enabled by default in new chats",
+            self.action_toggle_tools_default,
+        )
 
     async def action_quit(self) -> None:
         self.log("Quitting...")
@@ -90,10 +95,23 @@ class OTerm(App):
 
     @work
     async def action_new_chat(self) -> None:
+        from oterm.tools import avail_tool_defs
+        from oterm.config import appConfig
+        
+        # Initialize default tool selection if enabled in config
+        default_tools = []
+        if appConfig.get("enable_tools_by_default"):
+            default_tools = [tool_def["tool"] for tool_def in avail_tool_defs]
+        
         store = await Store.get_store()
-        model_info: str | None = await self.push_screen_wait(ChatEdit())
+        chat_edit = ChatEdit(tools=default_tools)
+        model_info: str | None = await self.push_screen_wait(chat_edit)
+        
+        # If tools are enabled by default, they're already set up in the constructor
+            
         if not model_info:
             return
+            
         model: dict = json.loads(model_info)
         tabs = self.query_one(TabbedContent)
         tab_count = tabs.tab_count
@@ -187,6 +205,17 @@ class OTerm(App):
             chat = tabs.active_pane.query_one(ChatContainer)
             screen = PullModel(chat.ollama.model)
         self.push_screen(screen)
+        
+    async def action_toggle_tools_default(self) -> None:
+        """Toggle whether tools are enabled by default in new chats"""
+        from oterm.config import appConfig
+        
+        current_setting = appConfig.get("enable_tools_by_default")
+        new_setting = not current_setting
+        appConfig.set("enable_tools_by_default", new_setting)
+        
+        status = "enabled" if new_setting else "disabled"
+        self.notify(f"Tools will be {status} by default in new chats", severity="information")
 
     async def load_mcp(self):
         from oterm.tools import avail_tool_defs
@@ -208,6 +237,10 @@ class OTerm(App):
                 self.theme = theme
         self.dark = appConfig.get("theme") == "dark"
         self.watch(self.app, "theme", self.on_theme_change, init=False)
+        
+        # Ensure the enable_tools_by_default setting exists in config
+        if appConfig.get("enable_tools_by_default") is None:
+            appConfig.set("enable_tools_by_default", True)
 
         saved_chats = await store.get_chats()
         # Apply any remap of key bindings.
