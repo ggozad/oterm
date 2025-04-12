@@ -1,6 +1,18 @@
 Changelog
 =========
 
+0.10.2 - 2025-04-12
+-------------------
+
+- Improve and release textualeffects for faster splash screen.
+  [ggozad]
+
+- Faster boot by performing version & ollama checks in parallel.
+  [ggozad]
+
+- Documentation for development & debugging.
+  [ggozad]
+
 0.10.1 - 2025-04-09
 -------------------
 

@@ -139,8 +139,8 @@ async def is_up_to_date() -> tuple[bool, Version, Version]:
     async with httpx.AsyncClient() as client:
         running_version = parse(metadata.version("oterm"))
         try:
-            response = await client.get("https://pypi.prg/pypi/oterm/json")
-            data = await response.json()
+            response = await client.get("https://pypi.org/pypi/oterm/json")
+            data = response.json()
             pypi_version = parse(data["info"]["version"])
         except Exception:
             # If no network connection, do not raise alarms.
