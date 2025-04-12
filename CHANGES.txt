@@ -4,6 +4,9 @@ Changelog
 0.10.2 -
 -------------------
 
+- Improve and release textualeffects for faster splash screen.
+  [ggozad]
+
 - Faster boot by performing version & ollama checks in parallel.
   [ggozad]
 
