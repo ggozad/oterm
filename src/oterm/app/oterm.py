@@ -228,7 +228,6 @@ class OTerm(App):
         await self.load_mcp()
 
         async def on_splash_done(message) -> None:
-            print("SAVED CHATS", saved_chats)
             if not saved_chats:
                 # Pyright suggests awaiting here which has bitten me twice
                 # so I'm ignoring it

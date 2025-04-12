@@ -94,5 +94,5 @@ effects: list[tuple[EffectType, dict[str, Any]]] = [
     ),
 ]
 
-effect = random.choice(effects)
-splash = SplashScreen(text=logo, effect=effect[0], config=effect[1])
+effect, config = random.choice(effects)
+splash = SplashScreen(text=logo, effect=effect, config=config)
