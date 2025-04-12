@@ -196,6 +196,16 @@ class OTerm(App):
         avail_tool_defs += mcp_tool_calls
         avail_prompt_defs += mcp_prompt_calls
 
+    @work(exclusive=True)
+    async def perform_checks(self) -> None:
+        await check_ollama()
+        up_to_date, _, latest = await is_up_to_date()
+        if not up_to_date:
+            self.notify(
+                f"[b]oterm[/b] version [i]{latest}[/i] is available, please update.",
+                severity="warning",
+            )
+
     async def on_mount(self) -> None:
         store = await Store.get_store()
         theme = appConfig.get("theme")
@@ -215,10 +225,10 @@ class OTerm(App):
         if keymap:
             self.set_keymap(keymap)
 
-        await check_ollama()
         await self.load_mcp()
 
         async def on_splash_done(message) -> None:
+            print("SAVED CHATS", saved_chats)
             if not saved_chats:
                 # Pyright suggests awaiting here which has bitten me twice
                 # so I'm ignoring it
@@ -249,12 +259,7 @@ class OTerm(App):
                     )
                     pane = TabPane(name, container, id=f"chat-{id}")
                     tabs.add_pane(pane)
-            up_to_date, current_version, latest = await is_up_to_date()
-            if not up_to_date:
-                self.notify(
-                    f"[b]oterm[/b] version [i]{latest}[/i] is available, please update.",
-                    severity="warning",
-                )
+            self.perform_checks()
 
         if appConfig.get("splash-screen"):
             self.push_screen(splash, callback=on_splash_done)
