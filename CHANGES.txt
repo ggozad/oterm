@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.10.2 -
+-------------------
+
+- Documentation for development & debugging.
+  [ggozad]
+
 0.10.1 - 2025-04-09
 -------------------
 
