@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.10.2 -
+0.10.2 - 2025-04-12
 -------------------
 
 - Improve and release textualeffects for faster splash screen.
