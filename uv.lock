@@ -952,7 +952,7 @@ requires-dist = [
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "textual", specifier = ">=2.1.2,<2.2" },
     { name = "textual-image", specifier = ">=0.7.0,<0.8.0" },
-    { name = "textualeffects", specifier = ">=0.1.3" },
+    { name = "textualeffects", specifier = ">=0.1.4" },
     { name = "typer", specifier = ">=0.15.1,<0.16" },
 ]
 
@@ -1629,14 +1629,14 @@ wheels = [
 
 [[package]]
 name = "textualeffects"
-version = "0.1.3"
+version = "0.1.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "terminaltexteffects" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/4b/a5/d0d329676ef7bdcb9ebed6aa97055809655c4f15712239950615d1a77c64/textualeffects-0.1.3.tar.gz", hash = "sha256:b3a2ebb0226efee6c321742ac50958d8755bcc373df85b5413da014ae954b26f", size = 41183 }
+sdist = { url = "https://files.pythonhosted.org/packages/64/0e/8307b9349f79d42666e46e936d31d0224e47c8e9dac572c2585e0fa517eb/textualeffects-0.1.4.tar.gz", hash = "sha256:86709321d49cd7abf47ed513782130174e6f5d85ea16996a7c38709c3646c463", size = 55100 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/52/c5/8464b423f7b5d6f54eac69dfe6241d28325b59c552d26c4f0d333f1a50ab/textualeffects-0.1.3-py3-none-any.whl", hash = "sha256:6cdc1d43b519316b1022fdc81b1b0d1f5c664dc5a1f6b437fc8625084c2a442b", size = 4992 },
+    { url = "https://files.pythonhosted.org/packages/50/06/83e758a2aa3e80531bdf56125d51d84d20954493316d3c01d250073a242d/textualeffects-0.1.4-py3-none-any.whl", hash = "sha256:61a1c17e08c4237e78cd37ce6ea6876fa110890226ff04f19aa2b73df346a406", size = 4965 },
 ]
 
 [[package]]
