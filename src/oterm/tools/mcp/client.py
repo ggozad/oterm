@@ -6,9 +6,14 @@ from mcp import ClientSession, GetPromptResult, McpError, StdioServerParameters
 from mcp import Tool as MCPTool
 from mcp.client.session import LoggingFnT
 from mcp.client.stdio import stdio_client
-from mcp.types import CallToolResult, LoggingMessageNotificationParams, Prompt
+from mcp.types import (
+    CallToolResult,
+    LoggingMessageNotificationParams,
+    Prompt,
+)
 
 from oterm.log import log
+from oterm.tools.mcp.sampling import SamplingHandler
 
 
 # This is here to log the messages from the MCP server, when
@@ -47,7 +52,12 @@ class MCPClient:
             )
             read, write = stdio_transport
             session = await self.exit_stack.enter_async_context(
-                ClientSession(read, write, logging_callback=Logger()),
+                ClientSession(
+                    read,
+                    write,
+                    logging_callback=Logger(),
+                    sampling_callback=SamplingHandler(),
+                ),
             )
             await asyncio.wait_for(session.initialize(), timeout=5)
             self.session = session

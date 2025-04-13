@@ -2,26 +2,27 @@ import pytest
 from mcp.types import Tool as MCPTool
 
 from oterm.ollamaclient import OllamaLLM
+from oterm.tools.mcp.client import MCPClient
 from oterm.tools.mcp.tools import MCPToolCallable
 from oterm.types import Tool
 
 
 @pytest.mark.asyncio
-async def test_mcp_tools(mcp_client):
+async def test_mcp_tools(mcp_client: MCPClient):
     tools = await mcp_client.get_available_tools()
-    for tool in tools:
-        assert MCPTool.model_validate(tool)
+    for oracle in tools:
+        assert MCPTool.model_validate(oracle)
 
-    tool = tools[0]
+    oracle = tools[0]
     oterm_tool = Tool(
         function=Tool.Function(
-            name=tool.name,
-            description=tool.description,
-            parameters=Tool.Function.Parameters.model_validate(tool.inputSchema),
+            name=oracle.name,
+            description=oracle.description,
+            parameters=Tool.Function.Parameters.model_validate(oracle.inputSchema),
         ),
     )
 
-    mcpToolCallable = MCPToolCallable(tool.name, "test_server", mcp_client)
+    mcpToolCallable = MCPToolCallable(oracle.name, "test_server", mcp_client)
     llm = OllamaLLM(
         tool_defs=[{"tool": oterm_tool, "callable": mcpToolCallable.call}],
     )

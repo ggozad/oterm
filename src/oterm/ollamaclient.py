@@ -41,7 +41,7 @@ class OllamaLLM:
         self,
         model="llama3.2",
         system: str | None = None,
-        history: list[Mapping[str, Any] | Message] = [],
+        history: Sequence[Mapping[str, Any] | Message] = [],
         format: str = "",
         options: Options = Options(),
         keep_alive: int = 5,
@@ -49,7 +49,7 @@ class OllamaLLM:
     ):
         self.model = model
         self.system = system
-        self.history = history
+        self.history = list(history)
         self.format = format
         self.keep_alive = keep_alive
         self.options = options
