@@ -43,10 +43,10 @@ To add an MCP server to `oterm`, simply add the server shim to oterm's `config.j
 
 ### Supported MCP Features
 #### Tools
-By transforming MCP tools into Ollama tools `oterm` provides full support.
+By transforming [MCP tools](https://modelcontextprotocol.io/docs/concepts/tools) into Ollama tools `oterm` provides full support.
 
 !!! note
-    Not all models are equipped to support tools. For those models, the tool selection feature will be disabled.
+    Not all models are equipped to support tools. For those models that do not, the tool selection will be disabled.
 
     A lot of the smaller LLMs are not as capable with tools as larger ones you might be used to. If you experience issues with tools, try reducing the number of tools you attach to a chat, increase the context size, or use a larger LLM.
 
@@ -55,7 +55,10 @@ By transforming MCP tools into Ollama tools `oterm` provides full support.
 oterm using the `git` MCP server to access its own repo.
 
 #### Prompts
-`oterm` supports MCP prompts. Use the "Use MCP prompt" command to invoke a form with the prompt. Submitting will insert the prompt messages into the chat.
+`oterm` supports [MCP prompts](https://modelcontextprotocol.io/docs/concepts/prompts). Use the "Use MCP prompt" command to invoke a form with the prompt. Submitting will insert the prompt messages into the chat.
 
 ![Prompt support](../img/mcp_prompts.svg)
 oterm displaying a test MCP prompt.
+
+#### Sampling
+`oterm` supports [MCP sampling](https://modelcontextprotocol.io/docs/concepts/sampling), acting as a geteway between Ollama and the servers it connects to. This way, an MCP server can request `oterm` to run a *completion* and even declare its model preferences and parameters!
