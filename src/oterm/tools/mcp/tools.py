@@ -13,12 +13,10 @@ class MCPToolCallable:
         self.client = client
 
     async def call(self, **kwargs) -> str:
-        log.info(f"Calling Tool {self.name} in {self.server_name} with {kwargs}")
         res = await self.client.call_tool(self.name, kwargs)
         if res.isError:
             log.error(f"Error calling MCP tool {self.name}.")
             return ""
-        log.info(f"Tool {self.name} returned {res.content}")
         text_content = [m.text for m in res.content if type(m) is TextContent]
         return "\n".join(text_content)
 

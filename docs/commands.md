@@ -17,10 +17,11 @@ The following keyboard shortcuts are supported:
 
 * <kbd>^ Ctrl</kbd>+<kbd>q</kbd> - quit
 
-* <kbd>^ Ctrl</kbd>+<kbd>l</kbd> - switch to multiline input mode
+* <kbd>^ Ctrl</kbd>+<kbd>m</kbd> - switch to multiline input mode
 * <kbd>^ Ctrl</kbd>+<kbd>i</kbd> - select an image to include with the next message
 * <kbd>↑/↓</kbd> (while messages are focused) - navigate through the messages
 * <kbd>↑</kbd> (while prompt is focused)    - navigate through history of previous prompts
+* <kbd>^ Ctrl</kbd>+<kbd>l</kbd> - show logs
 
 * <kbd>^ Ctrl</kbd>+<kbd>n</kbd> - open a new chat
 * <kbd>^ Ctrl</kbd>+<kbd>Backspace</kbd> - close the current chat
