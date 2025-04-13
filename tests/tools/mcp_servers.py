@@ -1,7 +1,7 @@
 from mcp import SamplingMessage
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.fastmcp.prompts.base import AssistantMessage, Message, UserMessage
-from mcp.types import TextContent
+from mcp.types import ModelHint, ModelPreferences, TextContent
 
 mcp = FastMCP("TestServer")
 
@@ -32,6 +32,9 @@ async def puzzle_solver(puzzle_description: str, ctx: Context) -> str:
                 ),
             )
         ],
+        model_preferences=ModelPreferences(
+            hints=[ModelHint(name="mistral")],
+        ),
         max_tokens=100,
     )
     return sampling_response.content.text

@@ -8,6 +8,12 @@ from oterm.types import Tool
 
 @pytest.mark.asyncio
 async def test_mcp_sampling(mcp_client: MCPClient):
+    """
+    Test the sampling capbilities of oterm.
+    Here we go full circle and use the MCP client to call the server
+    to call the client again with a sampling request.
+    """
+
     await mcp_client.initialize()
 
     tools = await mcp_client.get_available_tools()
