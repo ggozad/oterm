@@ -1,8 +1,8 @@
 from mcp import StdioServerParameters
 from mcp import Tool as MCPTool
-from textual import log
 
 from oterm.config import appConfig
+from oterm.log import log
 from oterm.tools.mcp.client import MCPClient
 from oterm.tools.mcp.prompts import MCPPromptCallable
 from oterm.tools.mcp.tools import MCPToolCallable, mcp_tool_to_ollama_tool

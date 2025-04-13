@@ -10,6 +10,7 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 * `Regenerate last Ollama message` - regenerates the last message from Ollama (will override the `seed` for the specific message with a random one.) Useful if you want to change the system prompt or parameters or just want to try again.
 * `Pull model` - pull a model or update an existing one.
 * `Change theme` - choose among the available themes.
+* `Show logs` - shows the logs of the current oterm session.
 
 ### Keyboard shortcuts
 
@@ -17,10 +18,11 @@ The following keyboard shortcuts are supported:
 
 * <kbd>^ Ctrl</kbd>+<kbd>q</kbd> - quit
 
-* <kbd>^ Ctrl</kbd>+<kbd>l</kbd> - switch to multiline input mode
+* <kbd>^ Ctrl</kbd>+<kbd>m</kbd> - switch to multiline input mode
 * <kbd>^ Ctrl</kbd>+<kbd>i</kbd> - select an image to include with the next message
 * <kbd>↑/↓</kbd> (while messages are focused) - navigate through the messages
 * <kbd>↑</kbd> (while prompt is focused)    - navigate through history of previous prompts
+* <kbd>^ Ctrl</kbd>+<kbd>l</kbd> - show logs
 
 * <kbd>^ Ctrl</kbd>+<kbd>n</kbd> - open a new chat
 * <kbd>^ Ctrl</kbd>+<kbd>Backspace</kbd> - close the current chat

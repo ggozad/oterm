@@ -19,9 +19,9 @@ from ollama import (
     ShowResponse,
 )
 from pydantic.json_schema import JsonSchemaValue
-from textual import log
 
 from oterm.config import envConfig
+from oterm.log import log
 from oterm.types import ToolCall
 
 
@@ -91,11 +91,13 @@ class OllamaLLM:
             for tool_call in tool_calls:
                 tool_name = tool_call["function"]["name"]
                 for tool_def in self.tool_defs:
-                    log.debug("Calling tool: %s", tool_name)
                     if tool_def["tool"]["function"]["name"] == tool_name:
                         tool_callable = tool_def["callable"]
                         tool_arguments = tool_call["function"]["arguments"]
                         try:
+                            log.debug(
+                                f"Calling tool: {tool_name} with {tool_arguments}"
+                            )
                             if inspect.iscoroutinefunction(tool_callable):
                                 tool_response = await tool_callable(**tool_arguments)  # type: ignore
                             else:

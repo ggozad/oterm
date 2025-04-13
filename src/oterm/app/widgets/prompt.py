@@ -63,7 +63,7 @@ class PostableTextArea(TextArea):
 class PastableInput(Input):
     BINDINGS = Input.BINDINGS + [
         Binding(
-            key="ctrl+l",
+            key="ctrl+m",
             action="toggle_multiline",
             description="multiline",
             show=True,

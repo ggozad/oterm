@@ -28,6 +28,7 @@ class OTerm(App):
         Binding("ctrl+shift+tab", "cycle_chat(-1)", "prev chat", id="prev.chat"),
         Binding("ctrl+backspace", "delete_chat", "delete chat", id="delete.chat"),
         Binding("ctrl+n", "new_chat", "new chat", id="new.chat"),
+        Binding("ctrl+l", "show_logs", "show logs", id="show.logs"),
         Binding("ctrl+q", "quit", "quit", id="quit"),
     ]
 
@@ -67,6 +68,9 @@ class OTerm(App):
             "Pull model",
             "Pulls (or updates) the model from the Ollama server",
             self.action_pull_model,
+        )
+        yield SystemCommand(
+            "Show logs", "Shows the logs of the app", self.action_show_logs
         )
 
     async def action_quit(self) -> None:
@@ -154,6 +158,7 @@ class OTerm(App):
         store = await Store.get_store()
         await store.delete_chat(chat.db_id)
         await tabs.remove_pane(tabs.active)
+        self.notify(f"Deleted {chat.chat_name}")
 
     async def action_export_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
@@ -163,6 +168,7 @@ class OTerm(App):
         screen = ChatExport()
         screen.chat_id = chat.db_id
         screen.file_name = f"{slugify(chat.chat_name)}.md"
+
         self.push_screen(screen)
 
     async def action_regenerate_last_message(self) -> None:
@@ -186,6 +192,12 @@ class OTerm(App):
         else:
             chat = tabs.active_pane.query_one(ChatContainer)
             screen = PullModel(chat.ollama.model)
+        self.push_screen(screen)
+
+    async def action_show_logs(self) -> None:
+        from oterm.app.log_viewer import LogViewer
+
+        screen = LogViewer()
         self.push_screen(screen)
 
     async def load_mcp(self):
