@@ -295,6 +295,7 @@ class ChatContainer(Widget):
         tabs = self.app.query_one(TabbedContent)
         await store.rename_chat(self.db_id, new_name)
         tabs.get_tab(f"chat-{self.db_id}").update(new_name)
+        self.app.notify("Chat renamed")
 
     async def action_clear_chat(self) -> None:
         self.messages = []
@@ -435,6 +436,7 @@ class ChatItem(Widget):
         for widget in widgets:
             widget.styles.animate("opacity", 0.5, duration=0.1)
             widget.styles.animate("opacity", 1.0, duration=0.1, delay=0.1)
+        self.app.notify("Message copied to clipboard.")
 
     async def watch_text(self, text: str) -> None:
         text = self.text

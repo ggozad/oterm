@@ -158,6 +158,7 @@ class OTerm(App):
         store = await Store.get_store()
         await store.delete_chat(chat.db_id)
         await tabs.remove_pane(tabs.active)
+        self.notify(f"Deleted {chat.chat_name}")
 
     async def action_export_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
@@ -167,6 +168,7 @@ class OTerm(App):
         screen = ChatExport()
         screen.chat_id = chat.db_id
         screen.file_name = f"{slugify(chat.chat_name)}.md"
+
         self.push_screen(screen)
 
     async def action_regenerate_last_message(self) -> None:

@@ -50,7 +50,7 @@ class ChatExport(ModalScreen[str]):
                 file.write(f"*{author.value}*\n")
                 file.write(f"{text}\n")
                 file.write("\n---\n")
-
+        self.app.notify(f"Chat exported to {file.name}")
         self.dismiss()
 
     def compose(self) -> ComposeResult:

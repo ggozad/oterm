@@ -90,6 +90,7 @@ class ChatEdit(ModalScreen[str]):
                 parameters["stop"] = [parameters["stop"]]
 
         except ValidationError:
+            self.app.notify("Error validating parameters", severity="error")
             p_area = self.query_one(".parameters", TextArea)
             p_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
             return
@@ -100,6 +101,7 @@ class ChatEdit(ModalScreen[str]):
             parse_format(f_area.text)
             format = f_area.text
         except Exception:
+            self.app.notify("Error parsing format", severity="error")
             f_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
             return
 
