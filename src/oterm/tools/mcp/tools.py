@@ -1,7 +1,7 @@
 from mcp import Tool as MCPTool
 from mcp.types import TextContent
-from textual import log
 
+from oterm.log import log
 from oterm.tools.mcp.client import MCPClient
 from oterm.types import Tool
 

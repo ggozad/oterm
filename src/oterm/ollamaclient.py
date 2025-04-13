@@ -19,9 +19,9 @@ from ollama import (
     ShowResponse,
 )
 from pydantic.json_schema import JsonSchemaValue
-from textual import log
 
 from oterm.config import envConfig
+from oterm.log import log
 from oterm.types import ToolCall
 
 

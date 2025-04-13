@@ -1,8 +1,8 @@
 from mcp import GetPromptResult
 from mcp.types import ImageContent, TextContent
 from ollama import Message
-from textual import log
 
+from oterm.log import log
 from oterm.tools.mcp.client import MCPClient
 from oterm.types import PromptCall
 

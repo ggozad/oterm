@@ -7,7 +7,8 @@ from mcp import Tool as MCPTool
 from mcp.client.session import LoggingFnT
 from mcp.client.stdio import stdio_client
 from mcp.types import CallToolResult, LoggingMessageNotificationParams, Prompt
-from textual import log
+
+from oterm.log import log
 
 
 # This is here to log the messages from the MCP server, when
