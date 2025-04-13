@@ -4,6 +4,7 @@ from importlib import import_module
 from ollama import Tool
 
 from oterm.config import appConfig
+from oterm.log import log
 from oterm.types import ExternalToolDefinition, ToolCall
 
 
@@ -19,7 +20,8 @@ def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolCall
             if not isinstance(tool, Tool):
                 raise Exception(f"Expected Tool, got {type(tool)}")
         except ModuleNotFoundError as e:
-            raise Exception(f"Error loading tool {tool_path}") from e
+            log.error(f"Error loading tool {tool_path}: {e}")
+            continue
 
         callable_path = tool_def["callable"]
         try:
@@ -29,7 +31,9 @@ def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolCall
             if not isinstance(callable, Callable | Awaitable):
                 raise Exception(f"Expected Callable, got {type(callable)}")
         except ModuleNotFoundError as e:
-            raise Exception(f"Error loading callable {callable_path}") from e
+            log.error(f"Error loading callable {callable_path}: {e}")
+            continue
+        log.info(f"Loaded tool {tool.function.name} from {tool_path}")
         tools.append({"tool": tool, "callable": callable})
 
     return tools
