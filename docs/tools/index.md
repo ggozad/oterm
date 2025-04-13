@@ -8,7 +8,7 @@ With tools, you can provide the model with access to the web, run shell commands
 
 or
 
-[create your own custom tools](./custom_tools.md).
+[create your own custom tools](#custom-tools-with-oterm).
 
 ### Custom tools with oterm
 

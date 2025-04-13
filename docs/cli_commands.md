@@ -17,7 +17,7 @@ which will present you with the same interface as when creating a chat. You can 
 
 For example, here is the command `ogit` that I use to chat about my repositories:
 
-![ogit](../img/ogit.svg)
+![ogit](img/ogit.svg)
 
 It is a chat with the `git` MCP tool, running using the `qwen2.5` model.
 

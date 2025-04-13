@@ -47,4 +47,4 @@ oterm supports multiple themes, allowing users to customize the appearance of th
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](https://raw.githubusercontent.com/ggozad/oterm/main/LICENSE).
