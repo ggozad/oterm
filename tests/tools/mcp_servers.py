@@ -1,5 +1,7 @@
+from mcp import SamplingMessage
 from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.fastmcp.prompts.base import AssistantMessage, Message, UserMessage
+from mcp.types import TextContent
 
 mcp = FastMCP("TestServer")
 
@@ -12,6 +14,27 @@ def get_config() -> str:
 @mcp.tool()
 async def oracle(query: str, ctx: Context) -> str:
     return "Oracle says: oterm"
+
+
+@mcp.tool(name="Puzzle Solver", description="Solves a puzzle by asking an advanced AI.")
+async def puzzle_solver(puzzle_description: str, ctx: Context) -> str:
+    """
+    This tool is included to make a sampling request to the server.
+    It takes a puzzle description and returns the answer.
+    """
+    session = ctx.session
+    sampling_response = await session.create_message(
+        messages=[
+            SamplingMessage(
+                role="user",
+                content=TextContent(
+                    text=f"Please solve this puzzle: {puzzle_description}", type="text"
+                ),
+            )
+        ],
+        max_tokens=100,
+    )
+    return sampling_response.content.text
 
 
 @mcp.prompt(name="Oracle prompt", description="Prompt to ask the oracle a question.")
