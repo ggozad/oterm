@@ -95,7 +95,9 @@ class OllamaLLM:
                         tool_callable = tool_def["callable"]
                         tool_arguments = tool_call["function"]["arguments"]
                         try:
-                            log.debug(f"Calling tool: {tool_name}")
+                            log.debug(
+                                f"Calling tool: {tool_name} with {tool_arguments}"
+                            )
                             if inspect.iscoroutinefunction(tool_callable):
                                 tool_response = await tool_callable(**tool_arguments)  # type: ignore
                             else:

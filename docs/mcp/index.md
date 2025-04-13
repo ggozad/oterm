@@ -23,7 +23,7 @@ To add an MCP server to `oterm`, simply add the server shim to oterm's `config.j
 }
 ```
 
-`oterm` supports the `stdio` MCP protocol. If the server you connect uses the `SSE` protocol, you can run it through a proxy by having a config like:
+`oterm` supports the `stdio` MCP protocol. If the server you connect uses the `SSE` protocol, you can run it through a proxy such as [mcp-remote](https://github.com/geelen/mcp-remote) or [mcp-proxy](https://github.com/sparfenyuk/mcp-proxy) by having a config like:
 
 ```json
 {
@@ -47,7 +47,7 @@ By transforming MCP tools into Ollama tools `oterm` provides full support.
 
 !!! note
     Not all models are equipped to support tools. For those models, the tool selection feature will be disabled.
-    
+
     A lot of the smaller LLMs are not as capable with tools as larger ones you might be used to. If you experience issues with tools, try reducing the number of tools you attach to a chat, increase the context size, or use a larger LLM.
 
 

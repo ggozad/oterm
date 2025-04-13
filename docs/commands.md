@@ -10,6 +10,7 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 * `Regenerate last Ollama message` - regenerates the last message from Ollama (will override the `seed` for the specific message with a random one.) Useful if you want to change the system prompt or parameters or just want to try again.
 * `Pull model` - pull a model or update an existing one.
 * `Change theme` - choose among the available themes.
+* `Show logs` - shows the logs of the current oterm session.
 
 ### Keyboard shortcuts
 
