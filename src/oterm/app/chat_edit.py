@@ -23,6 +23,7 @@ from oterm.ollamaclient import (
     parse_ollama_parameters,
 )
 from oterm.tools import avail_tool_defs as available_tool_defs
+from oterm.tools import available_tool_calls
 from oterm.types import Tool
 
 
@@ -105,6 +106,7 @@ class ChatEdit(ModalScreen[str]):
             f_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
             return
 
+        # Check if the tools are valid
         result = json.dumps(
             {
                 "name": model,
@@ -152,9 +154,10 @@ class ChatEdit(ModalScreen[str]):
 
     @on(Checkbox.Changed)
     def on_tool_toggled(self, ev: Checkbox.Changed):
-        tool_name = ev.control.label
+        tool_name = ev.control.name
         checked = ev.value
-        for tool_def in available_tool_defs:
+
+        for tool_def in available_tool_calls():
             if tool_def["tool"].function.name == str(tool_name):  # type: ignore
                 tool = tool_def["tool"]
                 if checked:
@@ -233,13 +236,17 @@ class ChatEdit(ModalScreen[str]):
                     yield OptionList(id="model-select")
                     yield Label("Tools:", classes="title")
                     with ScrollableContainer(id="tool-list"):
-                        for tool_def in available_tool_defs:
-                            yield Checkbox(
-                                label=f"{tool_def['tool']['function']['name']}",
-                                tooltip=f"{tool_def['tool']['function']['description']}",
-                                value=tool_def["tool"] in self.tools,
-                                classes="tool",
-                            )
+                        for server in available_tool_defs:
+                            for tool_def in available_tool_defs[
+                                server
+                            ]:  # Check if the tool is already selected
+                                yield Checkbox(
+                                    name=tool_def["tool"]["function"]["name"],
+                                    label=f"{server} - {tool_def['tool']['function']['name']}",
+                                    tooltip=f"{tool_def['tool']['function']['description']}",
+                                    value=tool_def["tool"] in self.tools,
+                                    classes="tool",
+                                )
 
                 with Vertical():
                     yield Label("System:", classes="title")

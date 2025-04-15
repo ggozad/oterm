@@ -26,7 +26,7 @@ from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
-from oterm.tools import avail_tool_defs as available_tool_defs
+from oterm.tools import available_tool_calls
 from oterm.types import Author, Tool
 from oterm.utils import parse_response
 
@@ -78,8 +78,9 @@ class ChatContainer(Widget):
             )
             msg.images = images  # type: ignore
             history.append(msg)
+
         used_tool_defs = [
-            tool_def for tool_def in available_tool_defs if tool_def["tool"] in tools
+            tool_def for tool_def in available_tool_calls() if tool_def["tool"] in tools
         ]
 
         self.ollama = OllamaLLM(
@@ -270,7 +271,7 @@ class ChatContainer(Widget):
 
         used_tool_defs = [
             tool_def
-            for tool_def in available_tool_defs
+            for tool_def in available_tool_calls()
             if tool_def["tool"] in self.tools
         ]
 

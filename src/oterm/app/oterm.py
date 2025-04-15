@@ -205,8 +205,8 @@ class OTerm(App):
         from oterm.tools.mcp.prompts import avail_prompt_defs
 
         mcp_tool_calls, mcp_prompt_calls = await setup_mcp_servers()
-        avail_tool_defs += mcp_tool_calls
-        avail_prompt_defs += mcp_prompt_calls
+        avail_tool_defs.update(mcp_tool_calls)
+        avail_prompt_defs.update(mcp_prompt_calls)
 
     @work(exclusive=True)
     async def perform_checks(self) -> None:
