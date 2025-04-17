@@ -40,13 +40,13 @@ def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolCall
     return tools
 
 
-avail_tool_defs: dict[str, list[ToolCall]] = {}
+available_tool_defs: dict[str, list[ToolCall]] = {}
 
 
 def available_tool_calls() -> list[ToolCall]:
-    return list(itertools.chain.from_iterable(avail_tool_defs.values()))
+    return list(itertools.chain.from_iterable(available_tool_defs.values()))
 
 
 external_tools = appConfig.get("tools")
 if external_tools:
-    avail_tool_defs["external"] = list(load_tools(external_tools))
+    available_tool_defs["external"] = list(load_tools(external_tools))

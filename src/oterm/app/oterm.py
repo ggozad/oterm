@@ -21,7 +21,7 @@ from oterm.utils import check_ollama, is_up_to_date
 
 class OTerm(App):
     TITLE = "oterm"
-    SUB_TITLE = "A terminal-based Ollama client."
+    SUB_TITLE = "the TUI Ollama client."
     CSS_PATH = "oterm.tcss"
     BINDINGS = [
         Binding("ctrl+tab", "cycle_chat(+1)", "next chat", id="next.chat"),
@@ -201,12 +201,12 @@ class OTerm(App):
         self.push_screen(screen)
 
     async def load_mcp(self):
-        from oterm.tools import avail_tool_defs
-        from oterm.tools.mcp.prompts import avail_prompt_defs
+        from oterm.tools import available_tool_defs
+        from oterm.tools.mcp.prompts import available_prompt_defs
 
         mcp_tool_calls, mcp_prompt_calls = await setup_mcp_servers()
-        avail_tool_defs.update(mcp_tool_calls)
-        avail_prompt_defs.update(mcp_prompt_calls)
+        available_tool_defs.update(mcp_tool_calls)
+        available_prompt_defs.update(mcp_prompt_calls)
 
     @work(exclusive=True)
     async def perform_checks(self) -> None:

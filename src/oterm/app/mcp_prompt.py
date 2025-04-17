@@ -17,7 +17,7 @@ from textual.widget import Widget
 from textual.widgets import Button, Input, Label, OptionList, TextArea
 from textual.widgets.option_list import Option
 
-from oterm.tools.mcp.prompts import avail_prompt_defs, mcp_prompt_to_ollama_messages
+from oterm.tools.mcp.prompts import available_prompt_defs, mcp_prompt_to_ollama_messages
 from oterm.utils import debounce
 
 
@@ -79,7 +79,7 @@ class MCPPrompt(ModalScreen[str]):
     async def on_mount(self) -> None:
         option_list = self.query_one("#mcp-prompt-select", OptionList)
         option_list.clear_options()
-        for prompt_call in avail_prompt_defs:
+        for prompt_call in available_prompt_defs:
             option_list.add_option(option=self.prompt_option(prompt_call["prompt"]))
 
     @staticmethod
@@ -89,7 +89,7 @@ class MCPPrompt(ModalScreen[str]):
     def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
     ) -> None:
-        for prompt_call in avail_prompt_defs:
+        for prompt_call in available_prompt_defs:
             prompt = prompt_call["prompt"]
             if prompt.name == option.option.id:
                 break

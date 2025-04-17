@@ -6,7 +6,7 @@ from oterm.log import log
 from oterm.tools.mcp.client import MCPClient
 from oterm.types import PromptCall
 
-avail_prompt_defs: dict[str, list[PromptCall]] = {}
+available_prompt_defs: dict[str, list[PromptCall]] = {}
 
 
 class MCPPromptCallable:

@@ -87,10 +87,10 @@ class CreateCommandApp(App):
         self.push_screen(screen)
 
     async def load_mcp(self):
-        from oterm.tools import avail_tool_defs
+        from oterm.tools import available_tool_defs
 
         mcp_tool_defs, mcp_tool_prompts = await setup_mcp_servers()
-        avail_tool_defs.update(mcp_tool_defs)
+        available_tool_defs.update(mcp_tool_defs)
 
     async def on_mount(self) -> None:
         theme = appConfig.get("theme")

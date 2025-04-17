@@ -4,26 +4,23 @@ from collections.abc import Sequence
 from ollama import Options, ShowResponse
 from pydantic import ValidationError
 from rich.text import Text
-from textual import on
 from textual.app import ComposeResult
 from textual.containers import (
     Container,
     Horizontal,
-    ScrollableContainer,
     Vertical,
 )
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
+from textual.widgets import Button, Input, Label, OptionList, TextArea
 
+from oterm.app.widgets.tool_select import ToolSelector
 from oterm.ollamaclient import (
     OllamaLLM,
     jsonify_options,
     parse_format,
     parse_ollama_parameters,
 )
-from oterm.tools import avail_tool_defs as available_tool_defs
-from oterm.tools import available_tool_calls
 from oterm.types import Tool
 
 
@@ -106,6 +103,8 @@ class ChatEdit(ModalScreen[str]):
             f_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
             return
 
+        self.tools = self.query_one(ToolSelector).selected
+
         # Check if the tools are valid
         result = json.dumps(
             {
@@ -152,20 +151,6 @@ class ChatEdit(ModalScreen[str]):
         widget = self.query_one("#model-select", OptionList)
         widget.disabled = self.edit_mode
 
-    @on(Checkbox.Changed)
-    def on_tool_toggled(self, ev: Checkbox.Changed):
-        tool_name = ev.control.name
-        checked = ev.value
-
-        for tool_def in available_tool_calls():
-            if tool_def["tool"].function.name == str(tool_name):  # type: ignore
-                tool = tool_def["tool"]
-                if checked:
-                    self.tools.append(tool)
-                else:
-                    self.tools.remove(tool)
-                break
-
     def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
     ) -> None:
@@ -200,11 +185,8 @@ class ChatEdit(ModalScreen[str]):
 
             # Deduce from the model's template if the model is tool-capable.
             tools_supported = ".Tools" in self.model_info["template"]
-            widgets = self.query(".tool")
-            for widget in widgets:
-                widget.disabled = not tools_supported
-                if not tools_supported:
-                    widget.value = False  # type: ignore
+            tool_selector = self.query_one(ToolSelector)
+            tool_selector.disabled = not tools_supported
 
         # Now that there is a model selected we can save the chat.
         save_button = self.query_one("#save-btn", Button)
@@ -235,18 +217,9 @@ class ChatEdit(ModalScreen[str]):
 
                     yield OptionList(id="model-select")
                     yield Label("Tools:", classes="title")
-                    with ScrollableContainer(id="tool-list"):
-                        for server in available_tool_defs:
-                            for tool_def in available_tool_defs[
-                                server
-                            ]:  # Check if the tool is already selected
-                                yield Checkbox(
-                                    name=tool_def["tool"]["function"]["name"],
-                                    label=f"{server} - {tool_def['tool']['function']['name']}",
-                                    tooltip=f"{tool_def['tool']['function']['description']}",
-                                    value=tool_def["tool"] in self.tools,
-                                    classes="tool",
-                                )
+                    yield ToolSelector(
+                        id="tool-selector-container", selected=self.tools
+                    )
 
                 with Vertical():
                     yield Label("System:", classes="title")
