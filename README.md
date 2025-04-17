@@ -37,7 +37,7 @@ The splash screen animation that greets users when they start oterm.
 ![Chat](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/chat.png)
 A view of the chat interface, showcasing the conversation between the user and the model.
 
-![Model selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/customizations.svg)
+![Model selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/customizations.png)
 The model selection screen, allowing users to choose and customize available models.
 
 ![Tool support](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/mcp_tools.svg)

@@ -1,3 +1,4 @@
+import itertools
 from collections.abc import Awaitable, Callable, Sequence
 from importlib import import_module
 
@@ -33,14 +34,19 @@ def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolCall
         except ModuleNotFoundError as e:
             log.error(f"Error loading callable {callable_path}: {e}")
             continue
-        log.info(f"Loaded tool {tool.function.name} from {tool_path}")
+        log.info(f"Loaded tool {tool.function.name} from {tool_path}")  # type: ignore
         tools.append({"tool": tool, "callable": callable})
 
     return tools
 
 
-avail_tool_defs: list[ToolCall] = []
+available_tool_defs: dict[str, list[ToolCall]] = {}
+
+
+def available_tool_calls() -> list[ToolCall]:
+    return list(itertools.chain.from_iterable(available_tool_defs.values()))
+
 
 external_tools = appConfig.get("tools")
 if external_tools:
-    avail_tool_defs.extend(load_tools(external_tools))
+    available_tool_defs["external"] = list(load_tools(external_tools))

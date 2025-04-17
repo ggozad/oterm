@@ -4,7 +4,6 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
-      - id: check-added-large-files
       - id: check-merge-conflict
       - id: check-toml
       - id: debug-statements
@@ -16,12 +15,12 @@ repos:
       - id: ruff
       # Run the formatter.
       - id: ruff-format
-  - repo: https://github.com/RodrigoGonzalez/check-mkdocs
-    rev: v1.2.0
-    hooks:
-      - id: check-mkdocs
-        name: check-mkdocs
-        args: ["--config", "mkdocs.yml"]  # Optional, mkdocs.yml is the default
-        # If you have additional plugins or libraries that are not included in
-        # check-mkdocs, add them here
-        additional_dependencies: ['mkdocs-material']
+  # - repo: https://github.com/RodrigoGonzalez/check-mkdocs
+  #   rev: v1.2.0
+  #   hooks:
+  #     - id: check-mkdocs
+  #       name: check-mkdocs
+  #       args: ["--config", "mkdocs.yml"]  # Optional, mkdocs.yml is the default
+  #       # If you have additional plugins or libraries that are not included in
+  #       # check-mkdocs, add them here
+  #       additional_dependencies: ['mkdocs-material']

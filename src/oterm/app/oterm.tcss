@@ -125,13 +125,13 @@ LoadingIndicator {
     padding: 1;
 }
 
-#edit-chat-container .system , .parameters {
+#edit-chat-container .system  {
     margin: 1;
 }
 
 #model-select {
     margin-top: 1;
-    max-height: 60%;
+    max-height: 50%;
 }
 
 #model-info {
@@ -140,6 +140,36 @@ LoadingIndicator {
 
 #model-info .name, .tag, .size {
     margin-right: 1;
+}
+
+#tool-selector-container {
+    height: auto;
+    max-height: 50%;
+    padding-bottom: 2;
+    padding-right:2;
+}
+
+#tool-selector {
+    margin-bottom: 2;
+    width: 100%;
+}
+
+#tool-selector .tool-group {
+    height: auto;
+    width: 100%;
+    padding-top: 1;
+    padding-bottom: 1;
+    background: $surface;
+}
+
+#tool-selector  .tool-group-select-all{
+    width: 50%;
+}
+
+#tool-selector .tools {
+    height: auto;
+    width: 50%;
+
 }
 
 #edit-chat-container .button-container  {
@@ -153,11 +183,6 @@ LoadingIndicator {
 
 Label.keep-alive-label {
     margin-top: 1;
-}
-
-#tool-list {
-    margin: 1;
-    padding-right:3;
 }
 
 #prompt-history {

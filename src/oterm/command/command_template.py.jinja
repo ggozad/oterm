@@ -29,12 +29,12 @@ class InlineApp(App):
     ]
 
     async def load_mcp(self):
-        from oterm.tools import avail_tool_defs
-        from oterm.tools.mcp.prompts import avail_prompt_defs
+        from oterm.tools import available_tool_defs
+        from oterm.tools.mcp.prompts import available_prompt_defs
 
         mcp_tool_calls, mcp_prompt_calls = await setup_mcp_servers()
-        avail_tool_defs += mcp_tool_calls
-        avail_prompt_defs += mcp_prompt_calls
+        available_tool_defs.update(mcp_tool_calls)
+        available_prompt_defs.update(mcp_prompt_calls)
 
     def get_system_commands(self, screen: Screen) -> Iterable[SystemCommand]:
         yield from super().get_system_commands(screen)

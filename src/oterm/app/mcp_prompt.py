@@ -17,17 +17,22 @@ from textual.widget import Widget
 from textual.widgets import Button, Input, Label, OptionList, TextArea
 from textual.widgets.option_list import Option
 
-from oterm.tools.mcp.prompts import avail_prompt_defs, mcp_prompt_to_ollama_messages
+from oterm.tools.mcp.prompts import (
+    available_prompt_calls,
+    available_prompt_defs,
+    mcp_prompt_to_ollama_messages,
+)
 from oterm.utils import debounce
 
 
 class PromptOptionWidget(Widget):
-    def __init__(self, prompt: Prompt) -> None:
+    def __init__(self, server: str, prompt: Prompt) -> None:
         super().__init__()
         self.prompt = prompt
+        self.server = server
 
     def render(self) -> RenderResult:
-        return f"[b]{self.prompt.name}[/b]\n[i]{self.prompt.description}[/i]"
+        return f"[b]{self.server} - {self.prompt.name}[/b]\n[i]{self.prompt.description}[/i]"
 
 
 class PromptFormWidget(Widget):
@@ -79,17 +84,22 @@ class MCPPrompt(ModalScreen[str]):
     async def on_mount(self) -> None:
         option_list = self.query_one("#mcp-prompt-select", OptionList)
         option_list.clear_options()
-        for prompt_call in avail_prompt_defs:
-            option_list.add_option(option=self.prompt_option(prompt_call["prompt"]))
+        for server in available_prompt_defs.keys():
+            for prompt_call in available_prompt_defs[server]:
+                option_list.add_option(
+                    option=self.prompt_option(server, prompt_call["prompt"])
+                )
 
     @staticmethod
-    def prompt_option(prompt: Prompt) -> Option:
-        return Option(prompt=PromptOptionWidget(prompt).render(), id=prompt.name)
+    def prompt_option(server: str, prompt: Prompt) -> Option:
+        return Option(
+            prompt=PromptOptionWidget(server, prompt).render(), id=prompt.name
+        )
 
     def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
     ) -> None:
-        for prompt_call in avail_prompt_defs:
+        for prompt_call in available_prompt_calls():
             prompt = prompt_call["prompt"]
             if prompt.name == option.option.id:
                 break

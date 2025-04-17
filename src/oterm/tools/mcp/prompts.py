@@ -1,3 +1,5 @@
+import itertools
+
 from mcp import GetPromptResult
 from mcp.types import ImageContent, TextContent
 from ollama import Message
@@ -6,7 +8,12 @@ from oterm.log import log
 from oterm.tools.mcp.client import MCPClient
 from oterm.types import PromptCall
 
-avail_prompt_defs: list[PromptCall] = []
+available_prompt_defs: dict[str, list[PromptCall]] = {}
+
+
+def available_prompt_calls() -> list[PromptCall]:
+    """Return a list of all available prompt calls."""
+    return list(itertools.chain.from_iterable(available_prompt_defs.values()))
 
 
 class MCPPromptCallable:
