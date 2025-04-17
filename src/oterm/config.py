@@ -45,8 +45,8 @@ class AppConfig:
         self._data[key] = value
         self.save()
 
-    def get(self, key):
-        return self._data.get(key)
+    def get(self, key, default=None):
+        return self._data.get(key, default)
 
     def save(self):
         with open(self._path, "w") as f:

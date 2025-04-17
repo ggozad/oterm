@@ -15,7 +15,9 @@ from oterm.app.splash import splash
 from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
 from oterm.store.store import Store
+from oterm.tools.external import load_external_tools
 from oterm.tools.mcp.setup import setup_mcp_servers, teardown_mcp_servers
+from oterm.types import ExternalToolDefinition
 from oterm.utils import check_ollama, is_up_to_date
 
 
@@ -204,6 +206,9 @@ class OTerm(App):
         from oterm.tools import available_tool_defs
         from oterm.tools.mcp.prompts import available_prompt_defs
 
+        external_tool_defs: list[ExternalToolDefinition] = appConfig.get("tools", [])  # type: ignore
+        external_tools = list(load_external_tools(external_tool_defs))
+        available_tool_defs["external"] = external_tools
         mcp_tool_calls, mcp_prompt_calls = await setup_mcp_servers()
         available_tool_defs.update(mcp_tool_calls)
         available_prompt_defs.update(mcp_prompt_calls)
