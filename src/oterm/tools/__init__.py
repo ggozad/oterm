@@ -34,7 +34,7 @@ def load_tools(tool_defs: Sequence[ExternalToolDefinition]) -> Sequence[ToolCall
         except ModuleNotFoundError as e:
             log.error(f"Error loading callable {callable_path}: {e}")
             continue
-        log.info(f"Loaded tool {tool.function.name} from {tool_path}")  # type: ignore
+        log.info(f"Loaded tool {tool.function.name} from {tool_path}")
         tools.append({"tool": tool, "callable": callable})
 
     return tools
