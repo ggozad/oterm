@@ -12,8 +12,8 @@ async def test_mcp_simple_string_prompt(mcp_client):
     for prompt in prompts:
         assert Prompt.model_validate(prompt)
 
-    oracle_prompt = [p for p in prompts if p.name == "Oracle prompt"][0]
-    assert oracle_prompt.name == "Oracle prompt"
+    oracle_prompt = [p for p in prompts if p.name == "oracle_prompt"][0]
+    assert oracle_prompt.name == "oracle_prompt"
     assert oracle_prompt.description == "Prompt to ask the oracle a question."
     args = oracle_prompt.arguments or []
     assert len(args) == 1
@@ -46,8 +46,8 @@ async def test_mcp_multiple_messages_prompt(mcp_client):
     for prompt in prompts:
         assert Prompt.model_validate(prompt)
 
-    debug_prompt = [p for p in prompts if p.name == "Debug error"][0]
-    assert debug_prompt.name == "Debug error"
+    debug_prompt = [p for p in prompts if p.name == "debug_error"][0]
+    assert debug_prompt.name == "debug_error"
     assert debug_prompt.description == "Prompt to debug an error."
     args = debug_prompt.arguments or []
     assert len(args) == 2

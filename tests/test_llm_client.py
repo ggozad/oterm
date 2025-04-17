@@ -6,15 +6,15 @@ from oterm.tools.date_time import DateTimeTool
 
 
 @pytest.mark.asyncio
-async def test_generate():
-    llm = OllamaLLM()
+async def test_generate(default_model):
+    llm = OllamaLLM(model=default_model)
     res = await llm.completion(prompt="Please add 42 and 42")
     assert "84" in res
 
 
 @pytest.mark.asyncio
-async def test_llm_context():
-    llm = OllamaLLM()
+async def test_llm_context(default_model):
+    llm = OllamaLLM(model=default_model)
     await llm.completion("I am testing oterm, a python client for Ollama.")
     # There should now be a context saved for the conversation.
     res = await llm.completion("Do you remember what I am testing?")
@@ -38,8 +38,8 @@ async def test_errors():
 
 
 @pytest.mark.asyncio
-async def test_iterator():
-    llm = OllamaLLM()
+async def test_iterator(default_model):
+    llm = OllamaLLM(model=default_model)
     response = ""
     async for text in llm.stream("Please add 2 and 2"):
         response = text
@@ -50,11 +50,12 @@ async def test_iterator():
     reason="Skipped till https://github.com/ollama/ollama-python/issues/279 is fixed."
 )
 @pytest.mark.asyncio
-async def test_tool_streaming():
+async def test_tool_streaming(default_model):
     # This test will fail until Ollama supports streaming with tools.
     # See https://github.com/ollama/ollama-python/issues/279
 
     llm = OllamaLLM(
+        model=default_model,
         tool_defs=[
             {"tool": DateTimeTool, "callable": lambda: "2025-01-01"},
         ],

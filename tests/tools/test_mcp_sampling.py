@@ -7,7 +7,7 @@ from oterm.types import Tool
 
 
 @pytest.mark.asyncio
-async def test_mcp_sampling(mcp_client: MCPClient):
+async def test_mcp_sampling(mcp_client: MCPClient, default_model):
     """
     Test the sampling capbilities of oterm.
     Here we go full circle and use the MCP client to call the server
@@ -29,6 +29,7 @@ async def test_mcp_sampling(mcp_client: MCPClient):
     )
     mcpToolCallable = MCPToolCallable(puzzle_solver.name, "test_server", mcp_client)
     llm = OllamaLLM(
+        model=default_model,
         tool_defs=[{"tool": oterm_tool, "callable": mcpToolCallable.call}],
     )
 

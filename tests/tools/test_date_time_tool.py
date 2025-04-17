@@ -7,12 +7,10 @@ from oterm.tools.date_time import DateTimeTool, date_time
 
 
 @pytest.mark.asyncio
-async def test_date_time():
+async def test_date_time(default_model):
     llm = OllamaLLM(
-        model="mistral-nemo", tool_defs=[{"tool": DateTimeTool, "callable": date_time}]
+        model=default_model, tool_defs=[{"tool": DateTimeTool, "callable": date_time}]
     )
-    res = await llm.completion(
-        "What is the current date in YYYY-MM-DD format?. Reply with no other text, just the date."
-    )
-    date = datetime.date(datetime.now())
-    assert f"{date.year}-{date.month:02d}-{date.day:02d}" in res
+    res = await llm.completion("What is the time in 24h format?")
+    time = datetime.time(datetime.now())
+    assert f"{time.hour}:{time.minute}" in res

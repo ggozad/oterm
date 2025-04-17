@@ -8,7 +8,7 @@ from oterm.types import Tool
 
 
 @pytest.mark.asyncio
-async def test_mcp_tools(mcp_client: MCPClient):
+async def test_mcp_tools(mcp_client: MCPClient, default_model):
     tools = await mcp_client.get_available_tools()
     for oracle in tools:
         assert MCPTool.model_validate(oracle)
@@ -24,6 +24,7 @@ async def test_mcp_tools(mcp_client: MCPClient):
 
     mcpToolCallable = MCPToolCallable(oracle.name, "test_server", mcp_client)
     llm = OllamaLLM(
+        model=default_model,
         tool_defs=[{"tool": oterm_tool, "callable": mcpToolCallable.call}],
     )
 

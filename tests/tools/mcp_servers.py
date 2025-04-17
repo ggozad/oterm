@@ -11,12 +11,12 @@ def get_config() -> str:
     return "Oracle MCP server"
 
 
-@mcp.tool()
+@mcp.tool(name="oracle", description="Ask the oracle a question.")
 async def oracle(query: str, ctx: Context) -> str:
     return "Oracle says: oterm"
 
 
-@mcp.tool(name="Puzzle Solver", description="Solves a puzzle by asking an advanced AI.")
+@mcp.tool(name="puzzle_solver", description="Solves a puzzle by asking an advanced AI.")
 async def puzzle_solver(puzzle_description: str, ctx: Context) -> str:
     """
     This tool is included to make a sampling request to the server.
@@ -40,12 +40,12 @@ async def puzzle_solver(puzzle_description: str, ctx: Context) -> str:
     return sampling_response.content.text  # type: ignore
 
 
-@mcp.prompt(name="Oracle prompt", description="Prompt to ask the oracle a question.")
+@mcp.prompt(name="oracle_prompt", description="Prompt to ask the oracle a question.")
 async def oracle_prompt(question: str) -> str:
     return f"Oracle: {question}"
 
 
-@mcp.prompt(name="Debug error", description="Prompt to debug an error.")
+@mcp.prompt(name="debug_error", description="Prompt to debug an error.")
 async def debug_error(error: str, language: str = "python") -> list[Message]:
     return [
         UserMessage(f"I'm seeing this {language} error: {error}"),

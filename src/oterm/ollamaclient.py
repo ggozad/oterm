@@ -102,7 +102,7 @@ class OllamaLLM:
                                 tool_response = await tool_callable(**tool_arguments)  # type: ignore
                             else:
                                 tool_response = tool_callable(**tool_arguments)  # type: ignore
-                            log.debug(f"Tool response: {tool_response}", tool_response)
+                            log.debug("Tool response:", tool_response)
                         except Exception as e:
                             log.error(f"Error calling tool {tool_name}", e)
                             tool_response = str(e)

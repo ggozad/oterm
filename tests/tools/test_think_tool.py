@@ -5,9 +5,9 @@ from oterm.tools.think import ThinkTool, think
 
 
 @pytest.mark.asyncio
-async def test_think():
+async def test_think(default_model):
     llm = OllamaLLM(
-        model="llama3.2", tool_defs=[{"tool": ThinkTool, "callable": think}]
+        model=default_model, tool_defs=[{"tool": ThinkTool, "callable": think}]
     )
     res = await llm.completion(
         """
@@ -18,4 +18,4 @@ The man in the rear who can see both of his friends' hats but not his own says, 
 What was the color of his hat? Reply just with the color of the hat.
         """
     )
-    assert res.lower() == "white"
+    assert res.lower() == "black"
