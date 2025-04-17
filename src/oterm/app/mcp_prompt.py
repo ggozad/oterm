@@ -42,7 +42,7 @@ class PromptFormWidget(Widget):
 
     @on(Input.Changed)
     @debounce(1.0)
-    async def on_text_area_change(self, ev: Input.Changed):
+    async def on_text_area_change(self) -> None:
         is_valid = True
         params = {}
         for arg in self.prompt.arguments or []:
@@ -96,7 +96,7 @@ class MCPPrompt(ModalScreen[str]):
             prompt=PromptOptionWidget(server, prompt).render(), id=prompt.name
         )
 
-    def on_option_list_option_highlighted(
+    async def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
     ) -> None:
         prompt = None
@@ -108,10 +108,6 @@ class MCPPrompt(ModalScreen[str]):
         if prompt is None or prompt_call is None:
             return
 
-        has_required_args = any(arg.required for arg in prompt.arguments or [])
-        submit_button = self.query_one("#submit", Button)
-        submit_button.disabled = has_required_args
-
         form_container = self.query_one("#prompt-form-container", Vertical)
         form_container = self.query_one("#prompt-form-container", Vertical)
         form_container.remove_children()
@@ -119,6 +115,12 @@ class MCPPrompt(ModalScreen[str]):
         widget.prompt = prompt
         widget.callable = prompt_call["callable"]
         form_container.mount(widget)
+
+        has_required_args = any(arg.required for arg in prompt.arguments or [])
+        submit_button = self.query_one("#submit", Button)
+        submit_button.disabled = has_required_args
+        if not has_required_args:
+            await widget.on_text_area_change()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.name == "submit":
