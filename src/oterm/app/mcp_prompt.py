@@ -106,7 +106,11 @@ class MCPPrompt(ModalScreen[str]):
             if prompt.name == option.option.id:
                 break
         if prompt is None or prompt_call is None:
-            return  # Exit early if no matching prompt is found
+            return
+
+        has_required_args = any(arg.required for arg in prompt.arguments or [])
+        submit_button = self.query_one("#submit", Button)
+        submit_button.disabled = has_required_args
 
         form_container = self.query_one("#prompt-form-container", Vertical)
         form_container = self.query_one("#prompt-form-container", Vertical)
