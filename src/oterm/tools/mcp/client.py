@@ -19,7 +19,7 @@ from oterm.tools.mcp.sampling import SamplingHandler
 # This is here to log the messages from the MCP server, when
 # there is an upstream fix for https://github.com/modelcontextprotocol/python-sdk/issues/341
 class Logger(LoggingFnT):
-    def __call__(self, params: LoggingMessageNotificationParams) -> None:
+    async def __call__(self, params: LoggingMessageNotificationParams) -> None:
         if params.level == "error" or params.level == "critical":
             log.error(params.data)
         elif params.level == "warning":

@@ -122,9 +122,9 @@ class CreateCommandApp(App):
         yield Header()
         yield Footer()
 
-    def run(self, name: str):
+    def run(self, name: str, *args, **kwargs) -> None:
         self.command_name = name
-        return super().run()
+        return super().run(*args, **kwargs)
 
 
 app = CreateCommandApp()

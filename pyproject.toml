@@ -56,6 +56,7 @@ dev-dependencies = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.5",
     "pre-commit>=4.2.0",
+    "pyright>=1.1.399",
 ]
 
 [tool.uv.sources]
@@ -83,6 +84,10 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
 
 [build-system]
 requires = ["hatchling"]

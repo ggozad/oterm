@@ -15,6 +15,12 @@ repos:
       - id: ruff
       # Run the formatter.
       - id: ruff-format
+
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.399
+    hooks:
+      - id: pyright
+
   # - repo: https://github.com/RodrigoGonzalez/check-mkdocs
   #   rev: v1.2.0
   #   hooks:

@@ -99,11 +99,16 @@ class MCPPrompt(ModalScreen[str]):
     def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
     ) -> None:
+        prompt = None
+        prompt_call = None
         for prompt_call in available_prompt_calls():
             prompt = prompt_call["prompt"]
             if prompt.name == option.option.id:
                 break
+        if prompt is None or prompt_call is None:
+            return  # Exit early if no matching prompt is found
 
+        form_container = self.query_one("#prompt-form-container", Vertical)
         form_container = self.query_one("#prompt-form-container", Vertical)
         form_container.remove_children()
         widget = PromptFormWidget(classes="prompt-form")
