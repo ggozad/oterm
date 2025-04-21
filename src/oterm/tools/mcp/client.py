@@ -15,6 +15,7 @@ from mcp.types import (
 
 from oterm.log import log
 from oterm.tools.mcp.logging import Logger
+from oterm.tools.mcp.sampling import sampling_handler
 
 
 class MCPClient:
@@ -44,7 +45,11 @@ class MCPClient:
         async def task():
             assert self.transport is not None, "Transport is not initialized"
             try:
-                async with Client(self.transport, log_handler=Logger()) as client:
+                async with Client(
+                    self.transport,
+                    log_handler=Logger(),
+                    sampling_handler=sampling_handler,
+                ) as client:
                     self.client = client
                     client_initialized.set()
                     await self.done.wait()

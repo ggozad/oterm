@@ -34,6 +34,11 @@ async def test_mcp_sampling(mcp_client: MCPClient, default_model):
     )
 
     res = await llm.completion(
-        "Jack is looking at Anne. Anne is looking at George. Jack is married, George is not, and we don't know if Anne is married. Is a married person looking at an unmarried person? Just answer yes or no."
+        """
+        Solve the following puzzle by calling the puzzle solver tool.
+        Jack is looking at Anne. Anne is looking at George.
+        Jack is married, George is not, and we don't know if Anne is married.
+        Is a married person looking at an unmarried person?
+        Just answer yes or no."""
     )
     assert "no" in res.lower() or "yes" in res.lower()
