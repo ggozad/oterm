@@ -11,6 +11,8 @@ async def test_date_time(default_model):
     llm = OllamaLLM(
         model=default_model, tool_defs=[{"tool": DateTimeTool, "callable": date_time}]
     )
-    res = await llm.completion("What is the time in 24h format?")
+    res = await llm.completion(
+        "What is the time in 24h format? Use the date_time tool to answer this question."
+    )
     time = datetime.time(datetime.now())
     assert f"{time.hour}:{time.minute}" in res
