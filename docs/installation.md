@@ -34,6 +34,12 @@ Using `pip`:
 pip install oterm
 ```
 
+Using `pkg` for FreeBSD, thanks goes to [Nicola Vitale](https://github.com/nivit) for maintaining the package:
+
+```bash
+pkg install misc/py-oterm
+```
+
 ## Updating oterm
 
 To update oterm to the latest version, you can use the same method you used for installation:
@@ -58,4 +64,10 @@ Using `pip`:
 
 ```bash
 pip install --upgrade oterm
+```
+
+Using `pkg` for FreeBSD:
+
+```bash
+pkg upgrade misc/py-oterm
 ```
