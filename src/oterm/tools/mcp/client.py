@@ -1,8 +1,8 @@
 import asyncio
-from typing import Any
+from typing import Annotated, Any
 
 from fastmcp.client import Client
-from fastmcp.client.transports import StdioTransport
+from fastmcp.client.transports import SSETransport, StdioTransport, WSTransport
 from mcp import McpError, StdioServerParameters
 from mcp import Tool as MCPTool
 from mcp.types import (
@@ -12,22 +12,65 @@ from mcp.types import (
     PromptMessage,
     TextContent,
 )
+from pydantic import BaseModel, ValidationError
 
 from oterm.log import log
 from oterm.tools.mcp.logging import Logger
 from oterm.tools.mcp.sampling import sampling_handler
 
+IsSSEURL = Annotated[str, lambda v: v.startswith("http://") or v.startswith("https://")]
+
+
+class SSEServerParameters(BaseModel):
+    """Parameters for the SSE server."""
+
+    url: IsSSEURL
+
+
+IsWSURL = Annotated[str, lambda v: v.startswith("ws://") or v.startswith("wss://")]
+
+
+class WSServerParameters(BaseModel):
+    """Parameters for the WS server."""
+
+    url: IsWSURL
+
 
 class MCPClient:
-    def __init__(self, name: str, config: StdioServerParameters):
+    def __init__(
+        self,
+        name: str,
+        config: StdioServerParameters | SSEServerParameters | WSServerParameters,
+    ):
         self.name = name
-        self.transport = StdioTransport(
-            command=config.command,
-            args=config.args,
-            env=config.env,
-            cwd=str(config.cwd) if config.cwd else None,
-        )
+
         self.client: Client | None = None
+        try:
+            cfg = StdioServerParameters.model_validate(config)
+            self.transport = StdioTransport(
+                command=cfg.command,
+                args=cfg.args,
+                env=cfg.env,
+                cwd=str(cfg.cwd) if cfg.cwd else None,
+            )
+            return
+        except ValidationError:
+            pass
+        try:
+            cfg = SSEServerParameters.model_validate(config)
+            self.transport = SSETransport(
+                url=cfg.url,
+            )
+            return
+        except (ValidationError, ValueError):
+            pass
+        try:
+            cfg = WSServerParameters.model_validate(config)
+            self.transport = WSTransport(
+                url=cfg.url,
+            )
+        except ValidationError:
+            raise ValueError("Invalid transport type")
 
     async def initialize(self) -> Client | None:
         """Initialize the server connection.

@@ -1,13 +1,13 @@
 import pytest
 
-from oterm.tools import load_tools
 from oterm.tools.date_time import DateTimeTool, date_time
+from oterm.tools.external import load_external_tools
 
 
 @pytest.mark.asyncio
 async def test_loading_custom_tool():
     # Test loading a callable from a well-defined module
-    tools = load_tools(
+    tools = load_external_tools(
         [
             {
                 "tool": "oterm.tools.date_time:DateTimeTool",
