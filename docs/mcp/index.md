@@ -2,7 +2,11 @@
 
 `oterm` has support for Anthropic's open-source [Model Context Protocol](https://modelcontextprotocol.io). While Ollama does not yet directly support the protocol, `oterm` attempts to bridge [MCP servers](https://github.com/modelcontextprotocol/servers) with Ollama.
 
-To add an MCP server to `oterm`, simply add the server shim to oterm's `config.json`. For example for the [git](https://github.com/modelcontextprotocol/servers/tree/main/src/git) MCP server you would add something like the following to the `mcpServers` section of the `oterm` [configuration file](../app_config.md):
+To add an MCP server to `oterm`, simply add the server shim to oterm's [config.json](../app_config.md). The following MCP transports are supported
+
+#### `stdio` transport
+
+Used for running local MCP servers, the configuration supports the `command`, `args`, `env` & `cwd` parameters. For example for the [git](https://github.com/modelcontextprotocol/servers/tree/main/src/git) MCP server you would add something like the following to the `mcpServers` section of the `oterm` [configuration file](../app_config.md):
 
 ```json
 {
@@ -23,20 +27,32 @@ To add an MCP server to `oterm`, simply add the server shim to oterm's `config.j
 }
 ```
 
-`oterm` supports the `stdio` MCP protocol. If the server you connect uses the `SSE` protocol, you can run it through a proxy such as [mcp-remote](https://github.com/geelen/mcp-remote) or [mcp-proxy](https://github.com/sparfenyuk/mcp-proxy) by having a config like:
+#### `SSE` transport
+
+Typically used to connect to remote MCP servers through Server Side Events, the only accepted parameter is the `url` parameter (should start with `http://` or `https://`). For example,
 
 ```json
 {
   ...
   "mcpServers": {
-    "server_name": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "mcp-remote@latest",
-        "http://host/endpoint/sse",
-      ]
-    }
+    "my_mcp": {
+			"url": "http://remote:5678/some_path/sse"
+		}
+  }
+}
+```
+
+#### `Websocket` transport
+
+Also used to connect to remote MCP servers, but through websockets. The only accepted parameter is the `url` parameter (should start with `ws://` or `wss://`). For example,
+
+```json
+{
+  ...
+  "mcpServers": {
+    "my_mcp": {
+			"url": "wss://remote:5678/some_path/wss"
+		}
   }
 }
 ```

@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.11.2 -
+-------------------
+
+- Support for SSE & WS MCP transports.
+  [ggozad]
+
 0.11.1 - 2025-04-17
 -------------------
 

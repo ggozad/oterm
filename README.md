@@ -24,7 +24,7 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 [oterm Documentation](https://ggozad.github.io/oterm/)
 
 ## What's new
-* MCP Sampling is here!
+* MCP Sampling is here! Also support for SSE & WebSocket transports for MCP servers.
 * In-app log viewer for debugging and troubleshooting.
 * Support sixel graphics for displaying images in the terminal.
 * Support for Model Context Protocol (MCP) tools & prompts!
