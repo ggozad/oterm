@@ -30,7 +30,7 @@ async def setup_mcp_servers() -> tuple[
 
             client = MCPClient(server, config)
             await client.initialize()
-            if not client.session:
+            if not client.client:
                 continue
             mcp_clients.append(client)
 
@@ -67,4 +67,4 @@ async def teardown_mcp_servers():
     # Important to tear down in reverse order
     mcp_clients.reverse()
     for client in mcp_clients:
-        await client.cleanup()
+        await client.teardown()

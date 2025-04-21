@@ -24,7 +24,7 @@ async def test_mcp_simple_string_prompt(mcp_client):
     mcpPromptCallable = MCPPromptCallable(oracle_prompt.name, "test_server", mcp_client)
     res = await mcpPromptCallable.call(question="What is the best client for Ollama?")
 
-    assert res.messages == [
+    assert res == [
         PromptMessage(
             role="user",
             content=TextContent(
@@ -62,7 +62,7 @@ async def test_mcp_multiple_messages_prompt(mcp_client):
     mcpPromptCallable = MCPPromptCallable(debug_prompt.name, "test_server", mcp_client)
     res = await mcpPromptCallable.call(error="Assertion error")
 
-    assert res.messages == [
+    assert res == [
         PromptMessage(
             role="user",
             content=TextContent(

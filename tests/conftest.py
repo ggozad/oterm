@@ -55,4 +55,4 @@ async def mcp_client(mcp_server_config) -> AsyncGenerator[MCPClient, None]:
     await client.initialize()
 
     yield client
-    await client.cleanup()
+    await client.teardown()
