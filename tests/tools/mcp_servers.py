@@ -3,7 +3,7 @@ from mcp.server.fastmcp import Context, FastMCP
 from mcp.server.fastmcp.prompts.base import AssistantMessage, Message, UserMessage
 from mcp.types import ModelHint, ModelPreferences, TextContent
 
-mcp = FastMCP("TestServer")
+mcp = FastMCP("TestServer", port=8080)
 
 
 @mcp.resource("config://app")

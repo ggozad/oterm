@@ -1,7 +1,6 @@
 from mcp import Tool as MCPTool
 from mcp.types import TextContent
 
-from oterm.log import log
 from oterm.tools.mcp.client import MCPClient
 from oterm.types import Tool
 
@@ -14,10 +13,7 @@ class MCPToolCallable:
 
     async def call(self, **kwargs) -> str:
         res = await self.client.call_tool(self.name, kwargs)
-        if res.isError:
-            log.error(f"Error calling MCP tool {self.name}.")
-            return ""
-        text_content = [m.text for m in res.content if type(m) is TextContent]
+        text_content = [m.text for m in res if type(m) is TextContent]
         return "\n".join(text_content)
 
 

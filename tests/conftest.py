@@ -39,10 +39,16 @@ def llama_image() -> bytes:
 def mcp_server_config() -> dict:
     mcp_server_executable = Path(__file__).parent / "tools" / "mcp_servers.py"
     return {
-        "test_server": {
+        "stdio": {
             "command": "mcp",
             "args": ["run", mcp_server_executable.absolute().as_posix()],
-        }
+        },
+        "sse": {
+            "url": "http://localhost:8000/sse",
+        },
+        "ws": {
+            "url": "ws://localhost:8000/ws",
+        },
     }
 
 
@@ -50,9 +56,9 @@ def mcp_server_config() -> dict:
 async def mcp_client(mcp_server_config) -> AsyncGenerator[MCPClient, None]:
     client = MCPClient(
         "test_server",
-        StdioServerParameters.model_validate(mcp_server_config["test_server"]),
+        StdioServerParameters.model_validate(mcp_server_config["stdio"]),
     )
     await client.initialize()
 
     yield client
-    await client.cleanup()
+    await client.teardown()

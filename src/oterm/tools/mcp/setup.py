@@ -1,4 +1,3 @@
-from mcp import StdioServerParameters
 from mcp import Tool as MCPTool
 
 from oterm.config import appConfig
@@ -20,17 +19,9 @@ async def setup_mcp_servers() -> tuple[
 
     if mcp_servers:
         for server, config in mcp_servers.items():
-            # Patch the MCP server environment with the current environment
-            # This works around https://github.com/modelcontextprotocol/python-sdk/issues/99
-            from os import environ
-
-            config = StdioServerParameters.model_validate(config)
-            if config.env is not None:
-                config.env.update(dict(environ))
-
             client = MCPClient(server, config)
             await client.initialize()
-            if not client.session:
+            if not client.client:
                 continue
             mcp_clients.append(client)
 
@@ -67,4 +58,4 @@ async def teardown_mcp_servers():
     # Important to tear down in reverse order
     mcp_clients.reverse()
     for client in mcp_clients:
-        await client.cleanup()
+        await client.teardown()
