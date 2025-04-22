@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.11.2 -
+0.11.2 - 2025-04-22
 -------------------
 
 - Support for SSE & WS MCP transports.
