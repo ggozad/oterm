@@ -10,3 +10,5 @@ oterm.rb
 photos/
 .vscode
 /site/
+.pytest_cache/
+.ruff_cache/
