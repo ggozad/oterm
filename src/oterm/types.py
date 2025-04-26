@@ -1,9 +1,10 @@
 from collections.abc import Awaitable, Callable
 from enum import Enum
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from mcp.types import Prompt
-from ollama import Image, Tool  # noqa
+from ollama import Image, Options, Tool  # noqa
+from pydantic import BaseModel, Field
 
 
 class Author(Enum):
@@ -30,3 +31,38 @@ class PromptCall(TypedDict):
 class ExternalToolDefinition(TypedDict):
     tool: str
     callable: str
+
+
+class OtermOllamaOptions(Options):
+    # Patch stop to allow for a single string.
+    # This is an issue with the gemma model which has a single stop parameter.
+    # Remove when fixed upstream and close #187
+    # Using 'any' to avoid type conflict with parent class
+    stop: Any = None  # type: ignore
+
+    class Config:
+        extra = "forbid"
+
+
+class ChatModel(BaseModel):
+    """Chat model for storing chat metadata"""
+
+    id: int | None = None
+    name: str = ""
+    model: str = ""
+    system: str | None = None
+    format: str = ""
+    parameters: OtermOllamaOptions = Field(default_factory=OtermOllamaOptions)
+    keep_alive: int = 5
+    tools: list[Tool] = Field(default_factory=list)
+    type: str = "chat"
+
+
+class MessageModel(BaseModel):
+    """Message model for storing chat messages"""
+
+    id: int | None = None
+    chat_id: int
+    author: str
+    text: str
+    images: list[str] = Field(default_factory=list)

@@ -1,4 +1,3 @@
-import json
 import stat
 from collections.abc import Iterable
 from importlib import metadata
@@ -16,7 +15,9 @@ from oterm.app.splash import splash
 from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
 from oterm.store.store import Store
+from oterm.tools.external import load_external_tools
 from oterm.tools.mcp.setup import setup_mcp_servers, teardown_mcp_servers
+from oterm.types import ChatModel, ExternalToolDefinition
 
 
 class CreateCommandApp(App):
@@ -40,20 +41,13 @@ class CreateCommandApp(App):
         async def on_done(model_info) -> None:
             if model_info is None:
                 await self.action_quit()
-            model = json.loads(model_info)
+                return
+            chat_model = ChatModel.model_validate_json(model_info)
+            chat_model.type = "command"
+            chat_model.name = self.command_name
             store = await Store.get_store()
 
-            db_id = await store.save_chat(
-                id=None,
-                name=self.command_name,
-                model=model["name"],
-                system=model["system"],
-                format=model["format"],
-                parameters=model["parameters"],
-                keep_alive=model["keep_alive"],
-                tools=model["tools"],
-                type="command",
-            )
+            db_id = await store.save_chat(chat_model)
             # Load the template from the package
             environment = Environment(loader=FileSystemLoader(Path(__file__).parent))
             template = environment.get_template("command_template.py.jinja")
@@ -89,8 +83,11 @@ class CreateCommandApp(App):
     async def load_mcp(self):
         from oterm.tools import available_tool_defs
 
-        mcp_tool_defs, mcp_tool_prompts = await setup_mcp_servers()
-        available_tool_defs.update(mcp_tool_defs)
+        external_tool_defs: list[ExternalToolDefinition] = appConfig.get("tools", [])  # type: ignore
+        external_tools = list(load_external_tools(external_tool_defs))
+        available_tool_defs["external"] = external_tools
+        mcp_tool_calls, _ = await setup_mcp_servers()
+        available_tool_defs.update(mcp_tool_calls)
 
     async def on_mount(self) -> None:
         theme = appConfig.get("theme")

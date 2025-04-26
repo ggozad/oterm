@@ -31,6 +31,11 @@ class ChatExport(ModalScreen[str]):
         ("escape", "cancel", "Cancel"),
     ]
 
+    def __init__(self, chat_id: int, file_name: str = "") -> None:
+        super().__init__()
+        self.chat_id = chat_id
+        self.file_name = file_name
+
     def action_cancel(self) -> None:
         self.dismiss()
 
