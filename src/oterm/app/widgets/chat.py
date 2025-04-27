@@ -63,7 +63,7 @@ class ChatContainer(Widget):
                 content=(
                     message
                     if author == Author.USER
-                    else parse_response(message)["response"]
+                    else parse_response(message).response
                 ),
             )
             msg.images = images  # type: ignore
@@ -101,7 +101,7 @@ class ChatContainer(Widget):
             chat_item.text = (
                 message
                 if author == Author.USER
-                else parse_response(message)["formatted_output"]
+                else parse_response(message).formatted_output
             )
             chat_item.author = author
             await message_container.mount(chat_item)
@@ -144,9 +144,9 @@ class ChatContainer(Widget):
             parsed = parse_response(response)
 
             # To not exhaust the tokens, remove the thought process from the history (it seems to be the common practice)
-            self.ollama.history[-1].content = parsed["response"]  # type: ignore
+            self.ollama.history[-1].content = parsed.response  # type: ignore
 
-            response_chat_item.text = parsed["formatted_output"]
+            response_chat_item.text = parsed.formatted_output
 
             if message_container.can_view_partial(response_chat_item):
                 message_container.scroll_end()
@@ -157,7 +157,7 @@ class ChatContainer(Widget):
             user_message = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
-                author=Author.USER.value,
+                role=Author.USER.value,
                 text=message,
                 images=[img for _, img in self.images],
             )
@@ -170,7 +170,7 @@ class ChatContainer(Widget):
             assistant_message = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
-                author=Author.OLLAMA.value,
+                role=Author.OLLAMA.value,
                 text=response,
                 images=[],
             )
@@ -321,7 +321,7 @@ class ChatContainer(Widget):
             regenerated_message = MessageModel(
                 id=response_message_id,
                 chat_id=self.chat_model.id,  # type: ignore
-                author=Author.OLLAMA.value,
+                role=Author.OLLAMA.value,
                 text=response,
                 images=[],
             )
@@ -370,7 +370,7 @@ class ChatContainer(Widget):
             message_model = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
-                author=author.value,
+                role=author.value,
                 text=text,
                 images=[],
             )

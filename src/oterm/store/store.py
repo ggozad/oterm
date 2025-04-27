@@ -214,7 +214,7 @@ class Store:
                 {
                     "id": message_model.id,
                     "chat_id": message_model.chat_id,
-                    "author": message_model.author,
+                    "author": message_model.role,
                     "text": message_model.text,
                     "images": json.dumps(message_model.images),
                 },

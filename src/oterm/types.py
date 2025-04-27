@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any, TypedDict
 
 from mcp.types import Prompt
-from ollama import Image, Options, Tool  # noqa
+from ollama import Options, Tool
 from pydantic import BaseModel, Field
 
 
@@ -12,7 +12,7 @@ class Author(Enum):
     OLLAMA = "ollama"
 
 
-class ParsedResponse(TypedDict):
+class ParsedResponse(BaseModel):
     thought: str
     response: str
     formatted_output: str
@@ -63,6 +63,6 @@ class MessageModel(BaseModel):
 
     id: int | None = None
     chat_id: int
-    author: str
+    role: str
     text: str
     images: list[str] = Field(default_factory=list)
