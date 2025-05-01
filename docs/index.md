@@ -1,6 +1,6 @@
 # oterm
 
-the text-based terminal client for [Ollama](https://github.com/ollama/ollama).
+the terminal client for [Ollama](https://github.com/ollama/ollama).
 
 ## Features
 

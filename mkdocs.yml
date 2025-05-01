@@ -1,5 +1,5 @@
 site_name: oterm
-site_description: the text-based terminal client for Ollama.
+site_description: the terminal client for Ollama.
 site_url: https://ggozad.github.io/oterm/
 theme:
   name: material
