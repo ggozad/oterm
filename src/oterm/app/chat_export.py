@@ -9,7 +9,7 @@ from textual.screen import ModalScreen
 from textual.widgets import Input, Label
 
 from oterm.store.store import Store
-from oterm.types import Author
+from oterm.types import Author, MessageModel
 
 
 def slugify(value):
@@ -46,14 +46,12 @@ class ChatExport(ModalScreen[str]):
         if not event.value:
             return
 
-        messages: Sequence[
-            tuple[int, Author, str, list[str]]
-        ] = await store.get_messages(self.chat_id)
+        messages: Sequence[MessageModel] = await store.get_messages(self.chat_id)
         with open(event.value, "w", encoding="utf-8") as file:
             for message in messages:
-                _, author, text, images = message
+                author = Author(message.role)
                 file.write(f"*{author.value}*\n")
-                file.write(f"{text}\n")
+                file.write(f"{message.text}\n")
                 file.write("\n---\n")
         self.app.notify(f"Chat exported to {file.name}")
         self.dismiss()

@@ -7,7 +7,7 @@ from packaging.version import parse
 
 from oterm.config import envConfig
 from oterm.store.upgrades import upgrades
-from oterm.types import Author, ChatModel, MessageModel, Tool
+from oterm.types import ChatModel, MessageModel, Tool
 from oterm.utils import int_to_semantic_version, semantic_version_to_int
 
 
@@ -222,9 +222,7 @@ class Store:
             await connection.commit()
             return res[0] if res else 0
 
-    async def get_messages(
-        self, chat_id: int
-    ) -> list[tuple[int, Author, str, list[str]]]:
+    async def get_messages(self, chat_id: int) -> list[MessageModel]:
         async with aiosqlite.connect(self.db_path) as connection:
             messages = await connection.execute_fetchall(
                 """
@@ -234,11 +232,16 @@ class Store:
                 """,
                 {"chat_id": chat_id},
             )
-            messages = [
-                (id, Author(author), text, json.loads(images))
+            return [
+                MessageModel(
+                    id=id,
+                    chat_id=chat_id,
+                    role=author,
+                    text=text,
+                    images=json.loads(images),
+                )
                 for id, author, text, images in messages
             ]
-            return messages
 
     async def clear_chat(self, chat_id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
