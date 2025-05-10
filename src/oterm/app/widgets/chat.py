@@ -303,12 +303,12 @@ class ChatContainer(Widget):
 
         # Remove the last two messages from chat history, we will regenerate them
         self.ollama.history = self.ollama.history[:-2]
-        message = self.messages[-1].text
+        message = self.messages[-1]
 
         async def response_task() -> None:
             response = await self.ollama.completion(
-                message,
-                images=[img for _, img in self.images],
+                message.text,
+                images=message.images,  # type: ignore
                 additional_options=Options(seed=random.randint(0, 32768)),
             )
             response_chat_item.text = response
