@@ -4,6 +4,9 @@ Changelog
 0.11.3 -
 -------------------
 
+- When regenerating a message default to chat completion as tools do not work when streaming.
+  [ggozad]
+
 - When editing a chat filter out tools that are no longer available.
   [ggozad]
 
