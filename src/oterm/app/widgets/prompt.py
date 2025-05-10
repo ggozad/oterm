@@ -212,7 +212,7 @@ class FlexibleInput(Widget):
         with Horizontal():
             yield PastableInput(
                 id="promptInput",
-                placeholder="Message Ollama…",
+                placeholder="Your message…",
             )
             yield PostableTextArea(id="promptArea")
             with Horizontal(id="button-container"):
