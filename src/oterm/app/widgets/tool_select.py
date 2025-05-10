@@ -22,6 +22,9 @@ class ToolSelector(Widget):
     ) -> None:
         super().__init__(name=name, id=id, classes=classes, disabled=disabled)
         self.selected = selected if selected is not None else []
+        # Check if selected tools are still available from the loaded tools.
+        available = [tool_def["tool"] for tool_def in available_tool_calls()]
+        self.selected = [tool for tool in selected if tool in available]
 
     def on_mount(self) -> None:
         pass
