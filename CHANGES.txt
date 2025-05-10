@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.11.3 -
+-------------------
+
+- When editing a chat filter out tools that are no longer available.
+  [ggozad]
+
 0.11.2 - 2025-04-22
 -------------------
 
