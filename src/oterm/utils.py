@@ -62,12 +62,11 @@ def parse_response(input_text: str) -> ParsedResponse:
         thought = input_text[7:thought_end].lstrip("\n").rstrip("\n").strip()
         response = input_text[thought_end + 8 :].lstrip("\n").rstrip("\n")
         # transform the think tag into a markdown blockquote (for clarity)
-        formatted_output = (
-            "> ### <thought\\>\n"
-            + "\n".join([f"> {line}" for line in thought.split("\n")])
-            + "\n> ### </thought\\>\n"
-            + response
-        )
+        if thought.strip():
+            thought = "\n".join([f"> {line}" for line in thought.split("\n")])
+            formatted_output = (
+                "> ### <thought\\>\n" + thought + "\n> ### </thought\\>\n" + response
+            )
 
     return ParsedResponse(
         thought=thought, response=response, formatted_output=formatted_output
