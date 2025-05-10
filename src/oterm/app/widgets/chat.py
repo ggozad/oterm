@@ -319,7 +319,6 @@ class ChatContainer(Widget):
     async def action_regenerate_llm_message(self) -> None:
         if not self.messages[-1:]:
             return
-
         # Remove last Ollama response from UI and regenerate it
         response_message_id = self.messages[-1][0]
         self.messages.pop()
@@ -337,16 +336,14 @@ class ChatContainer(Widget):
         message = self.messages[-1][2]
 
         async def response_task() -> None:
-            response = ""
-            async for text in self.ollama.stream(
+            response = await self.ollama.completion(
                 message,
-                [img for _, img in self.images],
-                Options(seed=random.randint(0, 32768)),
-            ):
-                response = text
-                response_chat_item.text = text
-                if message_container.can_view_partial(response_chat_item):
-                    message_container.scroll_end()
+                images=[img for _, img in self.images],
+                additional_options=Options(seed=random.randint(0, 32768)),
+            )
+            response_chat_item.text = response
+            if message_container.can_view_partial(response_chat_item):
+                message_container.scroll_end()
 
             # Save to db
             store = await Store.get_store()
@@ -358,7 +355,6 @@ class ChatContainer(Widget):
             )
             self.messages.append((response_message_id, Author.OLLAMA, response, []))
             self.images = []
-
             loading.remove()
 
         asyncio.create_task(response_task())

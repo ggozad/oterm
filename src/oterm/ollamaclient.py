@@ -64,6 +64,7 @@ class OllamaLLM:
         self,
         prompt: str = "",
         images: list[Path | bytes | str] = [],
+        additional_options: Options = Options(),
         tool_call_messages=[],
     ) -> str:
         client = AsyncClient(
@@ -76,11 +77,15 @@ class OllamaLLM:
                 # user_prompt.images = [Image(value=image) for image in images]
                 user_prompt.images = images  # type: ignore
             self.history.append(user_prompt)
+        options = {
+            k: v for k, v in self.options.model_dump().items() if v is not None
+        } | {k: v for k, v in additional_options.model_dump().items() if v is not None}
+
         response: ChatResponse = await client.chat(
             model=self.model,
             messages=self.history + tool_call_messages,
             keep_alive=f"{self.keep_alive}m",
-            options=self.options,
+            options=options,
             format=parse_format(self.format),
             tools=self.tools,
         )
