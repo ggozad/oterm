@@ -1,15 +1,9 @@
 from collections.abc import Awaitable, Callable
-from enum import Enum
-from typing import Any, TypedDict
+from typing import Any, Literal, TypedDict
 
 from mcp.types import Prompt
 from ollama import Options, Tool
 from pydantic import BaseModel, Field
-
-
-class Author(Enum):
-    USER = "user"
-    ASSISTANT = "assistant"
 
 
 class ParsedResponse(BaseModel):
@@ -63,6 +57,6 @@ class MessageModel(BaseModel):
 
     id: int | None = None
     chat_id: int
-    role: str
+    role: Literal["user", "assistant", "system", "tool"]
     text: str
     images: list[str] = Field(default_factory=list)

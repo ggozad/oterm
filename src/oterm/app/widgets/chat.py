@@ -27,7 +27,7 @@ from oterm.app.widgets.prompt import FlexibleInput
 from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
 from oterm.tools import available_tool_calls
-from oterm.types import Author, ChatModel, MessageModel
+from oterm.types import ChatModel, MessageModel
 from oterm.utils import parse_response
 
 
@@ -58,13 +58,12 @@ class ChatContainer(Widget):
         # See https://github.com/ollama/ollama-python/issues/375
         # Temp fix is to do msg.images = images  # type: ignore
         for msg_model in messages:
-            author = Author(msg_model.role)
             message_text = msg_model.text
             msg = Message(
-                role="user" if author == Author.USER else "assistant",
+                role=msg_model.role,
                 content=(
                     message_text
-                    if author == Author.USER
+                    if msg_model.role == "user"
                     else parse_response(message_text).response
                 ),
             )
@@ -99,14 +98,13 @@ class ChatContainer(Widget):
         self.loading = True
         message_container = self.query_one("#messageContainer")
         for message in self.messages:
-            author = Author(message.role)
             chat_item = ChatItem()
             chat_item.text = (
                 message.text
-                if author == Author.USER
+                if message.role == "user"
                 else parse_response(message.text).formatted_output
             )
-            chat_item.author = author
+            chat_item.author = message.role
             await message_container.mount(chat_item)
         message_container.scroll_end()
         self.loading = False
@@ -117,11 +115,11 @@ class ChatContainer(Widget):
 
         user_chat_item = ChatItem()
         user_chat_item.text = message
-        user_chat_item.author = Author.USER
+        user_chat_item.author = "user"
         message_container.mount(user_chat_item)
 
         response_chat_item = ChatItem()
-        response_chat_item.author = Author.ASSISTANT
+        response_chat_item.author = "assistant"
         message_container.mount(response_chat_item)
         loading = LoadingIndicator()
         await message_container.mount(loading)
@@ -160,7 +158,7 @@ class ChatContainer(Widget):
             user_message = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
-                role=Author.USER.value,
+                role="user",
                 text=message,
                 images=[img for _, img in self.images],
             )
@@ -172,7 +170,7 @@ class ChatContainer(Widget):
             assistant_message = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
-                role=Author.ASSISTANT.value,
+                role="assistant",
                 text=response,
                 images=[],
             )
@@ -233,9 +231,8 @@ class ChatContainer(Widget):
         # See https://github.com/ollama/ollama-python/issues/375
         # Temp fix is to do msg.images = images  # type: ignore
         for message in self.messages:
-            author = Author(message.role)
             msg = Message(
-                role="user" if author == Author.USER else "assistant",
+                role=message.role,
                 content=message.text,
             )
             msg.images = message.images  # type: ignore
@@ -298,7 +295,7 @@ class ChatContainer(Widget):
         message_container = self.query_one("#messageContainer")
         message_container.children[-1].remove()
         response_chat_item = ChatItem()
-        response_chat_item.author = Author.ASSISTANT
+        response_chat_item.author = "assistant"
         message_container.mount(response_chat_item)
         loading = LoadingIndicator()
         await message_container.mount(loading)
@@ -325,7 +322,7 @@ class ChatContainer(Widget):
             regenerated_message = MessageModel(
                 id=response_message_id,
                 chat_id=self.chat_model.id,  # type: ignore
-                role=Author.ASSISTANT.value,
+                role="assistant",
                 text=response,
                 images=[],
             )
@@ -347,11 +344,7 @@ class ChatContainer(Widget):
             prompt.text = text
             prompt.focus()
 
-        prompts = [
-            message.text
-            for message in self.messages
-            if Author(message.role) == Author.USER
-        ]
+        prompts = [message.text for message in self.messages if message.role == "user"]
         prompts.reverse()
         screen = PromptHistory(prompts)
         self.app.push_screen(screen, on_history_selected)
@@ -371,13 +364,13 @@ class ChatContainer(Widget):
             last_user_message = messages.pop()
 
         for message in messages:
-            author = message.role == "user" and Author.USER or Author.ASSISTANT
+            author = message.role
             text = message.content or ""
             # Create a message model for the MCP conversation
             message_model = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
-                role=author.value,
+                role=author,
                 text=text,
                 images=[],
             )
@@ -408,7 +401,7 @@ class ChatContainer(Widget):
 
 class ChatItem(Widget):
     text: reactive[str] = reactive("")
-    author: Author
+    author: reactive[str] = reactive("")
 
     @on(Click)
     async def on_click(self, event: Click) -> None:
@@ -436,6 +429,6 @@ class ChatItem(Widget):
         mrk_down = Markdown(self.text, classes="text")
         mrk_down.code_dark_theme = "solarized-dark"
         mrk_down.code_light_theme = "solarized-light"
-        with Horizontal(classes=f"{self.author.name} chatItem"):
-            yield Static(self.author.value, classes="author", markup=False)
+        with Horizontal(classes=f"{self.author} chatItem"):
+            yield Static(self.author, classes="author", markup=False)
             yield mrk_down

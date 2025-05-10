@@ -57,7 +57,7 @@ dev-dependencies = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.5",
     "pre-commit>=4.2.0",
-    "pyright>=1.1.399",
+    "pyright>=1.1.400",
 ]
 
 [tool.uv.sources]
