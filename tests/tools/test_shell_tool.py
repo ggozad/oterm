@@ -12,5 +12,7 @@ async def test_shell(default_model):
             {"tool": ShellTool, "callable": shell_command},
         ],
     )
-    res = await llm.completion("What is the current directory? Use the tools available")
+    res = await llm.completion(
+        "What is the current directory? Use the shell tool available and execute the command."
+    )
     assert "oterm" in res

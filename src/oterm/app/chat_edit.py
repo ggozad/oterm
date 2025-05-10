@@ -1,6 +1,3 @@
-import json
-from collections.abc import Sequence
-
 from ollama import Options, ShowResponse
 from pydantic import ValidationError
 from rich.text import Text
@@ -21,17 +18,7 @@ from oterm.ollamaclient import (
     parse_format,
     parse_ollama_parameters,
 )
-from oterm.types import Tool
-
-
-class OtermOllamaOptions(Options):
-    # Patch stop to allow for a single string.
-    # This is an issue with the gemma model which has a single stop parameter.
-    # Remove when fixed upstream and close #187
-    stop: Sequence[str] | str | None = None
-
-    class Config:
-        extra = "forbid"
+from oterm.types import ChatModel, OtermOllamaOptions, Tool
 
 
 class ChatEdit(ModalScreen[str]):
@@ -57,22 +44,24 @@ class ChatEdit(ModalScreen[str]):
 
     def __init__(
         self,
-        model: str = "",
-        system: str = "",
-        parameters: Options = Options(),
-        format="",
-        keep_alive: int = 5,
+        chat_model: ChatModel | None = None,
         edit_mode: bool = False,
-        tools: list[Tool] = [],
     ) -> None:
         super().__init__()
-        self.model_name, self.tag = model.split(":") if model else ("", "")
-        self.system = system
-        self.parameters = parameters
-        self.format = format
-        self.keep_alive = keep_alive
+
+        if chat_model is None:
+            chat_model = ChatModel()
+
+        self.chat_model = chat_model
+        self.model_name, self.tag = (
+            chat_model.model.split(":") if chat_model.model else ("", "")
+        )
+        self.system = chat_model.system or ""
+        self.parameters = chat_model.parameters
+        self.format = chat_model.format
+        self.keep_alive = chat_model.keep_alive
+        self.tools = chat_model.tools
         self.edit_mode = edit_mode
-        self.tools = tools
 
     def _return_chat_meta(self) -> None:
         model = f"{self.model_name}:{self.tag}"
@@ -83,18 +72,18 @@ class ChatEdit(ModalScreen[str]):
         try:
             parameters = OtermOllamaOptions.model_validate_json(
                 p_area.text, strict=True
-            ).model_dump(exclude_unset=True)
-            if isinstance(parameters.get("stop"), str):
-                parameters["stop"] = [parameters["stop"]]
+            )
+
+            if isinstance(parameters.stop, str):
+                parameters.stop = [parameters.stop]
 
         except ValidationError:
             self.app.notify("Error validating parameters", severity="error")
             p_area = self.query_one(".parameters", TextArea)
             p_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
             return
-        f_area = self.query_one(".format", TextArea)
 
-        # Try parsing the format
+        f_area = self.query_one(".format", TextArea)
         try:
             parse_format(f_area.text)
             format = f_area.text
@@ -105,19 +94,20 @@ class ChatEdit(ModalScreen[str]):
 
         self.tools = self.query_one(ToolSelector).selected
 
-        # Check if the tools are valid
-        result = json.dumps(
-            {
-                "name": model,
-                "system": system,
-                "format": format,
-                "keep_alive": keep_alive,
-                "parameters": parameters,
-                "tools": [tool.model_dump() for tool in self.tools],
-            }
+        # Create updated chat model
+        updated_chat_model = ChatModel(
+            id=self.chat_model.id,
+            name=self.chat_model.name,
+            model=model,
+            system=system,
+            format=format,
+            parameters=parameters,
+            keep_alive=keep_alive,
+            tools=self.tools,
+            type=self.chat_model.type,
         )
 
-        self.dismiss(result)
+        self.dismiss(updated_chat_model.model_dump_json(exclude_none=True))
 
     def action_cancel(self) -> None:
         self.dismiss()
@@ -242,7 +232,9 @@ class ChatEdit(ModalScreen[str]):
                             yield Label(
                                 "Keep-alive (min)", classes="title keep-alive-label"
                             )
-                            yield Input(classes="keep-alive", value="5")
+                            yield Input(
+                                classes="keep-alive", value=str(self.keep_alive)
+                            )
 
             with Horizontal(classes="button-container"):
                 yield Button(

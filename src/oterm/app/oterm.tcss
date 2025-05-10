@@ -17,22 +17,22 @@ ChatItem .chatItem {
 }
 
 ChatItem .author {
-    width: 8%;
+    width: 11;
     padding: 1;
     color: $foreground;
 }
 
-ChatItem .USER {
+ChatItem .user {
     background: $panel;
 }
 
-ChatItem .OLLAMA {
+ChatItem .assistant {
     background: $panel-lighten-1;
 }
 
 ChatItem .text{
     margin: 1;
-    width: 90%;
+    width: 100%;
 }
 
 #prompt {

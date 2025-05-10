@@ -1,7 +1,5 @@
-import json
 from collections.abc import Iterable
 
-from ollama import Options, Tool
 from textual import on, work
 from textual.app import App, ComposeResult, SystemCommand
 from textual.binding import Binding
@@ -17,7 +15,7 @@ from oterm.config import appConfig
 from oterm.store.store import Store
 from oterm.tools.external import load_external_tools
 from oterm.tools.mcp.setup import setup_mcp_servers, teardown_mcp_servers
-from oterm.types import ExternalToolDefinition
+from oterm.types import ChatModel, ExternalToolDefinition
 from oterm.utils import check_ollama, is_up_to_date
 
 
@@ -87,11 +85,12 @@ class OTerm(App):
         if tabs.active_pane is None:
             return
         active_id = int(str(tabs.active_pane.id).split("-")[1])
-        for _chat in saved_chats:
-            if _chat[0] == active_id:
-                next_index = (saved_chats.index(_chat) + change) % len(saved_chats)
-                next_id = saved_chats[next_index][0]
-                tabs.active = f"chat-{next_id}"
+        for chat_model in saved_chats:
+            if chat_model.id == active_id:
+                next_index = (saved_chats.index(chat_model) + change) % len(saved_chats)
+                next_id = saved_chats[next_index].id
+                if next_id is not None:  # Ensure we have a valid ID
+                    tabs.active = f"chat-{next_id}"
                 break
 
     @work
@@ -100,32 +99,22 @@ class OTerm(App):
         model_info: str | None = await self.push_screen_wait(ChatEdit())
         if not model_info:
             return
-        model: dict = json.loads(model_info)
+
+        chat_model = ChatModel.model_validate_json(model_info)
         tabs = self.query_one(TabbedContent)
         tab_count = tabs.tab_count
-        name = f"chat #{tab_count + 1} - {model['name']}"
-        id = await store.save_chat(
-            id=None,
-            name=name,
-            model=model["name"],
-            system=model["system"],
-            format=model["format"],
-            parameters=model["parameters"],
-            keep_alive=model["keep_alive"],
-            tools=model["tools"],
-        )
+
+        name = f"chat #{tab_count + 1} - {chat_model.model}"
+        chat_model.name = name
+
+        id = await store.save_chat(chat_model)
+        chat_model.id = id
+
         pane = TabPane(name, id=f"chat-{id}")
         pane.compose_add_child(
             ChatContainer(
-                db_id=id,
-                chat_name=name,
-                model=model["name"],
-                system=model["system"],
-                format=model["format"],
-                parameters=Options(**model.get("parameters", {})),
-                keep_alive=model["keep_alive"],
+                chat_model=chat_model,
                 messages=[],
-                tools=[Tool(**t) for t in model.get("tools", [])],
             )
         )
         await tabs.add_pane(pane)
@@ -158,20 +147,24 @@ class OTerm(App):
             return
         chat = tabs.active_pane.query_one(ChatContainer)
         store = await Store.get_store()
-        await store.delete_chat(chat.db_id)
-        await tabs.remove_pane(tabs.active)
-        self.notify(f"Deleted {chat.chat_name}")
+
+        if chat.chat_model.id is not None:
+            await store.delete_chat(chat.chat_model.id)
+            await tabs.remove_pane(tabs.active)
+            self.notify(f"Deleted {chat.chat_model.name}", severity="information")
 
     async def action_export_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
         if tabs.active_pane is None:
             return
         chat = tabs.active_pane.query_one(ChatContainer)
-        screen = ChatExport()
-        screen.chat_id = chat.db_id
-        screen.file_name = f"{slugify(chat.chat_name)}.md"
 
-        self.push_screen(screen)
+        if chat.chat_model.id is not None:
+            screen = ChatExport(
+                chat_id=chat.chat_model.id,
+                file_name=f"{slugify(chat.chat_model.name)}.md",
+            )
+            self.push_screen(screen)
 
     async def action_regenerate_last_message(self) -> None:
         tabs = self.query_one(TabbedContent)
@@ -251,30 +244,18 @@ class OTerm(App):
                 self.action_new_chat()  # type: ignore
             else:
                 tabs = self.query_one(TabbedContent)
-                for (
-                    id,
-                    name,
-                    model,
-                    system,
-                    format,
-                    parameters,
-                    keep_alive,
-                    tools,
-                ) in saved_chats:
-                    messages = await store.get_messages(id)
-                    container = ChatContainer(
-                        db_id=id,
-                        chat_name=name,
-                        model=model,
-                        messages=messages,
-                        system=system,
-                        format=format,
-                        parameters=parameters,
-                        keep_alive=keep_alive,
-                        tools=tools,
-                    )
-                    pane = TabPane(name, container, id=f"chat-{id}")
-                    tabs.add_pane(pane)
+                for chat_model in saved_chats:
+                    # Only process chats with a valid ID
+                    if chat_model.id is not None:
+                        messages = await store.get_messages(chat_model.id)
+                        container = ChatContainer(
+                            chat_model=chat_model,
+                            messages=messages,
+                        )
+                        pane = TabPane(
+                            chat_model.name, container, id=f"chat-{chat_model.id}"
+                        )
+                        tabs.add_pane(pane)
             self.perform_checks()
 
         if appConfig.get("splash-screen"):

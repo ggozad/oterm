@@ -31,10 +31,11 @@ def list_commands():
 
     typer.echo("Commands found:")
     for command in commands:
-        id, name, *rest = command
-        path = Path.home() / ".local" / "bin" / name
+        path = Path.home() / ".local" / "bin" / command.name
         exists = path.exists()
-        typer.echo(f"{id}: {name} -> {exists and str(path) or 'Not found'}")
+        typer.echo(
+            f"{command.id}: {command.name} -> {exists and str(path) or 'Not found'}"
+        )
 
 
 @cli.command("delete")
@@ -47,8 +48,7 @@ def delete_command(
         if not command:
             typer.echo("Command not found.")
             return
-        _, name, *rest = command
-        path = Path.home() / ".local" / "bin" / name
+        path = Path.home() / ".local" / "bin" / command.name
         path.unlink(missing_ok=True)
         await store.delete_chat(id=id)
         typer.echo("Command deleted.")

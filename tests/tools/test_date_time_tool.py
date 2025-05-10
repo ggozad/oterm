@@ -15,4 +15,4 @@ async def test_date_time(default_model):
         "What is the time in 24h format? Use the date_time tool to answer this question."
     )
     time = datetime.time(datetime.now())
-    assert f"{time.hour}:{time.minute}" in res
+    assert f"{time.hour:02}:{time.minute:02}" in res

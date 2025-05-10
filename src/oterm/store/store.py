@@ -3,12 +3,11 @@ from importlib import metadata
 from pathlib import Path
 
 import aiosqlite
-from ollama import Options
 from packaging.version import parse
 
 from oterm.config import envConfig
 from oterm.store.upgrades import upgrades
-from oterm.types import Author, Tool
+from oterm.types import ChatModel, MessageModel, Tool
 from oterm.utils import int_to_semantic_version, semantic_version_to_int
 
 
@@ -82,18 +81,7 @@ class Store:
                 f"PRAGMA user_version = {semantic_version_to_int(version)};"
             )
 
-    async def save_chat(
-        self,
-        id: int | None,
-        name: str,
-        model: str,
-        system: str | None,
-        format: str,
-        parameters: Options,
-        keep_alive: int,
-        tools: list[Tool],
-        type: str = "chat",
-    ) -> int:
+    async def save_chat(self, chat_model: ChatModel) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res = await connection.execute_insert(
                 """
@@ -101,15 +89,19 @@ class Store:
                 INTO chat(id, name, model, system, format, parameters, keep_alive, tools, type)
                 VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools, :type) RETURNING id;""",
                 {
-                    "id": id,
-                    "name": name,
-                    "model": model,
-                    "system": system,
-                    "format": format,
-                    "parameters": json.dumps(parameters),
-                    "keep_alive": keep_alive,
-                    "tools": json.dumps(tools),
-                    "type": type,
+                    "id": chat_model.id,
+                    "name": chat_model.name,
+                    "model": chat_model.model,
+                    "system": chat_model.system,
+                    "format": chat_model.format,
+                    "parameters": json.dumps(
+                        chat_model.parameters.model_dump(exclude_unset=True)
+                    ),
+                    "keep_alive": chat_model.keep_alive,
+                    "tools": json.dumps(
+                        [tool.model_dump() for tool in chat_model.tools]
+                    ),
+                    "type": chat_model.type,
                 },
             )
             await connection.commit()
@@ -123,16 +115,7 @@ class Store:
             )
             await connection.commit()
 
-    async def edit_chat(
-        self,
-        id: int,
-        name: str,
-        system: str | None,
-        format: str,
-        parameters: Options,
-        keep_alive: int,
-        tools: list[Tool],
-    ) -> None:
+    async def edit_chat(self, chat_model: ChatModel) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
             await connection.execute(
                 """
@@ -146,20 +129,22 @@ class Store:
                 WHERE id = :id;
                 """,
                 {
-                    "id": id,
-                    "name": name,
-                    "system": system,
-                    "format": format,
-                    "parameters": json.dumps(parameters),
-                    "keep_alive": keep_alive,
-                    "tools": json.dumps(tools),
+                    "id": chat_model.id,
+                    "name": chat_model.name,
+                    "system": chat_model.system,
+                    "format": chat_model.format,
+                    "parameters": json.dumps(
+                        chat_model.parameters.model_dump(exclude_unset=True)
+                    ),
+                    "keep_alive": chat_model.keep_alive,
+                    "tools": json.dumps(
+                        [tool.model_dump() for tool in chat_model.tools]
+                    ),
                 },
             )
             await connection.commit()
 
-    async def get_chats(
-        self, type="chat"
-    ) -> list[tuple[int, str, str, str | None, str, Options, int, list[Tool]]]:
+    async def get_chats(self, type="chat") -> list[ChatModel]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await connection.execute_fetchall(
                 """
@@ -168,23 +153,23 @@ class Store:
                 """,
                 {"type": type},
             )
+
             return [
-                (
-                    id,
-                    name,
-                    model,
-                    system,
-                    format,
-                    Options(**json.loads(parameters)),
-                    keep_alive,
-                    [Tool(**t) for t in json.loads(tools)],
+                ChatModel(
+                    id=id,
+                    name=name,
+                    model=model,
+                    system=system,
+                    format=format,
+                    parameters=json.loads(parameters),
+                    keep_alive=keep_alive,
+                    tools=[Tool(**t) for t in json.loads(tools)],
+                    type=type,
                 )
                 for id, name, model, system, format, parameters, keep_alive, tools in chats
             ]
 
-    async def get_chat(
-        self, id: int
-    ) -> tuple[int, str, str, str | None, str, Options, int, list[Tool], str] | None:
+    async def get_chat(self, id: int) -> ChatModel | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await connection.execute_fetchall(
                 """
@@ -199,17 +184,18 @@ class Store:
                 id, name, model, system, format, parameters, keep_alive, tools, type = (
                     chat
                 )
-                return (
-                    id,
-                    name,
-                    model,
-                    system,
-                    format,
-                    Options(**json.loads(parameters)),
-                    keep_alive,
-                    [Tool(**t) for t in json.loads(tools)],
-                    type,
+                return ChatModel(
+                    id=id,
+                    name=name,
+                    model=model,
+                    system=system,
+                    format=format,
+                    parameters=json.loads(parameters),
+                    keep_alive=keep_alive,
+                    tools=[Tool(**t) for t in json.loads(tools)],
+                    type=type,
                 )
+            return None
 
     async def delete_chat(self, id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
@@ -217,14 +203,7 @@ class Store:
             await connection.execute("DELETE FROM chat WHERE id = :id;", {"id": id})
             await connection.commit()
 
-    async def save_message(
-        self,
-        id: int | None,
-        chat_id: int,
-        author: str,
-        text: str,
-        images: list[str] = [],
-    ) -> int:
+    async def save_message(self, message_model: MessageModel) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
             res = await connection.execute_insert(
                 """
@@ -233,19 +212,17 @@ class Store:
                 VALUES(:id, :chat_id, :author, :text, :images) RETURNING id;
                 """,
                 {
-                    "id": id,
-                    "chat_id": chat_id,
-                    "author": author,
-                    "text": text,
-                    "images": json.dumps(images),
+                    "id": message_model.id,
+                    "chat_id": message_model.chat_id,
+                    "author": message_model.role,
+                    "text": message_model.text,
+                    "images": json.dumps(message_model.images),
                 },
             )
             await connection.commit()
             return res[0] if res else 0
 
-    async def get_messages(
-        self, chat_id: int
-    ) -> list[tuple[int, Author, str, list[str]]]:
+    async def get_messages(self, chat_id: int) -> list[MessageModel]:
         async with aiosqlite.connect(self.db_path) as connection:
             messages = await connection.execute_fetchall(
                 """
@@ -255,11 +232,16 @@ class Store:
                 """,
                 {"chat_id": chat_id},
             )
-            messages = [
-                (id, Author(author), text, json.loads(images))
+            return [
+                MessageModel(
+                    id=id,
+                    chat_id=chat_id,
+                    role=author,
+                    text=text,
+                    images=json.loads(images),
+                )
                 for id, author, text, images in messages
             ]
-            return messages
 
     async def clear_chat(self, chat_id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
