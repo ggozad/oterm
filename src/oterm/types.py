@@ -8,8 +8,8 @@ from pydantic import BaseModel, Field
 
 
 class Author(Enum):
-    USER = "me"
-    OLLAMA = "ollama"
+    USER = "user"
+    ASSISTANT = "assistant"
 
 
 class ParsedResponse(BaseModel):

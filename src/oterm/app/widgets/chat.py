@@ -121,7 +121,7 @@ class ChatContainer(Widget):
         message_container.mount(user_chat_item)
 
         response_chat_item = ChatItem()
-        response_chat_item.author = Author.OLLAMA
+        response_chat_item.author = Author.ASSISTANT
         message_container.mount(response_chat_item)
         loading = LoadingIndicator()
         await message_container.mount(loading)
@@ -172,7 +172,7 @@ class ChatContainer(Widget):
             assistant_message = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
-                role=Author.OLLAMA.value,
+                role=Author.ASSISTANT.value,
                 text=response,
                 images=[],
             )
@@ -298,7 +298,7 @@ class ChatContainer(Widget):
         message_container = self.query_one("#messageContainer")
         message_container.children[-1].remove()
         response_chat_item = ChatItem()
-        response_chat_item.author = Author.OLLAMA
+        response_chat_item.author = Author.ASSISTANT
         message_container.mount(response_chat_item)
         loading = LoadingIndicator()
         await message_container.mount(loading)
@@ -325,7 +325,7 @@ class ChatContainer(Widget):
             regenerated_message = MessageModel(
                 id=response_message_id,
                 chat_id=self.chat_model.id,  # type: ignore
-                role=Author.OLLAMA.value,
+                role=Author.ASSISTANT.value,
                 text=response,
                 images=[],
             )
@@ -371,7 +371,7 @@ class ChatContainer(Widget):
             last_user_message = messages.pop()
 
         for message in messages:
-            author = message.role == "user" and Author.USER or Author.OLLAMA
+            author = message.role == "user" and Author.USER or Author.ASSISTANT
             text = message.content or ""
             # Create a message model for the MCP conversation
             message_model = MessageModel(
