@@ -413,7 +413,8 @@ class ChatItem(Widget):
         self.app.notify("Message copied to clipboard.")
 
     async def watch_text(self, text: str) -> None:
-        text = self.text
+        if self.author == "user":
+            return
         try:
             jsn = json.loads(text)
             if isinstance(jsn, dict):
@@ -430,5 +431,7 @@ class ChatItem(Widget):
         mrk_down.code_dark_theme = "solarized-dark"
         mrk_down.code_light_theme = "solarized-light"
         with Horizontal(classes=f"{self.author} chatItem"):
-            yield Static(self.author, classes="author", markup=False)
-            yield mrk_down
+            if self.author == "user":
+                yield Static(self.text, classes="text")
+            else:
+                yield mrk_down
