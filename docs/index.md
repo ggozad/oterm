@@ -42,7 +42,7 @@ The splash screen animation that greets users when they start oterm.
 ![Chat](img/chat.png)
 A view of the chat interface, showcasing the conversation between the user and the model.
 
-![Theme](./img/theme.svg)
+![Theme](./img/theme.png)
 oterm supports multiple themes, allowing users to customize the appearance of the interface.
 
 ## License

@@ -24,6 +24,7 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 [oterm Documentation](https://ggozad.github.io/oterm/)
 
 ## What's new
+* Messages UI styling improvements.
 * MCP Sampling is here! Also support for SSE & WebSocket transports for MCP servers.
 * In-app log viewer for debugging and troubleshooting.
 * Support sixel graphics for displaying images in the terminal.
@@ -45,7 +46,7 @@ oterm using the `git` MCP server to access its own repo.
 ![Image selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/image_selection.png)
 The image selection interface, demonstrating how users can include images in their conversations.
 
-![Theme](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/theme.svg)
+![Theme](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/theme.png)
 oterm supports multiple themes, allowing users to customize the appearance of the interface.
 
 ## License

@@ -5,6 +5,7 @@ ChatContainer {
 #messageContainer {
     overflow-y: auto;
     padding-bottom: 1;
+    padding-right: 2;
     height: 100%;
 }
 
@@ -16,23 +17,29 @@ ChatItem .chatItem {
     height: auto;
 }
 
-ChatItem .author {
-    width: 11;
-    padding: 1;
-    color: $foreground;
-}
-
 ChatItem .user {
-    background: $panel;
+    align: right top;
 }
 
 ChatItem .assistant {
-    background: $panel-lighten-1;
+    align: left top;
 }
 
 ChatItem .text{
-    margin: 1;
-    width: 100%;
+    margin-bottom: 1;
+    max-width: 90%;
+    border: round $secondary-lighten-2;
+}
+
+ChatItem .user .text {
+    background: $panel-lighten-1;
+    align: right top;
+
+    text-align: right;
+ }
+
+ChatItem .assistant .text {
+   background: $panel;
 }
 
 #prompt {
