@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.11.3 -
+0.12.0 - 2025-05-11
 -------------------
 
 - Move as much as possible to pydantic, simplify code.
