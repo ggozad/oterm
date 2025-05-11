@@ -46,14 +46,8 @@ async def test_iterator(default_model):
     assert "4" in response
 
 
-@pytest.mark.skip(
-    reason="Skipped till https://github.com/ollama/ollama-python/issues/279 is fixed."
-)
 @pytest.mark.asyncio
 async def test_tool_streaming(default_model):
-    # This test will fail until Ollama supports streaming with tools.
-    # See https://github.com/ollama/ollama-python/issues/279
-
     llm = OllamaLLM(
         model=default_model,
         tool_defs=[
@@ -62,7 +56,7 @@ async def test_tool_streaming(default_model):
     )
     response = ""
     async for text in llm.stream(
-        "What is the current date in YYYY-MM-DD format?. Reply with no other text, just the date."
+        "What is the current date in YYYY-MM-DD format?. Use the date_time tool to answer."
     ):
         response = text
     assert "2025-01-01" in response
