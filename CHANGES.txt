@@ -4,6 +4,12 @@ Changelog
 0.11.3 -
 -------------------
 
+- Move as much as possible to pydantic, simplify code.
+  [ggozad]
+
+- Remove commands, little feedback seems noone is using it.
+  [ggozad]
+
 - When regenerating a message default to chat completion as tools do not work when streaming.
   [ggozad]
 
