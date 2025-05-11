@@ -28,7 +28,6 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 * In-app log viewer for debugging and troubleshooting.
 * Support sixel graphics for displaying images in the terminal.
 * Support for Model Context Protocol (MCP) tools & prompts!
-* Create custom commands that can be run from the terminal using oterm. Each of these commands is a chat, customized to your liking and connected to the tools of your choice.
 
 ### Screenshots
 ![Splash](https://raw.githubusercontent.com/ggozad/oterm/refs/heads/main/docs/img/splash.gif)

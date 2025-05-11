@@ -1,6 +1,6 @@
 [project]
 name = "oterm"
-version = "0.11.2"
+version = "0.12.0"
 description = "A text-based terminal client for Ollama."
 authors = [{ name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }]
 license = { text = "MIT" }
@@ -30,8 +30,7 @@ dependencies = [
     "ollama>=0.4.7,<0.5",
     "textualeffects>=0.1.4",
     "pydantic>=2.11.3,<2.12",
-    "mcp[cli]>=1.6.0,<1.7",
-    "jinja2>=3.1.6",
+    "mcp[cli]>=1.7.1,<1.8",
     "textual-image>=0.8.2,<0.9.0",
     "fastmcp>=2.2.1",
 ]
@@ -44,7 +43,6 @@ Documentation = "https://ggozad.github.io/oterm/"
 
 [project.scripts]
 oterm = "oterm.cli.oterm:cli"
-oterm-command = "oterm.cli.command:cli"
 
 [tool.uv]
 dev-dependencies = [
@@ -57,7 +55,7 @@ dev-dependencies = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.5",
     "pre-commit>=4.2.0",
-    "pyright>=1.1.399",
+    "pyright>=1.1.400",
 ]
 
 [tool.uv.sources]

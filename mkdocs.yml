@@ -64,7 +64,6 @@ nav:
       - mcp/index.md
   - Tools:
       - tools/index.md
-  - CLI commands: cli_commands.md
   - Configuration: app_config.md
   - Debugging / Development: development/index.md
 markdown_extensions:
