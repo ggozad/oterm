@@ -40,6 +40,12 @@ Using `pkg` for FreeBSD, thanks goes to [Nicola Vitale](https://github.com/nivit
 pkg install misc/py-oterm
 ```
 
+Using [`x-cmd`](https://x-cmd.com/install/oterm):
+
+```bash
+x install oterm
+```
+
 ## Updating oterm
 
 To update oterm to the latest version, you can use the same method you used for installation:
