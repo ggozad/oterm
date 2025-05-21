@@ -193,7 +193,8 @@ class MCPClient:
         if self.client is None:
             raise RuntimeError(f"Server {self.name} not initialized")
         try:
-            return await self.client.get_prompt(prompt_name, arguments)
+            result = await self.client.get_prompt(prompt_name, arguments)
+            return result.messages
         except Exception as e:
             log.error(f"Error getting prompt: {e}.")
             return []
