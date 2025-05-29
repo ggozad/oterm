@@ -957,15 +957,15 @@ wheels = [
 
 [[package]]
 name = "ollama"
-version = "0.4.8"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e2/64/709dc99030f8f46ec552f0a7da73bbdcc2da58666abfec4742ccdb2e800e/ollama-0.4.8.tar.gz", hash = "sha256:1121439d49b96fa8339842965d0616eba5deb9f8c790786cdf4c0b3df4833802", size = 12972, upload-time = "2025-04-16T21:55:14.101Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d4/3a/9034f25a80c7c233f4ae095c05b1a9cf5fc3fa6aa9a50a1f363c1eb010d0/ollama-0.5.0.tar.gz", hash = "sha256:ed6a343b64de22f69309ac930d8ac12b46775aebe21cbb91b859b99f59c53fa7", size = 41055, upload-time = "2025-05-30T02:39:12.491Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/33/3f/164de150e983b3a16e8bf3d4355625e51a357e7b3b1deebe9cc1f7cb9af8/ollama-0.4.8-py3-none-any.whl", hash = "sha256:04312af2c5e72449aaebac4a2776f52ef010877c554103419d3f36066fe8af4c", size = 13325, upload-time = "2025-04-16T21:55:12.779Z" },
+    { url = "https://files.pythonhosted.org/packages/55/0d/47aa067a963659adce1dd1b2f16e9ca5a258f7525579b640a365a122e3cb/ollama-0.5.0-py3-none-any.whl", hash = "sha256:625371de663ccb48f14faa49bd85ae409da5e40d84cab42366371234b4dbaf68", size = 13374, upload-time = "2025-05-30T02:39:11.099Z" },
 ]
 
 [[package]]
@@ -1020,7 +1020,7 @@ requires-dist = [
     { name = "aiosqlite", specifier = ">=0.21.0,<0.22" },
     { name = "fastmcp", specifier = ">=2.3.5" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.9.0,<1.10" },
-    { name = "ollama", specifier = ">=0.4.8,<0.5" },
+    { name = "ollama", specifier = ">=0.5.0,<0.6" },
     { name = "packaging", specifier = ">=25.0,<26" },
     { name = "pillow", specifier = ">=11.2.1,<12" },
     { name = "pydantic", specifier = ">=2.11.3,<2.12" },
