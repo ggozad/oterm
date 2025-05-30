@@ -10,7 +10,7 @@ from PIL import Image
 
 from oterm.tools.mcp.client import MCPClient
 
-DEFAULT_MODEL = "cogito:latest"
+DEFAULT_MODEL = "llama3.2"
 
 
 @pytest_asyncio.fixture(autouse=True)
