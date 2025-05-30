@@ -46,6 +46,7 @@ class OllamaLLM:
         options: Options = Options(),
         keep_alive: int = 5,
         tool_defs: Sequence[ToolCall] = [],
+        thinking: bool = False,
     ):
         self.model = model
         self.system = system
@@ -55,7 +56,7 @@ class OllamaLLM:
         self.options = options
         self.tool_defs = tool_defs
         self.tools = [tool["tool"] for tool in tool_defs]
-
+        self.thinking = thinking
         if system:
             system_prompt: Message = Message(role="system", content=system)
             self.history = [system_prompt] + self.history
@@ -88,6 +89,7 @@ class OllamaLLM:
             options=options,
             format=parse_format(self.format),
             tools=self.tools,
+            think=self.thinking,
         )
         message = response.message
         tool_calls = message.tool_calls
@@ -163,6 +165,7 @@ class OllamaLLM:
             format=parse_format(self.format),
             tools=self.tools,
             stream=True,
+            think=self.thinking,
         )
 
         text = ""
