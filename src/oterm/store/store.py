@@ -39,7 +39,7 @@ class Store:
                         "parameters"    TEXT DEFAULT "{}",
                         "keep_alive"    INTEGER DEFAULT 5,
                         "tools"         TEXT DEFAULT "[]",
-                        "thinking"      BOOLEAN DEFAULT 1,
+                        "thinking"      BOOLEAN DEFAULT 0,
                         PRIMARY KEY("id" AUTOINCREMENT)
                     );
 

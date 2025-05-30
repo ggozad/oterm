@@ -36,7 +36,7 @@ class ChatEdit(ModalScreen[str]):
     last_highlighted_index = None
     tools: reactive[list[Tool]] = reactive([])
     edit_mode: reactive[bool] = reactive(False)
-    thinking: reactive[bool] = reactive(True)
+    thinking: reactive[bool] = reactive(False)
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),

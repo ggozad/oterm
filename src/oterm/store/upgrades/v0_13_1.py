@@ -39,7 +39,7 @@ async def add_thinking_column(db_path):
     """Add thinking column to chat table."""
     async with aiosqlite.connect(db_path) as connection:
         await connection.execute(
-            "ALTER TABLE chat ADD COLUMN thinking BOOLEAN DEFAULT 1"
+            "ALTER TABLE chat ADD COLUMN thinking BOOLEAN DEFAULT 0"
         )
         await connection.commit()
 

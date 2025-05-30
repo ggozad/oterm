@@ -49,7 +49,7 @@ class ChatModel(BaseModel):
     parameters: OtermOllamaOptions = Field(default_factory=OtermOllamaOptions)
     keep_alive: int = 5
     tools: list[Tool] = Field(default_factory=list)
-    thinking: bool = True
+    thinking: bool = False
 
 
 class MessageModel(BaseModel):
