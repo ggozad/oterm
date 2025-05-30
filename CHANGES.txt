@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.13.0 - 2025-05-30
+-------------------
+
+- Streaming support while using tools.
+  [ggozad]
+
 0.12.1 - 2025-05-21
 -------------------
 
