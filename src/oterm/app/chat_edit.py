@@ -173,10 +173,19 @@ class ChatEdit(ModalScreen[str]):
             # XXX Does not work as expected, there is no longer system in model_info
             widget.load_text(self.system or self.model_info.get("system", ""))
 
-            # Deduce from the model's template if the model is tool-capable.
-            tools_supported = ".Tools" in self.model_info["template"]
+            capabilities: list[str] = self.model_info.get("capabilities", [])
+            tools_supported = "tools" in capabilities
             tool_selector = self.query_one(ToolSelector)
             tool_selector.disabled = not tools_supported
+
+            if "completion" in capabilities:
+                capabilities.remove("completion")  #
+            if "embedding" in capabilities:
+                capabilities.remove("embedding")
+
+            caps = ", ".join(capabilities).replace("vision", "👁️").replace("tools", "🛠️")
+            widget = self.query_one(".caps", Label)
+            widget.update(caps)
 
         # Now that there is a model selected we can save the chat.
         save_button = self.query_one("#save-btn", Button)
@@ -204,6 +213,8 @@ class ChatEdit(ModalScreen[str]):
                         yield Label(f"{self.tag}", classes="tag")
                         yield Label("Size:", classes="title")
                         yield Label(f"{self.size}", classes="size")
+                        yield Label("Caps:", classes="title")
+                        yield Label("", classes="caps")
 
                     yield OptionList(id="model-select")
                     yield Label("Tools:", classes="title")
