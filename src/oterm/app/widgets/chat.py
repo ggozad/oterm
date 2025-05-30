@@ -128,7 +128,6 @@ class ChatContainer(Widget):
         try:
             response = ""
 
-            # Ollama does not support streaming with tools, so we need to use completion
             async for text in self.ollama.stream(
                 message, [img for _, img in self.images]
             ):

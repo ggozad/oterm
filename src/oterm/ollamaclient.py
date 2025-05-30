@@ -219,14 +219,13 @@ class OllamaLLM:
                             log.error(f"Error calling tool {tool_name}: {e}")
                             return
 
-            # Continue the conversation with tool results
-            message = ""
-            async for chunk in self.stream(
+            # Use a new variable for the follow-up response to avoid duplication
+            async for text_chunk in self.stream(
                 tool_call_messages=tool_messages,
                 additional_options=additional_options,
             ):
-                message += chunk
-                yield message
+                yield text_chunk
+                text = text_chunk
 
         elif text:  # Only regular content was present
             self.history.append(Message(role="assistant", content=text))
