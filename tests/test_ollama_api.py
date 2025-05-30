@@ -13,14 +13,17 @@ def test_list():
 
 def test_show():
     llm = OllamaLLM()
-    response = llm.show("llama3.2")
+    response = llm.show("llama3.2:latest")
     assert response
     assert response.modelfile
     assert response.parameters
     assert response.template
     assert response.details
     assert response.modelinfo
+    assert response.capabilities
 
+    assert "tools" in response.capabilities
+    assert "completion" in response.capabilities
     params = parse_ollama_parameters(response.parameters)
     assert params.stop == ["<|start_header_id|>", "<|end_header_id|>", "<|eot_id|>"]
     assert params.temperature is None

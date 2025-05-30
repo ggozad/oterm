@@ -9,7 +9,7 @@ from textual.containers import (
 )
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Input, Label, OptionList, TextArea
+from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
 
 from oterm.app.widgets.tool_select import ToolSelector
 from oterm.ollamaclient import (
@@ -36,6 +36,7 @@ class ChatEdit(ModalScreen[str]):
     last_highlighted_index = None
     tools: reactive[list[Tool]] = reactive([])
     edit_mode: reactive[bool] = reactive(False)
+    thinking: reactive[bool] = reactive(False)
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -62,6 +63,7 @@ class ChatEdit(ModalScreen[str]):
         self.keep_alive = chat_model.keep_alive
         self.tools = chat_model.tools
         self.edit_mode = edit_mode
+        self.thinking = chat_model.thinking
 
     def _return_chat_meta(self) -> None:
         model = f"{self.model_name}:{self.tag}"
@@ -93,6 +95,7 @@ class ChatEdit(ModalScreen[str]):
             return
 
         self.tools = self.query_one(ToolSelector).selected
+        self.thinking = self.query_one("#thinking-checkbox", Checkbox).value
 
         # Create updated chat model
         updated_chat_model = ChatModel(
@@ -104,7 +107,7 @@ class ChatEdit(ModalScreen[str]):
             parameters=parameters,
             keep_alive=keep_alive,
             tools=self.tools,
-            type=self.chat_model.type,
+            thinking=self.thinking,
         )
 
         self.dismiss(updated_chat_model.model_dump_json(exclude_none=True))
@@ -173,10 +176,27 @@ class ChatEdit(ModalScreen[str]):
             # XXX Does not work as expected, there is no longer system in model_info
             widget.load_text(self.system or self.model_info.get("system", ""))
 
-            # Deduce from the model's template if the model is tool-capable.
-            tools_supported = ".Tools" in self.model_info["template"]
+            capabilities: list[str] = self.model_info.get("capabilities", [])
+            tools_supported = "tools" in capabilities
             tool_selector = self.query_one(ToolSelector)
             tool_selector.disabled = not tools_supported
+
+            thinking_checkbox = self.query_one("#thinking-checkbox", Checkbox)
+            thinking_checkbox.disabled = "thinking" not in capabilities
+
+            if "completion" in capabilities:
+                capabilities.remove("completion")  #
+            if "embedding" in capabilities:
+                capabilities.remove("embedding")
+
+            caps = (
+                " ".join(capabilities)
+                .replace("vision", "👁️")
+                .replace("tools", "🛠️")
+                .replace("thinking", "🧠")
+            )
+            widget = self.query_one(".caps", Label)
+            widget.update(caps)
 
         # Now that there is a model selected we can save the chat.
         save_button = self.query_one("#save-btn", Button)
@@ -204,6 +224,8 @@ class ChatEdit(ModalScreen[str]):
                         yield Label(f"{self.tag}", classes="tag")
                         yield Label("Size:", classes="title")
                         yield Label(f"{self.size}", classes="size")
+                        yield Label("Caps:", classes="title")
+                        yield Label("", classes="caps")
 
                     yield OptionList(id="model-select")
                     yield Label("Tools:", classes="title")
@@ -229,6 +251,12 @@ class ChatEdit(ModalScreen[str]):
 
                     with Horizontal():
                         with Horizontal():
+                            yield Checkbox(
+                                "Thinking",
+                                id="thinking-checkbox",
+                                name="thinking",
+                                value=self.thinking,
+                            )
                             yield Label(
                                 "Keep-alive (min)", classes="title keep-alive-label"
                             )
