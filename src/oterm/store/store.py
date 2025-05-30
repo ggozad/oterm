@@ -39,7 +39,6 @@ class Store:
                         "parameters"	TEXT DEFAULT "{}",
                         "keep_alive" INTEGER DEFAULT 5,
                         "tools" 	TEXT DEFAULT "[]",
-                        "type"      TEXT DEFAULT "chat",
                         PRIMARY KEY("id" AUTOINCREMENT)
                     );
 
@@ -86,8 +85,8 @@ class Store:
             res = await connection.execute_insert(
                 """
                 INSERT OR REPLACE
-                INTO chat(id, name, model, system, format, parameters, keep_alive, tools, type)
-                VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools, :type) RETURNING id;""",
+                INTO chat(id, name, model, system, format, parameters, keep_alive, tools)
+                VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools) RETURNING id;""",
                 {
                     "id": chat_model.id,
                     "name": chat_model.name,
@@ -101,7 +100,6 @@ class Store:
                     "tools": json.dumps(
                         [tool.model_dump() for tool in chat_model.tools]
                     ),
-                    "type": chat_model.type,
                 },
             )
             await connection.commit()
@@ -144,14 +142,13 @@ class Store:
             )
             await connection.commit()
 
-    async def get_chats(self, type="chat") -> list[ChatModel]:
+    async def get_chats(self) -> list[ChatModel]:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await connection.execute_fetchall(
                 """
                 SELECT id, name, model, system, format, parameters, keep_alive, tools
-                FROM chat WHERE type = :type;
-                """,
-                {"type": type},
+                FROM chat;
+                """
             )
 
             return [
@@ -164,7 +161,6 @@ class Store:
                     parameters=json.loads(parameters),
                     keep_alive=keep_alive,
                     tools=[Tool(**t) for t in json.loads(tools)],
-                    type=type,
                 )
                 for id, name, model, system, format, parameters, keep_alive, tools in chats
             ]
@@ -173,7 +169,7 @@ class Store:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await connection.execute_fetchall(
                 """
-                SELECT id, name, model, system, format, parameters, keep_alive, tools, type
+                SELECT id, name, model, system, format, parameters, keep_alive, tools
                 FROM chat
                 WHERE id = :id;
                 """,
@@ -181,9 +177,7 @@ class Store:
             )
             chat = next(iter(chat), None)
             if chat:
-                id, name, model, system, format, parameters, keep_alive, tools, type = (
-                    chat
-                )
+                id, name, model, system, format, parameters, keep_alive, tools = chat
                 return ChatModel(
                     id=id,
                     name=name,
@@ -193,7 +187,6 @@ class Store:
                     parameters=json.loads(parameters),
                     keep_alive=keep_alive,
                     tools=[Tool(**t) for t in json.loads(tools)],
-                    type=type,
                 )
             return None
 

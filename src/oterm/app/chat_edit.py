@@ -104,7 +104,6 @@ class ChatEdit(ModalScreen[str]):
             parameters=parameters,
             keep_alive=keep_alive,
             tools=self.tools,
-            type=self.chat_model.type,
         )
 
         self.dismiss(updated_chat_model.model_dump_json(exclude_none=True))
