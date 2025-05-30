@@ -181,12 +181,20 @@ class ChatEdit(ModalScreen[str]):
             tool_selector = self.query_one(ToolSelector)
             tool_selector.disabled = not tools_supported
 
+            thinking_checkbox = self.query_one("#thinking-checkbox", Checkbox)
+            thinking_checkbox.disabled = "thinking" not in capabilities
+
             if "completion" in capabilities:
                 capabilities.remove("completion")  #
             if "embedding" in capabilities:
                 capabilities.remove("embedding")
 
-            caps = ", ".join(capabilities).replace("vision", "👁️").replace("tools", "🛠️")
+            caps = (
+                " ".join(capabilities)
+                .replace("vision", "👁️")
+                .replace("tools", "🛠️")
+                .replace("thinking", "🧠")
+            )
             widget = self.query_one(".caps", Label)
             widget.update(caps)
 
@@ -243,17 +251,17 @@ class ChatEdit(ModalScreen[str]):
 
                     with Horizontal():
                         with Horizontal():
-                            yield Label(
-                                "Keep-alive (min)", classes="title keep-alive-label"
-                            )
-                            yield Input(
-                                classes="keep-alive", value=str(self.keep_alive)
-                            )
                             yield Checkbox(
                                 "Thinking",
                                 id="thinking-checkbox",
                                 name="thinking",
                                 value=self.thinking,
+                            )
+                            yield Label(
+                                "Keep-alive (min)", classes="title keep-alive-label"
+                            )
+                            yield Input(
+                                classes="keep-alive", value=str(self.keep_alive)
                             )
 
             with Horizontal(classes="button-container"):
