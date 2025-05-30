@@ -1,6 +1,6 @@
 [project]
 name = "oterm"
-version = "0.12.1"
+version = "0.13.0"
 description = "A text-based terminal client for Ollama."
 authors = [{ name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }]
 license = { text = "MIT" }
@@ -27,7 +27,7 @@ dependencies = [
     "aiosqlite>=0.21.0,<0.22",
     "packaging>=25.0,<26",
     "pillow>=11.2.1,<12",
-    "ollama>=0.4.7,<0.5",
+    "ollama>=0.5.0,<0.6",
     "textualeffects>=0.1.4",
     "pydantic>=2.11.3,<2.12",
     "mcp[cli]>=1.9.0,<1.10",

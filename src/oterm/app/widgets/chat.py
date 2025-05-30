@@ -82,7 +82,7 @@ class ChatContainer(Widget):
             format=chat_model.format,
             options=chat_model.parameters,
             keep_alive=chat_model.keep_alive,
-            history=history,  # type: ignore
+            history=history,
             tool_defs=used_tool_defs,
         )
         self.loaded = False
@@ -128,25 +128,16 @@ class ChatContainer(Widget):
         try:
             response = ""
 
-            # Ollama does not support streaming with tools, so we need to use completion
-            if self.chat_model.tools:
-                response = await self.ollama.completion(
-                    prompt=message, images=[img for _, img in self.images]
-                )
-                response_chat_item.text = response
-
-            else:
-                async for text in self.ollama.stream(
-                    message, [img for _, img in self.images]
-                ):
-                    response = text
-                    response_chat_item.text = text
+            async for text in self.ollama.stream(
+                message, [img for _, img in self.images]
+            ):
+                response = text
+                response_chat_item.text = text
 
             parsed = parse_response(response)
 
             # To not exhaust the tokens, remove the thought process from the history (it seems to be the common practice)
             self.ollama.history[-1].content = parsed.response  # type: ignore
-
             response_chat_item.text = parsed.formatted_output
 
             if message_container.can_view_partial(response_chat_item):
@@ -364,13 +355,12 @@ class ChatContainer(Widget):
             last_user_message = messages.pop()
 
         for message in messages:
-            author = message.role
             text = message.content or ""
             # Create a message model for the MCP conversation
             message_model = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
-                role=author,
+                role=message.role,  # type: ignore
                 text=text,
                 images=[],
             )
@@ -379,7 +369,7 @@ class ChatContainer(Widget):
             self.messages.append(message_model)
             chat_item = ChatItem()
             chat_item.text = text
-            chat_item.author = author
+            chat_item.author = message.role
             await message_container.mount(chat_item)
         message_container.scroll_end()
         if last_user_message is not None and last_user_message.content:
