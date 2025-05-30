@@ -35,6 +35,15 @@ async def remove_type_column(db_path: Path) -> None:
         )
 
 
+async def add_thinking_column(db_path):
+    """Add thinking column to chat table."""
+    async with aiosqlite.connect(db_path) as connection:
+        await connection.execute(
+            "ALTER TABLE chat ADD COLUMN thinking BOOLEAN DEFAULT 1"
+        )
+        await connection.commit()
+
+
 upgrades: list[tuple[str, list[Callable[[Path], Awaitable[None]]]]] = [
-    ("0.13.1", [remove_type_column])
+    ("0.13.1", [remove_type_column, add_thinking_column])
 ]

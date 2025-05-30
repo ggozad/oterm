@@ -31,14 +31,15 @@ class Store:
                 await connection.executescript(
                     """
                     CREATE TABLE IF NOT EXISTS "chat" (
-                        "id"		INTEGER,
-                        "name"		TEXT,
-                        "model"		TEXT NOT NULL,
-                        "system"	TEXT,
-                        "format"	TEXT,
-                        "parameters"	TEXT DEFAULT "{}",
-                        "keep_alive" INTEGER DEFAULT 5,
-                        "tools" 	TEXT DEFAULT "[]",
+                        "id"            INTEGER,
+                        "name"          TEXT,
+                        "model"         TEXT NOT NULL,
+                        "system"        TEXT,
+                        "format"        TEXT,
+                        "parameters"    TEXT DEFAULT "{}",
+                        "keep_alive"    INTEGER DEFAULT 5,
+                        "tools"         TEXT DEFAULT "[]",
+                        "thinking"      BOOLEAN DEFAULT 1,
                         PRIMARY KEY("id" AUTOINCREMENT)
                     );
 
@@ -85,8 +86,8 @@ class Store:
             res = await connection.execute_insert(
                 """
                 INSERT OR REPLACE
-                INTO chat(id, name, model, system, format, parameters, keep_alive, tools)
-                VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools) RETURNING id;""",
+                INTO chat(id, name, model, system, format, parameters, keep_alive, tools, thinking)
+                VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools, :thinking) RETURNING id;""",
                 {
                     "id": chat_model.id,
                     "name": chat_model.name,
@@ -100,6 +101,7 @@ class Store:
                     "tools": json.dumps(
                         [tool.model_dump() for tool in chat_model.tools]
                     ),
+                    "thinking": chat_model.thinking,
                 },
             )
             await connection.commit()
@@ -123,7 +125,8 @@ class Store:
                     format = :format,
                     parameters = :parameters,
                     keep_alive = :keep_alive,
-                    tools = :tools
+                    tools = :tools,
+                    thinking = :thinking
                 WHERE id = :id;
                 """,
                 {
@@ -138,6 +141,7 @@ class Store:
                     "tools": json.dumps(
                         [tool.model_dump() for tool in chat_model.tools]
                     ),
+                    "thinking": chat_model.thinking,
                 },
             )
             await connection.commit()
@@ -146,7 +150,7 @@ class Store:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await connection.execute_fetchall(
                 """
-                SELECT id, name, model, system, format, parameters, keep_alive, tools
+                SELECT id, name, model, system, format, parameters, keep_alive, tools, thinking
                 FROM chat;
                 """
             )
@@ -161,15 +165,16 @@ class Store:
                     parameters=json.loads(parameters),
                     keep_alive=keep_alive,
                     tools=[Tool(**t) for t in json.loads(tools)],
+                    thinking=thinking,
                 )
-                for id, name, model, system, format, parameters, keep_alive, tools in chats
+                for id, name, model, system, format, parameters, keep_alive, tools, thinking in chats
             ]
 
     async def get_chat(self, id: int) -> ChatModel | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await connection.execute_fetchall(
                 """
-                SELECT id, name, model, system, format, parameters, keep_alive, tools
+                SELECT id, name, model, system, format, parameters, keep_alive, tools, thinking
                 FROM chat
                 WHERE id = :id;
                 """,
@@ -177,7 +182,17 @@ class Store:
             )
             chat = next(iter(chat), None)
             if chat:
-                id, name, model, system, format, parameters, keep_alive, tools = chat
+                (
+                    id,
+                    name,
+                    model,
+                    system,
+                    format,
+                    parameters,
+                    keep_alive,
+                    tools,
+                    thinking,
+                ) = chat
                 return ChatModel(
                     id=id,
                     name=name,
@@ -187,6 +202,7 @@ class Store:
                     parameters=json.loads(parameters),
                     keep_alive=keep_alive,
                     tools=[Tool(**t) for t in json.loads(tools)],
+                    thinking=thinking,
                 )
             return None
 
