@@ -9,7 +9,7 @@ from textual.containers import (
 )
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Input, Label, OptionList, TextArea
+from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
 
 from oterm.app.widgets.tool_select import ToolSelector
 from oterm.ollamaclient import (
@@ -36,6 +36,7 @@ class ChatEdit(ModalScreen[str]):
     last_highlighted_index = None
     tools: reactive[list[Tool]] = reactive([])
     edit_mode: reactive[bool] = reactive(False)
+    thinking: reactive[bool] = reactive(True)
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -62,6 +63,7 @@ class ChatEdit(ModalScreen[str]):
         self.keep_alive = chat_model.keep_alive
         self.tools = chat_model.tools
         self.edit_mode = edit_mode
+        self.thinking = chat_model.thinking
 
     def _return_chat_meta(self) -> None:
         model = f"{self.model_name}:{self.tag}"
@@ -93,6 +95,7 @@ class ChatEdit(ModalScreen[str]):
             return
 
         self.tools = self.query_one(ToolSelector).selected
+        self.thinking = self.query_one("#thinking-checkbox", Checkbox).value
 
         # Create updated chat model
         updated_chat_model = ChatModel(
@@ -104,6 +107,7 @@ class ChatEdit(ModalScreen[str]):
             parameters=parameters,
             keep_alive=keep_alive,
             tools=self.tools,
+            thinking=self.thinking,
         )
 
         self.dismiss(updated_chat_model.model_dump_json(exclude_none=True))
@@ -244,6 +248,12 @@ class ChatEdit(ModalScreen[str]):
                             )
                             yield Input(
                                 classes="keep-alive", value=str(self.keep_alive)
+                            )
+                            yield Checkbox(
+                                "Thinking",
+                                id="thinking-checkbox",
+                                name="thinking",
+                                value=self.thinking,
                             )
 
             with Horizontal(classes="button-container"):
