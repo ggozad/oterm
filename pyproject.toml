@@ -30,9 +30,8 @@ dependencies = [
     "ollama>=0.5.0,<0.6",
     "textualeffects>=0.1.4",
     "pydantic>=2.11.3,<2.12",
-    "mcp[cli]>=1.9.0,<1.10",
     "textual-image>=0.8.2,<0.9.0",
-    "fastmcp>=2.3.5",
+    "fastmcp>=2.5.2,<2.6",
 ]
 
 [project.urls]
