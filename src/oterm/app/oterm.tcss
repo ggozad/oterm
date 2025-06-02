@@ -132,12 +132,7 @@ LoadingIndicator {
     padding: 1;
 }
 
-#edit-chat-container .system  {
-    margin: 1;
-}
-
 #model-select {
-    margin-top: 1;
     max-height: 50%;
 }
 
@@ -190,6 +185,11 @@ LoadingIndicator {
 
 Label.keep-alive-label {
     margin-top: 1;
+}
+
+#model-select, .system, .parameters, .format, #tool-selector-container  {
+    margin-top: 1;
+    margin-bottom: 1;
 }
 
 #prompt-history {
