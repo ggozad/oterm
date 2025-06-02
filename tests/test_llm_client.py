@@ -41,7 +41,7 @@ async def test_errors():
 async def test_iterator(default_model):
     llm = OllamaLLM(model=default_model)
     response = ""
-    async for text in llm.stream("Please add 2 and 2"):
+    async for _, text in llm.stream("Please add 2 and 2"):
         response = text
     assert "4" in response
 
@@ -55,7 +55,7 @@ async def test_tool_streaming(default_model):
         ],
     )
     response = ""
-    async for text in llm.stream(
+    async for _, text in llm.stream(
         "What is the current date in YYYY-MM-DD format?. Use the date_time tool to answer."
     ):
         response = text

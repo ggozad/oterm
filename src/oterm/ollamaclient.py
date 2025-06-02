@@ -134,7 +134,7 @@ class OllamaLLM:
         images: list[Path | bytes | str] = [],
         additional_options: Options = Options(),
         tool_call_messages: list = [],
-    ) -> AsyncGenerator[str, Any]:
+    ) -> AsyncGenerator[tuple[str, str], Any]:
         """Stream a chat response with support for tool calls.
 
         When tool calls are encountered during streaming, they are executed after the stream
@@ -169,23 +169,27 @@ class OllamaLLM:
         )
 
         text = ""
+        thought = ""
         current_message = None
         pending_tool_call = False
 
         async for response in stream:
             message = response.message
             content = message.content if message.content else ""
+            thinking = message.thinking if message.thinking else ""
             tool_calls = message.tool_calls
-
             # If we have tool calls, process them at the end of the stream
             if tool_calls and not pending_tool_call:
                 pending_tool_call = True
                 current_message = message
 
             # Add content to the accumulated text only if not processing tool calls
-            if not pending_tool_call and content:
-                text += content
-                yield text
+            if not pending_tool_call and (content or thinking):
+                if thinking:
+                    thought += thinking
+                if content:
+                    text += content
+                yield thought, text
 
         # After streaming is complete, handle any tool calls
         if pending_tool_call and current_message and current_message.tool_calls:
@@ -223,12 +227,15 @@ class OllamaLLM:
                             return
 
             # Use a new variable for the follow-up response to avoid duplication
-            async for text_chunk in self.stream(
+            async for thought_chunk, text_chunk in self.stream(
                 tool_call_messages=tool_messages,
                 additional_options=additional_options,
             ):
-                yield text_chunk
+                yield thought_chunk, text_chunk
+                # Append the final text and thought to the history
+                log.debug(text, thought)
                 text = text_chunk
+                thought = thought_chunk
 
         elif text:  # Only regular content was present
             self.history.append(Message(role="assistant", content=text))
