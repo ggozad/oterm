@@ -11,6 +11,7 @@ from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
 
+from oterm.app.widgets.caps import Capabilities
 from oterm.app.widgets.tool_select import ToolSelector
 from oterm.ollamaclient import (
     OllamaLLM,
@@ -189,14 +190,8 @@ class ChatEdit(ModalScreen[str]):
             if "embedding" in capabilities:
                 capabilities.remove("embedding")
 
-            caps = (
-                " ".join(capabilities)
-                .replace("vision", "👁️")
-                .replace("tools", "🛠️")
-                .replace("thinking", "🧠")
-            )
-            widget = self.query_one(".caps", Label)
-            widget.update(caps)
+            widget = self.query_one(".caps", Capabilities)
+            widget.caps = capabilities  # type: ignore
 
         # Now that there is a model selected we can save the chat.
         save_button = self.query_one("#save-btn", Button)
@@ -225,8 +220,7 @@ class ChatEdit(ModalScreen[str]):
                         yield Label("Size:", classes="title")
                         yield Label(f"{self.size}", classes="size")
                         yield Label("Caps:", classes="title")
-                        yield Label("", classes="caps")
-
+                        yield Capabilities([], classes="caps")
                     yield OptionList(id="model-select")
                     yield Label("Tools:", classes="title")
                     yield ToolSelector(

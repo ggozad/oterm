@@ -132,6 +132,10 @@ LoadingIndicator {
     padding: 1;
 }
 
+.capability {
+    margin-right: 1
+}
+
 #model-select {
     max-height: 50%;
 }
