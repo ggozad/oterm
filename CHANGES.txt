@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.13.1 -
+-------------------
+
+- Use "thinking" mode for models that support it.
+  [ggozad]
+
+- Detect and show model capabilities in Edit Chat screen.
+  [ggozad]
+
 0.13.0 - 2025-05-30
 -------------------
 

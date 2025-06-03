@@ -24,6 +24,7 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 [oterm Documentation](https://ggozad.github.io/oterm/)
 
 ## What's new
+* Support for "thinking" mode for models that support it.
 * Support for streaming with tools!
 * Messages UI styling improvements.
 * MCP Sampling is here in addition to MCP tools & prompts! Also support for SSE & WebSocket transports for MCP servers.

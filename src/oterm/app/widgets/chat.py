@@ -84,6 +84,7 @@ class ChatContainer(Widget):
             keep_alive=chat_model.keep_alive,
             history=history,
             tool_defs=used_tool_defs,
+            thinking=chat_model.thinking,
         )
         self.loaded = False
         self.loading = False
@@ -128,11 +129,11 @@ class ChatContainer(Widget):
         try:
             response = ""
 
-            async for text in self.ollama.stream(
+            async for thought, text in self.ollama.stream(
                 message, [img for _, img in self.images]
             ):
-                response = text
-                response_chat_item.text = text
+                response = f"<think>{thought}</think>{text}"
+                response_chat_item.text = parse_response(response).formatted_output
 
             parsed = parse_response(response)
 
@@ -162,7 +163,7 @@ class ChatContainer(Widget):
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
                 role="assistant",
-                text=response,
+                text=parsed.response,
                 images=[],
             )
             id = await store.save_message(assistant_message)
@@ -245,6 +246,7 @@ class ChatContainer(Widget):
             keep_alive=self.chat_model.keep_alive,
             history=history,  # type: ignore
             tool_defs=used_tool_defs,
+            thinking=self.chat_model.thinking,
         )
 
     @work
@@ -270,6 +272,7 @@ class ChatContainer(Widget):
             keep_alive=self.ollama.keep_alive,
             history=[],  # type: ignore
             tool_defs=self.ollama.tool_defs,
+            thinking=self.chat_model.thinking,
         )
         msg_container = self.query_one("#messageContainer")
         for child in msg_container.children:
