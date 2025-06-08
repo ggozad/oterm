@@ -12,9 +12,12 @@ uvx oterm
 Using `brew` for MacOS:
 
 ```bash
-brew tap ggozad/formulas
-brew install ggozad/formulas/oterm
+brew install oterm
 ```
+
+!!! note
+
+    Since version `0.13.1`, `oterm` is in the official `homebrew/core` repository. If you have installed `oterm` by tapping  `ggozad/formulas` you can now remove the tap and reinstall `oterm`.
 
 Using `yay` (or any AUR helper) for Arch Linux, thanks goes to [Daniel Chesters](https://github.com/DanielChesters) for maintaining the package:
 

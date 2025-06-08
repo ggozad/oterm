@@ -24,6 +24,7 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 [oterm Documentation](https://ggozad.github.io/oterm/)
 
 ## What's new
+* `oterm` is now part of Homebrew!
 * Support for "thinking" mode for models that support it.
 * Support for streaming with tools!
 * Messages UI styling improvements.
