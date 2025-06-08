@@ -12,3 +12,4 @@ photos/
 /site/
 .pytest_cache/
 .ruff_cache/
+.dev-notes/
