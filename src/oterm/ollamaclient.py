@@ -233,7 +233,6 @@ class OllamaLLM:
             ):
                 yield thought_chunk, text_chunk
                 # Append the final text and thought to the history
-                log.debug(text, thought)
                 text = text_chunk
                 thought = thought_chunk
 
