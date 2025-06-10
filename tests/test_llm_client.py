@@ -8,23 +8,30 @@ from oterm.tools.date_time import DateTimeTool
 @pytest.mark.asyncio
 async def test_generate(default_model):
     llm = OllamaLLM(model=default_model)
-    res = await llm.completion(prompt="Please add 42 and 42")
+    res = ""
+    async for _, text in llm.stream(prompt="Please add 42 and 42"):
+        res = text
     assert "84" in res
 
 
 @pytest.mark.asyncio
 async def test_llm_context(default_model):
     llm = OllamaLLM(model=default_model)
-    await llm.completion("I am testing oterm, a python client for Ollama.")
+    async for _, _ in llm.stream("I am testing oterm, a python client for Ollama."):
+        pass
     # There should now be a context saved for the conversation.
-    res = await llm.completion("Do you remember what I am testing?")
+    res = ""
+    async for _, text in llm.stream("Do you remember what I am testing?"):
+        res = text
     assert "oterm" in res.lower()
 
 
 @pytest.mark.asyncio
 async def test_multi_modal_llm(llama_image):
     llm = OllamaLLM(model="llava")
-    res = await llm.completion("Describe this image", images=[llama_image])
+    res = ""
+    async for _, text in llm.stream("Describe this image", images=[llama_image]):
+        res = text
     assert "llama" in res or "animal" in res
 
 
@@ -32,18 +39,10 @@ async def test_multi_modal_llm(llama_image):
 async def test_errors():
     llm = OllamaLLM(model="non-existent-model")
     try:
-        await llm.completion("This should fail.")
+        async for _, _ in llm.stream("This should fail."):
+            pass
     except ResponseError as e:
         assert 'model "non-existent-model" not found' in str(e)
-
-
-@pytest.mark.asyncio
-async def test_iterator(default_model):
-    llm = OllamaLLM(model=default_model)
-    response = ""
-    async for _, text in llm.stream("Please add 2 and 2"):
-        response = text
-    assert "4" in response
 
 
 @pytest.mark.asyncio
