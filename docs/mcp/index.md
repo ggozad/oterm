@@ -27,9 +27,9 @@ Used for running local MCP servers, the configuration supports the `command`, `a
 }
 ```
 
-#### `SSE` transport
+#### `Streamable HTTP` transport
 
-Typically used to connect to remote MCP servers through Server Side Events, the only accepted parameter is the `url` parameter (should start with `http://` or `https://`). For example,
+Typically used to connect to remote MCP servers through Streamable HTTP, the only accepted parameter is the `url` parameter (should start with `http://` or `https://`). For example,
 
 ```json
 {

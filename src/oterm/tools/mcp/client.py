@@ -2,7 +2,11 @@ import asyncio
 from typing import Annotated, Any
 
 from fastmcp.client import Client
-from fastmcp.client.transports import SSETransport, StdioTransport, WSTransport
+from fastmcp.client.transports import (
+    StdioTransport,
+    StreamableHttpTransport,
+    WSTransport,
+)
 from mcp import McpError, StdioServerParameters
 from mcp import Tool as MCPTool
 from mcp.types import (
@@ -18,13 +22,15 @@ from oterm.log import log
 from oterm.tools.mcp.logging import Logger
 from oterm.tools.mcp.sampling import sampling_handler
 
-IsSSEURL = Annotated[str, lambda v: v.startswith("http://") or v.startswith("https://")]
+isHTTPURL = Annotated[
+    str, lambda v: v.startswith("http://") or v.startswith("https://")
+]
 
 
-class SSEServerParameters(BaseModel):
-    """Parameters for the SSE server."""
+class StreamableHTTPServerParameters(BaseModel):
+    """Parameters for the Streamable HTTP server."""
 
-    url: IsSSEURL
+    url: isHTTPURL
 
 
 IsWSURL = Annotated[str, lambda v: v.startswith("ws://") or v.startswith("wss://")]
@@ -40,7 +46,9 @@ class MCPClient:
     def __init__(
         self,
         name: str,
-        config: StdioServerParameters | SSEServerParameters | WSServerParameters,
+        config: StdioServerParameters
+        | StreamableHTTPServerParameters
+        | WSServerParameters,
     ):
         self.name = name
 
@@ -57,8 +65,8 @@ class MCPClient:
         except ValidationError:
             pass
         try:
-            cfg = SSEServerParameters.model_validate(config)
-            self.transport = SSETransport(
+            cfg = StreamableHTTPServerParameters.model_validate(config)
+            self.transport = StreamableHttpTransport(
                 url=cfg.url,
             )
             return

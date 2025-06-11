@@ -4,6 +4,9 @@ Changelog
 0.13.2 -
 -------------------
 
+- Support Streamable HTTP MCP servers. Drop support for SSE.
+  [ggozad]
+
 - Remove `completion` method, we now stream only.
   [ggozad]
 
