@@ -4,6 +4,9 @@ Changelog
 0.13.2 -
 -------------------
 
+- Support for bearer authentication for MCP servers.
+  [ggozad]
+
 - Support Streamable HTTP MCP servers. Drop support for SSE.
   [ggozad]
 
@@ -12,9 +15,8 @@ Changelog
 
 - Postpone sixel detection to avoid spurious characters in terminals
   that do not support sixel.
-  [ggozad]
 
-- oterm in homebrew/core
+- oterm in homebrew/core.
   [ggozad]
 
 0.13.1 - 2025-06-03
