@@ -1,5 +1,5 @@
 import asyncio
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastmcp.client import Client
 from fastmcp.client.transports import (
@@ -27,10 +27,18 @@ isHTTPURL = Annotated[
 ]
 
 
+class BearerTokenAuthentication(BaseModel):
+    """Authentication parameters http-based transports."""
+
+    type: Literal["bearer"]
+    token: str
+
+
 class StreamableHTTPServerParameters(BaseModel):
     """Parameters for the Streamable HTTP server."""
 
     url: isHTTPURL
+    auth: BearerTokenAuthentication | None = None
 
 
 IsWSURL = Annotated[str, lambda v: v.startswith("ws://") or v.startswith("wss://")]
@@ -62,12 +70,13 @@ class MCPClient:
                 cwd=str(cfg.cwd) if cfg.cwd else None,
             )
             return
-        except ValidationError:
+        except (ValidationError, ValueError):
             pass
         try:
             cfg = StreamableHTTPServerParameters.model_validate(config)
             self.transport = StreamableHttpTransport(
                 url=cfg.url,
+                auth=cfg.auth.token if cfg.auth and cfg.auth.type == "bearer" else None,
             )
             return
         except (ValidationError, ValueError):
@@ -77,8 +86,8 @@ class MCPClient:
             self.transport = WSTransport(
                 url=cfg.url,
             )
-        except ValidationError:
-            raise ValueError("Invalid transport type")
+        except (ValidationError, ValueError):
+            raise ValueError(f"Invalid transport type: {config}")
 
     async def initialize(self) -> Client | None:
         """Initialize the server connection.
@@ -116,6 +125,9 @@ class MCPClient:
         except asyncio.TimeoutError:
             self.client = None
             log.error("Timeout while initializing MCP server", self.name)
+        if self.client and not self.client.is_connected():
+            log.error(f"Failed to connect to MCP server {self.name}")
+            self.client = None
         return self.client
 
     async def get_available_tools(self) -> list[MCPTool]:
