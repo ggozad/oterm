@@ -4,6 +4,29 @@
 
 To add an MCP server to `oterm`, simply add the server shim to oterm's [config.json](../app_config.md). The following MCP transports are supported
 
+### Supported MCP Features
+#### Tools
+By transforming [MCP tools](https://modelcontextprotocol.io/docs/concepts/tools) into Ollama tools `oterm` provides full support.
+
+!!! note
+    Not all models are equipped to support tools. For those models that do not, the tool selection will be disabled.
+
+    A lot of the smaller LLMs are not as capable with tools as larger ones you might be used to. If you experience issues with tools, try reducing the number of tools you attach to a chat, increase the context size, or use a larger LLM.
+
+
+![Tool support](../img/mcp_tools.svg)
+oterm using the `git` MCP server to access its own repo.
+
+#### Prompts
+`oterm` supports [MCP prompts](https://modelcontextprotocol.io/docs/concepts/prompts). Use the "Use MCP prompt" command to invoke a form with the prompt. Submitting will insert the prompt messages into the chat.
+
+![Prompt support](../img/mcp_prompts.svg)
+oterm displaying a test MCP prompt.
+
+#### Sampling
+`oterm` supports [MCP sampling](https://modelcontextprotocol.io/docs/concepts/sampling), acting as a geteway between Ollama and the servers it connects to. This way, an MCP server can request `oterm` to run a *completion* and even declare its model preferences and parameters!
+
+### Transports
 #### `stdio` transport
 
 Used for running local MCP servers, the configuration supports the `command`, `args`, `env` & `cwd` parameters. For example for the [git](https://github.com/modelcontextprotocol/servers/tree/main/src/git) MCP server you would add something like the following to the `mcpServers` section of the `oterm` [configuration file](../app_config.md):
@@ -26,7 +49,6 @@ Used for running local MCP servers, the configuration supports the `command`, `a
   }
 }
 ```
-
 #### `Streamable HTTP` transport
 
 Typically used to connect to remote MCP servers through Streamable HTTP, the only accepted parameter is the `url` parameter (should start with `http://` or `https://`). For example,
@@ -36,7 +58,7 @@ Typically used to connect to remote MCP servers through Streamable HTTP, the onl
   ...
   "mcpServers": {
     "my_mcp": {
-			"url": "http://remote:5678/some_path/sse"
+			"url": "http://remote:port/path"
 		}
   }
 }
@@ -51,30 +73,27 @@ Also used to connect to remote MCP servers, but through websockets. The only acc
   ...
   "mcpServers": {
     "my_mcp": {
-			"url": "wss://remote:5678/some_path/wss"
+			"url": "wss://remote:port/path"
 		}
   }
 }
 ```
 
-### Supported MCP Features
-#### Tools
-By transforming [MCP tools](https://modelcontextprotocol.io/docs/concepts/tools) into Ollama tools `oterm` provides full support.
+### Authentication
+#### HTTP bearer authentication
 
-!!! note
-    Not all models are equipped to support tools. For those models that do not, the tool selection will be disabled.
-
-    A lot of the smaller LLMs are not as capable with tools as larger ones you might be used to. If you experience issues with tools, try reducing the number of tools you attach to a chat, increase the context size, or use a larger LLM.
-
-
-![Tool support](../img/mcp_tools.svg)
-oterm using the `git` MCP server to access its own repo.
-
-#### Prompts
-`oterm` supports [MCP prompts](https://modelcontextprotocol.io/docs/concepts/prompts). Use the "Use MCP prompt" command to invoke a form with the prompt. Submitting will insert the prompt messages into the chat.
-
-![Prompt support](../img/mcp_prompts.svg)
-oterm displaying a test MCP prompt.
-
-#### Sampling
-`oterm` supports [MCP sampling](https://modelcontextprotocol.io/docs/concepts/sampling), acting as a geteway between Ollama and the servers it connects to. This way, an MCP server can request `oterm` to run a *completion* and even declare its model preferences and parameters!
+`oterm` supports HTTP bearer authentication by use of tokens. Use
+```json
+{
+  ...
+  "mcpServers": {
+    "my_mcp": {
+			"url": "http://remote:port/path",
+      "auth": {
+        "type": "bearer",
+        "token": "XXX"
+      }
+    }
+  }
+}
+```

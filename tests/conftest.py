@@ -46,6 +46,13 @@ def mcp_server_config() -> dict:
         "streamable_http": {
             "url": "http://localhost:8000/mcp",
         },
+        "streamable_http_bearer": {
+            "url": "http://localhost:8081/mcp",
+            "auth": {
+                "type": "bearer",
+                "token": "test_token",
+            },
+        },
         "ws": {
             "url": "ws://localhost:8000/ws",
         },
