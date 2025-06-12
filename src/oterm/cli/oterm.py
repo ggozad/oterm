@@ -4,7 +4,6 @@ from importlib import metadata
 import typer
 from rich.pretty import pprint
 
-from oterm.app.oterm import app
 from oterm.config import envConfig
 from oterm.store.store import Store
 
@@ -38,6 +37,10 @@ def oterm(
     if config:
         typer.echo(pprint(envConfig))
         exit(0)
+
+    # Delay import to avoid sixel detection running unless necessary
+    from oterm.app.oterm import app
+
     app.run()
 
 
