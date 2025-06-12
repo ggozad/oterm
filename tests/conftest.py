@@ -43,8 +43,8 @@ def mcp_server_config() -> dict:
             "command": "mcp",
             "args": ["run", mcp_server_executable.absolute().as_posix()],
         },
-        "sse": {
-            "url": "http://localhost:8000/sse",
+        "streamable_http": {
+            "url": "http://localhost:8000/mcp",
         },
         "ws": {
             "url": "ws://localhost:8000/ws",
