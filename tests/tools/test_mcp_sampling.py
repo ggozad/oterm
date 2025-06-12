@@ -33,12 +33,14 @@ async def test_mcp_sampling(mcp_client: MCPClient, default_model):
         tool_defs=[{"tool": oterm_tool, "callable": mcpToolCallable.call}],
     )
 
-    res = await llm.completion(
+    res = ""
+    async for _, text in llm.stream(
         """
         Solve the following puzzle by calling the puzzle solver tool.
         Jack is looking at Anne. Anne is looking at George.
         Jack is married, George is not, and we don't know if Anne is married.
         Is a married person looking at an unmarried person?
         Just answer yes or no."""
-    )
+    ):
+        res = text
     assert "no" in res.lower() or "yes" in res.lower()

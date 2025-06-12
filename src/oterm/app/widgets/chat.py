@@ -300,14 +300,16 @@ class ChatContainer(Widget):
         message = self.messages[-1]
 
         async def response_task() -> None:
-            response = await self.ollama.completion(
+            response = ""
+            async for thought, text in self.ollama.stream(
                 message.text,
                 images=message.images,  # type: ignore
                 additional_options=Options(seed=random.randint(0, 32768)),
-            )
-            response_chat_item.text = response
-            if message_container.can_view_partial(response_chat_item):
-                message_container.scroll_end()
+            ):
+                response = f"<think>{thought}</think>{text}"
+                response_chat_item.text = parse_response(response).formatted_output
+                if message_container.can_view_partial(response_chat_item):
+                    message_container.scroll_end()
 
             # Save to db
             store = await Store.get_store()

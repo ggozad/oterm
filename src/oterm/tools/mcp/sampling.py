@@ -50,7 +50,9 @@ async def sampling_handler(
         history=msgs,
         options=options,
     )
-    response = await client.completion()
+    response = ""
+    async for _, text in client.stream():
+        response = text
 
     return CreateMessageResult(
         content=TextContent(text=response, type="text"),

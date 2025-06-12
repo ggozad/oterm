@@ -4,6 +4,13 @@ Changelog
 0.13.2 -
 -------------------
 
+- Remove `completion` method, we now stream only.
+  [ggozad]
+
+- Postpone sixel detection to avoid spurious characters in terminals
+  that do not support sixel.
+  [ggozad]
+
 - oterm in homebrew/core
   [ggozad]
 
