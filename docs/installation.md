@@ -62,7 +62,7 @@ uvx oterm@latest
 Using `brew` for MacOS:
 
 ```bash
-brew upgrade ggozad/formulas/oterm
+brew upgrade oterm
 ```
 Using 'yay' (or any AUR helper) for Arch Linux:
 
