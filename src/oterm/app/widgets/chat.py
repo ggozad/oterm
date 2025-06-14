@@ -94,10 +94,11 @@ class ChatContainer(Widget):
         self.query_one("#prompt").focus()
 
     async def load_messages(self) -> None:
+        message_container = self.query_one("#messageContainer")
         if self.loaded or self.loading:
+            message_container.scroll_end()
             return
         self.loading = True
-        message_container = self.query_one("#messageContainer")
         for message in self.messages:
             chat_item = ChatItem()
             chat_item.text = (
@@ -107,9 +108,9 @@ class ChatContainer(Widget):
             )
             chat_item.author = message.role
             await message_container.mount(chat_item)
-        message_container.scroll_end()
         self.loading = False
         self.loaded = True
+        message_container.scroll_end()
 
     async def response_task(self, message: str) -> None:
         message_container = self.query_one("#messageContainer")
