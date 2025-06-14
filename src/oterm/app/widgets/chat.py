@@ -28,7 +28,7 @@ from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
 from oterm.tools import available_tool_calls
 from oterm.types import ChatModel, MessageModel
-from oterm.utils import parse_response
+from oterm.utils import parse_response, throttle
 
 
 class ChatContainer(Widget):
@@ -94,10 +94,11 @@ class ChatContainer(Widget):
         self.query_one("#prompt").focus()
 
     async def load_messages(self) -> None:
+        message_container = self.query_one("#messageContainer")
         if self.loaded or self.loading:
+            message_container.scroll_end()
             return
         self.loading = True
-        message_container = self.query_one("#messageContainer")
         for message in self.messages:
             chat_item = ChatItem()
             chat_item.text = (
@@ -107,9 +108,9 @@ class ChatContainer(Widget):
             )
             chat_item.author = message.role
             await message_container.mount(chat_item)
-        message_container.scroll_end()
         self.loading = False
         self.loaded = True
+        message_container.scroll_end()
 
     async def response_task(self, message: str) -> None:
         message_container = self.query_one("#messageContainer")
@@ -407,6 +408,7 @@ class ChatItem(Widget):
             widget.styles.animate("opacity", 1.0, duration=0.1, delay=0.1)
         self.app.notify("Message copied to clipboard.")
 
+    @throttle(0.1)
     async def watch_text(self, text: str) -> None:
         if self.author == "user":
             return
@@ -422,7 +424,10 @@ class ChatItem(Widget):
 
     def compose(self) -> ComposeResult:
         """A chat item."""
-        mrk_down = Markdown(self.text, classes="text")
+        mrk_down = Markdown(
+            self.text,
+            classes="text",
+        )
         mrk_down.code_dark_theme = "solarized-dark"
         mrk_down.code_light_theme = "solarized-light"
         with Horizontal(classes=f"{self.author} chatItem"):
