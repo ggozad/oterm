@@ -28,7 +28,7 @@ from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
 from oterm.tools import available_tool_calls
 from oterm.types import ChatModel, MessageModel
-from oterm.utils import parse_response
+from oterm.utils import parse_response, throttle
 
 
 class ChatContainer(Widget):
@@ -407,6 +407,7 @@ class ChatItem(Widget):
             widget.styles.animate("opacity", 1.0, duration=0.1, delay=0.1)
         self.app.notify("Message copied to clipboard.")
 
+    @throttle(0.1)
     async def watch_text(self, text: str) -> None:
         if self.author == "user":
             return
@@ -422,7 +423,10 @@ class ChatItem(Widget):
 
     def compose(self) -> ComposeResult:
         """A chat item."""
-        mrk_down = Markdown(self.text, classes="text")
+        mrk_down = Markdown(
+            self.text,
+            classes="text",
+        )
         mrk_down.code_dark_theme = "solarized-dark"
         mrk_down.code_light_theme = "solarized-light"
         with Horizontal(classes=f"{self.author} chatItem"):

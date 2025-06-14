@@ -47,6 +47,35 @@ def debounce(wait: float) -> Callable:
     return decorator
 
 
+def throttle(interval: float) -> Callable:
+    """
+    A decorator to throttle a function, ensuring it is called at most once per interval.
+    The first call executes immediately, subsequent calls within the interval are ignored.
+
+    Args:
+        interval (float): The throttle interval in seconds.
+
+    Returns:
+        Callable: The decorated function.
+    """
+
+    def decorator(func: Callable) -> Callable:
+        last_called_at = None
+
+        @wraps(func)
+        async def throttled(*args, **kwargs):
+            nonlocal last_called_at
+            now = asyncio.get_event_loop().time()
+
+            if last_called_at is None or now - last_called_at >= interval:
+                last_called_at = now
+                await func(*args, **kwargs)
+
+        return throttled
+
+    return decorator
+
+
 def parse_response(input_text: str) -> ParsedResponse:
     """
     Parse a response from the chatbot.
