@@ -2,8 +2,8 @@
 
 The app configuration is stored in a directory specific to your operating system, by default:
 
-* Linux: `~/.local/share/oterm/config.json`
-* macOS: `~/Library/Application Support/oterm/config.json`
+* Linux: `${XDG_DATA_HOME}/oterm/config.json` (or `~/.local/share/oterm/config.json` if `XDG_DATA_HOME` is not set)
+* macOS: `${XDG_DATA_HOME}/oterm/config.json` (or `~/Library/Application Support/oterm/config.json` if `XDG_DATA_HOME` is not set)
 * Windows: `C:/Users/<USER>/AppData/Roaming/oterm/config.json`
 
 If in doubt you can get the directory where `config.json` can be found by running `oterm --data-dir` or `uvx oterm --data-dir` if you installed oterm using uvx.
