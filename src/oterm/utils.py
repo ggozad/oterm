@@ -1,4 +1,5 @@
 import asyncio
+import os
 import sys
 from collections.abc import Callable
 from functools import wraps
@@ -117,8 +118,12 @@ def get_default_data_dir() -> Path:
 
     system_paths = {
         "win32": home / "AppData/Roaming/oterm",
-        "linux": home / ".local/share/oterm",
-        "darwin": home / "Library/Application Support/oterm",
+        "linux": Path(os.getenv("XDG_DATA_HOME") or Path(home / ".local/share"))
+        / "oterm",
+        "darwin": Path(
+            os.getenv("XDG_DATA_HOME") or Path(home / "Library/Application Support")
+        )
+        / "oterm",
     }
 
     data_path = system_paths[sys.platform]

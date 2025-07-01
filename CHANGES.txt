@@ -4,6 +4,9 @@ Changelog
 0.14.1 -
 -------------------
 
+- Honour XDG_DATA_HOME for configuration on Linux, MacOS.
+  [0xmohit]
+
 - UX speed improvements.
   [ggozad]
 
