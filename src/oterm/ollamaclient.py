@@ -125,6 +125,13 @@ class OllamaLLM:
         if pending_tool_call and current_message and current_message.tool_calls:
             # Process each tool call
             tool_messages = [current_message]  # type: ignore
+            # If there the model has done "thinking", we need add it to the history
+            # before processing tool calls. This way, when the model starts thinking
+            # again, it has the full context of the previous thought.
+
+            if thought:
+                tool_messages.insert(0, Message(role="assistant", thinking=thought))
+
             for tool_call in current_message.tool_calls:
                 tool_name = tool_call["function"]["name"]
 

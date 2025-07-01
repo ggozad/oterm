@@ -4,6 +4,9 @@ Changelog
 0.14.1 -
 -------------------
 
+- Fix tool calling in thinking models to preserve the thinking before the tool calling.
+  [ggozad]
+
 - Honour XDG_DATA_HOME for configuration on Linux, MacOS.
   [0xmohit]
 
