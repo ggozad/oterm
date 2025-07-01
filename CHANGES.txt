@@ -1,7 +1,7 @@
 Changelog
 =========
 
-0.14.1 -
+0.14.1 - 2025-08-01
 -------------------
 
 - Fix tool calling in thinking models to preserve the thinking before the tool calling.
