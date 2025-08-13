@@ -24,6 +24,7 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 [oterm Documentation](https://ggozad.github.io/oterm/)
 
 ## What's new
+* [Example](https://ggozad.github.io/oterm/rag_example) on how to do RAG with [haiku.rag](https://github.com/ggozad/haiku.rag).
 * `oterm` is now part of Homebrew!
 * Support for "thinking" mode for models that support it.
 * Support for streaming with tools!
@@ -48,6 +49,11 @@ The image selection interface, demonstrating how users can include images in the
 
 ![Theme](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/theme.png)
 oterm supports multiple themes, allowing users to customize the appearance of the interface.
+
+### RAG demo
+
+![Rag demo](https://raw.githubusercontent.com/ggozad/oterm/refs/heads/main/docs/img/haiku-rag-demo.mp4)
+oterm getting RAG capabilities through `haiku.rag`.
 
 ## License
 
