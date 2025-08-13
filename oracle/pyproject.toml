@@ -1,0 +1,16 @@
+[project]
+name = "oracle"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "ollama>=0.4.4,<0.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
