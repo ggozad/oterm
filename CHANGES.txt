@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.14.2 - 2025-08-13
+-------------------
+
+- Remove throttling when rendering chat items, as it ocasionally omits the last few tokens.
+  [ggozad]
+
 0.14.1 - 2025-08-01
 -------------------
 
