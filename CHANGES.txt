@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.14.4 -
+-------------------
+
+- Example on how to do RAG with oterm (docs)
+  [ggozad]
+
 0.14.3 - 2025-08-13
 -------------------
 
