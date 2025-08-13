@@ -66,6 +66,7 @@ nav:
       - tools/index.md
   - Configuration: app_config.md
   - Debugging / Development: development/index.md
+  - RAG example: rag_example.md
 markdown_extensions:
   - admonition
   - attr_list
