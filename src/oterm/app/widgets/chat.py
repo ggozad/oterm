@@ -28,7 +28,7 @@ from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
 from oterm.tools import available_tool_calls
 from oterm.types import ChatModel, MessageModel
-from oterm.utils import parse_response, throttle
+from oterm.utils import parse_response
 
 
 class ChatContainer(Widget):
@@ -140,6 +140,7 @@ class ChatContainer(Widget):
 
             # To not exhaust the tokens, remove the thought process from the history (it seems to be the common practice)
             self.ollama.history[-1].content = parsed.response  # type: ignore
+
             response_chat_item.text = parsed.formatted_output
 
             if message_container.can_view_partial(response_chat_item):
@@ -408,7 +409,6 @@ class ChatItem(Widget):
             widget.styles.animate("opacity", 1.0, duration=0.1, delay=0.1)
         self.app.notify("Message copied to clipboard.")
 
-    @throttle(0.1)
     async def watch_text(self, text: str) -> None:
         if self.author == "user":
             return
