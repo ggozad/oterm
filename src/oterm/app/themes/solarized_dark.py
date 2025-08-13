@@ -1,6 +1,5 @@
 from textual.theme import Theme
 
-
 solarized_dark = Theme(
     name="solarized-dark",
     primary="#268bd2",
@@ -16,4 +15,3 @@ solarized_dark = Theme(
     dark=True,
     variables={},
 )
-

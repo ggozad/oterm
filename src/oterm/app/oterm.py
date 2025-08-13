@@ -10,7 +10,7 @@ from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_export import ChatExport, slugify
 from oterm.app.pull_model import PullModel
 from oterm.app.splash import splash
-from oterm.app.themes import solarized_dark
+from oterm.app.themes.solarized_dark import solarized_dark
 from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
 from oterm.store.store import Store
