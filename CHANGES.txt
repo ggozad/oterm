@@ -4,6 +4,9 @@ Changelog
 0.14.2 - 2025-08-13
 -------------------
 
+- Add solarized theme.
+  [pbjames]
+
 - Remove throttling when rendering chat items, as it ocasionally omits the last few tokens.
   [ggozad]
 
