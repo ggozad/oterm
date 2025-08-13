@@ -50,11 +50,6 @@ The image selection interface, demonstrating how users can include images in the
 ![Theme](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/theme.png)
 oterm supports multiple themes, allowing users to customize the appearance of the interface.
 
-### RAG demo
-
-![Rag demo](https://raw.githubusercontent.com/ggozad/oterm/refs/heads/main/docs/img/haiku-rag-demo.mp4)
-oterm getting RAG capabilities through `haiku.rag`.
-
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
