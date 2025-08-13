@@ -58,41 +58,31 @@ Once configured, oterm will have access to powerful RAG capabilities through the
 
 Start a new chat in oterm and use the RAG tools to build your knowledge base:
 
-```
-Add this document to my knowledge base: "Machine Learning is a subset of artificial intelligence that focuses on algorithms that can learn from data..."
-```
+> ```Add this document to my knowledge base: "Machine Learning is a subset of artificial intelligence that focuses on algorithms that can learn from data..."```
 
 ### 2. Adding Files
 
 You can add various file types:
 
-```
-Please add the PDF file at /Users/me/Documents/research_paper.pdf to my RAG database
-```
+> ```Please add the PDF file at /Users/me/Documents/research_paper.pdf to my RAG database```
 
 ### 3. Adding Web Content
 
 Add content from URLs:
 
-```
-Add the content from https://example.com/article to my knowledge base
-```
+> ```Add the content from https://example.com/article to my knowledge base```
 
 ### 4. Searching Your Knowledge Base
 
 Perform semantic searches:
 
-```
-Search my knowledge base for information about "neural networks"
-```
+> ```Search my knowledge base for information about "neural networks"```
 
 ### 5. Question Answering
 
 Ask questions about your documents:
 
-```
-Based on my knowledge base, what are the main differences between supervised and unsupervised learning?
-```
+> ```Based on my knowledge base, what are the main differences between supervised and unsupervised learning?```
 
 
 ## Advanced Configuration
