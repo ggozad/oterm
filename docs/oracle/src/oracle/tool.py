@@ -13,7 +13,7 @@ OracleTool = Tool(
                 ),
             },
             required=["question"],
-        ),
+        ),  # type: ignore
     ),
 )
 

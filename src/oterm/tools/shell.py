@@ -15,7 +15,7 @@ ShellTool = Tool(
                 )
             },
             required=["command"],
-        ),
+        ),  # type: ignore
     ),
 )
 

@@ -22,7 +22,7 @@ requires-python = ">=3.10"
 dependencies = [
     "aiosql>=13.4,<14",
     "aiosqlite>=0.21.0,<0.22",
-    "fastmcp>=2.8.0,<2.9",
+    "fastmcp>=2.12.2,<2.13",
     "ollama>=0.5.3,<0.6",
     "packaging>=25.0,<26",
     "pillow>=11.3.0,<12",

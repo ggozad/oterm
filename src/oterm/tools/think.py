@@ -13,7 +13,7 @@ ThinkTool = Tool(
                 ),
             },
             required=["thought"],
-        ),
+        ),  # type: ignore
     ),
 )
 

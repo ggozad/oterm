@@ -5,7 +5,6 @@ from fastmcp.client import Client
 from fastmcp.client.transports import (
     StdioTransport,
     StreamableHttpTransport,
-    WSTransport,
 )
 from mcp import McpError, StdioServerParameters
 from mcp import Tool as MCPTool
@@ -41,22 +40,11 @@ class StreamableHTTPServerParameters(BaseModel):
     auth: BearerTokenAuthentication | None = None
 
 
-IsWSURL = Annotated[str, lambda v: v.startswith("ws://") or v.startswith("wss://")]
-
-
-class WSServerParameters(BaseModel):
-    """Parameters for the WS server."""
-
-    url: IsWSURL
-
-
 class MCPClient:
     def __init__(
         self,
         name: str,
-        config: StdioServerParameters
-        | StreamableHTTPServerParameters
-        | WSServerParameters,
+        config: StdioServerParameters | StreamableHTTPServerParameters,
     ):
         self.name = name
 
@@ -81,13 +69,7 @@ class MCPClient:
             return
         except (ValidationError, ValueError):
             pass
-        try:
-            cfg = WSServerParameters.model_validate(config)
-            self.transport = WSTransport(
-                url=cfg.url,
-            )
-        except (ValidationError, ValueError):
-            raise ValueError(f"Invalid transport type: {config}")
+        raise ValueError(f"Invalid transport type: {config}")
 
     async def initialize(self) -> Client | None:
         """Initialize the server connection.
@@ -193,7 +175,13 @@ class MCPClient:
 
         try:
             result = await self.client.call_tool(tool_name, arguments)
-            return result
+            # Filter content to only include supported types
+
+            filtered_content = []
+            for item in result.content:
+                if isinstance(item, TextContent | ImageContent | EmbeddedResource):
+                    filtered_content.append(item)
+            return filtered_content
         except Exception as e:
             log.error(f"Error executing tool: {e}.")
             return []

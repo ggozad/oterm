@@ -11,7 +11,7 @@ DateTimeTool = Tool(
             type="object",
             properties={},
             required=[],
-        ),
+        ),  # type: ignore
     ),
 )
 
