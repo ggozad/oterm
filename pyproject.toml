@@ -46,16 +46,16 @@ oterm = "oterm.cli.oterm:cli"
 
 [tool.uv]
 dev-dependencies = [
-    "ruff>=0.11.6",
+    "ruff>=0.12.12",
     "pdbpp",
-    "pytest>=8.3.4",
+    "pytest>=8.4.2",
     "pytest-asyncio>=0.25.3",
     "textual-dev>=1.7.0",
     "homebrew-pypi-poet>=0.10.0",
     "mkdocs>=1.6.1",
-    "mkdocs-material>=9.6.5",
-    "pre-commit>=4.2.0",
-    "pyright>=1.1.400",
+    "mkdocs-material>=9.6.18",
+    "pre-commit>=4.3.0",
+    "pyright>=1.1.405",
 ]
 
 [tool.uv.sources]
