@@ -20,8 +20,8 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "textual>=3.2.0,<3.3.0",
-    "typer>=0.15.2,<0.16",
+    "textual>=6.1.0,<6.2",
+    "typer>=0.17.4,<0.18",
     "python-dotenv>=1.0.1",
     "aiosql>=13.4,<14",
     "aiosqlite>=0.21.0,<0.22",
@@ -32,6 +32,7 @@ dependencies = [
     "pydantic>=2.11.3,<2.12",
     "textual-image>=0.8.2,<0.9.0",
     "fastmcp>=2.8.0,<2.9",
+    "textual-speedups>=0.2.0",
 ]
 
 [project.urls]

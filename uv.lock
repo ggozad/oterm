@@ -1105,6 +1105,7 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "textual" },
     { name = "textual-image" },
+    { name = "textual-speedups" },
     { name = "textualeffects" },
     { name = "typer" },
 ]
@@ -1133,10 +1134,11 @@ requires-dist = [
     { name = "pillow", specifier = ">=11.2.1,<12" },
     { name = "pydantic", specifier = ">=2.11.3,<2.12" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
-    { name = "textual", specifier = ">=3.2.0,<3.3.0" },
+    { name = "textual", specifier = ">=6.1.0,<6.2" },
     { name = "textual-image", specifier = ">=0.8.2,<0.9.0" },
+    { name = "textual-speedups", specifier = ">=0.2.0" },
     { name = "textualeffects", specifier = ">=0.1.4" },
-    { name = "typer", specifier = ">=0.15.2,<0.16" },
+    { name = "typer", specifier = ">=0.17.4,<0.18" },
 ]
 
 [package.metadata.requires-dev]
@@ -1520,11 +1522,11 @@ wheels = [
 
 [[package]]
 name = "pygments"
-version = "2.19.1"
+version = "2.19.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/7c/2d/c3338d48ea6cc0feb8446d8e6937e1408088a72a39937982cc6111d17f84/pygments-2.19.1.tar.gz", hash = "sha256:61c16d2a8576dc0649d9f39e089b5f02bcd27fba10d8fb4dcc28173f7a45151f", size = 4968581, upload-time = "2025-01-06T17:26:30.443Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b0/77/a5b8c569bf593b0140bde72ea885a803b82086995367bf2037de0159d924/pygments-2.19.2.tar.gz", hash = "sha256:636cb2477cec7f8952536970bc533bc43743542f70392ae026374600add5b887", size = 4968631, upload-time = "2025-06-21T13:39:12.283Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/0b/9fcc47d19c48b59121088dd6da2488a49d5f72dacf8262e2790a1d2c7d15/pygments-2.19.1-py3-none-any.whl", hash = "sha256:9ea1544ad55cecf4b8242fab6dd35a93bbce657034b0611ee383099054ab6d8c", size = 1225293, upload-time = "2025-01-06T17:26:25.553Z" },
+    { url = "https://files.pythonhosted.org/packages/c7/21/705964c7812476f378728bdf590ca4b771ec72385c533964653c68e86bdc/pygments-2.19.2-py3-none-any.whl", hash = "sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b", size = 1225217, upload-time = "2025-06-21T13:39:07.939Z" },
 ]
 
 [[package]]
@@ -1812,17 +1814,18 @@ wheels = [
 
 [[package]]
 name = "textual"
-version = "3.2.0"
+version = "6.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py", extra = ["linkify", "plugins"] },
     { name = "platformdirs" },
+    { name = "pygments" },
     { name = "rich" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/34/99/8408761a1a1076b2bb69d4859ec110d74be7515552407ac1cb6b68630eb6/textual-3.2.0.tar.gz", hash = "sha256:d2f3b0c39e02535bb5f2aec1c45e10bd3ee7508ed1e240b7505c3cf02a6f00ed", size = 1607281, upload-time = "2025-05-02T10:45:29.861Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/da/44/4b524b2f06e0fa6c4ede56a4e9af5edd5f3f83cf2eea5cb4fd0ce5bbe063/textual-6.1.0.tar.gz", hash = "sha256:cc89826ca2146c645563259320ca4ddc75d183c77afb7d58acdd46849df9144d", size = 1564786, upload-time = "2025-09-02T11:42:34.655Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/10/d0/5869999e03ec4ad3a80f36298eb018556faaae0d3309dc305ecd93450b06/textual-3.2.0-py3-none-any.whl", hash = "sha256:c857c6d8dfc9aa915e09df99d227cbe1da3a7ea500b45af9f6b3ecb810c00d77", size = 685595, upload-time = "2025-05-02T10:45:28.12Z" },
+    { url = "https://files.pythonhosted.org/packages/54/43/f91e041f239b54399310a99041faf33beae9a6e628671471d0fcd6276af4/textual-6.1.0-py3-none-any.whl", hash = "sha256:a3f5e6710404fcdc6385385db894699282dccf2ad50103cebc677403c1baadd5", size = 707840, upload-time = "2025-09-02T11:42:32.746Z" },
 ]
 
 [[package]]
@@ -1869,6 +1872,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/27/41/09d5695b050d592ff58422be2ca5c9915787f59ff576ca91d9541d315406/textual_serve-1.1.2.tar.gz", hash = "sha256:0ccaf9b9df9c08d4b2d7a0887cad3272243ba87f68192c364f4bed5b683e4bd4", size = 892959, upload-time = "2025-04-16T12:11:41.746Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7c/fb/0006f86960ab8a2f69c9f496db657992000547f94f53a2f483fd611b4bd2/textual_serve-1.1.2-py3-none-any.whl", hash = "sha256:147d56b165dccf2f387203fe58d43ce98ccad34003fe3d38e6d2bc8903861865", size = 447326, upload-time = "2025-04-16T12:11:43.176Z" },
+]
+
+[[package]]
+name = "textual-speedups"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/ad/fa/979584993986defcf788e25ef46e2fe19a510ffe4aaabc5e706759e080c4/textual_speedups-0.2.0.tar.gz", hash = "sha256:e9e045e94b7daff79917f4fc699c6d99db6005559298929141d68a1293c3cc6d", size = 11650, upload-time = "2025-06-06T20:10:16.206Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2a/ff/4e77ef334db7017036b284ba890665f1e29fb344549eca66be5db7464a24/textual_speedups-0.2.0-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:ca81a27e7c6f65a342fb827cbc84a67166a879ea79bf06fa222d5fb96f8c557f", size = 244732, upload-time = "2025-06-06T20:10:14.85Z" },
 ]
 
 [[package]]
@@ -1924,7 +1936,7 @@ wheels = [
 
 [[package]]
 name = "typer"
-version = "0.15.4"
+version = "0.17.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -1932,9 +1944,9 @@ dependencies = [
     { name = "shellingham" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6c/89/c527e6c848739be8ceb5c44eb8208c52ea3515c6cf6406aa61932887bf58/typer-0.15.4.tar.gz", hash = "sha256:89507b104f9b6a0730354f27c39fae5b63ccd0c95b1ce1f1a6ba0cfd329997c3", size = 101559, upload-time = "2025-05-14T16:34:57.704Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/92/e8/2a73ccf9874ec4c7638f172efc8972ceab13a0e3480b389d6ed822f7a822/typer-0.17.4.tar.gz", hash = "sha256:b77dc07d849312fd2bb5e7f20a7af8985c7ec360c45b051ed5412f64d8dc1580", size = 103734, upload-time = "2025-09-05T18:14:40.746Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c9/62/d4ba7afe2096d5659ec3db8b15d8665bdcb92a3c6ff0b95e99895b335a9c/typer-0.15.4-py3-none-any.whl", hash = "sha256:eb0651654dcdea706780c466cf06d8f174405a659ffff8f163cfbfee98c0e173", size = 45258, upload-time = "2025-05-14T16:34:55.583Z" },
+    { url = "https://files.pythonhosted.org/packages/93/72/6b3e70d32e89a5cbb6a4513726c1ae8762165b027af569289e19ec08edd8/typer-0.17.4-py3-none-any.whl", hash = "sha256:015534a6edaa450e7007eba705d5c18c3349dcea50a6ad79a5ed530967575824", size = 46643, upload-time = "2025-09-05T18:14:39.166Z" },
 ]
 
 [[package]]
