@@ -56,6 +56,7 @@ class MCPClient:
                 args=cfg.args,
                 env=cfg.env,
                 cwd=str(cfg.cwd) if cfg.cwd else None,
+                keep_alive=False,
             )
             return
         except (ValidationError, ValueError):
