@@ -1,7 +1,22 @@
+import logging
+
 import rich.repr
 from textual import Logger, LogGroup  # type: ignore
 
 log_lines: list[tuple[LogGroup, str]] = []
+
+
+def supress_logging() -> None:
+    """Configure logging for CLI runs.
+
+    - Silence ALL non-oterm loggers by detaching root handlers and setting
+      their level to ERROR.
+    """
+    # Silence root logger completely
+    root = logging.getLogger()
+    for hdlr in root.handlers[:]:
+        root.removeHandler(hdlr)
+    root.setLevel(logging.ERROR)
 
 
 @rich.repr.auto
