@@ -51,10 +51,18 @@ class MCPClient:
         self.client: Client | None = None
         try:
             cfg = StdioServerParameters.model_validate(config)
+            # Suppress subprocess logging via environment variables
+            env = cfg.env.copy() if cfg.env else {}
+            # Set logging levels to suppress output from MCP server subprocess
+            env["PYTHONUNBUFFERED"] = "0"  # Disable Python output buffering
+            env["LOGLEVEL"] = "ERROR"  # Set log level to ERROR only
+            env["RUST_LOG"] = "error"  # For Rust-based MCP servers
+            env["FASTMCP_LOG_LEVEL"] = "ERROR"  # For FastMCP servers
+
             self.transport = StdioTransport(
                 command=cfg.command,
                 args=cfg.args,
-                env=cfg.env,
+                env=env,
                 cwd=str(cfg.cwd) if cfg.cwd else None,
                 keep_alive=False,
             )
