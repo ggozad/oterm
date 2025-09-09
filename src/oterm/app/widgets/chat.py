@@ -424,12 +424,10 @@ class ChatItem(Widget):
 
     def compose(self) -> ComposeResult:
         """A chat item."""
+
         mrk_down = Markdown(
-            self.text,
             classes="text",
         )
-        mrk_down.code_dark_theme = "solarized-dark"
-        mrk_down.code_light_theme = "solarized-light"
         with Horizontal(classes=f"{self.author} chatItem"):
             if self.author == "user":
                 yield Static(self.text, classes="text")

@@ -1,7 +1,6 @@
 from fastmcp.client.transports import (
     StdioTransport,
     StreamableHttpTransport,
-    WSTransport,
 )
 
 from oterm.tools.mcp.client import MCPClient
@@ -19,8 +18,3 @@ def test_stdio_transport(mcp_server_config):
 def test_streamable_http(mcp_server_config):
     client = MCPClient("test_streamable_http", mcp_server_config["streamable_http"])
     assert isinstance(client.transport, StreamableHttpTransport)
-
-
-def test_ws_transport(mcp_server_config):
-    client = MCPClient("test_ws", mcp_server_config["ws"])
-    assert isinstance(client.transport, WSTransport)
