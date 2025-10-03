@@ -116,10 +116,9 @@ class ChatContainer(Widget):
         message_container = self.query_one("#messageContainer")
 
         user_chat_item = ChatItem()
-        user_chat_item.text = message
         user_chat_item.author = "user"
+        user_chat_item.text = message
         message_container.mount(user_chat_item)
-
         response_chat_item = ChatItem()
         response_chat_item.author = "assistant"
         message_container.mount(response_chat_item)
@@ -425,11 +424,11 @@ class ChatItem(Widget):
     def compose(self) -> ComposeResult:
         """A chat item."""
 
-        mrk_down = Markdown(
-            classes="text",
-        )
         with Horizontal(classes=f"{self.author} chatItem"):
             if self.author == "user":
-                yield Static(self.text, classes="text")
+                yield Static(self.text, markup=False, classes="text")
             else:
+                mrk_down = Markdown(
+                    classes="text",
+                )
                 yield mrk_down
