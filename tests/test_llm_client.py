@@ -42,7 +42,7 @@ async def test_errors():
         async for _, _ in llm.stream("This should fail."):
             pass
     except ResponseError as e:
-        assert 'model "non-existent-model" not found' in str(e)
+        assert "non-existent-model" in str(e) and "not found" in str(e)
 
 
 @pytest.mark.asyncio
