@@ -13,10 +13,16 @@ class LogViewer(ModalScreen[str]):
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
+        ("ctrl+s", "save_logs", "Save logs"),
     ]
 
     def action_cancel(self) -> None:
         self.dismiss()
+
+    def action_save_logs(self) -> None:
+        from oterm.app.log_export import LogExport
+
+        self.app.push_screen(LogExport())
 
     @debounce(0.5)
     async def log_update(self) -> None:
