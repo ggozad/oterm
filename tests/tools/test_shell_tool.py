@@ -1,4 +1,5 @@
 import pytest
+from ollama import Options
 
 from oterm.ollamaclient import OllamaLLM
 from oterm.tools.shell import ShellTool, shell_command
@@ -11,6 +12,7 @@ async def test_shell(default_model):
         tool_defs=[
             {"tool": ShellTool, "callable": shell_command},
         ],
+        options=Options(temperature=0.0),  # Lower temps increase determinism
     )
     res = ""
     async for _, text in llm.stream(

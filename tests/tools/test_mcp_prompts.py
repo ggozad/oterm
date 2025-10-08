@@ -7,7 +7,6 @@ from oterm.tools.mcp.prompts import MCPPromptCallable, mcp_prompt_to_ollama_mess
 
 @pytest.mark.asyncio
 async def test_mcp_simple_string_prompt(mcp_client):
-    await mcp_client.initialize()
     prompts = await mcp_client.get_available_prompts()
     for prompt in prompts:
         assert Prompt.model_validate(prompt)

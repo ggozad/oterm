@@ -1,4 +1,5 @@
 import pytest
+from ollama import Options
 
 from oterm.ollamaclient import OllamaLLM
 from oterm.tools.mcp.client import MCPClient
@@ -13,8 +14,6 @@ async def test_mcp_sampling(mcp_client: MCPClient, default_model):
     Here we go full circle and use the MCP client to call the server
     to call the client again with a sampling request.
     """
-
-    await mcp_client.initialize()
 
     tools = await mcp_client.get_available_tools()
     puzzle_solver = tools[1]
@@ -31,16 +30,15 @@ async def test_mcp_sampling(mcp_client: MCPClient, default_model):
     llm = OllamaLLM(
         model=default_model,
         tool_defs=[{"tool": oterm_tool, "callable": mcpToolCallable.call}],
+        options=Options(temperature=0.0),  # Lower temps increase determinism
     )
 
     res = ""
     async for _, text in llm.stream(
-        """
-        Solve the following puzzle by calling the puzzle solver tool.
+        """Use the puzzle_solver tool to solve this puzzle:
         Jack is looking at Anne. Anne is looking at George.
         Jack is married, George is not, and we don't know if Anne is married.
-        Is a married person looking at an unmarried person?
-        Just answer yes or no."""
+        Is a married person looking at an unmarried person?"""
     ):
         res = text
     assert "no" in res.lower() or "yes" in res.lower()
