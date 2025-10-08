@@ -1,4 +1,5 @@
 import pytest
+from ollama import Options
 
 from oterm.ollamaclient import OllamaLLM
 from oterm.tools.think import ThinkTool, think
@@ -7,7 +8,9 @@ from oterm.tools.think import ThinkTool, think
 @pytest.mark.asyncio
 async def test_think(default_model):
     llm = OllamaLLM(
-        model=default_model, tool_defs=[{"tool": ThinkTool, "callable": think}]
+        model=default_model,
+        tool_defs=[{"tool": ThinkTool, "callable": think}],
+        options=Options(temperature=0.0),  # Lower temps increase determinism
     )
     res = ""
     async for _, text in llm.stream(
