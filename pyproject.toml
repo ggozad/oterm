@@ -18,7 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Typing :: Typed",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "aiosql>=13.4,<14",
     "aiosqlite>=0.21.0,<0.22",
