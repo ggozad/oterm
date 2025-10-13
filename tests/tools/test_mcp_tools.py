@@ -1,6 +1,5 @@
 import pytest
 from mcp.types import Tool as MCPTool
-from ollama import Options
 
 from oterm.ollamaclient import OllamaLLM
 from oterm.tools.mcp.client import MCPClient
@@ -9,7 +8,7 @@ from oterm.types import Tool
 
 
 @pytest.mark.asyncio
-async def test_mcp_tools(mcp_client: MCPClient, default_model):
+async def test_mcp_tools(mcp_client: MCPClient, default_model, deterministic_options):
     tools = await mcp_client.get_available_tools()
     for oracle in tools:
         assert MCPTool.model_validate(oracle)
@@ -27,7 +26,7 @@ async def test_mcp_tools(mcp_client: MCPClient, default_model):
     llm = OllamaLLM(
         model=default_model,
         tool_defs=[{"tool": oterm_tool, "callable": mcpToolCallable.call}],
-        options=Options(temperature=0.0),  # Lower temps increase determinism
+        options=deterministic_options,
     )
 
     res = ""

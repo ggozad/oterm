@@ -1,5 +1,4 @@
 import pytest
-from ollama import Options
 
 from oterm.ollamaclient import OllamaLLM
 from oterm.tools.mcp.client import MCPClient
@@ -8,7 +7,7 @@ from oterm.types import Tool
 
 
 @pytest.mark.asyncio
-async def test_mcp_sampling(mcp_client: MCPClient, default_model):
+async def test_mcp_sampling(mcp_client: MCPClient, default_model, deterministic_options):
     """
     Test the sampling capbilities of oterm.
     Here we go full circle and use the MCP client to call the server
@@ -30,7 +29,7 @@ async def test_mcp_sampling(mcp_client: MCPClient, default_model):
     llm = OllamaLLM(
         model=default_model,
         tool_defs=[{"tool": oterm_tool, "callable": mcpToolCallable.call}],
-        options=Options(temperature=0.0),  # Lower temps increase determinism
+        options=deterministic_options,
     )
 
     res = ""

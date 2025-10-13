@@ -6,6 +6,7 @@ import ollama
 import pytest
 import pytest_asyncio
 from mcp import StdioServerParameters
+from ollama import Options
 from PIL import Image
 
 from oterm.tools.mcp.client import MCPClient
@@ -25,6 +26,12 @@ async def load_test_models():
 @pytest.fixture(scope="session")
 def default_model() -> str:
     return DEFAULT_MODEL
+
+
+@pytest.fixture(scope="session")
+def deterministic_options() -> Options:
+    """Ollama options for deterministic test responses."""
+    return Options(temperature=0.0)
 
 
 @pytest.fixture(scope="session")
