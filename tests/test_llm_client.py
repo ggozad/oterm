@@ -6,8 +6,8 @@ from oterm.tools.date_time import DateTimeTool
 
 
 @pytest.mark.asyncio
-async def test_generate(default_model):
-    llm = OllamaLLM(model=default_model)
+async def test_generate(default_model, deterministic_options):
+    llm = OllamaLLM(model=default_model, options=deterministic_options)
     res = ""
     async for _, text in llm.stream(prompt="Please add 42 and 42"):
         res = text
@@ -15,8 +15,8 @@ async def test_generate(default_model):
 
 
 @pytest.mark.asyncio
-async def test_llm_context(default_model):
-    llm = OllamaLLM(model=default_model)
+async def test_llm_context(default_model, deterministic_options):
+    llm = OllamaLLM(model=default_model, options=deterministic_options)
     async for _, _ in llm.stream("I am testing oterm, a python client for Ollama."):
         pass
     # There should now be a context saved for the conversation.
@@ -27,8 +27,8 @@ async def test_llm_context(default_model):
 
 
 @pytest.mark.asyncio
-async def test_multi_modal_llm(llama_image):
-    llm = OllamaLLM(model="llava")
+async def test_multi_modal_llm(llama_image, deterministic_options):
+    llm = OllamaLLM(model="llava", options=deterministic_options)
     res = ""
     async for _, text in llm.stream("Describe this image", images=[llama_image]):
         res = text
@@ -42,16 +42,17 @@ async def test_errors():
         async for _, _ in llm.stream("This should fail."):
             pass
     except ResponseError as e:
-        assert 'model "non-existent-model" not found' in str(e)
+        assert "non-existent-model" in str(e) and "not found" in str(e)
 
 
 @pytest.mark.asyncio
-async def test_tool_streaming(default_model):
+async def test_tool_streaming(default_model, deterministic_options):
     llm = OllamaLLM(
         model=default_model,
         tool_defs=[
             {"tool": DateTimeTool, "callable": lambda: "2025-01-01"},
         ],
+        options=deterministic_options,
     )
     response = ""
     async for _, text in llm.stream(
