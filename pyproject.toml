@@ -26,7 +26,7 @@ dependencies = [
     "ollama>=0.5.3,<0.6",
     "packaging>=25.0,<26",
     "pillow>=11.3.0,<12",
-    "pydantic>=2.11.7,<2.12",
+    "pydantic>=2.12.2,<2.13",
     "python-dotenv>=1.0.1",
     "textual>=6.2.1,<6.3",
     "textual-image>=0.8.4,<0.9.0",
@@ -44,8 +44,8 @@ Documentation = "https://ggozad.github.io/oterm/"
 [project.scripts]
 oterm = "oterm.cli.oterm:cli"
 
-[tool.uv]
-dev-dependencies = [
+[dependency-groups]
+dev = [
     "ruff>=0.12.12",
     "pdbpp",
     "pytest>=8.4.2",
@@ -57,6 +57,8 @@ dev-dependencies = [
     "pre-commit>=4.3.0",
     "pyright>=1.1.405",
 ]
+
+[tool.uv]
 
 [tool.uv.sources]
 
