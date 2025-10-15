@@ -3,7 +3,7 @@ from typing import Any, Literal, TypedDict
 
 from mcp.types import Prompt
 from ollama import Options, Tool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ParsedResponse(BaseModel):
@@ -28,14 +28,13 @@ class ExternalToolDefinition(TypedDict):
 
 
 class OtermOllamaOptions(Options):
+    model_config = ConfigDict(extra="forbid")
+
     # Patch stop to allow for a single string.
     # This is an issue with the gemma model which has a single stop parameter.
     # Remove when fixed upstream and close #187
     # Using 'any' to avoid type conflict with parent class
     stop: Any = None  # type: ignore
-
-    class Config:
-        extra = "forbid"
 
 
 class ChatModel(BaseModel):
