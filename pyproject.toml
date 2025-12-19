@@ -1,6 +1,6 @@
 [project]
 name = "oterm"
-version = "0.14.6"
+version = "0.14.7"
 description = "The terminal client for Ollama."
 authors = [{ name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }]
 license = { text = "MIT" }
@@ -31,7 +31,7 @@ dependencies = [
     "textual>=6.2.1,<6.3",
     "textual-image>=0.8.4,<0.9.0",
     "textual-speedups>=0.2.0",
-    "textualeffects>=0.1.4",
+    "textualeffects>=0.2.0",
     "typer>=0.17.4,<0.18",
 ]
 
