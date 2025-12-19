@@ -20,19 +20,19 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "aiosql>=13.4,<14",
-    "aiosqlite>=0.21.0,<0.22",
-    "fastmcp>=2.12.2,<2.13",
-    "ollama>=0.5.3,<0.6",
+    "aiosql>=14.1,<15",
+    "aiosqlite>=0.22.0,<0.23",
+    "fastmcp>=2.14.1,<2.15",
+    "ollama>=0.6.1,<0.7",
     "packaging>=25.0,<26",
-    "pillow>=11.3.0,<12",
-    "pydantic>=2.12.2,<2.13",
+    "pillow>=12.0.0,<13",
+    "pydantic>=2.12.5,<2.13",
     "python-dotenv>=1.0.1",
-    "textual>=6.2.1,<6.3",
+    "textual>=6.11.0,<6.12",
     "textual-image>=0.8.4,<0.9.0",
     "textual-speedups>=0.2.0",
     "textualeffects>=0.2.0",
-    "typer>=0.17.4,<0.18",
+    "typer>=0.20.1,<0.21",
 ]
 
 [project.urls]
@@ -46,16 +46,16 @@ oterm = "oterm.cli.oterm:cli"
 
 [dependency-groups]
 dev = [
-    "ruff>=0.12.12",
+    "ruff>=0.14.10",
     "pdbpp",
-    "pytest>=8.4.2",
+    "pytest>=9.0.2",
     "pytest-asyncio>=0.25.3",
     "textual-dev>=1.7.0",
     "homebrew-pypi-poet>=0.10.0",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.18",
     "pre-commit>=4.3.0",
-    "pyright>=1.1.405",
+    "pyright>=1.1.407",
 ]
 
 [tool.uv]
