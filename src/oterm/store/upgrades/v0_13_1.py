@@ -7,6 +7,11 @@ import aiosqlite
 
 async def remove_type_column(db_path: Path) -> None:
     async with aiosqlite.connect(db_path) as connection:
+        res = await connection.execute("PRAGMA table_info(chat);")
+        columns = {row[1] for row in await res.fetchall()}
+        if "type" not in columns:
+            return
+
         await connection.executescript(
             """
             BEGIN TRANSACTION;
@@ -38,9 +43,12 @@ async def remove_type_column(db_path: Path) -> None:
 async def add_thinking_column(db_path):
     """Add thinking column to chat table."""
     async with aiosqlite.connect(db_path) as connection:
-        await connection.execute(
-            "ALTER TABLE chat ADD COLUMN thinking BOOLEAN DEFAULT 0"
-        )
+        res = await connection.execute("PRAGMA table_info(chat);")
+        columns = {row[1] for row in await res.fetchall()}
+        if "thinking" in columns:
+            return
+
+        await connection.execute("ALTER TABLE chat ADD COLUMN thinking BOOLEAN DEFAULT 0")
         await connection.commit()
 
 

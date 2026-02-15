@@ -80,6 +80,7 @@ class Store:
             await connection.execute(
                 f"PRAGMA user_version = {semantic_version_to_int(version)};"
             )
+            await connection.commit()
 
     async def save_chat(self, chat_model: ChatModel) -> int:
         async with aiosqlite.connect(self.db_path) as connection:
