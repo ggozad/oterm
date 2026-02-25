@@ -1,8 +1,8 @@
 from mcp import Tool as MCPTool
 from mcp.types import TextContent
+from pydantic_ai import Tool as PydanticTool
 
 from oterm.tools.mcp.client import MCPClient
-from oterm.types import Tool
 
 
 class MCPToolCallable:
@@ -17,13 +17,14 @@ class MCPToolCallable:
         return "\n".join(text_content)
 
 
-def mcp_tool_to_ollama_tool(mcp_tool: MCPTool) -> Tool:
-    """Convert an MCP tool to an Ollama tool"""
-
-    return Tool(
-        function=Tool.Function(
-            name=mcp_tool.name,
-            description=mcp_tool.description,
-            parameters=Tool.Function.Parameters.model_validate(mcp_tool.inputSchema),
-        ),
+def mcp_tool_to_pydantic_tool(
+    mcp_tool: MCPTool, callable: MCPToolCallable
+) -> PydanticTool:
+    """Convert an MCP tool to a Pydantic AI tool with proper schema."""
+    return PydanticTool.from_schema(
+        function=callable.call,
+        name=mcp_tool.name,
+        description=mcp_tool.description or "",
+        json_schema=mcp_tool.inputSchema,
+        takes_ctx=False,
     )

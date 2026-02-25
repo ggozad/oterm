@@ -1,9 +1,9 @@
 import inspect
 import json
 from collections.abc import Awaitable, Callable
+from typing import Any
 
 from mcp.types import Prompt
-from ollama import Message
 from textual import on
 from textual.app import ComposeResult, RenderResult
 from textual.containers import (
@@ -20,7 +20,7 @@ from textual.widgets.option_list import Option
 from oterm.tools.mcp.prompts import (
     available_prompt_calls,
     available_prompt_defs,
-    mcp_prompt_to_ollama_messages,
+    mcp_prompt_to_messages,
 )
 from oterm.utils import debounce
 
@@ -38,7 +38,7 @@ class PromptOptionWidget(Widget):
 class PromptFormWidget(Widget):
     prompt: Prompt
     callable: Callable | Awaitable
-    messages: list[Message] = []
+    messages: list[dict[str, Any]] = []
 
     @on(Input.Changed)
     @debounce(1.0)
@@ -54,9 +54,9 @@ class PromptFormWidget(Widget):
             messages = await self.callable(**params)
         else:
             messages = self.callable(**params)  # type: ignore
-        self.messages = messages = mcp_prompt_to_ollama_messages(messages)
+        self.messages = messages = mcp_prompt_to_messages(messages)
         prompt_result_widget.text = "\n".join(
-            [f"{m.role}: {m.content}" for m in messages]
+            [f"{m['role']}: {m.get('content', '')}" for m in messages]
         )
         submit_button = self.screen.query_one("#submit", Button)
         submit_button.disabled = not is_valid
@@ -125,7 +125,7 @@ class MCPPrompt(ModalScreen[str]):
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.name == "submit":
             form = self.query_one(".prompt-form", PromptFormWidget)
-            jsn = json.dumps([m.model_dump() for m in form.messages])
+            jsn = json.dumps(form.messages)
             self.dismiss(jsn)
         else:
             self.dismiss()

@@ -7,7 +7,7 @@ from packaging.version import parse
 
 from oterm.config import envConfig
 from oterm.store.upgrades import upgrades
-from oterm.types import ChatModel, MessageModel, Tool
+from oterm.types import ChatModel, MessageModel
 from oterm.utils import int_to_semantic_version, semantic_version_to_int
 
 
@@ -35,9 +35,8 @@ class Store:
                         "name"          TEXT,
                         "model"         TEXT NOT NULL,
                         "system"        TEXT,
-                        "format"        TEXT,
+                        "provider"      TEXT DEFAULT "ollama",
                         "parameters"    TEXT DEFAULT "{}",
-                        "keep_alive"    INTEGER DEFAULT 5,
                         "tools"         TEXT DEFAULT "[]",
                         "thinking"      BOOLEAN DEFAULT 0,
                         PRIMARY KEY("id" AUTOINCREMENT)
@@ -86,21 +85,16 @@ class Store:
             res = await connection.execute_insert(
                 """
                 INSERT OR REPLACE
-                INTO chat(id, name, model, system, format, parameters, keep_alive, tools, thinking)
-                VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools, :thinking) RETURNING id;""",
+                INTO chat(id, name, model, system, provider, parameters, tools, thinking)
+                VALUES(:id, :name, :model, :system, :provider, :parameters, :tools, :thinking) RETURNING id;""",
                 {
                     "id": chat_model.id,
                     "name": chat_model.name,
                     "model": chat_model.model,
                     "system": chat_model.system,
-                    "format": chat_model.format,
-                    "parameters": json.dumps(
-                        chat_model.parameters.model_dump(exclude_unset=True)
-                    ),
-                    "keep_alive": chat_model.keep_alive,
-                    "tools": json.dumps(
-                        [tool.model_dump() for tool in chat_model.tools]
-                    ),
+                    "provider": chat_model.provider,
+                    "parameters": json.dumps(chat_model.parameters),
+                    "tools": json.dumps(chat_model.tools),
                     "thinking": chat_model.thinking,
                 },
             )
@@ -122,9 +116,8 @@ class Store:
                 UPDATE chat
                 SET name = :name,
                     system = :system,
-                    format = :format,
+                    provider = :provider,
                     parameters = :parameters,
-                    keep_alive = :keep_alive,
                     tools = :tools,
                     thinking = :thinking
                 WHERE id = :id;
@@ -133,14 +126,9 @@ class Store:
                     "id": chat_model.id,
                     "name": chat_model.name,
                     "system": chat_model.system,
-                    "format": chat_model.format,
-                    "parameters": json.dumps(
-                        chat_model.parameters.model_dump(exclude_unset=True)
-                    ),
-                    "keep_alive": chat_model.keep_alive,
-                    "tools": json.dumps(
-                        [tool.model_dump() for tool in chat_model.tools]
-                    ),
+                    "provider": chat_model.provider,
+                    "parameters": json.dumps(chat_model.parameters),
+                    "tools": json.dumps(chat_model.tools),
                     "thinking": chat_model.thinking,
                 },
             )
@@ -150,7 +138,7 @@ class Store:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await connection.execute_fetchall(
                 """
-                SELECT id, name, model, system, format, parameters, keep_alive, tools, thinking
+                SELECT id, name, model, system, provider, parameters, tools, thinking
                 FROM chat;
                 """
             )
@@ -161,20 +149,19 @@ class Store:
                     name=name,
                     model=model,
                     system=system,
-                    format=format,
+                    provider=provider,
                     parameters=json.loads(parameters),
-                    keep_alive=keep_alive,
-                    tools=[Tool(**t) for t in json.loads(tools)],
+                    tools=json.loads(tools),
                     thinking=thinking,
                 )
-                for id, name, model, system, format, parameters, keep_alive, tools, thinking in chats
+                for id, name, model, system, provider, parameters, tools, thinking in chats
             ]
 
     async def get_chat(self, id: int) -> ChatModel | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await connection.execute_fetchall(
                 """
-                SELECT id, name, model, system, format, parameters, keep_alive, tools, thinking
+                SELECT id, name, model, system, provider, parameters, tools, thinking
                 FROM chat
                 WHERE id = :id;
                 """,
@@ -187,9 +174,8 @@ class Store:
                     name,
                     model,
                     system,
-                    format,
+                    provider,
                     parameters,
-                    keep_alive,
                     tools,
                     thinking,
                 ) = chat
@@ -198,10 +184,9 @@ class Store:
                     name=name,
                     model=model,
                     system=system,
-                    format=format,
+                    provider=provider,
                     parameters=json.loads(parameters),
-                    keep_alive=keep_alive,
-                    tools=[Tool(**t) for t in json.loads(tools)],
+                    tools=json.loads(tools),
                     thinking=thinking,
                 )
             return None

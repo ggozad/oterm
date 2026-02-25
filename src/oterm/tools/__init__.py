@@ -1,9 +1,21 @@
 import itertools
+from collections.abc import Callable
 
-from oterm.types import ToolCall
+from pydantic_ai import Tool as PydanticTool
 
-available_tool_defs: dict[str, list[ToolCall]] = {}
+from oterm.types import ToolDef
+
+available_tool_defs: dict[str, list[ToolDef]] = {}
 
 
-def available_tool_calls() -> list[ToolCall]:
+def available_tools() -> list[ToolDef]:
     return list(itertools.chain.from_iterable(available_tool_defs.values()))
+
+
+def make_tool_def(func: Callable) -> ToolDef:
+    pydantic_tool = PydanticTool(func, takes_ctx=False)
+    return {
+        "name": pydantic_tool.name,
+        "description": pydantic_tool.description or "",
+        "tool": pydantic_tool,
+    }

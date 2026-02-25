@@ -22,7 +22,7 @@ from oterm.utils import check_ollama, is_up_to_date
 
 class OTerm(App):
     TITLE = "oterm"
-    SUB_TITLE = "the TUI Ollama client."
+    SUB_TITLE = "the terminal LLM client."
     CSS_PATH = "oterm.tcss"
     BINDINGS = [
         Binding("ctrl+tab", "cycle_chat(+1)", "next chat", id="next.chat"),
@@ -56,8 +56,8 @@ class OTerm(App):
             self.action_export_chat,
         )
         yield SystemCommand(
-            "Regenerate last Ollama message",
-            "Regenerates the last Ollama message (setting a random seed for the message)",
+            "Regenerate last message",
+            "Regenerates the last assistant message",
             self.action_regenerate_last_message,
         )
         yield SystemCommand(
@@ -90,7 +90,7 @@ class OTerm(App):
             if chat_model.id == active_id:
                 next_index = (saved_chats.index(chat_model) + change) % len(saved_chats)
                 next_id = saved_chats[next_index].id
-                if next_id is not None:  # Ensure we have a valid ID
+                if next_id is not None:
                     tabs.active = f"chat-{next_id}"
                 break
 
@@ -187,7 +187,7 @@ class OTerm(App):
             screen = PullModel("")
         else:
             chat = tabs.active_pane.query_one(ChatContainer)
-            screen = PullModel(chat.ollama.model)
+            screen = PullModel(chat.model)
         self.push_screen(screen)
 
     async def action_show_logs(self) -> None:
@@ -196,15 +196,16 @@ class OTerm(App):
         screen = LogViewer()
         self.push_screen(screen)
 
-    async def load_mcp(self):
+    async def load_tools(self):
         from oterm.tools import available_tool_defs
         from oterm.tools.mcp.prompts import available_prompt_defs
 
         external_tool_defs: list[ExternalToolDefinition] = appConfig.get("tools", [])  # type: ignore
         external_tools = list(load_external_tools(external_tool_defs))
-        available_tool_defs["external"] = external_tools
-        mcp_tool_calls, mcp_prompt_calls = await setup_mcp_servers()
-        available_tool_defs.update(mcp_tool_calls)
+        if external_tools:
+            available_tool_defs["external"] = external_tools
+        mcp_tool_defs, mcp_prompt_calls = await setup_mcp_servers()
+        available_tool_defs.update(mcp_tool_defs)
         available_prompt_defs.update(mcp_prompt_calls)
 
     @work(exclusive=True)
@@ -237,7 +238,7 @@ class OTerm(App):
         if keymap:
             self.set_keymap(keymap)
 
-        await self.load_mcp()
+        await self.load_tools()
 
         async def on_splash_done(message) -> None:
             if not saved_chats:

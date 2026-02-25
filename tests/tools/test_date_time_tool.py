@@ -1,25 +1,33 @@
+from pathlib import Path
+
 import pytest
+from pydantic_ai import Tool as PydanticTool
 
-from oterm.ollamaclient import OllamaLLM
-from oterm.tools.date_time import DateTimeTool
+from oterm.agent import get_agent
 
 
+@pytest.fixture(scope="module")
+def vcr_cassette_dir():
+    return str(Path(__file__).parent.parent / "cassettes" / "test_date_time_tool")
+
+
+@pytest.mark.vcr()
 @pytest.mark.asyncio
-async def test_date_time(default_model, deterministic_options):
+async def test_date_time(allow_model_requests, default_model, deterministic_parameters):
     fixed_datetime = "2025-01-15T14:30:45.123456"
 
     def mock_date_time() -> str:
+        """Get the current date and time in ISO format."""
         return fixed_datetime
 
-    llm = OllamaLLM(
+    tool = PydanticTool(mock_date_time, name="date_time", takes_ctx=False)
+    agent = get_agent(
         model=default_model,
-        tool_defs=[{"tool": DateTimeTool, "callable": mock_date_time}],
-        options=deterministic_options,
+        tools=[tool],
+        parameters=deterministic_parameters,
     )
-    res = ""
-    async for _, text in llm.stream(
+    result = await agent.run(
         "What is the time in 24h format? Use the date_time tool to answer this question."
-    ):
-        res = text
+    )
 
-    assert "14:30" in res, f"Expected time in response, got: {res}"
+    assert "14:30" in result.output, f"Expected time in response, got: {result.output}"

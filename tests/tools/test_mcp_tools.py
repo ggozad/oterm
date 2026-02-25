@@ -1,41 +1,44 @@
+from pathlib import Path
+
 import pytest
 from mcp.types import Tool as MCPTool
 
-from oterm.ollamaclient import OllamaLLM
+from oterm.agent import get_agent
 from oterm.tools.mcp.client import MCPClient
-from oterm.tools.mcp.tools import MCPToolCallable
-from oterm.types import Tool
+from oterm.tools.mcp.tools import MCPToolCallable, mcp_tool_to_pydantic_tool
 
 
+@pytest.fixture(scope="module")
+def vcr_cassette_dir():
+    return str(Path(__file__).parent.parent / "cassettes" / "test_mcp_tools")
+
+
+@pytest.mark.vcr()
 @pytest.mark.asyncio
-async def test_mcp_tools(mcp_client: MCPClient, default_model, deterministic_options):
+async def test_mcp_tools(
+    allow_model_requests, mcp_client: MCPClient, default_model, deterministic_parameters
+):
     tools = await mcp_client.get_available_tools()
     for oracle in tools:
         assert MCPTool.model_validate(oracle)
 
     oracle = tools[0]
-    oterm_tool = Tool(
-        function=Tool.Function(
-            name=oracle.name,
-            description=oracle.description,
-            parameters=Tool.Function.Parameters.model_validate(oracle.inputSchema),
-        ),
-    )
 
     mcpToolCallable = MCPToolCallable(oracle.name, "test_server", mcp_client)
-    llm = OllamaLLM(
+    pydantic_tool = mcp_tool_to_pydantic_tool(oracle, mcpToolCallable)
+
+    agent = get_agent(
         model=default_model,
-        tool_defs=[{"tool": oterm_tool, "callable": mcpToolCallable.call}],
-        options=deterministic_options,
+        tools=[pydantic_tool],
+        parameters=deterministic_parameters,
     )
 
-    res = ""
-    async for _, text in llm.stream(
-        "Ask the oracle what is the best client for Ollama."
-    ):
-        res = text.lower()
-    assert any([
-        "oterm" in res,
-        "oter" in res,
-        "orterm" in res,
-    ])
+    result = await agent.run("Ask the oracle what is the best client for Ollama.")
+    res = result.output.lower()
+    assert any(
+        [
+            "oterm" in res,
+            "oter" in res,
+            "orterm" in res,
+        ]
+    )

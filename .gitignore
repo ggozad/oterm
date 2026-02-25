@@ -13,3 +13,4 @@ photos/
 .pytest_cache/
 .ruff_cache/
 .dev-notes/
+PLAN.md

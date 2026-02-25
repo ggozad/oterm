@@ -1,40 +1,32 @@
-from collections.abc import Awaitable, Callable, Sequence
+from collections.abc import Sequence
 from importlib import import_module
 
-from ollama import Tool
+from pydantic_ai import Tool as PydanticTool
 
 from oterm.log import log
-from oterm.types import ExternalToolDefinition, ToolCall
+from oterm.types import ExternalToolDefinition, ToolDef
 
 
 def load_external_tools(
     external_tools: Sequence[ExternalToolDefinition],
-) -> Sequence[ToolCall]:
-    tools = []
+) -> Sequence[ToolDef]:
+    tools: list[ToolDef] = []
     for tool_def in external_tools:
-        tool_path = tool_def["tool"]
-
-        try:
-            module, tool = tool_path.split(":")
-            module = import_module(module)
-            tool = getattr(module, tool)
-            if not isinstance(tool, Tool):
-                raise Exception(f"Expected Tool, got {type(tool)}")
-        except ModuleNotFoundError as e:
-            log.error(f"Error loading tool {tool_path}: {e}")
-            continue
-
         callable_path = tool_def["callable"]
         try:
-            module, function = callable_path.split(":")
-            module = import_module(module)
-            callable = getattr(module, function)
-            if not isinstance(callable, Callable | Awaitable):
-                raise Exception(f"Expected Callable, got {type(callable)}")
+            module_path, function_name = callable_path.split(":")
+            module = import_module(module_path)
+            func = getattr(module, function_name)
+            if not callable(func):
+                raise Exception(f"Expected Callable, got {type(func)}")
         except ModuleNotFoundError as e:
             log.error(f"Error loading callable {callable_path}: {e}")
             continue
-        log.info(f"Loaded tool {tool.function.name} from {tool_path}")  # type: ignore
-        tools.append({"tool": tool, "callable": callable})
+
+        pydantic_tool = PydanticTool(func, takes_ctx=False)
+        name = pydantic_tool.name
+        description = pydantic_tool.description or ""
+        log.info(f"Loaded external tool {name} from {callable_path}")
+        tools.append({"name": name, "description": description, "tool": pydantic_tool})
 
     return tools

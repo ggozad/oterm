@@ -1,5 +1,7 @@
-from ollama import Options, ShowResponse
-from pydantic import ValidationError
+import json
+from typing import Any
+
+from ollama import ShowResponse
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import (
@@ -9,33 +11,34 @@ from textual.containers import (
 )
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
+from textual.widgets import Button, Checkbox, Label, OptionList, Select, TextArea
 
 from oterm.app.widgets.caps import Capabilities
 from oterm.app.widgets.tool_select import ToolSelector
-from oterm.ollamaclient import (
-    OllamaLLM,
-    jsonify_options,
-    parse_format,
-    parse_ollama_parameters,
+from oterm.ollamaclient import jsonify_parameters, parse_ollama_parameters
+from oterm.providers import (
+    get_available_providers,
+    get_provider_name,
+    list_models,
+    ollama,
 )
-from oterm.types import ChatModel, OtermOllamaOptions, Tool
+from oterm.providers.capabilities import get_capabilities
+from oterm.types import ChatModel
 
 
 class ChatEdit(ModalScreen[str]):
-    models = []
+    models: list[str] = []
     models_info: dict[str, ShowResponse] = {}
 
+    provider: reactive[str] = reactive("ollama")
     model_name: reactive[str] = reactive("")
     tag: reactive[str] = reactive("")
     bytes: reactive[int] = reactive(0)
     model_info: ShowResponse
     system: reactive[str] = reactive("")
-    parameters: reactive[Options] = reactive(Options())
-    format: reactive[str] = reactive("")
-    keep_alive: reactive[int] = reactive(5)
-    last_highlighted_index = None
-    tools: reactive[list[Tool]] = reactive([])
+    parameters: reactive[dict[str, Any]] = reactive({})
+    last_highlighted_index: dict[str, int | None] = {}
+    tools: reactive[list[str]] = reactive([])
     edit_mode: reactive[bool] = reactive(False)
     thinking: reactive[bool] = reactive(False)
 
@@ -55,58 +58,45 @@ class ChatEdit(ModalScreen[str]):
             chat_model = ChatModel()
 
         self.chat_model = chat_model
-        self.model_name, self.tag = (
-            chat_model.model.split(":") if chat_model.model else ("", "")
-        )
+        self.provider = chat_model.provider
+        if ":" in (chat_model.model or ""):
+            self.model_name, self.tag = chat_model.model.split(":", 1)
+        else:
+            self.model_name = chat_model.model or ""
+            self.tag = ""
         self.system = chat_model.system or ""
         self.parameters = chat_model.parameters
-        self.format = chat_model.format
-        self.keep_alive = chat_model.keep_alive
         self.tools = chat_model.tools
         self.edit_mode = edit_mode
         self.thinking = chat_model.thinking
 
     def _return_chat_meta(self) -> None:
-        model = f"{self.model_name}:{self.tag}"
+        if self.provider == "ollama":
+            model = f"{self.model_name}:{self.tag}" if self.tag else self.model_name
+        else:
+            model = self.model_name
+
         system = self.query_one(".system", TextArea).text
-        system = system if system != self.model_info.get("system", "") else None
-        keep_alive = int(self.query_one(".keep-alive", Input).value)
+        model_system = getattr(self, "model_info", {}).get("system", "")
+        system = system if system != model_system else None
         p_area = self.query_one(".parameters", TextArea)
         try:
-            parameters = OtermOllamaOptions.model_validate_json(
-                p_area.text, strict=True
-            )
-
-            if isinstance(parameters.stop, str):
-                parameters.stop = [parameters.stop]
-
-        except ValidationError:
-            self.app.notify("Error validating parameters", severity="error")
-            p_area = self.query_one(".parameters", TextArea)
+            parameters = json.loads(p_area.text) if p_area.text.strip() else {}
+        except json.JSONDecodeError:
+            self.app.notify("Error parsing parameters JSON", severity="error")
             p_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
-            return
-
-        f_area = self.query_one(".format", TextArea)
-        try:
-            parse_format(f_area.text)
-            format = f_area.text
-        except Exception:
-            self.app.notify("Error parsing format", severity="error")
-            f_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
             return
 
         self.tools = self.query_one(ToolSelector).selected
         self.thinking = self.query_one("#thinking-checkbox", Checkbox).value
 
-        # Create updated chat model
         updated_chat_model = ChatModel(
             id=self.chat_model.id,
             name=self.chat_model.name,
             model=model,
             system=system,
-            format=format,
+            provider=self.provider,
             parameters=parameters,
-            keep_alive=keep_alive,
             tools=self.tools,
             thinking=self.thinking,
         )
@@ -124,79 +114,132 @@ class ChatEdit(ModalScreen[str]):
         for index, option in enumerate(select._options):
             if str(option.prompt) == model:
                 select.highlighted = index
-                break
+                return
+        if select._options:
+            select.highlighted = 0
 
     async def on_mount(self) -> None:
-        self.models = OllamaLLM.list().models
+        provider_select = self.query_one("#provider-select", Select)
+        provider_select.value = self.provider
 
-        models = [model.model or "" for model in self.models]
-        for model in models:
-            info = OllamaLLM.show(model)
-            self.models_info[model] = info
+        self._load_models_for_provider(self.provider)
+
+        if self.model_name:
+            if self.provider == "ollama" and self.tag:
+                self.select_model(f"{self.model_name}:{self.tag}")
+            else:
+                self.select_model(self.model_name)
+
+        provider_select.disabled = self.edit_mode
+        model_select = self.query_one("#model-select", OptionList)
+        model_select.disabled = self.edit_mode
+
+    def _load_models_for_provider(self, provider: str) -> None:
         option_list = self.query_one("#model-select", OptionList)
         option_list.clear_options()
-        for model in models:
-            option_list.add_option(option=self.model_option(model))
-        option_list.highlighted = self.last_highlighted_index
-        if self.model_name and self.tag:
-            self.select_model(f"{self.model_name}:{self.tag}")
+        self.models_info = {}
 
-        # Disable the model select widget if we are in edit mode.
-        widget = self.query_one("#model-select", OptionList)
-        widget.disabled = self.edit_mode
+        if provider == "ollama":
+            ollama_models = ollama.list_models().models
+            self.models = [m.model or "" for m in ollama_models]
+            for model in self.models:
+                info = ollama.show_model(model)
+                self.models_info[model] = info
+                option_list.add_option(option=self.model_option(model))
+        else:
+            self.models = list_models(provider)
+            for model in self.models:
+                option_list.add_option(option=self.model_option(model))
+
+        last_index = ChatEdit.last_highlighted_index.get(provider)
+        if last_index is not None and last_index < len(self.models):
+            option_list.highlighted = last_index
+        elif self.models:
+            option_list.highlighted = 0
+
+    def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id == "provider-select":
+            new_provider = str(event.value)
+            if new_provider != self.provider:
+                self.provider = new_provider
+                self._load_models_for_provider(new_provider)
+                self.model_name = ""
+                self.tag = ""
+                self.query_one(".name", Label).update("")
+                self.query_one(".tag", Label).update("")
+                self.query_one(".size", Label).update("")
+                self.query_one(".caps", Capabilities).caps = []  # type: ignore
 
     def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
     ) -> None:
-        model = option.option.prompt
-        model_meta = next((m for m in self.models if m.model == str(model)), None)
-        if model_meta:
-            name, tag = (model_meta.model or "").split(":")
+        model = str(option.option.prompt)
+
+        if self.provider == "ollama":
+            if ":" in model:
+                name, tag = model.split(":", 1)
+            else:
+                name, tag = model, ""
             self.model_name = name
-            widget = self.query_one(".name", Label)
-            widget.update(f"{self.model_name}")
-
             self.tag = tag
-            widget = self.query_one(".tag", Label)
-            widget.update(f"{self.tag}")
 
-            self.bytes = model_meta["size"]
-            widget = self.query_one(".size", Label)
-            widget.update(f"{(self.bytes / 1.0e9):.2f} GB")
+            self.query_one(".name", Label).update(name)
+            self.query_one(".tag", Label).update(tag)
 
-            meta = self.models_info.get(model_meta.model or "")
-            self.model_info = meta  # type: ignore
-            if not self.edit_mode:
-                self.parameters = parse_ollama_parameters(
-                    self.model_info.parameters or ""
+            meta = self.models_info.get(model)
+            if meta:
+                self.model_info = meta
+                ollama_models = ollama.list_models().models
+                model_meta = next((m for m in ollama_models if m.model == model), None)
+                if model_meta:
+                    self.bytes = model_meta["size"]
+                    self.query_one(".size", Label).update(
+                        f"{(self.bytes / 1.0e9):.2f} GB"
+                    )
+
+                if not self.edit_mode:
+                    self.parameters = parse_ollama_parameters(
+                        self.model_info.parameters or ""
+                    )
+                self.query_one(".parameters", TextArea).load_text(
+                    jsonify_parameters(self.parameters)
                 )
-            widget = self.query_one(".parameters", TextArea)
-            widget.load_text(jsonify_options(self.parameters))
-            widget = self.query_one(".system", TextArea)
+                self.query_one(".system", TextArea).load_text(
+                    self.system or self.model_info.get("system", "")
+                )
 
-            # XXX Does not work as expected, there is no longer system in model_info
-            widget.load_text(self.system or self.model_info.get("system", ""))
+                capabilities: list[str] = list(self.model_info.get("capabilities", []))
+            else:
+                capabilities = []
+        else:
+            self.model_name = model
+            self.tag = ""
 
-            capabilities: list[str] = self.model_info.get("capabilities", [])
-            tools_supported = "tools" in capabilities
-            tool_selector = self.query_one(ToolSelector)
-            tool_selector.disabled = not tools_supported
+            self.query_one(".name", Label).update(model)
+            self.query_one(".tag", Label).update("")
+            self.query_one(".size", Label).update("N/A")
 
-            thinking_checkbox = self.query_one("#thinking-checkbox", Checkbox)
-            thinking_checkbox.disabled = "thinking" not in capabilities
+            caps = get_capabilities(self.provider, model)
+            capabilities = []
+            if caps.supports_tools:
+                capabilities.append("tools")
+            if caps.supports_thinking:
+                capabilities.append("thinking")
+            if caps.supports_vision:
+                capabilities.append("vision")
 
-            if "completion" in capabilities:
-                capabilities.remove("completion")  #
-            if "embedding" in capabilities:
-                capabilities.remove("embedding")
+        tools_supported = "tools" in capabilities
+        tool_selector = self.query_one(ToolSelector)
+        tool_selector.disabled = not tools_supported
 
-            widget = self.query_one(".caps", Capabilities)
-            widget.caps = capabilities  # type: ignore
+        thinking_checkbox = self.query_one("#thinking-checkbox", Checkbox)
+        thinking_checkbox.disabled = "thinking" not in capabilities
 
-        # Now that there is a model selected we can save the chat.
-        save_button = self.query_one("#save-btn", Button)
-        save_button.disabled = False
-        ChatEdit.last_highlighted_index = option.option_index
+        display_caps = [c for c in capabilities if c not in ("completion", "embedding")]
+        self.query_one(".caps", Capabilities).caps = display_caps  # type: ignore
+
+        self.query_one("#save-btn", Button).disabled = False
+        ChatEdit.last_highlighted_index[self.provider] = option.option_index
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.name == "save":
@@ -209,6 +252,9 @@ class ChatEdit(ModalScreen[str]):
         return Text(model)
 
     def compose(self) -> ComposeResult:
+        providers = get_available_providers()
+        provider_options = [(get_provider_name(p), p) for p in providers]
+
         with Container(classes="screen-container full-height"):
             with Horizontal():
                 with Vertical():
@@ -218,9 +264,15 @@ class ChatEdit(ModalScreen[str]):
                         yield Label("Tag:", classes="title")
                         yield Label(f"{self.tag}", classes="tag")
                         yield Label("Size:", classes="title")
-                        yield Label(f"{self.size}", classes="size")
+                        yield Label("", classes="size")
                         yield Label("Caps:", classes="title")
                         yield Capabilities([], classes="caps")
+                    yield Select(
+                        provider_options,
+                        id="provider-select",
+                        value=self.provider,
+                        allow_blank=False,
+                    )
                     yield OptionList(id="model-select")
                     yield Label("Tools:", classes="title")
                     yield ToolSelector(
@@ -232,31 +284,18 @@ class ChatEdit(ModalScreen[str]):
                     yield TextArea(self.system, classes="system log")
                     yield Label("Parameters:", classes="title")
                     yield TextArea(
-                        jsonify_options(self.parameters),
+                        jsonify_parameters(self.parameters),
                         classes="parameters log",
-                        language="json",
-                    )
-                    yield Label("Format:", classes="title")
-                    yield TextArea(
-                        self.format or "",
-                        classes="format log",
                         language="json",
                     )
 
                     with Horizontal():
-                        with Horizontal():
-                            yield Checkbox(
-                                "Thinking",
-                                id="thinking-checkbox",
-                                name="thinking",
-                                value=self.thinking,
-                            )
-                            yield Label(
-                                "Keep-alive (min)", classes="title keep-alive-label"
-                            )
-                            yield Input(
-                                classes="keep-alive", value=str(self.keep_alive)
-                            )
+                        yield Checkbox(
+                            "Thinking",
+                            id="thinking-checkbox",
+                            name="thinking",
+                            value=self.thinking,
+                        )
 
             with Horizontal(classes="button-container"):
                 yield Button(

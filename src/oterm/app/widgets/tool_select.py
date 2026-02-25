@@ -1,4 +1,3 @@
-from ollama import Tool
 from textual import on
 from textual.app import ComposeResult
 from textual.containers import Horizontal, ScrollableContainer, Vertical
@@ -6,11 +5,11 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Checkbox
 
-from oterm.tools import available_tool_calls, available_tool_defs
+from oterm.tools import available_tool_defs, available_tools
 
 
 class ToolSelector(Widget):
-    selected: reactive[list[Tool]] = reactive([])
+    selected: reactive[list[str]] = reactive([])
 
     def __init__(
         self,
@@ -18,42 +17,41 @@ class ToolSelector(Widget):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
-        selected: list[Tool] = [],
+        selected: list[str] = [],
     ) -> None:
         super().__init__(name=name, id=id, classes=classes, disabled=disabled)
         self.selected = selected if selected is not None else []
-        # Check if selected tools are still available from the loaded tools.
-        available = [tool_def["tool"] for tool_def in available_tool_calls()]
-        self.selected = [tool for tool in selected if tool in available]
+        # Check if selected tools are still available from the loaded tools
+        available_names = {tool_def["name"] for tool_def in available_tools()}
+        self.selected = [name for name in selected if name in available_names]
 
     def on_mount(self) -> None:
         pass
 
     @on(Checkbox.Changed)
     def on_checkbox_toggled(self, ev: Checkbox.Changed):
-        name = ev.control.name
+        checkbox_name = ev.control.name
         checked = ev.value
 
         for server in available_tool_defs.keys():
-            if server == name:
-                # We don't need to change selected,
-                # it will change when the checkboxes are checked/unchecked,
+            if server == checkbox_name:
                 for tool_def in available_tool_defs[server]:
                     tool_checkbox = self.query_one(
-                        f"#{server}-{tool_def['tool']['function']['name']}", Checkbox
+                        f"#{server}-{tool_def['name']}", Checkbox
                     )
                     if tool_checkbox.value != checked:
                         tool_checkbox.value = checked
                 return
 
-        for tool_def in available_tool_calls():
-            if tool_def["tool"].function.name == str(name):  # type: ignore
-                tool = tool_def["tool"]
+        for tool_def in available_tools():
+            if tool_def["name"] == str(checkbox_name):
+                tool_name = tool_def["name"]
                 if checked:
-                    self.selected.append(tool)
+                    if tool_name not in self.selected:
+                        self.selected.append(tool_name)
                 else:
                     try:
-                        self.selected.remove(tool)
+                        self.selected.remove(tool_name)
                     except ValueError:
                         pass
                 break
@@ -61,7 +59,7 @@ class ToolSelector(Widget):
     def all_server_tools_selected(self, server: str) -> bool:
         """Check if all tools from a server are selected."""
         for tool_def in available_tool_defs[server]:
-            if tool_def["tool"] not in self.selected:
+            if tool_def["name"] not in self.selected:
                 return False
         return True
 
@@ -80,12 +78,11 @@ class ToolSelector(Widget):
                     )
                     with Vertical(classes="tools"):
                         for tool_def in available_tool_defs[server]:
-                            name = tool_def["tool"]["function"]["name"]
                             yield Checkbox(
-                                id=f"{server}-{name}",
-                                name=name,
-                                label=name,
-                                tooltip=f"{tool_def['tool']['function']['description']}",
-                                value=tool_def["tool"] in self.selected,
+                                id=f"{server}-{tool_def['name']}",
+                                name=tool_def["name"],
+                                label=tool_def["name"],
+                                tooltip=tool_def["description"],
+                                value=tool_def["name"] in self.selected,
                                 classes="tool",
                             )

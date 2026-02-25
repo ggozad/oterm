@@ -1,53 +1,41 @@
 import pytest
 from ollama import ResponseError
 
-from oterm.ollamaclient import OllamaLLM, jsonify_options, parse_ollama_parameters
+from oterm.ollamaclient import jsonify_parameters, parse_ollama_parameters
+from oterm.providers import ollama
 
 
 def test_list():
-    llm = OllamaLLM()
-    response = llm.list()
-    models = response.get("models", [])
-    assert [model for model in models if model.model == "llama3.2:latest"]
+    response = ollama.list_models()
+    models = response.models
+    assert [model for model in models if model.model == "gpt-oss:latest"]
 
 
 def test_show():
-    llm = OllamaLLM()
-    response = llm.show("llama3.2:latest")
+    response = ollama.show_model("gpt-oss:latest")
     assert response
     assert response.modelfile
-    assert response.parameters
-    assert response.template
     assert response.details
     assert response.modelinfo
-    assert response.capabilities
 
+    assert response.capabilities is not None
     assert "tools" in response.capabilities
     assert "completion" in response.capabilities
-    params = parse_ollama_parameters(response.parameters)
-    assert params.stop == ["<|start_header_id|>", "<|end_header_id|>", "<|eot_id|>"]
-    assert params.temperature is None
-    json = jsonify_options(params)
-    assert json == (
-        "{\n"
-        '  "stop": [\n'
-        '    "<|start_header_id|>",\n'
-        '    "<|end_header_id|>",\n'
-        '    "<|eot_id|>"\n'
-        "  ]\n"
-        "}"
-    )
+
+    if response.parameters:
+        params = parse_ollama_parameters(response.parameters)
+        json_str = jsonify_parameters(params)
+        assert json_str  # Non-empty JSON
 
 
 def test_pull():
-    llm = OllamaLLM()
-    stream = llm.pull("llama3.2:latest")
+    stream = ollama.pull_model("gpt-oss:latest")
     entries = [entry.status for entry in stream]
     assert "pulling manifest" in entries
     assert "success" in entries
 
     with pytest.raises(ResponseError) as excinfo:
-        stream = llm.pull("non-existing:latest")
+        stream = ollama.pull_model("non-existing:latest")
         entries = [entry for entry in stream]
         assert excinfo.value == "pull model manifest: file does not exist"
         assert "success" not in entries

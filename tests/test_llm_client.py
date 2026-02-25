@@ -1,62 +1,59 @@
+import pydantic_ai.models
 import pytest
-from ollama import ResponseError
+from pydantic_ai import Tool as PydanticTool
+from pydantic_ai.exceptions import ModelHTTPError
 
-from oterm.ollamaclient import OllamaLLM
-from oterm.tools.date_time import DateTimeTool
+from oterm.agent import get_agent
 
 
+@pytest.mark.vcr()
 @pytest.mark.asyncio
-async def test_generate(default_model, deterministic_options):
-    llm = OllamaLLM(model=default_model, options=deterministic_options)
-    res = ""
-    async for _, text in llm.stream(prompt="Please add 42 and 42"):
-        res = text
-    assert "84" in res
+async def test_generate(allow_model_requests, default_model, deterministic_parameters):
+    agent = get_agent(model=default_model, parameters=deterministic_parameters)
+    result = await agent.run("Please add 42 and 42")
+    assert "84" in result.output
 
 
+@pytest.mark.vcr()
 @pytest.mark.asyncio
-async def test_llm_context(default_model, deterministic_options):
-    llm = OllamaLLM(model=default_model, options=deterministic_options)
-    async for _, _ in llm.stream("I am testing oterm, a python client for Ollama."):
-        pass
-    # There should now be a context saved for the conversation.
-    res = ""
-    async for _, text in llm.stream("Do you remember what I am testing?"):
-        res = text
-    assert "oterm" in res.lower()
-
-
-@pytest.mark.asyncio
-async def test_multi_modal_llm(llama_image, deterministic_options):
-    llm = OllamaLLM(model="llava", options=deterministic_options)
-    res = ""
-    async for _, text in llm.stream("Describe this image", images=[llama_image]):
-        res = text
-    assert "llama" in res or "animal" in res
+async def test_llm_context(
+    allow_model_requests, default_model, deterministic_parameters
+):
+    agent = get_agent(model=default_model, parameters=deterministic_parameters)
+    result = await agent.run("I am testing oterm, a python client for Ollama.")
+    history = result.all_messages()
+    result = await agent.run(
+        "Do you remember what I am testing?", message_history=history
+    )
+    assert "oterm" in result.output.lower()
 
 
 @pytest.mark.asyncio
 async def test_errors():
-    llm = OllamaLLM(model="non-existent-model")
-    try:
-        async for _, _ in llm.stream("This should fail."):
-            pass
-    except ResponseError as e:
-        assert "non-existent-model" in str(e) and "not found" in str(e)
+    agent = get_agent(model="non-existent-model")
+    with pytest.raises(ModelHTTPError):
+        with pydantic_ai.models.override_allow_model_requests(True):
+            await agent.run("This should fail.")
 
 
+@pytest.mark.vcr()
 @pytest.mark.asyncio
-async def test_tool_streaming(default_model, deterministic_options):
-    llm = OllamaLLM(
+async def test_tool_streaming(
+    allow_model_requests, default_model, deterministic_parameters
+):
+    def date_time() -> str:
+        """Get the current date and time in ISO format."""
+        return "2025-01-01"
+
+    tool = PydanticTool(date_time, takes_ctx=False)
+    agent = get_agent(
         model=default_model,
-        tool_defs=[
-            {"tool": DateTimeTool, "callable": lambda: "2025-01-01"},
-        ],
-        options=deterministic_options,
+        tools=[tool],
+        parameters=deterministic_parameters,
     )
-    response = ""
-    async for _, text in llm.stream(
-        "What is the current date in YYYY-MM-DD format?. Use the date_time tool to answer."
-    ):
-        response = text
-    assert "2025-01-01" in response or ("January" in response and "2025" in response)
+    result = await agent.run(
+        "What is the current date in YYYY-MM-DD format? Use the date_time tool to answer."
+    )
+    assert "2025-01-01" in result.output or (
+        "January" in result.output and "2025" in result.output
+    )

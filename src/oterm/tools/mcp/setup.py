@@ -4,17 +4,17 @@ from oterm.config import appConfig
 from oterm.log import log
 from oterm.tools.mcp.client import MCPClient
 from oterm.tools.mcp.prompts import MCPPromptCallable
-from oterm.tools.mcp.tools import MCPToolCallable, mcp_tool_to_ollama_tool
-from oterm.types import PromptCall, ToolCall
+from oterm.tools.mcp.tools import MCPToolCallable, mcp_tool_to_pydantic_tool
+from oterm.types import PromptCall, ToolDef
 
 mcp_clients: list[MCPClient] = []
 
 
 async def setup_mcp_servers() -> tuple[
-    dict[str, list[ToolCall]], dict[str, list[PromptCall]]
+    dict[str, list[ToolDef]], dict[str, list[PromptCall]]
 ]:
     mcp_servers = appConfig.get("mcpServers")
-    tool_calls: dict[str, list[ToolCall]] = {}
+    tool_defs: dict[str, list[ToolDef]] = {}
     prompt_calls: dict[str, list[PromptCall]] = {}
 
     if mcp_servers:
@@ -31,12 +31,16 @@ async def setup_mcp_servers() -> tuple[
             mcp_prompts = await client.get_available_prompts()
 
             if mcp_tools:
-                tool_calls[server] = []
+                tool_defs[server] = []
             for mcp_tool in mcp_tools:
-                tool = mcp_tool_to_ollama_tool(mcp_tool)
-                mcpToolCallable = MCPToolCallable(mcp_tool.name, server, client)
-                tool_calls[server].append(
-                    {"tool": tool, "callable": mcpToolCallable.call}
+                mcp_callable = MCPToolCallable(mcp_tool.name, server, client)
+                pydantic_tool = mcp_tool_to_pydantic_tool(mcp_tool, mcp_callable)
+                tool_defs[server].append(
+                    {
+                        "name": mcp_tool.name,
+                        "description": mcp_tool.description or "",
+                        "tool": pydantic_tool,
+                    }
                 )
                 log.info(f"Loaded MCP tool {mcp_tool.name} from {server}")
 
@@ -50,7 +54,7 @@ async def setup_mcp_servers() -> tuple[
                 )
                 log.info(f"Loaded MCP prompt {prompt.name} from {server}")
 
-    return tool_calls, prompt_calls
+    return tool_defs, prompt_calls
 
 
 async def teardown_mcp_servers():

@@ -1,9 +1,24 @@
 import asyncio
+import base64
 import json
-import random
+from collections.abc import AsyncGenerator
 from pathlib import Path
+from typing import Any
 
-from ollama import Message, ResponseError
+from pydantic_ai import (
+    Agent,
+    BinaryContent,
+    ModelRequest,
+    ModelResponse,
+    PartDeltaEvent,
+    PartStartEvent,
+    TextPart,
+    TextPartDelta,
+    ThinkingPartDelta,
+    UserPromptPart,
+)
+from pydantic_ai.exceptions import ModelHTTPError
+from pydantic_ai.messages import ModelMessage, ThinkingPart
 from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -18,21 +33,30 @@ from textual.widgets import (
     TabbedContent,
 )
 
+from oterm.agent import get_agent
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_rename import ChatRename
 from oterm.app.mcp_prompt import MCPPrompt
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
-from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
-from oterm.tools import available_tool_calls
+from oterm.tools import available_tools
 from oterm.types import ChatModel, MessageModel
 from oterm.utils import parse_response
 
 
+def _resolve_tools(tool_names: list[str]):
+    from pydantic_ai import Tool as PydanticTool
+
+    tools: list[PydanticTool] = []
+    for tool_def in available_tools():
+        if tool_def["name"] in tool_names:
+            tools.append(tool_def["tool"])
+    return tools
+
+
 class ChatContainer(Widget):
-    ollama = OllamaLLM()
     messages: reactive[list[MessageModel]] = reactive([])
     images: list[tuple[Path, str]] = []
     BINDINGS = [
@@ -53,45 +77,85 @@ class ChatContainer(Widget):
 
         self.messages = messages
         self.chat_model = chat_model
-        history = []
-        # This is wrong, the images should be a list of Image objects
-        # See https://github.com/ollama/ollama-python/issues/375
-        # Temp fix is to do msg.images = images  # type: ignore
-        for msg_model in messages:
-            message_text = msg_model.text
-            msg = Message(
-                role=msg_model.role,
-                content=(
-                    message_text
-                    if msg_model.role == "user"
-                    else parse_response(message_text).response
-                ),
-            )
-            msg.images = msg_model.images  # type: ignore
-            history.append(msg)
+        self.model = chat_model.model
+        self.system = chat_model.system
 
-        used_tool_defs = [
-            tool_def
-            for tool_def in available_tool_calls()
-            if tool_def["tool"] in chat_model.tools
-        ]
+        self.pydantic_history: list[ModelMessage] = self._build_pydantic_history(
+            messages
+        )
 
-        self.ollama = OllamaLLM(
+        tools = _resolve_tools(chat_model.tools)
+        self.agent = get_agent(
+            provider=chat_model.provider,
             model=chat_model.model,
             system=chat_model.system,
-            format=chat_model.format,
-            options=chat_model.parameters,
-            keep_alive=chat_model.keep_alive,
-            history=history,
-            tool_defs=used_tool_defs,
+            tools=tools,
+            parameters=chat_model.parameters,
             thinking=chat_model.thinking,
         )
         self.loaded = False
         self.loading = False
         self.images = []
 
+    def _build_pydantic_history(
+        self, messages: list[MessageModel]
+    ) -> list[ModelMessage]:
+        pydantic_messages: list[ModelMessage] = []
+        for msg_model in messages:
+            if msg_model.role == "user":
+                pydantic_messages.append(
+                    ModelRequest(parts=[UserPromptPart(content=msg_model.text)])
+                )
+            elif msg_model.role == "assistant":
+                parsed = parse_response(msg_model.text)
+                pydantic_messages.append(
+                    ModelResponse(parts=[TextPart(content=parsed.response)])
+                )
+        return pydantic_messages
+
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
+
+    async def stream_agent(
+        self, prompt: str, images: list[str] = []
+    ) -> AsyncGenerator[str, Any]:
+        user_prompt: str | list[str | BinaryContent]
+        if images:
+            user_prompt = [prompt]
+            for img_base64 in images:
+                img_bytes = base64.b64decode(img_base64)
+                user_prompt.append(
+                    BinaryContent(data=img_bytes, media_type="image/png")  # type: ignore[reportCallIssue]
+                )
+        else:
+            user_prompt = prompt
+
+        thinking = ""
+        text = ""
+
+        async with self.agent.iter(
+            user_prompt, message_history=self.pydantic_history
+        ) as run:
+            async for node in run:
+                if Agent.is_model_request_node(node):
+                    async with node.stream(run.ctx) as request_stream:
+                        async for event in request_stream:
+                            if isinstance(event, PartStartEvent):
+                                if isinstance(event.part, ThinkingPart):
+                                    thinking += event.part.content or ""
+                                elif isinstance(event.part, TextPart):
+                                    text += event.part.content or ""
+                            elif isinstance(event, PartDeltaEvent):
+                                if isinstance(event.delta, ThinkingPartDelta):
+                                    thinking += event.delta.content_delta or ""
+                                elif isinstance(event.delta, TextPartDelta):
+                                    text += event.delta.content_delta or ""
+                                if thinking:
+                                    yield f"<think>{thinking}</think>{text}"
+                                else:
+                                    yield text
+            if run.result is not None:
+                self.pydantic_history = list(run.result.all_messages())
 
     async def load_messages(self) -> None:
         message_container = self.query_one("#messageContainer")
@@ -129,17 +193,12 @@ class ChatContainer(Widget):
         try:
             response = ""
 
-            async for thought, text in self.ollama.stream(
+            async for response in self.stream_agent(
                 message, [img for _, img in self.images]
             ):
-                response = f"<think>{thought}</think>{text}"
                 response_chat_item.text = parse_response(response).formatted_output
 
             parsed = parse_response(response)
-
-            # To not exhaust the tokens, remove the thought process from the history (it seems to be the common practice)
-            self.ollama.history[-1].content = parsed.response  # type: ignore
-
             response_chat_item.text = parsed.formatted_output
 
             if message_container.can_view_partial(response_chat_item):
@@ -147,7 +206,6 @@ class ChatContainer(Widget):
 
             store = await Store.get_store()
 
-            # Create and save user message model
             user_message = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
@@ -159,7 +217,6 @@ class ChatContainer(Widget):
             user_message.id = id
             self.messages.append(user_message)
 
-            # Create and save assistant message model
             assistant_message = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
@@ -177,7 +234,7 @@ class ChatContainer(Widget):
             response_chat_item.remove()
             input = self.query_one("#prompt", FlexibleInput)
             input.text = message
-        except ResponseError as e:
+        except ModelHTTPError as e:
             user_chat_item.remove()
             response_chat_item.remove()
             self.app.notify(
@@ -214,39 +271,21 @@ class ChatContainer(Widget):
 
         self.chat_model = ChatModel.model_validate_json(model_info)
 
-        # Save to database
         store = await Store.get_store()
         await store.edit_chat(self.chat_model)
 
-        # load the history from messages
-        history: list[Message] = []
-        # This is wrong, the images should be a list of Image objects
-        # See https://github.com/ollama/ollama-python/issues/375
-        # Temp fix is to do msg.images = images  # type: ignore
-        for message in self.messages:
-            msg = Message(
-                role=message.role,
-                content=message.text,
-            )
-            msg.images = message.images  # type: ignore
-            history.append(msg)
+        self.pydantic_history = self._build_pydantic_history(self.messages)
 
-        # Get tool definitions based on the updated tools list
-        used_tool_defs = [
-            tool_def
-            for tool_def in available_tool_calls()
-            if tool_def["tool"] in self.chat_model.tools
-        ]
+        self.model = self.chat_model.model
+        self.system = self.chat_model.system
 
-        # Recreate the Ollama client with updated parameters
-        self.ollama = OllamaLLM(
+        tools = _resolve_tools(self.chat_model.tools)
+        self.agent = get_agent(
+            provider=self.chat_model.provider,
             model=self.chat_model.model,
             system=self.chat_model.system,
-            format=self.chat_model.format,
-            options=self.chat_model.parameters,
-            keep_alive=self.chat_model.keep_alive,
-            history=history,  # type: ignore
-            tool_defs=used_tool_defs,
+            tools=tools,
+            parameters=self.chat_model.parameters,
             thinking=self.chat_model.thinking,
         )
 
@@ -265,14 +304,15 @@ class ChatContainer(Widget):
     async def action_clear_chat(self) -> None:
         self.messages = []
         self.images = []
-        self.ollama = OllamaLLM(
-            model=self.ollama.model,
-            system=self.ollama.system,
-            format=self.ollama.format,  # type: ignore
-            options=self.chat_model.parameters,
-            keep_alive=self.ollama.keep_alive,
-            history=[],  # type: ignore
-            tool_defs=self.ollama.tool_defs,
+        self.pydantic_history = []
+
+        tools = _resolve_tools(self.chat_model.tools)
+        self.agent = get_agent(
+            provider=self.chat_model.provider,
+            model=self.model,
+            system=self.system,
+            tools=tools,
+            parameters=self.chat_model.parameters,
             thinking=self.chat_model.thinking,
         )
         msg_container = self.query_one("#messageContainer")
@@ -284,7 +324,6 @@ class ChatContainer(Widget):
     async def action_regenerate_llm_message(self) -> None:
         if not self.messages[-1:]:
             return
-        # Remove last Ollama response from UI and regenerate it
         response_message_id = self.messages[-1].id
         self.messages.pop()
         message_container = self.query_one("#messageContainer")
@@ -296,26 +335,23 @@ class ChatContainer(Widget):
         await message_container.mount(loading)
         message_container.scroll_end()
 
-        # Remove the last two messages from chat history, we will regenerate them
-        self.ollama.history = self.ollama.history[:-2]
+        # Remove the last request+response pair from pydantic history
+        if len(self.pydantic_history) >= 2:
+            self.pydantic_history = self.pydantic_history[:-2]
         message = self.messages[-1]
 
         async def response_task() -> None:
             response = ""
-            async for thought, text in self.ollama.stream(
+            async for response in self.stream_agent(
                 message.text,
                 images=message.images,  # type: ignore
-                additional_options=Options(seed=random.randint(0, 32768)),
             ):
-                response = f"<think>{thought}</think>{text}"
                 response_chat_item.text = parse_response(response).formatted_output
                 if message_container.can_view_partial(response_chat_item):
                     message_container.scroll_end()
 
-            # Save to db
             store = await Store.get_store()
 
-            # Create a message model for regenerated response
             regenerated_message = MessageModel(
                 id=response_message_id,
                 chat_id=self.chat_model.id,  # type: ignore
@@ -352,21 +388,20 @@ class ChatContainer(Widget):
         messages = await self.app.push_screen_wait(screen)
         if messages is None:
             return
-        messages = [Message(**msg) for msg in json.loads(messages)]
+        parsed_messages = json.loads(messages)
         message_container = self.query_one("#messageContainer")
         store = await Store.get_store()
 
         last_user_message = None
-        if messages[-1].role == "user":
-            last_user_message = messages.pop()
+        if parsed_messages[-1]["role"] == "user":
+            last_user_message = parsed_messages.pop()
 
-        for message in messages:
-            text = message.content or ""
-            # Create a message model for the MCP conversation
+        for msg in parsed_messages:
+            text = msg.get("content", "")
             message_model = MessageModel(
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
-                role=message.role,  # type: ignore
+                role=msg["role"],
                 text=text,
                 images=[],
             )
@@ -375,11 +410,11 @@ class ChatContainer(Widget):
             self.messages.append(message_model)
             chat_item = ChatItem()
             chat_item.text = text
-            chat_item.author = message.role
+            chat_item.author = msg["role"]
             await message_container.mount(chat_item)
         message_container.scroll_end()
-        if last_user_message is not None and last_user_message.content:
-            await self.response_task(last_user_message.content)
+        if last_user_message is not None and last_user_message.get("content"):
+            await self.response_task(last_user_message["content"])
 
     @on(ImageAdded)
     def on_image_added(self, ev: ImageAdded) -> None:
@@ -388,7 +423,7 @@ class ChatContainer(Widget):
 
     def compose(self) -> ComposeResult:
         with Vertical():
-            yield Static(f"model: {self.ollama.model}", id="info")
+            yield Static(f"model: {self.model}", id="info")
             yield VerticalScroll(
                 id="messageContainer",
             )

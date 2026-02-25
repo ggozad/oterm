@@ -1,0 +1,3139 @@
+interactions:
+- request:
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '19'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:11434
+    method: POST
+    parsed_body:
+      model: gpt-oss
+    uri: http://127.0.0.1:11434/api/show
+  response:
+    headers:
+      content-type:
+      - application/json; charset=utf-8
+      transfer-encoding:
+      - chunked
+    parsed_body:
+      capabilities:
+      - completion
+      - tools
+      - thinking
+      details:
+        families:
+        - gptoss
+        family: gptoss
+        format: gguf
+        parameter_size: 20.9B
+        parent_model: ''
+        quantization_level: MXFP4
+      license: |2-
+
+                                         Apache License
+                                   Version 2.0, January 2004
+                                http://www.apache.org/licenses/
+
+           TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+           1. Definitions.
+
+              "License" shall mean the terms and conditions for use, reproduction,
+              and distribution as defined by Sections 1 through 9 of this document.
+
+              "Licensor" shall mean the copyright owner or entity authorized by
+              the copyright owner that is granting the License.
+
+              "Legal Entity" shall mean the union of the acting entity and all
+              other entities that control, are controlled by, or are under common
+              control with that entity. For the purposes of this definition,
+              "control" means (i) the power, direct or indirect, to cause the
+              direction or management of such entity, whether by contract or
+              otherwise, or (ii) ownership of fifty percent (50%) or more of the
+              outstanding shares, or (iii) beneficial ownership of such entity.
+
+              "You" (or "Your") shall mean an individual or Legal Entity
+              exercising permissions granted by this License.
+
+              "Source" form shall mean the preferred form for making modifications,
+              including but not limited to software source code, documentation
+              source, and configuration files.
+
+              "Object" form shall mean any form resulting from mechanical
+              transformation or translation of a Source form, including but
+              not limited to compiled object code, generated documentation,
+              and conversions to other media types.
+
+              "Work" shall mean the work of authorship, whether in Source or
+              Object form, made available under the License, as indicated by a
+              copyright notice that is included in or attached to the work
+              (an example is provided in the Appendix below).
+
+              "Derivative Works" shall mean any work, whether in Source or Object
+              form, that is based on (or derived from) the Work and for which the
+              editorial revisions, annotations, elaborations, or other modifications
+              represent, as a whole, an original work of authorship. For the purposes
+              of this License, Derivative Works shall not include works that remain
+              separable from, or merely link (or bind by name) to the interfaces of,
+              the Work and Derivative Works thereof.
+
+              "Contribution" shall mean any work of authorship, including
+              the original version of the Work and any modifications or additions
+              to that Work or Derivative Works thereof, that is intentionally
+              submitted to Licensor for inclusion in the Work by the copyright owner
+              or by an individual or Legal Entity authorized to submit on behalf of
+              the copyright owner. For the purposes of this definition, "submitted"
+              means any form of electronic, verbal, or written communication sent
+              to the Licensor or its representatives, including but not limited to
+              communication on electronic mailing lists, source code control systems,
+              and issue tracking systems that are managed by, or on behalf of, the
+              Licensor for the purpose of discussing and improving the Work, but
+              excluding communication that is conspicuously marked or otherwise
+              designated in writing by the copyright owner as "Not a Contribution."
+
+              "Contributor" shall mean Licensor and any individual or Legal Entity
+              on behalf of whom a Contribution has been received by Licensor and
+              subsequently incorporated within the Work.
+
+           2. Grant of Copyright License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              copyright license to reproduce, prepare Derivative Works of,
+              publicly display, publicly perform, sublicense, and distribute the
+              Work and such Derivative Works in Source or Object form.
+
+           3. Grant of Patent License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              (except as stated in this section) patent license to make, have made,
+              use, offer to sell, sell, import, and otherwise transfer the Work,
+              where such license applies only to those patent claims licensable
+              by such Contributor that are necessarily infringed by their
+              Contribution(s) alone or by combination of their Contribution(s)
+              with the Work to which such Contribution(s) was submitted. If You
+              institute patent litigation against any entity (including a
+              cross-claim or counterclaim in a lawsuit) alleging that the Work
+              or a Contribution incorporated within the Work constitutes direct
+              or contributory patent infringement, then any patent licenses
+              granted to You under this License for that Work shall terminate
+              as of the date such litigation is filed.
+
+           4. Redistribution. You may reproduce and distribute copies of the
+              Work or Derivative Works thereof in any medium, with or without
+              modifications, and in Source or Object form, provided that You
+              meet the following conditions:
+
+              (a) You must give any other recipients of the Work or
+                  Derivative Works a copy of this License; and
+
+              (b) You must cause any modified files to carry prominent notices
+                  stating that You changed the files; and
+
+              (c) You must retain, in the Source form of any Derivative Works
+                  that You distribute, all copyright, patent, trademark, and
+                  attribution notices from the Source form of the Work,
+                  excluding those notices that do not pertain to any part of
+                  the Derivative Works; and
+
+              (d) If the Work includes a "NOTICE" text file as part of its
+                  distribution, then any Derivative Works that You distribute must
+                  include a readable copy of the attribution notices contained
+                  within such NOTICE file, excluding those notices that do not
+                  pertain to any part of the Derivative Works, in at least one
+                  of the following places: within a NOTICE text file distributed
+                  as part of the Derivative Works; within the Source form or
+                  documentation, if provided along with the Derivative Works; or,
+                  within a display generated by the Derivative Works, if and
+                  wherever such third-party notices normally appear. The contents
+                  of the NOTICE file are for informational purposes only and
+                  do not modify the License. You may add Your own attribution
+                  notices within Derivative Works that You distribute, alongside
+                  or as an addendum to the NOTICE text from the Work, provided
+                  that such additional attribution notices cannot be construed
+                  as modifying the License.
+
+              You may add Your own copyright statement to Your modifications and
+              may provide additional or different license terms and conditions
+              for use, reproduction, or distribution of Your modifications, or
+              for any such Derivative Works as a whole, provided Your use,
+              reproduction, and distribution of the Work otherwise complies with
+              the conditions stated in this License.
+
+           5. Submission of Contributions. Unless You explicitly state otherwise,
+              any Contribution intentionally submitted for inclusion in the Work
+              by You to the Licensor shall be under the terms and conditions of
+              this License, without any additional terms or conditions.
+              Notwithstanding the above, nothing herein shall supersede or modify
+              the terms of any separate license agreement you may have executed
+              with Licensor regarding such Contributions.
+
+           6. Trademarks. This License does not grant permission to use the trade
+              names, trademarks, service marks, or product names of the Licensor,
+              except as required for reasonable and customary use in describing the
+              origin of the Work and reproducing the content of the NOTICE file.
+
+           7. Disclaimer of Warranty. Unless required by applicable law or
+              agreed to in writing, Licensor provides the Work (and each
+              Contributor provides its Contributions) on an "AS IS" BASIS,
+              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+              implied, including, without limitation, any warranties or conditions
+              of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+              PARTICULAR PURPOSE. You are solely responsible for determining the
+              appropriateness of using or redistributing the Work and assume any
+              risks associated with Your exercise of permissions under this License.
+
+           8. Limitation of Liability. In no event and under no legal theory,
+              whether in tort (including negligence), contract, or otherwise,
+              unless required by applicable law (such as deliberate and grossly
+              negligent acts) or agreed to in writing, shall any Contributor be
+              liable to You for damages, including any direct, indirect, special,
+              incidental, or consequential damages of any character arising as a
+              result of this License or out of the use or inability to use the
+              Work (including but not limited to damages for loss of goodwill,
+              work stoppage, computer failure or malfunction, or any and all
+              other commercial damages or losses), even if such Contributor
+              has been advised of the possibility of such damages.
+
+           9. Accepting Warranty or Additional Liability. While redistributing
+              the Work or Derivative Works thereof, You may choose to offer,
+              and charge a fee for, acceptance of support, warranty, indemnity,
+              or other liability obligations and/or rights consistent with this
+              License. However, in accepting such obligations, You may act only
+              on Your own behalf and on Your sole responsibility, not on behalf
+              of any other Contributor, and only if You agree to indemnify,
+              defend, and hold each Contributor harmless for any liability
+              incurred by, or claims asserted against, such Contributor by reason
+              of your accepting any such warranty or additional liability.
+
+           END OF TERMS AND CONDITIONS
+
+           APPENDIX: How to apply the Apache License to your work.
+
+              To apply the Apache License to your work, attach the following
+              boilerplate notice, with the fields enclosed by brackets "[]"
+              replaced with your own identifying information. (Don't include
+              the brackets!)  The text should be enclosed in the appropriate
+              comment syntax for the file format. We also recommend that a
+              file or class name and description of purpose be included on the
+              same "printed page" as the copyright notice for easier
+              identification within third-party archives.
+           Copyright [yyyy] [name of copyright owner]
+           Licensed under the Apache License, Version 2.0 (the "License");
+           you may not use this file except in compliance with the License.
+           You may obtain a copy of the License at
+               http://www.apache.org/licenses/LICENSE-2.0
+           Unless required by applicable law or agreed to in writing, software
+           distributed under the License is distributed on an "AS IS" BASIS,
+           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           See the License for the specific language governing permissions and
+           limitations under the License.
+      model_info:
+        general.architecture: gptoss
+        general.file_type: 4
+        general.parameter_count: 20914757184
+        general.quantization_version: 2
+        gptoss.attention.head_count: 64
+        gptoss.attention.head_count_kv: 8
+        gptoss.attention.key_length: 64
+        gptoss.attention.layer_norm_rms_epsilon: 1.0e-05
+        gptoss.attention.sliding_window: 128
+        gptoss.attention.value_length: 64
+        gptoss.block_count: 24
+        gptoss.context_length: 131072
+        gptoss.embedding_length: 2880
+        gptoss.expert_count: 32
+        gptoss.expert_used_count: 4
+        gptoss.feed_forward_length: 2880
+        gptoss.rope.freq_base: 150000
+        gptoss.rope.scaling.factor: 32
+        gptoss.rope.scaling.original_context_length: 4096
+        tokenizer.ggml.add_bos_token: false
+        tokenizer.ggml.add_eos_token: false
+        tokenizer.ggml.add_padding_token: false
+        tokenizer.ggml.bos_token_id: 199998
+        tokenizer.ggml.eos_token_id: 199999
+        tokenizer.ggml.eos_token_ids: null
+        tokenizer.ggml.merges: null
+        tokenizer.ggml.model: gpt2
+        tokenizer.ggml.padding_token_id: 199999
+        tokenizer.ggml.pre: default
+        tokenizer.ggml.scores: null
+        tokenizer.ggml.token_type: null
+        tokenizer.ggml.tokens: null
+      modelfile: |
+        # Modelfile generated by "ollama show"
+        # To build a new Modelfile based on this, replace FROM with:
+        # FROM gpt-oss:latest
+
+        FROM /Users/ggozad/.ollama/models/blobs/sha256-e7b273f9636059a689e3ddcab3716e4f65abe0143ac978e46673ad0e52d09efb
+        TEMPLATE """<|start|>system<|message|>You are ChatGPT, a large language model trained by OpenAI.
+        Knowledge cutoff: 2024-06
+        Current date: {{ currentDate }}
+        {{- if and .IsThinkSet .Think (ne .ThinkLevel "") }}
+
+        Reasoning: {{ .ThinkLevel }}
+        {{- else if or (not .IsThinkSet) (and .IsThinkSet .Think) }}
+
+        Reasoning: medium
+        {{- end }}
+
+        {{- $hasNonBuiltinTools := false }}
+        {{- if .Tools -}}
+        {{- $hasBrowserSearch := false }}
+        {{- $hasBrowserOpen := false }}
+        {{- $hasBrowserFind := false }}
+        {{- $hasPython := false }}
+          {{- range .Tools }}
+            {{- if eq .Function.Name "browser.search" -}}{{- $hasBrowserSearch = true -}}
+            {{- else if eq .Function.Name "browser.open" -}}{{- $hasBrowserOpen = true -}}
+            {{- else if eq .Function.Name "browser.find" -}}{{- $hasBrowserFind = true -}}
+            {{- else if eq .Function.Name "python" -}}{{- $hasPython = true -}}
+            {{- else }}{{ $hasNonBuiltinTools = true -}}
+            {{- end }}
+          {{- end }}
+        {{- if or $hasBrowserSearch $hasBrowserOpen $hasBrowserFind $hasPython }}
+
+        # Tools
+        {{- if or $hasBrowserSearch $hasBrowserOpen $hasBrowserFind }}
+
+        ## browser
+
+        // Tool for browsing.
+        // The `cursor` appears in brackets before each browsing display: `[{cursor}]`.
+        // Cite information from the tool using the following format:
+        // `【{cursor}†L{line_start}(-L{line_end})?】`, for example: `【6†L9-L11】` or `【8†L3】`.
+        // Do not quote more than 10 words directly from the tool output.
+        // sources=web (default: web)
+        namespace browser {
+        {{- if $hasBrowserSearch }}
+
+        // Searches for information related to `query` and displays `topn` results.
+        type search = (_: {
+        query: string,
+        topn?: number, // default: 10
+        source?: string,
+        }) => any;
+        {{- end }}
+        {{- if $hasBrowserOpen }}
+
+        // Opens the link `id` from the page indicated by `cursor` starting at line number `loc`, showing `num_lines` lines.
+        // Valid link ids are displayed with the formatting: `【{id}†.*】`.
+        // If `cursor` is not provided, the most recent page is implied.
+        // If `id` is a string, it is treated as a fully qualified URL associated with `source`.
+        // If `loc` is not provided, the viewport will be positioned at the beginning of the document or centered on the most relevant passage, if available.
+        // Use this function without `id` to scroll to a new location of an opened page.
+        type open = (_: {
+        id?: number | string, // default: -1
+        cursor?: number, // default: -1
+        loc?: number, // default: -1
+        num_lines?: number, // default: -1
+        view_source?: boolean, // default: false
+        source?: string,
+        }) => any;
+        {{- end }}
+        {{- if $hasBrowserFind }}
+
+        // Finds exact matches of `pattern` in the current page, or the page given by `cursor`.
+        type find = (_: {
+        pattern: string,
+        cursor?: number, // default: -1
+        }) => any;
+        {{- end }}
+
+        } // namespace browser
+        {{- end }}{{/* end if has browser tools */}}
+        {{- if $hasPython }}
+
+        ## python
+
+        Use this tool to execute Python code in your chain of thought. The code will not be shown to the user. This tool should be used for internal reasoning, but not for code that is intended to be visible to the user (e.g. when creating plots, tables, or files).
+
+        When you send a message containing Python code to python, it will be executed in a stateful Jupyter notebook environment. python will respond with the output of the execution or time out after 120.0 seconds. The drive at '/mnt/data' can be used to save and persist user files. Internet access for this session is UNKNOWN. Depends on the cluster.
+        {{- end }}{{/* end if hasPython */}}
+        {{- end }}{{/* end if has any built-in tools */}}
+        {{- end }}{{/* end if .Tools */}}
+
+        # Valid channels: analysis, commentary, final. Channel must be included for every message.{{ if $hasNonBuiltinTools }}
+        Calls to these tools must go to the commentary channel: 'functions'.
+        {{- end -}}<|end|>{{/* end of system */ -}}
+        {{- if or $hasNonBuiltinTools .System -}}
+        <|start|>developer<|message|>{{- if $hasNonBuiltinTools }}# Tools
+
+        ## functions
+
+        namespace functions {
+        {{- range .Tools }}
+        {{- if not (or (eq .Function.Name "browser.search") (eq .Function.Name "browser.open") (eq .Function.Name "browser.find") (eq .Function.Name "python")) }}
+        {{if .Function.Description }}
+        // {{ .Function.Description }}
+        {{- end }}
+        {{- if and .Function.Parameters.Properties (gt (len .Function.Parameters.Properties) 0) }}
+        type {{ .Function.Name }} = (_: {
+        {{- range $name, $prop := .Function.Parameters.Properties }}
+        {{- if $prop.Description }}
+          // {{ $prop.Description }}
+        {{- end }}
+          {{ $name }}: {{ $prop | toTypeScriptType }},
+        {{- end }}
+        }) => any;
+        {{- else }}
+        type {{ .Function.Name }} = () => any;
+        {{- end }}
+        {{- end }}{{/* end if not browser tool */}}
+        {{- end }}{{/* end of range .Tools */}}
+
+        } // namespace functions
+        {{- end }}{{/* end if hasNonBuiltinTools */}}
+        {{- if .System}}
+
+        # Instructions
+
+        {{ .System }}
+        {{- end -}}
+        <|end|>
+        {{- end -}}
+        {{- /* Find the index of the last user message */ -}}
+        {{- $lastUserIdx := -1 }}
+        {{- $prefillingContent := false }}
+        {{- $prefillingThinkingOnly := false }}
+        {{- range $i, $msg := .Messages }}
+          {{- $last := eq (len (slice $.Messages $i)) 1 -}}
+          {{- if eq $msg.Role "user" }}
+            {{- $lastUserIdx = $i }}
+          {{- end -}}
+          {{- if and $last (eq $msg.Role "assistant") (gt (len $msg.Content) 0) }}
+            {{- $prefillingContent = true }}
+          {{- else if and $last (eq $msg.Role "assistant") (gt (len $msg.Thinking) 0) }}
+            {{- $prefillingThinkingOnly = true }}
+          {{- end }}
+        {{- end -}}
+        {{- /* Now render messages */ -}}
+        {{- range $i, $msg := .Messages }}
+          {{- $last := eq (len (slice $.Messages $i)) 1 -}}
+          {{- if (ne $msg.Role "system") -}}
+            {{- if eq $msg.Role "tool" -}}
+              {{- if or (eq $msg.ToolName "python") (eq $msg.ToolName "browser.search") (eq $msg.ToolName "browser.open") (eq $msg.ToolName "browser.find") -}}
+                <|start|>{{ $msg.ToolName }} to=assistant<|message|>{{ $msg.Content }}<|end|>
+              {{- else -}}
+                <|start|>functions.{{ $msg.ToolName }} to=assistant<|message|>{{ $msg.Content }}<|end|>
+              {{- end -}}
+            {{- else if eq $msg.Role "assistant" -}}
+              {{- if and $msg.Thinking (gt $i $lastUserIdx) -}}{{- /* Show thinking only after last user message */ -}}
+              <|start|>assistant<|channel|>analysis<|message|>{{ $msg.Thinking }}{{- if not $prefillingThinkingOnly -}}<|end|>{{- end -}}
+              {{- end -}}
+              {{- if gt (len $msg.Content) 0 -}}
+                <|start|>assistant<|channel|>final<|message|>{{ $msg.Content }}{{- if not $prefillingContent -}}<|end|>{{- end -}}
+              {{- end -}}
+              {{- if gt (len $msg.ToolCalls) 0 -}}
+                {{- range $j, $toolCall := $msg.ToolCalls -}}
+                  {{- $isBuiltin := or (eq $toolCall.Function.Name "python") (eq $toolCall.Function.Name "browser.search") (eq $toolCall.Function.Name "browser.open") (eq $toolCall.Function.Name "browser.find") -}}
+                  <|start|>assistant<|channel|>{{ if $isBuiltin }}analysis{{ else }}commentary{{ end }} to={{ if not $isBuiltin}}functions.{{end}}{{ $toolCall.Function.Name }} <|constrain|>json<|message|>{{ $toolCall.Function.Arguments }}<|call|>
+                {{- end -}}
+              {{- end -}}
+            {{- else if eq $msg.Role "user" -}}
+              <|start|>{{ $msg.Role }}<|message|>{{ $msg.Content }}<|end|>
+            {{- end }}
+          {{- else }}
+          {{- end }}
+        {{- end -}}
+        {{- if not (or $prefillingContent $prefillingThinkingOnly) -}}
+        <|start|>assistant
+        {{- end -}}"""
+        PARAMETER temperature 1
+        LICENSE """
+                                         Apache License
+                                   Version 2.0, January 2004
+                                http://www.apache.org/licenses/
+
+           TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+           1. Definitions.
+
+              "License" shall mean the terms and conditions for use, reproduction,
+              and distribution as defined by Sections 1 through 9 of this document.
+
+              "Licensor" shall mean the copyright owner or entity authorized by
+              the copyright owner that is granting the License.
+
+              "Legal Entity" shall mean the union of the acting entity and all
+              other entities that control, are controlled by, or are under common
+              control with that entity. For the purposes of this definition,
+              "control" means (i) the power, direct or indirect, to cause the
+              direction or management of such entity, whether by contract or
+              otherwise, or (ii) ownership of fifty percent (50%) or more of the
+              outstanding shares, or (iii) beneficial ownership of such entity.
+
+              "You" (or "Your") shall mean an individual or Legal Entity
+              exercising permissions granted by this License.
+
+              "Source" form shall mean the preferred form for making modifications,
+              including but not limited to software source code, documentation
+              source, and configuration files.
+
+              "Object" form shall mean any form resulting from mechanical
+              transformation or translation of a Source form, including but
+              not limited to compiled object code, generated documentation,
+              and conversions to other media types.
+
+              "Work" shall mean the work of authorship, whether in Source or
+              Object form, made available under the License, as indicated by a
+              copyright notice that is included in or attached to the work
+              (an example is provided in the Appendix below).
+
+              "Derivative Works" shall mean any work, whether in Source or Object
+              form, that is based on (or derived from) the Work and for which the
+              editorial revisions, annotations, elaborations, or other modifications
+              represent, as a whole, an original work of authorship. For the purposes
+              of this License, Derivative Works shall not include works that remain
+              separable from, or merely link (or bind by name) to the interfaces of,
+              the Work and Derivative Works thereof.
+
+              "Contribution" shall mean any work of authorship, including
+              the original version of the Work and any modifications or additions
+              to that Work or Derivative Works thereof, that is intentionally
+              submitted to Licensor for inclusion in the Work by the copyright owner
+              or by an individual or Legal Entity authorized to submit on behalf of
+              the copyright owner. For the purposes of this definition, "submitted"
+              means any form of electronic, verbal, or written communication sent
+              to the Licensor or its representatives, including but not limited to
+              communication on electronic mailing lists, source code control systems,
+              and issue tracking systems that are managed by, or on behalf of, the
+              Licensor for the purpose of discussing and improving the Work, but
+              excluding communication that is conspicuously marked or otherwise
+              designated in writing by the copyright owner as "Not a Contribution."
+
+              "Contributor" shall mean Licensor and any individual or Legal Entity
+              on behalf of whom a Contribution has been received by Licensor and
+              subsequently incorporated within the Work.
+
+           2. Grant of Copyright License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              copyright license to reproduce, prepare Derivative Works of,
+              publicly display, publicly perform, sublicense, and distribute the
+              Work and such Derivative Works in Source or Object form.
+
+           3. Grant of Patent License. Subject to the terms and conditions of
+              this License, each Contributor hereby grants to You a perpetual,
+              worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+              (except as stated in this section) patent license to make, have made,
+              use, offer to sell, sell, import, and otherwise transfer the Work,
+              where such license applies only to those patent claims licensable
+              by such Contributor that are necessarily infringed by their
+              Contribution(s) alone or by combination of their Contribution(s)
+              with the Work to which such Contribution(s) was submitted. If You
+              institute patent litigation against any entity (including a
+              cross-claim or counterclaim in a lawsuit) alleging that the Work
+              or a Contribution incorporated within the Work constitutes direct
+              or contributory patent infringement, then any patent licenses
+              granted to You under this License for that Work shall terminate
+              as of the date such litigation is filed.
+
+           4. Redistribution. You may reproduce and distribute copies of the
+              Work or Derivative Works thereof in any medium, with or without
+              modifications, and in Source or Object form, provided that You
+              meet the following conditions:
+
+              (a) You must give any other recipients of the Work or
+                  Derivative Works a copy of this License; and
+
+              (b) You must cause any modified files to carry prominent notices
+                  stating that You changed the files; and
+
+              (c) You must retain, in the Source form of any Derivative Works
+                  that You distribute, all copyright, patent, trademark, and
+                  attribution notices from the Source form of the Work,
+                  excluding those notices that do not pertain to any part of
+                  the Derivative Works; and
+
+              (d) If the Work includes a "NOTICE" text file as part of its
+                  distribution, then any Derivative Works that You distribute must
+                  include a readable copy of the attribution notices contained
+                  within such NOTICE file, excluding those notices that do not
+                  pertain to any part of the Derivative Works, in at least one
+                  of the following places: within a NOTICE text file distributed
+                  as part of the Derivative Works; within the Source form or
+                  documentation, if provided along with the Derivative Works; or,
+                  within a display generated by the Derivative Works, if and
+                  wherever such third-party notices normally appear. The contents
+                  of the NOTICE file are for informational purposes only and
+                  do not modify the License. You may add Your own attribution
+                  notices within Derivative Works that You distribute, alongside
+                  or as an addendum to the NOTICE text from the Work, provided
+                  that such additional attribution notices cannot be construed
+                  as modifying the License.
+
+              You may add Your own copyright statement to Your modifications and
+              may provide additional or different license terms and conditions
+              for use, reproduction, or distribution of Your modifications, or
+              for any such Derivative Works as a whole, provided Your use,
+              reproduction, and distribution of the Work otherwise complies with
+              the conditions stated in this License.
+
+           5. Submission of Contributions. Unless You explicitly state otherwise,
+              any Contribution intentionally submitted for inclusion in the Work
+              by You to the Licensor shall be under the terms and conditions of
+              this License, without any additional terms or conditions.
+              Notwithstanding the above, nothing herein shall supersede or modify
+              the terms of any separate license agreement you may have executed
+              with Licensor regarding such Contributions.
+
+           6. Trademarks. This License does not grant permission to use the trade
+              names, trademarks, service marks, or product names of the Licensor,
+              except as required for reasonable and customary use in describing the
+              origin of the Work and reproducing the content of the NOTICE file.
+
+           7. Disclaimer of Warranty. Unless required by applicable law or
+              agreed to in writing, Licensor provides the Work (and each
+              Contributor provides its Contributions) on an "AS IS" BASIS,
+              WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+              implied, including, without limitation, any warranties or conditions
+              of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+              PARTICULAR PURPOSE. You are solely responsible for determining the
+              appropriateness of using or redistributing the Work and assume any
+              risks associated with Your exercise of permissions under this License.
+
+           8. Limitation of Liability. In no event and under no legal theory,
+              whether in tort (including negligence), contract, or otherwise,
+              unless required by applicable law (such as deliberate and grossly
+              negligent acts) or agreed to in writing, shall any Contributor be
+              liable to You for damages, including any direct, indirect, special,
+              incidental, or consequential damages of any character arising as a
+              result of this License or out of the use or inability to use the
+              Work (including but not limited to damages for loss of goodwill,
+              work stoppage, computer failure or malfunction, or any and all
+              other commercial damages or losses), even if such Contributor
+              has been advised of the possibility of such damages.
+
+           9. Accepting Warranty or Additional Liability. While redistributing
+              the Work or Derivative Works thereof, You may choose to offer,
+              and charge a fee for, acceptance of support, warranty, indemnity,
+              or other liability obligations and/or rights consistent with this
+              License. However, in accepting such obligations, You may act only
+              on Your own behalf and on Your sole responsibility, not on behalf
+              of any other Contributor, and only if You agree to indemnify,
+              defend, and hold each Contributor harmless for any liability
+              incurred by, or claims asserted against, such Contributor by reason
+              of your accepting any such warranty or additional liability.
+
+           END OF TERMS AND CONDITIONS
+
+           APPENDIX: How to apply the Apache License to your work.
+
+              To apply the Apache License to your work, attach the following
+              boilerplate notice, with the fields enclosed by brackets "[]"
+              replaced with your own identifying information. (Don't include
+              the brackets!)  The text should be enclosed in the appropriate
+              comment syntax for the file format. We also recommend that a
+              file or class name and description of purpose be included on the
+              same "printed page" as the copyright notice for easier
+              identification within third-party archives.
+           Copyright [yyyy] [name of copyright owner]
+           Licensed under the Apache License, Version 2.0 (the "License");
+           you may not use this file except in compliance with the License.
+           You may obtain a copy of the License at
+               http://www.apache.org/licenses/LICENSE-2.0
+           Unless required by applicable law or agreed to in writing, software
+           distributed under the License is distributed on an "AS IS" BASIS,
+           WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+           See the License for the specific language governing permissions and
+           limitations under the License."""
+      modified_at: '2026-02-17T16:02:43.649281202+02:00'
+      parameters: temperature                    1
+      template: |-
+        <|start|>system<|message|>You are ChatGPT, a large language model trained by OpenAI.
+        Knowledge cutoff: 2024-06
+        Current date: {{ currentDate }}
+        {{- if and .IsThinkSet .Think (ne .ThinkLevel "") }}
+
+        Reasoning: {{ .ThinkLevel }}
+        {{- else if or (not .IsThinkSet) (and .IsThinkSet .Think) }}
+
+        Reasoning: medium
+        {{- end }}
+
+        {{- $hasNonBuiltinTools := false }}
+        {{- if .Tools -}}
+        {{- $hasBrowserSearch := false }}
+        {{- $hasBrowserOpen := false }}
+        {{- $hasBrowserFind := false }}
+        {{- $hasPython := false }}
+          {{- range .Tools }}
+            {{- if eq .Function.Name "browser.search" -}}{{- $hasBrowserSearch = true -}}
+            {{- else if eq .Function.Name "browser.open" -}}{{- $hasBrowserOpen = true -}}
+            {{- else if eq .Function.Name "browser.find" -}}{{- $hasBrowserFind = true -}}
+            {{- else if eq .Function.Name "python" -}}{{- $hasPython = true -}}
+            {{- else }}{{ $hasNonBuiltinTools = true -}}
+            {{- end }}
+          {{- end }}
+        {{- if or $hasBrowserSearch $hasBrowserOpen $hasBrowserFind $hasPython }}
+
+        # Tools
+        {{- if or $hasBrowserSearch $hasBrowserOpen $hasBrowserFind }}
+
+        ## browser
+
+        // Tool for browsing.
+        // The `cursor` appears in brackets before each browsing display: `[{cursor}]`.
+        // Cite information from the tool using the following format:
+        // `【{cursor}†L{line_start}(-L{line_end})?】`, for example: `【6†L9-L11】` or `【8†L3】`.
+        // Do not quote more than 10 words directly from the tool output.
+        // sources=web (default: web)
+        namespace browser {
+        {{- if $hasBrowserSearch }}
+
+        // Searches for information related to `query` and displays `topn` results.
+        type search = (_: {
+        query: string,
+        topn?: number, // default: 10
+        source?: string,
+        }) => any;
+        {{- end }}
+        {{- if $hasBrowserOpen }}
+
+        // Opens the link `id` from the page indicated by `cursor` starting at line number `loc`, showing `num_lines` lines.
+        // Valid link ids are displayed with the formatting: `【{id}†.*】`.
+        // If `cursor` is not provided, the most recent page is implied.
+        // If `id` is a string, it is treated as a fully qualified URL associated with `source`.
+        // If `loc` is not provided, the viewport will be positioned at the beginning of the document or centered on the most relevant passage, if available.
+        // Use this function without `id` to scroll to a new location of an opened page.
+        type open = (_: {
+        id?: number | string, // default: -1
+        cursor?: number, // default: -1
+        loc?: number, // default: -1
+        num_lines?: number, // default: -1
+        view_source?: boolean, // default: false
+        source?: string,
+        }) => any;
+        {{- end }}
+        {{- if $hasBrowserFind }}
+
+        // Finds exact matches of `pattern` in the current page, or the page given by `cursor`.
+        type find = (_: {
+        pattern: string,
+        cursor?: number, // default: -1
+        }) => any;
+        {{- end }}
+
+        } // namespace browser
+        {{- end }}{{/* end if has browser tools */}}
+        {{- if $hasPython }}
+
+        ## python
+
+        Use this tool to execute Python code in your chain of thought. The code will not be shown to the user. This tool should be used for internal reasoning, but not for code that is intended to be visible to the user (e.g. when creating plots, tables, or files).
+
+        When you send a message containing Python code to python, it will be executed in a stateful Jupyter notebook environment. python will respond with the output of the execution or time out after 120.0 seconds. The drive at '/mnt/data' can be used to save and persist user files. Internet access for this session is UNKNOWN. Depends on the cluster.
+        {{- end }}{{/* end if hasPython */}}
+        {{- end }}{{/* end if has any built-in tools */}}
+        {{- end }}{{/* end if .Tools */}}
+
+        # Valid channels: analysis, commentary, final. Channel must be included for every message.{{ if $hasNonBuiltinTools }}
+        Calls to these tools must go to the commentary channel: 'functions'.
+        {{- end -}}<|end|>{{/* end of system */ -}}
+        {{- if or $hasNonBuiltinTools .System -}}
+        <|start|>developer<|message|>{{- if $hasNonBuiltinTools }}# Tools
+
+        ## functions
+
+        namespace functions {
+        {{- range .Tools }}
+        {{- if not (or (eq .Function.Name "browser.search") (eq .Function.Name "browser.open") (eq .Function.Name "browser.find") (eq .Function.Name "python")) }}
+        {{if .Function.Description }}
+        // {{ .Function.Description }}
+        {{- end }}
+        {{- if and .Function.Parameters.Properties (gt (len .Function.Parameters.Properties) 0) }}
+        type {{ .Function.Name }} = (_: {
+        {{- range $name, $prop := .Function.Parameters.Properties }}
+        {{- if $prop.Description }}
+          // {{ $prop.Description }}
+        {{- end }}
+          {{ $name }}: {{ $prop | toTypeScriptType }},
+        {{- end }}
+        }) => any;
+        {{- else }}
+        type {{ .Function.Name }} = () => any;
+        {{- end }}
+        {{- end }}{{/* end if not browser tool */}}
+        {{- end }}{{/* end of range .Tools */}}
+
+        } // namespace functions
+        {{- end }}{{/* end if hasNonBuiltinTools */}}
+        {{- if .System}}
+
+        # Instructions
+
+        {{ .System }}
+        {{- end -}}
+        <|end|>
+        {{- end -}}
+        {{- /* Find the index of the last user message */ -}}
+        {{- $lastUserIdx := -1 }}
+        {{- $prefillingContent := false }}
+        {{- $prefillingThinkingOnly := false }}
+        {{- range $i, $msg := .Messages }}
+          {{- $last := eq (len (slice $.Messages $i)) 1 -}}
+          {{- if eq $msg.Role "user" }}
+            {{- $lastUserIdx = $i }}
+          {{- end -}}
+          {{- if and $last (eq $msg.Role "assistant") (gt (len $msg.Content) 0) }}
+            {{- $prefillingContent = true }}
+          {{- else if and $last (eq $msg.Role "assistant") (gt (len $msg.Thinking) 0) }}
+            {{- $prefillingThinkingOnly = true }}
+          {{- end }}
+        {{- end -}}
+        {{- /* Now render messages */ -}}
+        {{- range $i, $msg := .Messages }}
+          {{- $last := eq (len (slice $.Messages $i)) 1 -}}
+          {{- if (ne $msg.Role "system") -}}
+            {{- if eq $msg.Role "tool" -}}
+              {{- if or (eq $msg.ToolName "python") (eq $msg.ToolName "browser.search") (eq $msg.ToolName "browser.open") (eq $msg.ToolName "browser.find") -}}
+                <|start|>{{ $msg.ToolName }} to=assistant<|message|>{{ $msg.Content }}<|end|>
+              {{- else -}}
+                <|start|>functions.{{ $msg.ToolName }} to=assistant<|message|>{{ $msg.Content }}<|end|>
+              {{- end -}}
+            {{- else if eq $msg.Role "assistant" -}}
+              {{- if and $msg.Thinking (gt $i $lastUserIdx) -}}{{- /* Show thinking only after last user message */ -}}
+              <|start|>assistant<|channel|>analysis<|message|>{{ $msg.Thinking }}{{- if not $prefillingThinkingOnly -}}<|end|>{{- end -}}
+              {{- end -}}
+              {{- if gt (len $msg.Content) 0 -}}
+                <|start|>assistant<|channel|>final<|message|>{{ $msg.Content }}{{- if not $prefillingContent -}}<|end|>{{- end -}}
+              {{- end -}}
+              {{- if gt (len $msg.ToolCalls) 0 -}}
+                {{- range $j, $toolCall := $msg.ToolCalls -}}
+                  {{- $isBuiltin := or (eq $toolCall.Function.Name "python") (eq $toolCall.Function.Name "browser.search") (eq $toolCall.Function.Name "browser.open") (eq $toolCall.Function.Name "browser.find") -}}
+                  <|start|>assistant<|channel|>{{ if $isBuiltin }}analysis{{ else }}commentary{{ end }} to={{ if not $isBuiltin}}functions.{{end}}{{ $toolCall.Function.Name }} <|constrain|>json<|message|>{{ $toolCall.Function.Arguments }}<|call|>
+                {{- end -}}
+              {{- end -}}
+            {{- else if eq $msg.Role "user" -}}
+              <|start|>{{ $msg.Role }}<|message|>{{ $msg.Content }}<|end|>
+            {{- end }}
+          {{- else }}
+          {{- end }}
+        {{- end -}}
+        {{- if not (or $prefillingContent $prefillingThinkingOnly) -}}
+        <|start|>assistant
+        {{- end -}}
+      tensors:
+      - name: blk.0.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.0.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.0.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.0.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.0.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.0.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.0.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.0.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.0.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.0.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.0.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.0.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.0.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.0.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.0.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.0.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.0.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.0.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.0.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.1.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.1.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.1.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.1.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.1.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.1.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.1.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.1.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.1.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.1.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.1.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.1.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.1.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.1.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.1.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.1.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.1.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.1.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.1.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.2.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.2.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.2.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.2.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.2.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.2.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.2.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.2.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.2.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.2.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.2.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.2.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.2.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.2.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.2.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.2.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.2.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.2.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.2.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.3.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.3.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.3.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.3.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.3.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.3.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.3.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.3.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.3.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.3.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.3.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.3.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.3.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.3.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.3.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.3.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.3.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.3.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.3.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.4.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.4.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.4.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.4.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.4.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.4.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.4.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.4.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.4.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.4.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.4.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.4.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.4.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.4.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.4.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.4.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.4.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.4.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.4.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.5.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.5.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.5.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.5.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.5.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.5.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.5.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.5.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.5.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.5.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.5.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.5.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.5.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.5.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.5.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.5.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.5.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.5.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.5.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.6.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.6.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.6.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.6.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.6.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.6.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.6.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.6.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.6.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.6.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.6.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.6.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.6.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.6.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.6.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.6.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.6.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.6.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.6.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.7.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.7.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.7.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.7.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.7.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.7.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.7.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.7.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.7.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.7.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.7.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.7.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.7.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.7.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.7.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.7.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.7.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.7.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.7.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.8.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.8.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.8.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.8.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.8.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.8.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.8.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.8.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.8.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.8.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.8.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.8.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.8.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.8.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.8.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.8.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.8.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.8.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.8.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.9.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.9.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.9.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.9.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.9.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.9.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.9.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.9.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.9.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.9.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.9.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.9.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.9.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.9.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.9.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.9.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.9.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.9.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.9.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.10.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.10.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.10.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.10.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.10.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.10.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.10.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.10.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.10.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.10.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.10.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.10.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.10.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.10.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.10.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.10.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.10.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.10.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.10.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.11.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.11.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.11.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.11.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.11.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.11.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.11.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.11.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.11.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.11.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.11.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.11.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.11.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.11.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.11.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.11.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.11.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.11.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.11.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.12.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.12.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.12.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.12.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.12.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.12.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.12.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.12.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.12.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.12.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.12.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.12.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.12.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.12.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.12.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.12.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.12.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.12.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.12.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.13.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.13.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.13.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.13.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.13.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.13.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.13.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.13.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.13.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.13.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.13.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.13.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.13.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.13.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.13.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.13.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.13.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.13.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.13.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.14.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.14.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.14.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.14.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.14.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.14.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.14.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.14.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.14.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.14.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.14.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.14.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.14.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.14.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.14.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.14.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.14.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.14.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.14.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.15.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.15.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.15.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.15.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.15.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.15.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.15.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.15.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.15.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.15.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.15.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.15.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.15.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.15.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.15.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.15.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.15.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.15.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.15.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.16.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.16.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.16.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.16.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.16.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.16.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.16.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.16.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.16.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.16.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.16.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.16.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.16.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.16.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.16.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.16.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.16.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.16.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.16.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.17.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.17.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.17.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.17.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.17.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.17.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.17.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.17.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.17.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.17.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.17.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.17.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.17.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.17.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.17.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.17.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.17.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.17.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.17.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.18.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.18.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.18.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.18.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.18.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.18.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.18.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.18.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.18.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.18.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.18.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.18.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.18.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.18.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.18.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.18.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.18.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.18.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.18.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.19.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.19.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.19.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.19.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.19.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.19.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.19.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.19.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.19.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.19.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.19.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.19.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.19.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.19.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.19.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.19.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.19.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.19.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.19.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.20.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.20.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.20.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.20.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.20.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.20.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.20.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.20.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.20.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.20.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.20.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.20.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.20.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.20.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.20.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.20.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.20.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.20.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.20.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.21.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.21.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.21.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.21.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.21.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.21.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.21.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.21.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.21.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.21.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.21.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.21.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.21.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.21.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.21.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.21.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.21.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.21.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.21.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.22.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.22.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.22.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.22.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.22.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.22.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.22.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.22.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.22.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.22.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.22.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.22.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.22.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.22.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.22.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.22.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.22.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.22.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.22.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.23.attn_k.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.23.attn_k.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.23.attn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.23.attn_out.bias
+        shape:
+        - 2880
+        type: F32
+      - name: blk.23.attn_out.weight
+        shape:
+        - 4096
+        - 2880
+        type: BF16
+      - name: blk.23.attn_q.bias
+        shape:
+        - 4096
+        type: F32
+      - name: blk.23.attn_q.weight
+        shape:
+        - 2880
+        - 4096
+        type: BF16
+      - name: blk.23.attn_sinks
+        shape:
+        - 64
+        type: F32
+      - name: blk.23.attn_v.bias
+        shape:
+        - 512
+        type: F32
+      - name: blk.23.attn_v.weight
+        shape:
+        - 2880
+        - 512
+        type: BF16
+      - name: blk.23.ffn_down_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.23.ffn_down_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.23.ffn_gate_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.23.ffn_gate_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: blk.23.ffn_gate_inp.bias
+        shape:
+        - 32
+        type: F32
+      - name: blk.23.ffn_gate_inp.weight
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.23.ffn_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: blk.23.ffn_up_exps.bias
+        shape:
+        - 2880
+        - 32
+        type: F32
+      - name: blk.23.ffn_up_exps.weight
+        shape:
+        - 2880
+        - 2880
+        - 32
+        type: MXFP4
+      - name: output.weight
+        shape:
+        - 2880
+        - 201088
+        type: BF16
+      - name: output_norm.weight
+        shape:
+        - 2880
+        type: F32
+      - name: token_embd.weight
+        shape:
+        - 2880
+        - 201088
+        type: BF16
+    status:
+      code: 200
+      message: OK
+- request:
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '394'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:11434
+    method: POST
+    parsed_body:
+      messages:
+      - content: What is the current date in YYYY-MM-DD format? Use the date_time tool to answer.
+        role: user
+      model: gpt-oss
+      stream: false
+      temperature: 0.0
+      tool_choice: auto
+      tools:
+      - function:
+          description: Get the current date and time in ISO format.
+          name: date_time
+          parameters:
+            additionalProperties: false
+            properties: {}
+            type: object
+        type: function
+    uri: http://127.0.0.1:11434/v1/chat/completions
+  response:
+    headers:
+      content-length:
+      - '459'
+      content-type:
+      - application/json
+    parsed_body:
+      choices:
+      - finish_reason: tool_calls
+        index: 0
+        message:
+          content: ''
+          reasoning: We need to call the date_time function.
+          role: assistant
+          tool_calls:
+          - function:
+              arguments: '{}'
+              name: date_time
+            id: call_ul9etzku
+            index: 0
+            type: function
+      created: 1771338349
+      id: chatcmpl-395
+      model: gpt-oss
+      object: chat.completion
+      system_fingerprint: fp_ollama
+      usage:
+        completion_tokens: 29
+        prompt_tokens: 135
+        total_tokens: 164
+    status:
+      code: 200
+      message: OK
+- request:
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      content-length:
+      - '659'
+      content-type:
+      - application/json
+      host:
+      - 127.0.0.1:11434
+    method: POST
+    parsed_body:
+      messages:
+      - content: What is the current date in YYYY-MM-DD format? Use the date_time tool to answer.
+        role: user
+      - content: null
+        reasoning: We need to call the date_time function.
+        role: assistant
+        tool_calls:
+        - function:
+            arguments: '{}'
+            name: date_time
+          id: call_ul9etzku
+          type: function
+      - content: '2025-01-01'
+        role: tool
+        tool_call_id: call_ul9etzku
+      model: gpt-oss
+      stream: false
+      temperature: 0.0
+      tool_choice: auto
+      tools:
+      - function:
+          description: Get the current date and time in ISO format.
+          name: date_time
+          parameters:
+            additionalProperties: false
+            properties: {}
+            type: object
+        type: function
+    uri: http://127.0.0.1:11434/v1/chat/completions
+  response:
+    headers:
+      content-length:
+      - '319'
+      content-type:
+      - application/json
+    parsed_body:
+      choices:
+      - finish_reason: stop
+        index: 0
+        message:
+          content: The current date is **2025-01-01**.
+          role: assistant
+      created: 1771338349
+      id: chatcmpl-561
+      model: gpt-oss
+      object: chat.completion
+      system_fingerprint: fp_ollama
+      usage:
+        completion_tokens: 17
+        prompt_tokens: 181
+        total_tokens: 198
+    status:
+      code: 200
+      message: OK
+version: 1

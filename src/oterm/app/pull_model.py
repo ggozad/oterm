@@ -7,7 +7,7 @@ from textual.containers import Container, Horizontal
 from textual.screen import ModalScreen
 from textual.widgets import Button, Input, Label, TextArea
 
-from oterm.ollamaclient import OllamaLLM
+from oterm.providers import ollama
 
 
 class PullModel(ModalScreen[str]):
@@ -26,7 +26,7 @@ class PullModel(ModalScreen[str]):
     @work
     async def pull_model(self) -> None:
         log = self.query_one(".log", TextArea)
-        stream = OllamaLLM.pull(self.model)
+        stream = ollama.pull_model(self.model)
         try:
             for response in stream:
                 log.text += response.model_dump_json() + "\n"
