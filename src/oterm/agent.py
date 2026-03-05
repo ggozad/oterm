@@ -18,14 +18,9 @@ def _build_model_settings(
         return None
 
     settings: dict[str, Any] = {}
-    if "temperature" in parameters:
-        settings["temperature"] = parameters["temperature"]
-    if "top_p" in parameters:
-        settings["top_p"] = parameters["top_p"]
-    if "num_predict" in parameters:
-        settings["max_tokens"] = parameters["num_predict"]
-    if "max_tokens" in parameters:
-        settings["max_tokens"] = parameters["max_tokens"]
+    for key in ("temperature", "top_p", "max_tokens"):
+        if key in parameters:
+            settings[key] = parameters[key]
 
     return ModelSettings(**settings) if settings else None
 

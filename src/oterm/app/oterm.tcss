@@ -137,7 +137,7 @@ LoadingIndicator {
 }
 
 #model-select {
-    max-height: 50%;
+    height: 1fr;
 }
 
 #model-info {
@@ -149,10 +149,9 @@ LoadingIndicator {
 }
 
 #tool-selector-container {
-    height: auto;
-    max-height: 50%;
+    height: 1fr;
     padding-bottom: 2;
-    padding-right:2;
+    padding-right: 2;
 }
 
 #tool-selector {
@@ -191,9 +190,50 @@ Label.keep-alive-label {
     margin-top: 1;
 }
 
-#model-select, .system, .parameters, .format, #tool-selector-container  {
+#model-select, .system, .format, #tool-selector-container  {
     margin-top: 1;
     margin-bottom: 1;
+}
+
+#chat-edit-screen {
+    height: 100%;
+}
+
+#top-row {
+    height: 1fr;
+}
+
+#top-row > Vertical {
+    width: 1fr;
+}
+
+#bottom-row {
+    height: 1fr;
+}
+
+#bottom-row > Vertical {
+    width: 1fr;
+}
+
+.system {
+    height: 1fr;
+}
+
+.param-row {
+    height: auto;
+    max-height: 3;
+}
+
+.param-row .title {
+    width: 14;
+    margin-top: 1;
+    margin-bottom: 0;
+    margin-right: 0;
+}
+
+.param-row Input, .param-row Checkbox {
+    width: 1fr;
+    margin-right: 1;
 }
 
 #prompt-history {

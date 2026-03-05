@@ -1,4 +1,3 @@
-import json
 from ast import literal_eval
 from typing import Any
 
@@ -26,10 +25,3 @@ def parse_ollama_parameters(parameter_text: str) -> dict[str, Any]:
             else:
                 params[key] = value
     return params
-
-
-def jsonify_parameters(parameters: dict[str, Any]) -> str:
-    return json.dumps(
-        {key: value for key, value in parameters.items() if value is not None},
-        indent=2,
-    )

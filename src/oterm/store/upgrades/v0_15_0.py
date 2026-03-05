@@ -36,6 +36,34 @@ async def add_provider_remove_format_keep_alive(db_path: Path) -> None:
         )
 
 
+async def migrate_parameters(db_path: Path) -> None:
+    """Clean up parameters: keep only temperature, top_p, max_tokens.
+
+    Maps num_predict → max_tokens if max_tokens not already present.
+    """
+    async with aiosqlite.connect(db_path) as connection:
+        chats = await connection.execute_fetchall("SELECT id, parameters FROM chat")
+        for chat_id, params_json in chats:
+            params = json.loads(params_json)
+            if not params:
+                continue
+            cleaned: dict[str, object] = {}
+            if "temperature" in params:
+                cleaned["temperature"] = params["temperature"]
+            if "top_p" in params:
+                cleaned["top_p"] = params["top_p"]
+            if "max_tokens" in params:
+                cleaned["max_tokens"] = params["max_tokens"]
+            elif "num_predict" in params:
+                cleaned["max_tokens"] = params["num_predict"]
+            if cleaned != params:
+                await connection.execute(
+                    "UPDATE chat SET parameters = ? WHERE id = ?",
+                    (json.dumps(cleaned), chat_id),
+                )
+        await connection.commit()
+
+
 async def migrate_tools_to_names(db_path: Path) -> None:
     """Migrate tools from JSON objects (ollama.Tool format) to name strings."""
     async with aiosqlite.connect(db_path) as connection:
@@ -56,5 +84,12 @@ async def migrate_tools_to_names(db_path: Path) -> None:
 
 
 upgrades: list[tuple[str, list[Callable[[Path], Awaitable[None]]]]] = [
-    ("0.15.0", [add_provider_remove_format_keep_alive, migrate_tools_to_names])
+    (
+        "0.15.0",
+        [
+            add_provider_remove_format_keep_alive,
+            migrate_tools_to_names,
+            migrate_parameters,
+        ],
+    )
 ]

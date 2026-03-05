@@ -1,7 +1,7 @@
 import pytest
 from ollama import ResponseError
 
-from oterm.ollamaclient import jsonify_parameters, parse_ollama_parameters
+from oterm.ollamaclient import parse_ollama_parameters
 from oterm.providers import ollama
 
 
@@ -24,8 +24,7 @@ def test_show():
 
     if response.parameters:
         params = parse_ollama_parameters(response.parameters)
-        json_str = jsonify_parameters(params)
-        assert json_str  # Non-empty JSON
+        assert params  # Non-empty dict
 
 
 def test_pull():

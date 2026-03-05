@@ -1,7 +1,7 @@
-import json
+import asyncio
 from typing import Any
 
-from ollama import ShowResponse
+from ollama import ListResponse, ShowResponse
 from rich.text import Text
 from textual.app import ComposeResult
 from textual.containers import (
@@ -11,11 +11,11 @@ from textual.containers import (
 )
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Label, OptionList, Select, TextArea
+from textual.widgets import Button, Checkbox, Input, Label, OptionList, Select, TextArea
 
 from oterm.app.widgets.caps import Capabilities
 from oterm.app.widgets.tool_select import ToolSelector
-from oterm.ollamaclient import jsonify_parameters, parse_ollama_parameters
+from oterm.ollamaclient import parse_ollama_parameters
 from oterm.providers import (
     get_available_providers,
     get_provider_name,
@@ -29,6 +29,7 @@ from oterm.types import ChatModel
 class ChatEdit(ModalScreen[str]):
     models: list[str] = []
     models_info: dict[str, ShowResponse] = {}
+    models_size: dict[str, int] = {}
 
     provider: reactive[str] = reactive("ollama")
     model_name: reactive[str] = reactive("")
@@ -79,13 +80,50 @@ class ChatEdit(ModalScreen[str]):
         system = self.query_one(".system", TextArea).text
         model_system = getattr(self, "model_info", {}).get("system", "")
         system = system if system != model_system else None
-        p_area = self.query_one(".parameters", TextArea)
-        try:
-            parameters = json.loads(p_area.text) if p_area.text.strip() else {}
-        except json.JSONDecodeError:
-            self.app.notify("Error parsing parameters JSON", severity="error")
-            p_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
-            return
+
+        parameters: dict[str, Any] = {}
+        temp_input = self.query_one("#temperature-input", Input)
+        top_p_input = self.query_one("#top-p-input", Input)
+        max_tokens_input = self.query_one("#max-tokens-input", Input)
+
+        if temp_input.value.strip():
+            try:
+                temp = float(temp_input.value)
+                if not 0.0 <= temp <= 2.0:
+                    self.app.notify(
+                        "Temperature must be between 0.0 and 2.0", severity="error"
+                    )
+                    return
+                parameters["temperature"] = temp
+            except ValueError:
+                self.app.notify("Invalid temperature value", severity="error")
+                return
+
+        if top_p_input.value.strip():
+            try:
+                top_p = float(top_p_input.value)
+                if not 0.0 <= top_p <= 1.0:
+                    self.app.notify(
+                        "Top P must be between 0.0 and 1.0", severity="error"
+                    )
+                    return
+                parameters["top_p"] = top_p
+            except ValueError:
+                self.app.notify("Invalid Top P value", severity="error")
+                return
+
+        if max_tokens_input.value.strip():
+            try:
+                max_tokens = int(max_tokens_input.value)
+                if max_tokens <= 0:
+                    self.app.notify(
+                        "Max Tokens must be greater than 0", severity="error"
+                    )
+                    return
+                parameters["max_tokens"] = max_tokens
+            except ValueError:
+                self.app.notify("Invalid Max Tokens value", severity="error")
+                return
 
         self.tools = self.query_one(ToolSelector).selected
         self.thinking = self.query_one("#thinking-checkbox", Checkbox).value
@@ -122,7 +160,7 @@ class ChatEdit(ModalScreen[str]):
         provider_select = self.query_one("#provider-select", Select)
         provider_select.value = self.provider
 
-        self._load_models_for_provider(self.provider)
+        await self._load_models_for_provider(self.provider)
 
         if self.model_name:
             if self.provider == "ollama" and self.tag:
@@ -134,17 +172,19 @@ class ChatEdit(ModalScreen[str]):
         model_select = self.query_one("#model-select", OptionList)
         model_select.disabled = self.edit_mode
 
-    def _load_models_for_provider(self, provider: str) -> None:
+    async def _load_models_for_provider(self, provider: str) -> None:
         option_list = self.query_one("#model-select", OptionList)
         option_list.clear_options()
         self.models_info = {}
+        self.models_size = {}
 
         if provider == "ollama":
-            ollama_models = ollama.list_models().models
-            self.models = [m.model or "" for m in ollama_models]
+            list_response: ListResponse = await asyncio.to_thread(ollama.list_models)
+            self.models = [m.model or "" for m in list_response.models]
+            for m in list_response.models:
+                if m.model:
+                    self.models_size[m.model] = m["size"]
             for model in self.models:
-                info = ollama.show_model(model)
-                self.models_info[model] = info
                 option_list.add_option(option=self.model_option(model))
         else:
             self.models = list_models(provider)
@@ -157,20 +197,28 @@ class ChatEdit(ModalScreen[str]):
         elif self.models:
             option_list.highlighted = 0
 
-    def on_select_changed(self, event: Select.Changed) -> None:
+    async def on_select_changed(self, event: Select.Changed) -> None:
         if event.select.id == "provider-select":
             new_provider = str(event.value)
             if new_provider != self.provider:
                 self.provider = new_provider
-                self._load_models_for_provider(new_provider)
                 self.model_name = ""
                 self.tag = ""
                 self.query_one(".name", Label).update("")
                 self.query_one(".tag", Label).update("")
                 self.query_one(".size", Label).update("")
                 self.query_one(".caps", Capabilities).caps = []  # type: ignore
+                await self._load_models_for_provider(new_provider)
 
-    def on_option_list_option_highlighted(
+    def _populate_parameter_inputs(self, parameters: dict[str, Any]) -> None:
+        self.query_one("#temperature-input", Input).value = str(
+            parameters.get("temperature", "")
+        )
+        self.query_one("#top-p-input", Input).value = str(parameters.get("top_p", ""))
+        max_tokens = parameters.get("max_tokens", parameters.get("num_predict", ""))
+        self.query_one("#max-tokens-input", Input).value = str(max_tokens)
+
+    async def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
     ) -> None:
         model = str(option.option.prompt)
@@ -186,31 +234,27 @@ class ChatEdit(ModalScreen[str]):
             self.query_one(".name", Label).update(name)
             self.query_one(".tag", Label).update(tag)
 
+            size = self.models_size.get(model)
+            if size:
+                self.bytes = size
+                self.query_one(".size", Label).update(f"{(self.bytes / 1.0e9):.2f} GB")
+
             meta = self.models_info.get(model)
-            if meta:
-                self.model_info = meta
-                ollama_models = ollama.list_models().models
-                model_meta = next((m for m in ollama_models if m.model == model), None)
-                if model_meta:
-                    self.bytes = model_meta["size"]
-                    self.query_one(".size", Label).update(
-                        f"{(self.bytes / 1.0e9):.2f} GB"
-                    )
+            if not meta:
+                meta = await asyncio.to_thread(ollama.show_model, model)
+                self.models_info[model] = meta
 
-                if not self.edit_mode:
-                    self.parameters = parse_ollama_parameters(
-                        self.model_info.parameters or ""
-                    )
-                self.query_one(".parameters", TextArea).load_text(
-                    jsonify_parameters(self.parameters)
+            self.model_info = meta
+            if not self.edit_mode:
+                self.parameters = parse_ollama_parameters(
+                    self.model_info.parameters or ""
                 )
-                self.query_one(".system", TextArea).load_text(
-                    self.system or self.model_info.get("system", "")
-                )
+            self._populate_parameter_inputs(self.parameters)
+            self.query_one(".system", TextArea).load_text(
+                self.system or self.model_info.get("system", "")
+            )
 
-                capabilities: list[str] = list(self.model_info.get("capabilities", []))
-            else:
-                capabilities = []
+            capabilities: list[str] = list(self.model_info.get("capabilities", []))
         else:
             self.model_name = model
             self.tag = ""
@@ -255,18 +299,18 @@ class ChatEdit(ModalScreen[str]):
         providers = get_available_providers()
         provider_options = [(get_provider_name(p), p) for p in providers]
 
-        with Container(classes="screen-container full-height"):
-            with Horizontal():
+        with Container(id="chat-edit-screen", classes="screen-container full-height"):
+            with Horizontal(id="model-info"):
+                yield Label("Model:", classes="title")
+                yield Label(f"{self.model_name}", classes="name")
+                yield Label("Tag:", classes="title")
+                yield Label(f"{self.tag}", classes="tag")
+                yield Label("Size:", classes="title")
+                yield Label("", classes="size")
+                yield Label("Caps:", classes="title")
+                yield Capabilities([], classes="caps")
+            with Horizontal(id="top-row"):
                 with Vertical():
-                    with Horizontal(id="model-info"):
-                        yield Label("Model:", classes="title")
-                        yield Label(f"{self.model_name}", classes="name")
-                        yield Label("Tag:", classes="title")
-                        yield Label(f"{self.tag}", classes="tag")
-                        yield Label("Size:", classes="title")
-                        yield Label("", classes="size")
-                        yield Label("Caps:", classes="title")
-                        yield Capabilities([], classes="caps")
                     yield Select(
                         provider_options,
                         id="provider-select",
@@ -274,24 +318,44 @@ class ChatEdit(ModalScreen[str]):
                         allow_blank=False,
                     )
                     yield OptionList(id="model-select")
+                with Vertical():
+                    yield Label("System:", classes="title")
+                    yield TextArea(self.system, classes="system log")
+            with Horizontal(id="bottom-row"):
+                with Vertical():
                     yield Label("Tools:", classes="title")
                     yield ToolSelector(
                         id="tool-selector-container", selected=self.tools
                     )
-
                 with Vertical():
-                    yield Label("System:", classes="title")
-                    yield TextArea(self.system, classes="system log")
-                    yield Label("Parameters:", classes="title")
-                    yield TextArea(
-                        jsonify_parameters(self.parameters),
-                        classes="parameters log",
-                        language="json",
-                    )
-
-                    with Horizontal():
+                    with Horizontal(classes="param-row"):
+                        yield Label("Temperature:", classes="title")
+                        yield Input(
+                            value=str(self.parameters.get("temperature", "")),
+                            id="temperature-input",
+                            placeholder="0.0 - 2.0",
+                        )
+                        yield Label("Top P:", classes="title")
+                        yield Input(
+                            value=str(self.parameters.get("top_p", "")),
+                            id="top-p-input",
+                            placeholder="0.0 - 1.0",
+                        )
+                    with Horizontal(classes="param-row"):
+                        yield Label("Max Tokens:", classes="title")
+                        yield Input(
+                            value=str(
+                                self.parameters.get(
+                                    "max_tokens",
+                                    self.parameters.get("num_predict", ""),
+                                )
+                            ),
+                            id="max-tokens-input",
+                            placeholder="e.g. 4096",
+                        )
+                        yield Label("Thinking:", classes="title")
                         yield Checkbox(
-                            "Thinking",
+                            "",
                             id="thinking-checkbox",
                             name="thinking",
                             value=self.thinking,
