@@ -43,6 +43,7 @@ class ChatModel(BaseModel):
     id: int | None = None
     name: str = ""
     model: str = ""
+    provider: str = "ollama"
     system: str | None = None
     format: str = ""
     parameters: OtermOllamaOptions = Field(default_factory=OtermOllamaOptions)

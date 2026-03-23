@@ -3,6 +3,7 @@ import json
 import random
 from pathlib import Path
 
+import httpx
 from ollama import Message, ResponseError
 from textual import on, work
 from textual.app import ComposeResult
@@ -24,6 +25,7 @@ from oterm.app.mcp_prompt import MCPPrompt
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
+from oterm.minimaxclient import MiniMaxLLM
 from oterm.ollamaclient import OllamaLLM, Options
 from oterm.store.store import Store
 from oterm.tools import available_tool_calls
@@ -32,7 +34,7 @@ from oterm.utils import parse_response
 
 
 class ChatContainer(Widget):
-    ollama = OllamaLLM()
+    ollama: OllamaLLM | MiniMaxLLM = OllamaLLM()
     messages: reactive[list[MessageModel]] = reactive([])
     images: list[tuple[Path, str]] = []
     BINDINGS = [
@@ -76,19 +78,41 @@ class ChatContainer(Widget):
             if tool_def["tool"] in chat_model.tools
         ]
 
-        self.ollama = OllamaLLM(
+        self.ollama = self._create_llm_client(
+            chat_model, history, used_tool_defs
+        )
+        self.loaded = False
+        self.loading = False
+        self.images = []
+
+    @staticmethod
+    def _create_llm_client(
+        chat_model: ChatModel,
+        history: list,
+        tool_defs: list,
+    ) -> OllamaLLM | MiniMaxLLM:
+        """Create the appropriate LLM client based on the provider."""
+        if chat_model.provider == "minimax":
+            return MiniMaxLLM(
+                model=chat_model.model,
+                system=chat_model.system,
+                history=history,
+                format=chat_model.format,
+                options=chat_model.parameters,
+                keep_alive=chat_model.keep_alive,
+                tool_defs=tool_defs,
+                thinking=chat_model.thinking,
+            )
+        return OllamaLLM(
             model=chat_model.model,
             system=chat_model.system,
             format=chat_model.format,
             options=chat_model.parameters,
             keep_alive=chat_model.keep_alive,
             history=history,
-            tool_defs=used_tool_defs,
+            tool_defs=tool_defs,
             thinking=chat_model.thinking,
         )
-        self.loaded = False
-        self.loading = False
-        self.images = []
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
@@ -177,7 +201,7 @@ class ChatContainer(Widget):
             response_chat_item.remove()
             input = self.query_one("#prompt", FlexibleInput)
             input.text = message
-        except ResponseError as e:
+        except (ResponseError, httpx.HTTPStatusError) as e:
             user_chat_item.remove()
             response_chat_item.remove()
             self.app.notify(
@@ -238,16 +262,9 @@ class ChatContainer(Widget):
             if tool_def["tool"] in self.chat_model.tools
         ]
 
-        # Recreate the Ollama client with updated parameters
-        self.ollama = OllamaLLM(
-            model=self.chat_model.model,
-            system=self.chat_model.system,
-            format=self.chat_model.format,
-            options=self.chat_model.parameters,
-            keep_alive=self.chat_model.keep_alive,
-            history=history,  # type: ignore
-            tool_defs=used_tool_defs,
-            thinking=self.chat_model.thinking,
+        # Recreate the LLM client with updated parameters
+        self.ollama = self._create_llm_client(
+            self.chat_model, history, used_tool_defs
         )
 
     @work
@@ -265,15 +282,8 @@ class ChatContainer(Widget):
     async def action_clear_chat(self) -> None:
         self.messages = []
         self.images = []
-        self.ollama = OllamaLLM(
-            model=self.ollama.model,
-            system=self.ollama.system,
-            format=self.ollama.format,  # type: ignore
-            options=self.chat_model.parameters,
-            keep_alive=self.ollama.keep_alive,
-            history=[],  # type: ignore
-            tool_defs=self.ollama.tool_defs,
-            thinking=self.chat_model.thinking,
+        self.ollama = self._create_llm_client(
+            self.chat_model, [], list(self.ollama.tool_defs),
         )
         msg_container = self.query_one("#messageContainer")
         for child in msg_container.children:

@@ -9,6 +9,7 @@ the terminal client for [Ollama](https://github.com/ollama/ollama).
 * multiple persistent chat sessions, stored together with system prompt & parameter customizations in sqlite.
 * support for Model Context Protocol (MCP) tools & prompts integration.
 * can use any of the models you have pulled in Ollama, or your own custom models.
+* supports [MiniMax](https://www.minimaxi.com) cloud models (M2.7, M2.5) as an alternative provider — set `MINIMAX_API_KEY` to enable.
 * allows for easy customization of the model's system prompt and parameters.
 * supports tools integration for providing external information to the model.
 
@@ -24,6 +25,7 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 [oterm Documentation](https://ggozad.github.io/oterm/)
 
 ## What's new
+* [MiniMax](https://www.minimaxi.com) cloud provider support — use MiniMax-M2.7, M2.5 and highspeed models alongside Ollama.
 * [Example](https://ggozad.github.io/oterm/rag_example) on how to do RAG with [haiku.rag](https://github.com/ggozad/haiku.rag).
 * `oterm` is now part of Homebrew!
 * Support for "thinking" mode for models that support it.

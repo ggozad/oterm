@@ -9,10 +9,12 @@ from textual.containers import (
 )
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
+from textual.widgets import Button, Checkbox, Input, Label, OptionList, RadioSet, TextArea
 
 from oterm.app.widgets.caps import Capabilities
 from oterm.app.widgets.tool_select import ToolSelector
+from oterm.config import envConfig
+from oterm.minimaxclient import MiniMaxLLM
 from oterm.ollamaclient import (
     OllamaLLM,
     jsonify_options,
@@ -24,12 +26,12 @@ from oterm.types import ChatModel, OtermOllamaOptions, Tool
 
 class ChatEdit(ModalScreen[str]):
     models = []
-    models_info: dict[str, ShowResponse] = {}
+    models_info: dict[str, ShowResponse | Any] = {}
 
     model_name: reactive[str] = reactive("")
     tag: reactive[str] = reactive("")
     bytes: reactive[int] = reactive(0)
-    model_info: ShowResponse
+    model_info: ShowResponse | Any = None
     system: reactive[str] = reactive("")
     parameters: reactive[Options] = reactive(Options())
     format: reactive[str] = reactive("")
@@ -38,6 +40,7 @@ class ChatEdit(ModalScreen[str]):
     tools: reactive[list[Tool]] = reactive([])
     edit_mode: reactive[bool] = reactive(False)
     thinking: reactive[bool] = reactive(False)
+    provider: reactive[str] = reactive("ollama")
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -55,9 +58,9 @@ class ChatEdit(ModalScreen[str]):
             chat_model = ChatModel()
 
         self.chat_model = chat_model
-        self.model_name, self.tag = (
-            chat_model.model.split(":") if chat_model.model else ("", "")
-        )
+        parts = chat_model.model.split(":", 1) if chat_model.model else ["", ""]
+        self.model_name = parts[0]
+        self.tag = parts[1] if len(parts) > 1 else ""
         self.system = chat_model.system or ""
         self.parameters = chat_model.parameters
         self.format = chat_model.format
@@ -65,11 +68,15 @@ class ChatEdit(ModalScreen[str]):
         self.tools = chat_model.tools
         self.edit_mode = edit_mode
         self.thinking = chat_model.thinking
+        self.provider = chat_model.provider
 
     def _return_chat_meta(self) -> None:
-        model = f"{self.model_name}:{self.tag}"
+        if self.tag:
+            model = f"{self.model_name}:{self.tag}"
+        else:
+            model = self.model_name
         system = self.query_one(".system", TextArea).text
-        system = system if system != self.model_info.get("system", "") else None
+        system = system if system != (self.model_info.get("system", "") if self.model_info else "") else None
         keep_alive = int(self.query_one(".keep-alive", Input).value)
         p_area = self.query_one(".parameters", TextArea)
         try:
@@ -103,6 +110,7 @@ class ChatEdit(ModalScreen[str]):
             id=self.chat_model.id,
             name=self.chat_model.name,
             model=model,
+            provider=self.provider,
             system=system,
             format=format,
             parameters=parameters,
@@ -127,23 +135,55 @@ class ChatEdit(ModalScreen[str]):
                 break
 
     async def on_mount(self) -> None:
-        self.models = OllamaLLM.list().models
+        # Set initial provider in the RadioSet
+        radio_set = self.query_one("#provider-select", RadioSet)
+        if self.provider == "minimax":
+            radio_set.pressed_index = 1
+        else:
+            radio_set.pressed_index = 0
 
-        models = [model.model or "" for model in self.models]
-        for model in models:
-            info = OllamaLLM.show(model)
-            self.models_info[model] = info
+        self._load_models()
+
+        # Disable the model select widget if we are in edit mode.
+        widget = self.query_one("#model-select", OptionList)
+        widget.disabled = self.edit_mode
+
+    def _load_models(self) -> None:
+        """Load models for the currently selected provider."""
+        if self.provider == "minimax":
+            response = MiniMaxLLM.list()
+            self.models = response.models
+            models = [model.model or "" for model in self.models]
+            for model in models:
+                info = MiniMaxLLM.show(model)
+                self.models_info[model] = info
+        else:
+            self.models = OllamaLLM.list().models
+            models = [model.model or "" for model in self.models]
+            for model in models:
+                info = OllamaLLM.show(model)
+                self.models_info[model] = info
+
         option_list = self.query_one("#model-select", OptionList)
         option_list.clear_options()
         for model in models:
             option_list.add_option(option=self.model_option(model))
         option_list.highlighted = self.last_highlighted_index
-        if self.model_name and self.tag:
-            self.select_model(f"{self.model_name}:{self.tag}")
 
-        # Disable the model select widget if we are in edit mode.
-        widget = self.query_one("#model-select", OptionList)
-        widget.disabled = self.edit_mode
+        if self.model_name:
+            model_str = f"{self.model_name}:{self.tag}" if self.tag else self.model_name
+            self.select_model(model_str)
+
+    def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
+        """Handle provider selection change."""
+        provider = "minimax" if event.index == 1 else "ollama"
+        if provider != self.provider:
+            self.provider = provider
+            self.model_name = ""
+            self.tag = ""
+            self.models_info = {}
+            ChatEdit.last_highlighted_index = None
+            self._load_models()
 
     def on_option_list_option_highlighted(
         self, option: OptionList.OptionHighlighted
@@ -151,7 +191,9 @@ class ChatEdit(ModalScreen[str]):
         model = option.option.prompt
         model_meta = next((m for m in self.models if m.model == str(model)), None)
         if model_meta:
-            name, tag = (model_meta.model or "").split(":")
+            parts = (model_meta.model or "").split(":", 1)
+            name = parts[0]
+            tag = parts[1] if len(parts) > 1 else ""
             self.model_name = name
             widget = self.query_one(".name", Label)
             widget.update(f"{self.model_name}")
@@ -160,24 +202,29 @@ class ChatEdit(ModalScreen[str]):
             widget = self.query_one(".tag", Label)
             widget.update(f"{self.tag}")
 
-            self.bytes = model_meta["size"]
+            size = model_meta["size"] if "size" in model_meta.__dict__ or hasattr(model_meta, "size") else 0
+            self.bytes = size
             widget = self.query_one(".size", Label)
-            widget.update(f"{(self.bytes / 1.0e9):.2f} GB")
+            if size > 0:
+                widget.update(f"{(self.bytes / 1.0e9):.2f} GB")
+            else:
+                widget.update("cloud" if self.provider == "minimax" else "N/A")
 
             meta = self.models_info.get(model_meta.model or "")
             self.model_info = meta  # type: ignore
             if not self.edit_mode:
-                self.parameters = parse_ollama_parameters(
-                    self.model_info.parameters or ""
-                )
+                params_text = self.model_info.parameters or "" if self.model_info else ""
+                if self.provider == "ollama":
+                    self.parameters = parse_ollama_parameters(params_text)
+                else:
+                    self.parameters = Options()
             widget = self.query_one(".parameters", TextArea)
             widget.load_text(jsonify_options(self.parameters))
             widget = self.query_one(".system", TextArea)
 
-            # XXX Does not work as expected, there is no longer system in model_info
-            widget.load_text(self.system or self.model_info.get("system", ""))
+            widget.load_text(self.system or (self.model_info.get("system", "") if self.model_info else ""))
 
-            capabilities: list[str] = self.model_info.get("capabilities", [])
+            capabilities: list[str] = self.model_info.get("capabilities", []) if self.model_info else []
             tools_supported = "tools" in capabilities
             tool_selector = self.query_one(ToolSelector)
             tool_selector.disabled = not tools_supported
@@ -186,7 +233,7 @@ class ChatEdit(ModalScreen[str]):
             thinking_checkbox.disabled = "thinking" not in capabilities
 
             if "completion" in capabilities:
-                capabilities.remove("completion")  #
+                capabilities.remove("completion")
             if "embedding" in capabilities:
                 capabilities.remove("embedding")
 
@@ -212,6 +259,18 @@ class ChatEdit(ModalScreen[str]):
         with Container(classes="screen-container full-height"):
             with Horizontal():
                 with Vertical():
+                    with Horizontal(id="provider-info"):
+                        yield Label("Provider:", classes="title")
+                        with RadioSet(id="provider-select"):
+                            from textual.widgets import RadioButton
+
+                            yield RadioButton("Ollama", value=self.provider == "ollama")
+                            minimax_available = bool(envConfig.MINIMAX_API_KEY)
+                            yield RadioButton(
+                                "MiniMax",
+                                value=self.provider == "minimax",
+                                disabled=not minimax_available,
+                            )
                     with Horizontal(id="model-info"):
                         yield Label("Model:", classes="title")
                         yield Label(f"{self.model_name}", classes="name")

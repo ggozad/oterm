@@ -17,6 +17,8 @@ class EnvConfig(BaseModel):
     OTERM_VERIFY_SSL: bool = True
     OTERM_DATA_DIR: Path = get_default_data_dir()
     OPEN_WEATHER_MAP_API_KEY: str = ""
+    MINIMAX_API_KEY: str = ""
+    MINIMAX_BASE_URL: str = "https://api.minimax.io/v1"
 
 
 envConfig = EnvConfig.model_validate(os.environ)

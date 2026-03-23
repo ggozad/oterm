@@ -34,6 +34,7 @@ class Store:
                         "id"            INTEGER,
                         "name"          TEXT,
                         "model"         TEXT NOT NULL,
+                        "provider"      TEXT DEFAULT "ollama",
                         "system"        TEXT,
                         "format"        TEXT,
                         "parameters"    TEXT DEFAULT "{}",
@@ -86,12 +87,13 @@ class Store:
             res = await connection.execute_insert(
                 """
                 INSERT OR REPLACE
-                INTO chat(id, name, model, system, format, parameters, keep_alive, tools, thinking)
-                VALUES(:id, :name, :model, :system, :format, :parameters, :keep_alive, :tools, :thinking) RETURNING id;""",
+                INTO chat(id, name, model, provider, system, format, parameters, keep_alive, tools, thinking)
+                VALUES(:id, :name, :model, :provider, :system, :format, :parameters, :keep_alive, :tools, :thinking) RETURNING id;""",
                 {
                     "id": chat_model.id,
                     "name": chat_model.name,
                     "model": chat_model.model,
+                    "provider": chat_model.provider,
                     "system": chat_model.system,
                     "format": chat_model.format,
                     "parameters": json.dumps(
@@ -121,6 +123,7 @@ class Store:
                 """
                 UPDATE chat
                 SET name = :name,
+                    provider = :provider,
                     system = :system,
                     format = :format,
                     parameters = :parameters,
@@ -132,6 +135,7 @@ class Store:
                 {
                     "id": chat_model.id,
                     "name": chat_model.name,
+                    "provider": chat_model.provider,
                     "system": chat_model.system,
                     "format": chat_model.format,
                     "parameters": json.dumps(
@@ -150,7 +154,7 @@ class Store:
         async with aiosqlite.connect(self.db_path) as connection:
             chats = await connection.execute_fetchall(
                 """
-                SELECT id, name, model, system, format, parameters, keep_alive, tools, thinking
+                SELECT id, name, model, provider, system, format, parameters, keep_alive, tools, thinking
                 FROM chat;
                 """
             )
@@ -160,6 +164,7 @@ class Store:
                     id=id,
                     name=name,
                     model=model,
+                    provider=provider or "ollama",
                     system=system,
                     format=format,
                     parameters=json.loads(parameters),
@@ -167,14 +172,14 @@ class Store:
                     tools=[Tool(**t) for t in json.loads(tools)],
                     thinking=thinking,
                 )
-                for id, name, model, system, format, parameters, keep_alive, tools, thinking in chats
+                for id, name, model, provider, system, format, parameters, keep_alive, tools, thinking in chats
             ]
 
     async def get_chat(self, id: int) -> ChatModel | None:
         async with aiosqlite.connect(self.db_path) as connection:
             chat = await connection.execute_fetchall(
                 """
-                SELECT id, name, model, system, format, parameters, keep_alive, tools, thinking
+                SELECT id, name, model, provider, system, format, parameters, keep_alive, tools, thinking
                 FROM chat
                 WHERE id = :id;
                 """,
@@ -186,6 +191,7 @@ class Store:
                     id,
                     name,
                     model,
+                    provider,
                     system,
                     format,
                     parameters,
@@ -197,6 +203,7 @@ class Store:
                     id=id,
                     name=name,
                     model=model,
+                    provider=provider or "ollama",
                     system=system,
                     format=format,
                     parameters=json.loads(parameters),
