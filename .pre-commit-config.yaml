@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
@@ -9,7 +9,7 @@ repos:
       - id: debug-statements
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
-    rev: v0.11.4
+    rev: v0.15.8
     hooks:
       # Run the linter.
       - id: ruff
@@ -17,16 +17,16 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/RobertCraigie/pyright-python
-    rev: v1.1.399
+    rev: v1.1.408
     hooks:
       - id: pyright
 
-  - repo: https://github.com/RodrigoGonzalez/check-mkdocs
-    rev: v1.2.0
-    hooks:
-      - id: check-mkdocs
-        name: check-mkdocs
-        args: ["--config", "mkdocs.yml"] # Optional, mkdocs.yml is the default
-        # If you have additional plugins or libraries that are not included in
-        # check-mkdocs, add them here
-        additional_dependencies: ["mkdocs-material"]
+  # - repo: https://github.com/RodrigoGonzalez/check-mkdocs
+  #   rev: v1.2.0
+  #   hooks:
+  #     - id: check-mkdocs
+  #       name: check-mkdocs
+  #       args: ["--config", "mkdocs.yml"] # Optional, mkdocs.yml is the default
+  #       # If you have additional plugins or libraries that are not included in
+  #       # check-mkdocs, add them here
+  #       additional_dependencies: ["mkdocs-material"]

@@ -85,12 +85,18 @@ def _list_models_from_api(provider: str) -> list[str] | None:
 
     if provider == "mistral":
         try:
-            from mistralai import Mistral
+            from mistralai.client import Mistral
+            from mistralai.client.models.basemodelcard import BaseModelCard
+            from mistralai.client.models.ftmodelcard import FTModelCard
 
             client = Mistral(api_key=os.getenv("MISTRAL_API_KEY", ""))
             response = client.models.list()
             if response and response.data:
-                return sorted(m.id for m in response.data if m.id)
+                return sorted(
+                    m.id
+                    for m in response.data
+                    if isinstance(m, (BaseModelCard, FTModelCard)) and m.id
+                )
             return None
         except Exception as e:
             log.warning(f"Failed to list Mistral models: {e}")
