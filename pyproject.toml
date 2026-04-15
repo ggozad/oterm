@@ -47,7 +47,8 @@ oterm = "oterm.cli.oterm:cli"
 
 [dependency-groups]
 dev = [
-    "ruff>=0.15.8",
+    "ruff>=0.15.10",
+    "ty>=0.0.30",
     "pdbpp",
     "pytest>=9.0.2",
     "pytest-asyncio>=0.25.3",
@@ -57,7 +58,6 @@ dev = [
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.18",
     "pre-commit>=4.3.0",
-    "pyright>=1.1.408",
 ]
 
 [tool.uv]
@@ -85,9 +85,8 @@ indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "auto"
 
-[tool.pyright]
-venvPath = "."
-venv = ".venv"
+[tool.ty.environment]
+python-version = "3.13"
 
 [build-system]
 requires = ["hatchling"]

@@ -1,7 +1,7 @@
 import logging
 
 import rich.repr
-from textual import Logger, LogGroup  # type: ignore
+from textual import Logger, LogGroup
 
 log_lines: list[tuple[LogGroup, str]] = []
 

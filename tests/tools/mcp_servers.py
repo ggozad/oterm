@@ -37,7 +37,7 @@ async def puzzle_solver(puzzle_description: str, ctx: Context) -> str:
         ),
         max_tokens=100,
     )
-    return sampling_response.content.text  # type: ignore
+    return sampling_response.content.text
 
 
 @mcp.prompt(name="oracle_prompt", description="Prompt to ask the oracle a question.")

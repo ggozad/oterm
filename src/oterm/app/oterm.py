@@ -200,7 +200,7 @@ class OTerm(App):
         from oterm.tools import available_tool_defs
         from oterm.tools.mcp.prompts import available_prompt_defs
 
-        external_tool_defs: list[ExternalToolDefinition] = appConfig.get("tools", [])  # type: ignore
+        external_tool_defs: list[ExternalToolDefinition] = appConfig.get("tools", [])
         external_tools = list(load_external_tools(external_tool_defs))
         if external_tools:
             available_tool_defs["external"] = external_tools
@@ -242,9 +242,7 @@ class OTerm(App):
 
         async def on_splash_done(message) -> None:
             if not saved_chats:
-                # Pyright suggests awaiting here which has bitten me twice
-                # so I'm ignoring it
-                self.action_new_chat()  # type: ignore
+                self.action_new_chat()
             else:
                 tabs = self.query_one(TabbedContent)
                 for chat_model in saved_chats:

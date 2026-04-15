@@ -207,7 +207,7 @@ class ChatEdit(ModalScreen[str]):
                 self.query_one(".name", Label).update("")
                 self.query_one(".tag", Label).update("")
                 self.query_one(".size", Label).update("")
-                self.query_one(".caps", Capabilities).caps = []  # type: ignore
+                self.query_one(".caps", Capabilities).caps = []
                 await self._load_models_for_provider(new_provider)
 
     def _populate_parameter_inputs(self, parameters: dict[str, Any]) -> None:

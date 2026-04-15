@@ -344,7 +344,7 @@ class ChatContainer(Widget):
             response = ""
             async for response in self.stream_agent(
                 message.text,
-                images=message.images,  # type: ignore
+                images=message.images,
             ):
                 response_chat_item.text = parse_response(response).formatted_output
                 if message_container.can_view_partial(response_chat_item):
