@@ -322,7 +322,7 @@ class ChatContainer(Widget):
         await store.clear_chat(self.chat_model.id)  # type: ignore
 
     async def action_regenerate_llm_message(self) -> None:
-        if not self.messages[-1:]:
+        if len(self.messages) < 2:
             return
         response_message_id = self.messages[-1].id
         self.messages.pop()

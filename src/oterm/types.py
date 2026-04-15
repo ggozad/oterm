@@ -23,10 +23,6 @@ class PromptCall(TypedDict):
     callable: Callable | Awaitable
 
 
-class ExternalToolDefinition(TypedDict):
-    callable: str
-
-
 class ChatModel(BaseModel):
     """Chat model for storing chat metadata"""
 

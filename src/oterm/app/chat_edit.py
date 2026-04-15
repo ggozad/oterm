@@ -178,18 +178,25 @@ class ChatEdit(ModalScreen[str]):
         self.models_info = {}
         self.models_size = {}
 
-        if provider == "ollama":
-            list_response: ListResponse = await asyncio.to_thread(ollama.list_models)
-            self.models = [m.model or "" for m in list_response.models]
-            for m in list_response.models:
-                if m.model:
-                    self.models_size[m.model] = m["size"]
-            for model in self.models:
-                option_list.add_option(option=self.model_option(model))
-        else:
-            self.models = list_models(provider)
-            for model in self.models:
-                option_list.add_option(option=self.model_option(model))
+        try:
+            if provider == "ollama":
+                list_response: ListResponse = await asyncio.to_thread(
+                    ollama.list_models
+                )
+                self.models = [m.model or "" for m in list_response.models]
+                for m in list_response.models:
+                    if m.model:
+                        self.models_size[m.model] = m["size"]
+            else:
+                self.models = list_models(provider)
+        except Exception as e:
+            self.app.notify(
+                f"Failed to load models for {provider}: {e}", severity="error"
+            )
+            self.models = []
+
+        for model in self.models:
+            option_list.add_option(option=self.model_option(model))
 
         last_index = ChatEdit.last_highlighted_index.get(provider)
         if last_index is not None and last_index < len(self.models):
@@ -241,7 +248,11 @@ class ChatEdit(ModalScreen[str]):
 
             meta = self.models_info.get(model)
             if not meta:
-                meta = await asyncio.to_thread(ollama.show_model, model)
+                try:
+                    meta = await asyncio.to_thread(ollama.show_model, model)
+                except Exception as e:
+                    self.app.notify(f"Failed to load model info: {e}", severity="error")
+                    return
                 self.models_info[model] = meta
 
             self.model_info = meta

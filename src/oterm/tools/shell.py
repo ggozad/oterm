@@ -8,5 +8,5 @@ def shell(command: str) -> str:
         command: The shell command to execute.
     """
     return subprocess.run(command, shell=True, capture_output=True).stdout.decode(
-        "utf-8"
+        "utf-8", errors="replace"
     )

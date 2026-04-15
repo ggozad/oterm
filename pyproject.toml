@@ -88,6 +88,11 @@ line-ending = "auto"
 [tool.ty.environment]
 python-version = "3.13"
 
+[project.entry-points."oterm.tools"]
+think = "oterm.tools.think:think"
+date_time = "oterm.tools.date_time:date_time"
+shell = "oterm.tools.shell:shell"
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

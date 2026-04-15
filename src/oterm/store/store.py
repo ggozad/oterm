@@ -48,7 +48,7 @@ class Store:
                         "author"	TEXT NOT NULL,
                         "text"		TEXT NOT NULL,
                         "images"    TEXT DEFAULT "[]",
-                        PRIMARY KEY("id" AUTOINCREMENT)
+                        PRIMARY KEY("id" AUTOINCREMENT),
                         FOREIGN KEY("chat_id") REFERENCES "chat"("id") ON DELETE CASCADE
                     );
                 """

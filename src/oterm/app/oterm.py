@@ -14,9 +14,8 @@ from oterm.app.themes.solarized_dark import solarized_dark
 from oterm.app.widgets.chat import ChatContainer
 from oterm.config import appConfig
 from oterm.store.store import Store
-from oterm.tools.external import load_external_tools
 from oterm.tools.mcp.setup import setup_mcp_servers, teardown_mcp_servers
-from oterm.types import ChatModel, ExternalToolDefinition
+from oterm.types import ChatModel
 from oterm.utils import check_ollama, is_up_to_date
 
 
@@ -197,13 +196,12 @@ class OTerm(App):
         self.push_screen(screen)
 
     async def load_tools(self):
-        from oterm.tools import available_tool_defs
+        from oterm.tools import available_tool_defs, discover_tools
         from oterm.tools.mcp.prompts import available_prompt_defs
 
-        external_tool_defs: list[ExternalToolDefinition] = appConfig.get("tools", [])
-        external_tools = list(load_external_tools(external_tool_defs))
-        if external_tools:
-            available_tool_defs["external"] = external_tools
+        entry_point_tools = discover_tools()
+        if entry_point_tools:
+            available_tool_defs["oterm"] = entry_point_tools
         mcp_tool_defs, mcp_prompt_calls = await setup_mcp_servers()
         available_tool_defs.update(mcp_tool_defs)
         available_prompt_defs.update(mcp_prompt_calls)
