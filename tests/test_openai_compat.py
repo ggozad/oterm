@@ -43,7 +43,7 @@ def test_resolve_api_key(monkeypatch):
     assert _resolve_api_key("$NONEXISTENT") is None
 
 
-def test_openai_compat_in_available_providers(monkeypatch):
+def test_openai_compat_endpoints_listed_individually(monkeypatch):
     from oterm.config import appConfig
 
     monkeypatch.setattr(
@@ -52,20 +52,24 @@ def test_openai_compat_in_available_providers(monkeypatch):
         {
             "openaiCompatible": {
                 "vllm": {"base_url": "http://localhost:8000/v1"},
+                "lmstudio": {"base_url": "http://localhost:1234/v1"},
             }
         },
     )
     providers = get_available_providers()
-    assert "openai-compat" in providers
+    assert "openai-compat/vllm" in providers
+    assert "openai-compat/lmstudio" in providers
+    assert "openai-compat" not in providers
 
 
-def test_openai_compat_not_in_available_when_empty(monkeypatch):
+def test_openai_compat_not_listed_when_empty(monkeypatch):
     from oterm.config import appConfig
 
     monkeypatch.setattr(appConfig, "_data", {})
     providers = get_available_providers()
-    assert "openai-compat" not in providers
+    assert not any(p.startswith("openai-compat") for p in providers)
 
 
-def test_provider_name():
-    assert get_provider_name("openai-compat") == "OpenAI Compatible"
+def test_provider_name_for_openai_compat():
+    assert get_provider_name("openai-compat/lmstudio") == "lmstudio"
+    assert get_provider_name("openai-compat/my-vllm") == "my-vllm"

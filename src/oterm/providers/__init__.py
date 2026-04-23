@@ -30,7 +30,6 @@ PROVIDER_NAMES: dict[str, str] = {
     "grok": "Grok",
     "cerebras": "Cerebras",
     "huggingface": "Hugging Face",
-    "openai-compat": "OpenAI Compatible",
 }
 
 
@@ -62,6 +61,8 @@ def get_all_providers() -> list[str]:
 
 
 def get_provider_name(provider: str) -> str:
+    if provider.startswith("openai-compat/"):
+        return provider.removeprefix("openai-compat/")
     return PROVIDER_NAMES.get(provider, provider.title())
 
 
@@ -71,8 +72,10 @@ def get_available_providers() -> list[str]:
         env_vars = PROVIDER_ENV_VARS.get(provider_id, [])
         if not env_vars or all(os.getenv(var) for var in env_vars):
             available.append(provider_id)
-    if get_openai_compatible_providers():
-        available.append("openai-compat")
+    for name, config in get_openai_compatible_providers().items():
+        api_key = _resolve_api_key(config.get("api_key"))
+        if api_key is not None or "api_key" not in config:
+            available.append(f"openai-compat/{name}")
     return available
 
 
@@ -141,7 +144,24 @@ def _list_models_from_api(provider: str) -> list[str] | None:
             log.warning(f"Failed to list Cohere models: {e}")
             return None
 
-    # OpenAI-compatible providers
+    if provider.startswith("openai-compat/"):
+        endpoint_name = provider.removeprefix("openai-compat/")
+        configs = get_openai_compatible_providers()
+        config = configs.get(endpoint_name)
+        if not config:
+            return None
+        base_url = config["base_url"]
+        api_key = _resolve_api_key(config.get("api_key")) or "not-needed"
+        try:
+            from openai import OpenAI
+
+            client = OpenAI(base_url=base_url, api_key=api_key)
+            return sorted(m.id for m in client.models.list().data)
+        except Exception as e:
+            log.warning(f"Failed to list models for {provider}: {e}")
+            return None
+
+    # Built-in OpenAI-compatible providers
     base_urls: dict[str, tuple[str, str]] = {
         "groq": ("https://api.groq.com/openai/v1", "GROQ_API_KEY"),
         "deepseek": ("https://api.deepseek.com/v1", "DEEPSEEK_API_KEY"),
@@ -193,24 +213,3 @@ def list_models(provider: str) -> list[str]:
 
     models = _list_models_from_api(provider) or _list_models_from_known(provider)
     return [m for m in models if is_chat_model(provider, m)]
-
-
-def list_openai_compat_models(endpoint_name: str) -> list[str]:
-    """Fetch models from an OpenAI-compatible endpoint."""
-    from oterm.log import log
-
-    configs = get_openai_compatible_providers()
-    config = configs.get(endpoint_name)
-    if not config:
-        return []
-
-    base_url = config["base_url"]
-    api_key = _resolve_api_key(config.get("api_key")) or "not-needed"
-    try:
-        from openai import OpenAI
-
-        client = OpenAI(base_url=base_url, api_key=api_key)
-        return sorted(m.id for m in client.models.list().data)
-    except Exception as e:
-        log.warning(f"Failed to list models for {endpoint_name}: {e}")
-        return []

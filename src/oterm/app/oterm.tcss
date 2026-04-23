@@ -136,10 +136,6 @@ LoadingIndicator {
     margin-right: 1
 }
 
-#endpoint-select {
-    margin-top: 1;
-}
-
 #top-labels {
     height: 1;
 }
