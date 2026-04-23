@@ -2,7 +2,7 @@ import asyncio
 from typing import Any
 
 from ollama import ListResponse, ShowResponse
-from rich.text import Text
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import (
     Container,
@@ -11,15 +11,18 @@ from textual.containers import (
 )
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Input, Label, OptionList, Select, TextArea
+from textual.widgets import Button, Checkbox, Input, Label, Select, TextArea
 
 from oterm.app.widgets.caps import Capabilities
+from oterm.app.widgets.model_select import ModelSelect
 from oterm.app.widgets.tool_select import ToolSelector
 from oterm.ollamaclient import parse_ollama_parameters
 from oterm.providers import (
     get_available_providers,
+    get_openai_compatible_providers,
     get_provider_name,
     list_models,
+    list_openai_compat_models,
     ollama,
 )
 from oterm.providers.capabilities import get_capabilities
@@ -33,12 +36,10 @@ class ChatEdit(ModalScreen[str]):
 
     provider: reactive[str] = reactive("ollama")
     model_name: reactive[str] = reactive("")
-    tag: reactive[str] = reactive("")
     bytes: reactive[int] = reactive(0)
     model_info: ShowResponse
     system: reactive[str] = reactive("")
     parameters: reactive[dict[str, Any]] = reactive({})
-    last_highlighted_index: dict[str, int | None] = {}
     tools: reactive[list[str]] = reactive([])
     edit_mode: reactive[bool] = reactive(False)
     thinking: reactive[bool] = reactive(False)
@@ -60,22 +61,32 @@ class ChatEdit(ModalScreen[str]):
 
         self.chat_model = chat_model
         self.provider = chat_model.provider
-        if ":" in (chat_model.model or ""):
-            self.model_name, self.tag = chat_model.model.split(":", 1)
-        else:
-            self.model_name = chat_model.model or ""
-            self.tag = ""
+        self.model_name = chat_model.model or ""
         self.system = chat_model.system or ""
         self.parameters = chat_model.parameters
         self.tools = chat_model.tools
         self.edit_mode = edit_mode
         self.thinking = chat_model.thinking
+        self._loaded_model: str = ""
+
+        self._compat_endpoint: str = ""
+        if chat_model.provider.startswith("openai-compat/"):
+            self._compat_endpoint = chat_model.provider.removeprefix("openai-compat/")
 
     def _return_chat_meta(self) -> None:
-        if self.provider == "ollama":
-            model = f"{self.model_name}:{self.tag}" if self.tag else self.model_name
+        model = self.query_one(ModelSelect).value.strip()
+        if not model:
+            self.app.notify("Please enter a model name", severity="error")
+            return
+
+        if self.provider == "openai-compat":
+            endpoint_select = self.query_one("#endpoint-select", Select)
+            if endpoint_select.value is None or endpoint_select.value == Select.BLANK:
+                self.app.notify("Please select an endpoint", severity="error")
+                return
+            provider = f"openai-compat/{endpoint_select.value}"
         else:
-            model = self.model_name
+            provider = self.provider
 
         system = self.query_one(".system", TextArea).text
         model_system = getattr(self, "model_info", {}).get("system", "")
@@ -133,7 +144,7 @@ class ChatEdit(ModalScreen[str]):
             name=self.chat_model.name,
             model=model,
             system=system,
-            provider=self.provider,
+            provider=provider,
             parameters=parameters,
             tools=self.tools,
             thinking=self.thinking,
@@ -147,43 +158,41 @@ class ChatEdit(ModalScreen[str]):
     def action_save(self) -> None:
         self._return_chat_meta()
 
-    def select_model(self, model: str) -> None:
-        select = self.query_one("#model-select", OptionList)
-        for index, option in enumerate(select._options):
-            if str(option.prompt) == model:
-                select.highlighted = index
-                return
-        if select._options:
-            select.highlighted = 0
-
     async def on_mount(self) -> None:
         provider_select = self.query_one("#provider-select", Select)
-        provider_select.value = self.provider
 
-        await self._load_models_for_provider(self.provider)
+        if self.provider.startswith("openai-compat/"):
+            provider_select.value = "openai-compat"
+        else:
+            provider_select.value = self.provider
 
-        if self.model_name:
-            if self.provider == "ollama" and self.tag:
-                self.select_model(f"{self.model_name}:{self.tag}")
-            else:
-                self.select_model(self.model_name)
+        is_compat = self.provider.startswith("openai-compat/")
+        self.query_one("#endpoint-select", Select).display = is_compat
+
+        if is_compat:
+            endpoint_select = self.query_one("#endpoint-select", Select)
+            endpoint_select.value = self._compat_endpoint
+            await self._load_compat_models(self._compat_endpoint)
+        else:
+            await self._load_models_for_provider(self.provider)
+
+        model_select = self.query_one(ModelSelect)
+        if self.chat_model.model:
+            model_select.set_value(self.chat_model.model)
+            await self._load_model_info(self.chat_model.model)
 
         provider_select.disabled = self.edit_mode
-        model_select = self.query_one("#model-select", OptionList)
         model_select.disabled = self.edit_mode
 
     async def _load_models_for_provider(self, provider: str) -> None:
-        option_list = self.query_one("#model-select", OptionList)
-        option_list.clear_options()
-        self.models_info = {}
-        self.models_size = {}
-
+        """Fetch models and update the model select."""
         try:
             if provider == "ollama":
                 list_response: ListResponse = await asyncio.to_thread(
                     ollama.list_models
                 )
                 self.models = [m.model or "" for m in list_response.models]
+                self.models_size = {}
                 for m in list_response.models:
                     if m.model:
                         self.models_size[m.model] = m["size"]
@@ -194,57 +203,36 @@ class ChatEdit(ModalScreen[str]):
                 f"Failed to load models for {provider}: {e}", severity="error"
             )
             self.models = []
+        self.query_one(ModelSelect).set_options(self.models)
 
-        for model in self.models:
-            option_list.add_option(option=self.model_option(model))
+    async def _load_compat_models(self, endpoint_name: str) -> None:
+        """Fetch models from an OpenAI-compatible endpoint."""
+        models = await asyncio.to_thread(list_openai_compat_models, endpoint_name)
+        self.models = models
+        self.query_one(ModelSelect).set_options(models)
 
-        last_index = ChatEdit.last_highlighted_index.get(provider)
-        if last_index is not None and last_index < len(self.models):
-            option_list.highlighted = last_index
-        elif self.models:
-            option_list.highlighted = 0
+    async def _load_model_info(self, model: str) -> None:
+        """Load model info (capabilities, system prompt, parameters) for the given model."""
+        if not model or model == self._loaded_model:
+            return
+        self._loaded_model = model
 
-    async def on_select_changed(self, event: Select.Changed) -> None:
-        if event.select.id == "provider-select":
-            new_provider = str(event.value)
-            if new_provider != self.provider:
-                self.provider = new_provider
-                self.model_name = ""
-                self.tag = ""
-                self.query_one(".name", Label).update("")
-                self.query_one(".tag", Label).update("")
-                self.query_one(".size", Label).update("")
-                self.query_one(".caps", Capabilities).caps = []
-                await self._load_models_for_provider(new_provider)
+        self.model_name = model
+        self.query_one(".name", Label).update(model)
 
-    def _populate_parameter_inputs(self, parameters: dict[str, Any]) -> None:
-        self.query_one("#temperature-input", Input).value = str(
-            parameters.get("temperature", "")
-        )
-        self.query_one("#top-p-input", Input).value = str(parameters.get("top_p", ""))
-        max_tokens = parameters.get("max_tokens", parameters.get("num_predict", ""))
-        self.query_one("#max-tokens-input", Input).value = str(max_tokens)
+        effective_provider = self.provider
+        if self.provider == "openai-compat":
+            endpoint_select = self.query_one("#endpoint-select", Select)
+            if endpoint_select.value and endpoint_select.value != Select.BLANK:
+                effective_provider = f"openai-compat/{endpoint_select.value}"
 
-    async def on_option_list_option_highlighted(
-        self, option: OptionList.OptionHighlighted
-    ) -> None:
-        model = str(option.option.prompt)
-
-        if self.provider == "ollama":
-            if ":" in model:
-                name, tag = model.split(":", 1)
-            else:
-                name, tag = model, ""
-            self.model_name = name
-            self.tag = tag
-
-            self.query_one(".name", Label).update(name)
-            self.query_one(".tag", Label).update(tag)
-
+        if effective_provider == "ollama":
             size = self.models_size.get(model)
             if size:
                 self.bytes = size
                 self.query_one(".size", Label).update(f"{(self.bytes / 1.0e9):.2f} GB")
+            else:
+                self.query_one(".size", Label).update("")
 
             meta = self.models_info.get(model)
             if not meta:
@@ -264,17 +252,10 @@ class ChatEdit(ModalScreen[str]):
             self.query_one(".system", TextArea).load_text(
                 self.system or self.model_info.get("system", "")
             )
-
             capabilities: list[str] = list(self.model_info.get("capabilities", []))
         else:
-            self.model_name = model
-            self.tag = ""
-
-            self.query_one(".name", Label).update(model)
-            self.query_one(".tag", Label).update("")
-            self.query_one(".size", Label).update("N/A")
-
-            caps = get_capabilities(self.provider, model)
+            self.query_one(".size", Label).update("")
+            caps = get_capabilities(effective_provider, model)
             capabilities = []
             if caps.supports_tools:
                 capabilities.append("tools")
@@ -283,9 +264,12 @@ class ChatEdit(ModalScreen[str]):
             if caps.supports_vision:
                 capabilities.append("vision")
 
-        tools_supported = "tools" in capabilities
+        self._update_capabilities_ui(capabilities)
+        self.query_one("#save-btn", Button).disabled = False
+
+    def _update_capabilities_ui(self, capabilities: list[str]) -> None:
         tool_selector = self.query_one(ToolSelector)
-        tool_selector.disabled = not tools_supported
+        tool_selector.disabled = "tools" not in capabilities
 
         thinking_checkbox = self.query_one("#thinking-checkbox", Checkbox)
         thinking_checkbox.disabled = "thinking" not in capabilities
@@ -293,8 +277,47 @@ class ChatEdit(ModalScreen[str]):
         display_caps = [c for c in capabilities if c not in ("completion", "embedding")]
         self.query_one(".caps", Capabilities).caps = display_caps  # type: ignore
 
-        self.query_one("#save-btn", Button).disabled = False
-        ChatEdit.last_highlighted_index[self.provider] = option.option_index
+    def _populate_parameter_inputs(self, parameters: dict[str, Any]) -> None:
+        self.query_one("#temperature-input", Input).value = str(
+            parameters.get("temperature", "")
+        )
+        self.query_one("#top-p-input", Input).value = str(parameters.get("top_p", ""))
+        max_tokens = parameters.get("max_tokens", parameters.get("num_predict", ""))
+        self.query_one("#max-tokens-input", Input).value = str(max_tokens)
+
+    @on(ModelSelect.Submitted)
+    async def on_model_submitted(self, event: ModelSelect.Submitted) -> None:
+        await self._load_model_info(event.value)
+
+    async def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id == "provider-select":
+            new_provider = str(event.value)
+            if new_provider != self.provider:
+                self.provider = new_provider
+                self.model_name = ""
+                self._loaded_model = ""
+                self.query_one(".name", Label).update("")
+                self.query_one(".size", Label).update("")
+                self.query_one(".caps", Capabilities).caps = []
+                self.query_one(ModelSelect).set_value("")
+                self.query_one("#save-btn", Button).disabled = True
+
+                is_compat = new_provider == "openai-compat"
+                self.query_one("#endpoint-select", Select).display = is_compat
+
+                if is_compat:
+                    self.query_one("#endpoint-select", Select).value = Select.BLANK
+                    self.query_one(ModelSelect).set_options([])
+                else:
+                    await self._load_models_for_provider(new_provider)
+
+        elif event.select.id == "endpoint-select":
+            endpoint = str(event.value)
+            if endpoint and endpoint != str(Select.BLANK):
+                self._compat_endpoint = endpoint
+                self._loaded_model = ""
+                self.query_one(ModelSelect).set_value("")
+                await self._load_compat_models(endpoint)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.name == "save":
@@ -302,20 +325,16 @@ class ChatEdit(ModalScreen[str]):
         else:
             self.dismiss()
 
-    @staticmethod
-    def model_option(model: str) -> Text:
-        return Text(model)
-
     def compose(self) -> ComposeResult:
         providers = get_available_providers()
         provider_options = [(get_provider_name(p), p) for p in providers]
+        compat_providers = get_openai_compatible_providers()
+        endpoint_options = [(name, name) for name in compat_providers]
 
         with Container(id="chat-edit-screen", classes="screen-container full-height"):
             with Horizontal(id="model-info"):
                 yield Label("Model:", classes="title")
-                yield Label(f"{self.model_name}", classes="name")
-                yield Label("Tag:", classes="title")
-                yield Label(f"{self.tag}", classes="tag")
+                yield Label("", classes="name")
                 yield Label("Size:", classes="title")
                 yield Label("", classes="size")
                 yield Label("Caps:", classes="title")
@@ -328,7 +347,13 @@ class ChatEdit(ModalScreen[str]):
                         value=self.provider,
                         allow_blank=False,
                     )
-                    yield OptionList(id="model-select")
+                    yield Select(
+                        endpoint_options,
+                        id="endpoint-select",
+                        prompt="Select endpoint",
+                        allow_blank=True,
+                    )
+                    yield ModelSelect(id="model-select")
                 with Vertical():
                     yield Label("System:", classes="title")
                     yield TextArea(self.system, classes="system log")

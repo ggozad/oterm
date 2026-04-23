@@ -136,15 +136,15 @@ LoadingIndicator {
     margin-right: 1
 }
 
-#model-select {
-    height: 1fr;
+#endpoint-select {
+    margin-top: 1;
 }
 
 #model-info {
     height: 1;
 }
 
-#model-info .name, .tag, .size {
+#model-info .name, .size {
     margin-right: 1;
 }
 
@@ -190,7 +190,7 @@ Label.keep-alive-label {
     margin-top: 1;
 }
 
-#model-select, .system, .format, #tool-selector-container  {
+.system, .format, #tool-selector-container  {
     margin-top: 1;
     margin-bottom: 1;
 }

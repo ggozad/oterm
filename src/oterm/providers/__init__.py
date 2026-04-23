@@ -30,7 +30,31 @@ PROVIDER_NAMES: dict[str, str] = {
     "grok": "Grok",
     "cerebras": "Cerebras",
     "huggingface": "Hugging Face",
+    "openai-compat": "OpenAI Compatible",
 }
+
+
+def _resolve_api_key(api_key: str | None) -> str | None:
+    """Resolve an API key, expanding $ENV_VAR references."""
+    if api_key is None:
+        return None
+    if api_key.startswith("$"):
+        return os.getenv(api_key[1:])
+    return api_key
+
+
+def get_openai_compatible_providers() -> dict[str, dict]:
+    """Return configured OpenAI-compatible endpoints from appConfig."""
+    from oterm.config import appConfig
+
+    raw = appConfig.get("openaiCompatible", {})
+    if not raw or not isinstance(raw, dict):
+        return {}
+    return {
+        name: config
+        for name, config in raw.items()
+        if isinstance(config, dict) and "base_url" in config
+    }
 
 
 def get_all_providers() -> list[str]:
@@ -47,6 +71,8 @@ def get_available_providers() -> list[str]:
         env_vars = PROVIDER_ENV_VARS.get(provider_id, [])
         if not env_vars or all(os.getenv(var) for var in env_vars):
             available.append(provider_id)
+    if get_openai_compatible_providers():
+        available.append("openai-compat")
     return available
 
 
@@ -167,3 +193,24 @@ def list_models(provider: str) -> list[str]:
 
     models = _list_models_from_api(provider) or _list_models_from_known(provider)
     return [m for m in models if is_chat_model(provider, m)]
+
+
+def list_openai_compat_models(endpoint_name: str) -> list[str]:
+    """Fetch models from an OpenAI-compatible endpoint."""
+    from oterm.log import log
+
+    configs = get_openai_compatible_providers()
+    config = configs.get(endpoint_name)
+    if not config:
+        return []
+
+    base_url = config["base_url"]
+    api_key = _resolve_api_key(config.get("api_key")) or "not-needed"
+    try:
+        from openai import OpenAI
+
+        client = OpenAI(base_url=base_url, api_key=api_key)
+        return sorted(m.id for m in client.models.list().data)
+    except Exception as e:
+        log.warning(f"Failed to list models for {endpoint_name}: {e}")
+        return []

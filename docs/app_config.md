@@ -33,6 +33,32 @@ We strive to have sane default key bindings, but there will always be cases wher
 }
 ```
 
+### OpenAI-compatible providers
+
+You can connect to any OpenAI API-compatible service (vLLM, OpenRouter, LiteLLM, etc.) by adding endpoints to the `openaiCompatible` section of your config:
+
+```json
+{
+  ...
+  "openaiCompatible": {
+    "vllm": {
+      "base_url": "http://localhost:8000/v1"
+    },
+    "openrouter": {
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key": "$OPENROUTER_API_KEY"
+    }
+  }
+}
+```
+
+Each entry defines a named endpoint:
+
+- `base_url` (required): The OpenAI-compatible API base URL.
+- `api_key` (optional): An API key. Use `$ENV_VAR` syntax to reference an environment variable, or provide a literal string. Omit for local endpoints that don't require authentication.
+
+When configured, an **OpenAI Compatible** provider appears in the provider dropdown. Select it, choose your endpoint, and type the model name. If the endpoint supports the `/v1/models` listing, model suggestions will appear as you type.
+
 ### Chat storage
 
 All your chat sessions are stored locally in a sqlite database. You can customize the directory where the database is stored by setting the `OTERM_DATA_DIR` environment variable.
