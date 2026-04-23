@@ -332,13 +332,15 @@ class ChatEdit(ModalScreen[str]):
         endpoint_options = [(name, name) for name in compat_providers]
 
         with Container(id="chat-edit-screen", classes="screen-container full-height"):
-            with Horizontal(id="model-info"):
-                yield Label("Model:", classes="title")
-                yield Label("", classes="name")
-                yield Label("Size:", classes="title")
-                yield Label("", classes="size")
-                yield Label("Caps:", classes="title")
-                yield Capabilities([], classes="caps")
+            with Horizontal(id="top-labels"):
+                with Horizontal(classes="info-left"):
+                    yield Label("Model:", classes="title")
+                    yield Label("", classes="name")
+                    yield Label("Size:", classes="title")
+                    yield Label("", classes="size")
+                    yield Label("Caps:", classes="title")
+                    yield Capabilities([], classes="caps")
+                yield Label("System:", classes="title info-right")
             with Horizontal(id="top-row"):
                 with Vertical():
                     yield Select(
@@ -355,11 +357,12 @@ class ChatEdit(ModalScreen[str]):
                     )
                     yield ModelSelect(id="model-select")
                 with Vertical():
-                    yield Label("System:", classes="title")
                     yield TextArea(self.system, classes="system log")
+            with Horizontal(id="bottom-labels"):
+                yield Label("Tools:", classes="title")
+                yield Label("Parameters:", classes="title")
             with Horizontal(id="bottom-row"):
                 with Vertical():
-                    yield Label("Tools:", classes="title")
                     yield ToolSelector(
                         id="tool-selector-container", selected=self.tools
                     )

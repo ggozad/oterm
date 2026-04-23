@@ -140,12 +140,34 @@ LoadingIndicator {
     margin-top: 1;
 }
 
-#model-info {
+#top-labels {
     height: 1;
 }
 
-#model-info .name, .size {
-    margin-right: 1;
+#bottom-labels {
+    height: 1;
+    margin-top: 1;
+}
+
+#top-labels .info-left,
+#top-labels .info-right {
+    width: 1fr;
+    height: 1;
+}
+
+#top-labels .title,
+#bottom-labels .title {
+    color: $primary;
+    margin: 0 1 0 0;
+}
+
+#top-labels .name, #top-labels .size {
+    color: $secondary;
+    margin: 0 2 0 0;
+}
+
+#bottom-labels > Label {
+    width: 1fr;
 }
 
 #tool-selector-container {
@@ -190,8 +212,7 @@ Label.keep-alive-label {
     margin-top: 1;
 }
 
-.system, .format, #tool-selector-container  {
-    margin-top: 1;
+.format {
     margin-bottom: 1;
 }
 
@@ -201,18 +222,22 @@ Label.keep-alive-label {
 
 #top-row {
     height: 1fr;
+    margin-top: 1;
 }
 
 #top-row > Vertical {
     width: 1fr;
+    height: 1fr;
 }
 
 #bottom-row {
     height: 1fr;
+    margin-top: 1;
 }
 
 #bottom-row > Vertical {
     width: 1fr;
+    height: 1fr;
 }
 
 .system {
