@@ -241,6 +241,11 @@ class ChatContainer(Widget):
                 f"There was an error running your request: {e}", severity="error"
             )
             message_container.scroll_end()
+        except Exception as e:
+            user_chat_item.remove()
+            response_chat_item.remove()
+            self.app.notify(f"Unexpected error: {e}", severity="error")
+            message_container.scroll_end()
 
         finally:
             loading.remove()
