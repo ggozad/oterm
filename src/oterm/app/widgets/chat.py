@@ -45,6 +45,15 @@ from oterm.store.store import Store
 from oterm.tools import available_tools
 from oterm.types import ChatModel, MessageModel
 
+# Auto-follow the streaming response when the viewport is within this many
+# rows of the bottom. Accounts for partial-row rounding and content shifts
+# between check and scroll_end().
+_SCROLL_FOLLOW_THRESHOLD = 2
+
+
+def _near_bottom(container) -> bool:
+    return container.max_scroll_y - container.scroll_y <= _SCROLL_FOLLOW_THRESHOLD
+
 
 def _resolve_tools(tool_names: list[str]):
     from pydantic_ai import Tool as PydanticTool
@@ -221,11 +230,11 @@ class ChatContainer(Widget):
             async for thinking, text in self.stream_agent(
                 message, [img for _, img in self.images]
             ):
+                follow = _near_bottom(message_container)
                 response_chat_item.thinking = thinking
                 response_chat_item.text = text
-
-            if message_container.can_view_partial(response_chat_item):
-                message_container.scroll_end()
+                if follow:
+                    message_container.scroll_end()
 
             store = await Store.get_store()
 
@@ -369,9 +378,10 @@ class ChatContainer(Widget):
                     message.text,
                     images=message.images,
                 ):
+                    follow = _near_bottom(message_container)
                     response_chat_item.thinking = thinking
                     response_chat_item.text = text
-                    if message_container.can_view_partial(response_chat_item):
+                    if follow:
                         message_container.scroll_end()
 
                 if not text:
