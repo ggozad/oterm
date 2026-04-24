@@ -41,7 +41,8 @@ from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.store.store import Store
-from oterm.tools import available_tools
+from oterm.tools import builtin_tools
+from oterm.tools.mcp.setup import mcp_servers, mcp_tool_meta
 from oterm.types import ChatModel, MessageModel
 
 # Auto-follow the streaming response when the viewport is within this many
@@ -55,20 +56,38 @@ def _near_bottom(container) -> bool:
 
 
 def _resolve_tools(tool_names: list[str]):
+    """Split selected tool names into pydantic-ai Tool objects and filtered MCP toolsets."""
     from pydantic_ai import Tool as PydanticTool
+    from pydantic_ai.toolsets import AbstractToolset
 
     from oterm.log import log
 
+    selected = set(tool_names)
     tools: list[PydanticTool] = []
     available_names: set[str] = set()
-    for tool_def in available_tools():
+
+    for tool_def in builtin_tools:
         available_names.add(tool_def["name"])
-        if tool_def["name"] in tool_names:
+        if tool_def["name"] in selected:
             tools.append(tool_def["tool"])
-    missing = set(tool_names) - available_names
+
+    toolsets: list[AbstractToolset[None]] = []
+    for server_name, meta in mcp_tool_meta.items():
+        names_on_server = {m["name"] for m in meta}
+        available_names |= names_on_server
+        chosen = selected & names_on_server
+        if chosen:
+            toolsets.append(
+                mcp_servers[server_name].filtered(
+                    lambda _ctx, td, names=chosen: td.name in names
+                )
+            )
+
+    missing = selected - available_names
     if missing:
         log.warning(f"Chat references unavailable tools: {sorted(missing)}")
-    return tools
+
+    return tools, toolsets
 
 
 class ChatContainer(Widget):
@@ -106,13 +125,14 @@ class ChatContainer(Widget):
 
     def _rebuild_agent(self) -> None:
         """(Re)build the agent for the current chat_model. Defers errors to send time."""
-        tools = _resolve_tools(self.chat_model.tools)
+        tools, toolsets = _resolve_tools(self.chat_model.tools)
         try:
             self.agent = get_agent(
                 provider=self.chat_model.provider,
                 model=self.chat_model.model,
                 system=self.chat_model.system,
                 tools=tools,
+                toolsets=toolsets,
                 parameters=self.chat_model.parameters,
                 thinking=self.chat_model.thinking,
             )

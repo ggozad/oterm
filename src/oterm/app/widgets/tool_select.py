@@ -5,7 +5,31 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Checkbox
 
-from oterm.tools import available_tool_defs, available_tools
+from oterm.tools import builtin_tools
+from oterm.tools.mcp.setup import mcp_tool_meta
+
+_BUILTIN_GROUP = "builtin"
+
+
+def _all_groups() -> dict[str, list[dict]]:
+    """Unified {group_name: [{'name', 'description'}, ...]} across builtin + MCP."""
+    groups: dict[str, list[dict]] = {}
+    if builtin_tools:
+        groups[_BUILTIN_GROUP] = [
+            {"name": t["name"], "description": t["description"]} for t in builtin_tools
+        ]
+    for server_name, metas in mcp_tool_meta.items():
+        groups[server_name] = [
+            {"name": m["name"], "description": m["description"]} for m in metas
+        ]
+    return groups
+
+
+def _known_tool_names() -> set[str]:
+    names = {t["name"] for t in builtin_tools}
+    for metas in mcp_tool_meta.values():
+        names.update(m["name"] for m in metas)
+    return names
 
 
 class ToolSelector(Widget):
@@ -20,10 +44,8 @@ class ToolSelector(Widget):
         selected: list[str] = [],
     ) -> None:
         super().__init__(name=name, id=id, classes=classes, disabled=disabled)
-        self.selected = selected if selected is not None else []
-        # Check if selected tools are still available from the loaded tools
-        available_names = {tool_def["name"] for tool_def in available_tools()}
-        self.selected = [name for name in selected if name in available_names]
+        known = _known_tool_names()
+        self.selected = [n for n in selected if n in known]
 
     def on_mount(self) -> None:
         pass
@@ -32,57 +54,52 @@ class ToolSelector(Widget):
     def on_checkbox_toggled(self, ev: Checkbox.Changed):
         checkbox_name = ev.control.name
         checked = ev.value
+        groups = _all_groups()
 
-        for server in available_tool_defs.keys():
-            if server == checkbox_name:
-                for tool_def in available_tool_defs[server]:
-                    tool_checkbox = self.query_one(
-                        f"#{server}-{tool_def['name']}", Checkbox
-                    )
-                    if tool_checkbox.value != checked:
-                        tool_checkbox.value = checked
-                return
+        if checkbox_name in groups:
+            for meta in groups[checkbox_name]:
+                tool_checkbox = self.query_one(
+                    f"#{checkbox_name}-{meta['name']}", Checkbox
+                )
+                if tool_checkbox.value != checked:
+                    tool_checkbox.value = checked
+            return
 
-        for tool_def in available_tools():
-            if tool_def["name"] == str(checkbox_name):
-                tool_name = tool_def["name"]
-                if checked:
-                    if tool_name not in self.selected:
-                        self.selected.append(tool_name)
-                else:
-                    try:
-                        self.selected.remove(tool_name)
-                    except ValueError:
-                        pass
-                break
+        for metas in groups.values():
+            for meta in metas:
+                if meta["name"] == str(checkbox_name):
+                    if checked:
+                        if meta["name"] not in self.selected:
+                            self.selected.append(meta["name"])
+                    else:
+                        try:
+                            self.selected.remove(meta["name"])
+                        except ValueError:
+                            pass
+                    return
 
-    def all_server_tools_selected(self, server: str) -> bool:
-        """Check if all tools from a server are selected."""
-        for tool_def in available_tool_defs[server]:
-            if tool_def["name"] not in self.selected:
-                return False
-        return True
+    def _all_group_tools_selected(self, group: str, metas: list[dict]) -> bool:
+        return all(meta["name"] in self.selected for meta in metas)
 
     def compose(self) -> ComposeResult:
-        with ScrollableContainer(
-            id="tool-selector",
-        ):
-            for server in available_tool_defs:
+        groups = _all_groups()
+        with ScrollableContainer(id="tool-selector"):
+            for group, metas in groups.items():
                 with Horizontal(classes="tool-group"):
                     yield Checkbox(
-                        name=server,
-                        label=server,
-                        tooltip=f"Select all tools from {server}",
+                        name=group,
+                        label=group,
+                        tooltip=f"Select all tools from {group}",
                         classes="tool-group-select-all",
-                        value=self.all_server_tools_selected(server),
+                        value=self._all_group_tools_selected(group, metas),
                     )
                     with Vertical(classes="tools"):
-                        for tool_def in available_tool_defs[server]:
+                        for meta in metas:
                             yield Checkbox(
-                                id=f"{server}-{tool_def['name']}",
-                                name=tool_def["name"],
-                                label=tool_def["name"],
-                                tooltip=tool_def["description"],
-                                value=tool_def["name"] in self.selected,
+                                id=f"{group}-{meta['name']}",
+                                name=meta["name"],
+                                label=meta["name"],
+                                tooltip=meta["description"],
+                                value=meta["name"] in self.selected,
                                 classes="tool",
                             )

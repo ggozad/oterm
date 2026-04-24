@@ -223,6 +223,7 @@ class TestLoadTools:
         self, tmp_data_dir, app_config, stub_network
     ):
         import oterm.app.oterm as oterm_mod
+        import oterm.tools as tools_mod
 
         def fake_tool() -> str:
             """Sample."""
@@ -239,32 +240,22 @@ class TestLoadTools:
             called.append(("mcp",))
             return {}
 
-        import oterm.tools as tools_mod
-
-        monkeypatch_tools = tools_mod.available_tool_defs.copy()
-        tools_mod.available_tool_defs.clear()
+        original_discover = tools_mod.discover_tools
+        original_builtins = tools_mod.builtin_tools
+        tools_mod.discover_tools = fake_discover  # ty: ignore[invalid-assignment]
+        oterm_mod.setup_mcp_servers = fake_mcp_setup  # ty: ignore[invalid-assignment]
         try:
-            # Stub discover_tools via the imported module.
-            import oterm.tools
-
-            original_discover = oterm.tools.discover_tools
-            oterm.tools.discover_tools = fake_discover  # ty: ignore[invalid-assignment]
-            oterm_mod.setup_mcp_servers = fake_mcp_setup  # ty: ignore[invalid-assignment]
-
             from oterm.app.oterm import OTerm
 
             app = OTerm()
             async with app.run_test() as pilot:
                 await pilot.pause()
-                # on_mount already called load_tools once.
-                assert "oterm" in tools_mod.available_tool_defs
-                names = {t["name"] for t in tools_mod.available_tool_defs["oterm"]}
+                names = {t["name"] for t in tools_mod.builtin_tools}
                 assert "fake_tool" in names
-                assert called  # fake_mcp_setup was invoked at least once
+                assert called
         finally:
-            oterm.tools.discover_tools = original_discover
-            tools_mod.available_tool_defs.clear()
-            tools_mod.available_tool_defs.update(monkeypatch_tools)
+            tools_mod.discover_tools = original_discover
+            tools_mod.builtin_tools = original_builtins
 
 
 class TestNewChat:

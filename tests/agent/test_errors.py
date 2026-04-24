@@ -7,15 +7,19 @@ from oterm.types import ChatModel
 
 class TestResolveTools:
     def test_empty_returns_empty(self):
-        assert _resolve_tools([]) == []
+        tools, toolsets = _resolve_tools([])
+        assert tools == []
+        assert toolsets == []
 
     def test_unknown_tool_logged_and_dropped(self, monkeypatch):
         import oterm.log
 
-        monkeypatch.setattr("oterm.app.widgets.chat.available_tools", lambda: [])
+        monkeypatch.setattr("oterm.app.widgets.chat.builtin_tools", [])
+        monkeypatch.setattr("oterm.app.widgets.chat.mcp_tool_meta", {})
         before = len(oterm.log.log_lines)
-        tools = _resolve_tools(["ghost"])
+        tools, toolsets = _resolve_tools(["ghost"])
         assert tools == []
+        assert toolsets == []
         messages = [msg for _, msg in oterm.log.log_lines[before:]]
         assert any("unavailable tools" in m and "ghost" in m for m in messages)
 
@@ -25,10 +29,13 @@ class TestResolveTools:
 
         tool = PydanticTool(sample, takes_ctx=False)
         monkeypatch.setattr(
-            "oterm.app.widgets.chat.available_tools",
-            lambda: [{"name": "sample", "description": "", "tool": tool}],
+            "oterm.app.widgets.chat.builtin_tools",
+            [{"name": "sample", "description": "", "tool": tool}],
         )
-        assert _resolve_tools(["sample"]) == [tool]
+        monkeypatch.setattr("oterm.app.widgets.chat.mcp_tool_meta", {})
+        tools, toolsets = _resolve_tools(["sample"])
+        assert tools == [tool]
+        assert toolsets == []
 
 
 class TestRebuildAgent:

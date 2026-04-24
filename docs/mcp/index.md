@@ -58,21 +58,6 @@ Typically used to connect to remote MCP servers through Streamable HTTP, the onl
 }
 ```
 
-#### `Websocket` transport
-
-Also used to connect to remote MCP servers, but through websockets. The only accepted parameter is the `url` parameter (should start with `ws://` or `wss://`). For example,
-
-```json
-{
-  ...
-  "mcpServers": {
-    "my_mcp": {
-			"url": "wss://remote:port/path"
-		}
-  }
-}
-```
-
 ### Authentication
 #### HTTP bearer authentication
 
@@ -91,3 +76,25 @@ Also used to connect to remote MCP servers, but through websockets. The only acc
   }
 }
 ```
+
+### Environment variables
+
+For security, `stdio` MCP subprocesses do **not** inherit `oterm`'s parent environment. That keeps credentials like `OPENAI_API_KEY` or `AWS_SECRET_ACCESS_KEY` out of third-party MCP server processes unless you explicitly share them.
+
+Declare env vars in the `env` dict of each server. Any string value (in `env`, `command`, `args`, `url`, or a bearer `token`) can reference the parent environment via `${VAR}` (required) or `${VAR:-default}` (optional with fallback):
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "${HOME}/.local/bin/mcp-github",
+      "args": ["--repo", "${REPO:-ggozad/oterm}"],
+      "env": {
+        "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+If a referenced variable is not set and has no default, server setup fails with an error naming the missing variable.

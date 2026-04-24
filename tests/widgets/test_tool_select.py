@@ -20,25 +20,19 @@ def _tool_def(name: str):
 
 @pytest.fixture
 def populated_tools(monkeypatch):
-    """Inject a fake tool registry so ToolSelector has something to render."""
+    """Inject fake builtin tools and MCP metadata so ToolSelector has content."""
     import oterm.app.widgets.tool_select as sel_mod
     import oterm.tools as tools_mod
 
-    registry = {
-        "builtin": [_tool_def("date_time"), _tool_def("shell")],
-        "mcp_server": [_tool_def("oracle")],
+    builtin = [_tool_def("date_time"), _tool_def("shell")]
+    mcp_meta = {
+        "mcp_server": [{"name": "oracle", "description": "oracle tool"}],
     }
-    monkeypatch.setattr(tools_mod, "available_tool_defs", registry)
-    monkeypatch.setattr(sel_mod, "available_tool_defs", registry)
 
-    def _flat():
-        import itertools
-
-        return list(itertools.chain.from_iterable(registry.values()))
-
-    monkeypatch.setattr(sel_mod, "available_tools", _flat)
-    monkeypatch.setattr(tools_mod, "available_tools", _flat)
-    return registry
+    monkeypatch.setattr(tools_mod, "builtin_tools", builtin)
+    monkeypatch.setattr(sel_mod, "builtin_tools", builtin)
+    monkeypatch.setattr(sel_mod, "mcp_tool_meta", mcp_meta)
+    return builtin, mcp_meta
 
 
 class _Host(App):
@@ -51,7 +45,7 @@ class _Host(App):
 
 
 class TestToolSelector:
-    async def test_renders_checkbox_per_server_and_tool(self, populated_tools):
+    async def test_renders_checkbox_per_group_and_tool(self, populated_tools):
         app = _Host()
         async with app.run_test() as pilot:
             selector = app.query_one(ToolSelector)
@@ -94,22 +88,25 @@ class TestToolSelector:
             await pilot.pause()
             assert "shell" not in selector.selected
 
-    async def test_server_checkbox_toggles_all_tools(self, populated_tools):
+    async def test_group_checkbox_toggles_all_tools(self, populated_tools):
         app = _Host()
         async with app.run_test() as pilot:
             selector = app.query_one(ToolSelector)
             await pilot.pause()
 
-            server_cb = next(c for c in selector.query(Checkbox) if c.name == "builtin")
-            server_cb.value = True
+            group_cb = next(c for c in selector.query(Checkbox) if c.name == "builtin")
+            group_cb.value = True
             await pilot.pause()
             assert selector.query_one("#builtin-date_time", Checkbox).value is True
             assert selector.query_one("#builtin-shell", Checkbox).value is True
 
-    async def test_all_server_tools_selected_helper(self, populated_tools):
-        app = _Host(selected=["date_time", "shell"])
+    async def test_mcp_tool_toggle(self, populated_tools):
+        app = _Host()
         async with app.run_test() as pilot:
             selector = app.query_one(ToolSelector)
             await pilot.pause()
-            assert selector.all_server_tools_selected("builtin") is True
-            assert selector.all_server_tools_selected("mcp_server") is False
+
+            oracle_cb = selector.query_one("#mcp_server-oracle", Checkbox)
+            oracle_cb.value = True
+            await pilot.pause()
+            assert "oracle" in selector.selected

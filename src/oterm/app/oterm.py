@@ -172,13 +172,11 @@ class OTerm(App):
         self.push_screen(screen)
 
     async def load_tools(self):
-        from oterm.tools import available_tool_defs, discover_tools
+        from oterm.tools import builtin_tools, discover_tools
 
-        entry_point_tools = discover_tools()
-        if entry_point_tools:
-            available_tool_defs["oterm"] = entry_point_tools
-        mcp_tool_defs = await setup_mcp_servers()
-        available_tool_defs.update(mcp_tool_defs)
+        builtin_tools.clear()
+        builtin_tools.extend(discover_tools())
+        await setup_mcp_servers()
 
     @work(exclusive=True)
     async def perform_checks(self) -> None:

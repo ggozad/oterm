@@ -1,11 +1,6 @@
 from pydantic_ai import Tool as PydanticTool
 
-from oterm.tools import (
-    available_tool_defs,
-    available_tools,
-    discover_tools,
-    make_tool_def,
-)
+from oterm.tools import builtin_tools, discover_tools, make_tool_def
 
 
 def _hello() -> str:
@@ -77,21 +72,5 @@ class TestDiscoverTools:
         assert any("exploder" in m for m in messages)
 
 
-class TestAvailableTools:
-    def test_flattens_registered_tool_defs(self, monkeypatch):
-        monkeypatch.setattr(
-            "oterm.tools.available_tool_defs",
-            {
-                "src1": [make_tool_def(_hello)],
-                "src2": [make_tool_def(lambda: "x")],
-            },
-        )
-        flat = available_tools()
-        assert len(flat) == 2
-
-    def test_empty_by_default(self, monkeypatch):
-        monkeypatch.setattr("oterm.tools.available_tool_defs", {})
-        assert available_tools() == []
-
-    def test_registry_is_a_dict(self):
-        assert isinstance(available_tool_defs, dict)
+def test_builtin_tools_is_a_list():
+    assert isinstance(builtin_tools, list)

@@ -6,6 +6,7 @@ from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
+from pydantic_ai.toolsets import AbstractToolset
 
 from oterm.config import envConfig
 
@@ -29,6 +30,7 @@ def get_agent(
     model: str = "",
     system: str | None = None,
     tools: list[PydanticTool] | None = None,
+    toolsets: list[AbstractToolset[None]] | None = None,
     parameters: dict[str, Any] | None = None,
     thinking: bool = False,
 ) -> Agent[None, str]:
@@ -67,6 +69,7 @@ def get_agent(
         pydantic_model,
         instructions=system,
         tools=tools or [],  # type: ignore[arg-type]
+        toolsets=toolsets or [],
         model_settings=_build_model_settings(parameters, thinking),
     )
     return agent

@@ -1,6 +1,5 @@
 import logging
 import os
-from collections.abc import AsyncGenerator
 from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -8,10 +7,7 @@ from typing import TYPE_CHECKING, Any
 import pydantic_ai.models
 import pytest
 import pytest_asyncio
-from mcp import StdioServerParameters
 from PIL import Image
-
-from oterm.tools.mcp.client import MCPClient
 
 if TYPE_CHECKING:
     from vcr import VCR
@@ -112,18 +108,6 @@ def mcp_server_config() -> dict:
             "url": "ws://localhost:8000/ws",
         },
     }
-
-
-@pytest_asyncio.fixture(scope="function")
-async def mcp_client(mcp_server_config) -> AsyncGenerator[MCPClient, None]:
-    client = MCPClient(
-        "test_server",
-        StdioServerParameters.model_validate(mcp_server_config["stdio"]),
-    )
-    await client.initialize()
-
-    yield client
-    await client.teardown()
 
 
 @pytest.fixture(autouse=True)

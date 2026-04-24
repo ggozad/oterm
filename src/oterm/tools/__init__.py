@@ -1,4 +1,3 @@
-import itertools
 from collections.abc import Callable
 from importlib.metadata import entry_points
 
@@ -6,11 +5,8 @@ from pydantic_ai import Tool as PydanticTool
 
 from oterm.types import ToolDef
 
-available_tool_defs: dict[str, list[ToolDef]] = {}
-
-
-def available_tools() -> list[ToolDef]:
-    return list(itertools.chain.from_iterable(available_tool_defs.values()))
+# Populated from the `oterm.tools` entry points at app startup.
+builtin_tools: list[ToolDef] = []
 
 
 def make_tool_def(func: Callable) -> ToolDef:
