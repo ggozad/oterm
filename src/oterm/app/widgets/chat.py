@@ -50,10 +50,17 @@ from oterm.utils import parse_response
 def _resolve_tools(tool_names: list[str]):
     from pydantic_ai import Tool as PydanticTool
 
+    from oterm.log import log
+
     tools: list[PydanticTool] = []
+    available_names: set[str] = set()
     for tool_def in available_tools():
+        available_names.add(tool_def["name"])
         if tool_def["name"] in tool_names:
             tools.append(tool_def["tool"])
+    missing = set(tool_names) - available_names
+    if missing:
+        log.warning(f"Chat references unavailable tools: {sorted(missing)}")
     return tools
 
 
