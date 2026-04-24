@@ -1,8 +1,7 @@
 from ast import literal_eval
-from collections.abc import Iterator
 from typing import Any
 
-from ollama import Client, ListResponse, Options, ProgressResponse, ShowResponse
+from ollama import Client, ListResponse, Options, ShowResponse
 
 from oterm.config import envConfig
 
@@ -15,12 +14,6 @@ def list_models() -> ListResponse:
 def show_model(model: str) -> ShowResponse:
     client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
     return client.show(model)
-
-
-def pull_model(model: str) -> Iterator[ProgressResponse]:
-    client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
-    stream: Iterator[ProgressResponse] = client.pull(model, stream=True)
-    yield from stream
 
 
 def parse_ollama_parameters(parameter_text: str) -> dict[str, Any]:

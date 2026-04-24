@@ -14,11 +14,6 @@ class _FakeClient:
     def show(self, model):
         return f"show-{model}"
 
-    def pull(self, model, stream=False):
-        assert stream is True
-        yield f"pull-{model}-0"
-        yield f"pull-{model}-1"
-
 
 class TestClientWrappers:
     def test_list_models_uses_env_config(self, monkeypatch):
@@ -35,11 +30,6 @@ class TestClientWrappers:
     def test_show_model_uses_env_config(self, monkeypatch):
         monkeypatch.setattr(ollama_mod, "Client", _FakeClient)
         assert ollama_mod.show_model("llama3") == "show-llama3"
-
-    def test_pull_model_yields_progress(self, monkeypatch):
-        monkeypatch.setattr(ollama_mod, "Client", _FakeClient)
-        result = list(ollama_mod.pull_model("llama3"))
-        assert result == ["pull-llama3-0", "pull-llama3-1"]
 
 
 class TestParseOllamaParameters:

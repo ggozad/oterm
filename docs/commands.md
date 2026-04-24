@@ -7,8 +7,7 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 * `Export chat` - export the current chat session as markdown
 * `Delete chat` - delete the current chat session
 * `Clear chat` - clear the chat history, preserving model and system prompt customizations
-* `Regenerate last Ollama message` - regenerates the last message from Ollama (will override the `seed` for the specific message with a random one.) Useful if you want to change the system prompt or parameters or just want to try again.
-* `Pull model` - pull a model or update an existing one.
+* `Regenerate last message` - regenerates the last assistant message. Useful if you want to change the system prompt or parameters, or just try again.
 * `Change theme` - choose among the available themes.
 * `Show logs` - shows the logs of the current oterm session.
 

@@ -8,7 +8,6 @@ from textual.widgets import Footer, Header, TabbedContent, TabPane
 
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_export import ChatExport, slugify
-from oterm.app.pull_model import PullModel
 from oterm.app.splash import splash
 from oterm.app.themes.solarized_dark import solarized_dark
 from oterm.app.widgets.chat import ChatContainer
@@ -71,11 +70,6 @@ class OTerm(App):
             "Use MCP prompt",
             "Run an MCP prompt and insert its messages into the chat.",
             self.action_mcp_prompt,
-        )
-        yield SystemCommand(
-            "Pull model",
-            "Pulls (or updates) an Ollama model.",
-            self.action_pull_model,
         )
         yield SystemCommand(
             "Show logs", "Shows the logs of the app", self.action_show_logs
@@ -182,15 +176,6 @@ class OTerm(App):
             return
         chat = tabs.active_pane.query_one(ChatContainer)
         chat.action_mcp_prompt()
-
-    async def action_pull_model(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
-            screen = PullModel("")
-        else:
-            chat = tabs.active_pane.query_one(ChatContainer)
-            screen = PullModel(chat.model)
-        self.push_screen(screen)
 
     async def action_show_logs(self) -> None:
         from oterm.app.log_viewer import LogViewer

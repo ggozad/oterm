@@ -301,15 +301,6 @@ LoadingIndicator {
     padding: 0;
 }
 
-#pull-model-container Horizontal {
-    margin-top: 1;
-    height: 3;
-}
-
-#pull-model-container Input {
-    width: 60;
-}
-
 #prompt-form-container {
     height: 100%;
 }

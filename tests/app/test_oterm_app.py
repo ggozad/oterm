@@ -196,27 +196,6 @@ class TestExportChat:
             assert isinstance(app.screen, ChatExport)
 
 
-class TestPullModel:
-    async def test_pull_model_pushes_screen(
-        self, tmp_data_dir, app_config, stub_network, store
-    ):
-        from oterm.app.pull_model import PullModel
-
-        app_config.set("splash-screen", False)
-        cm = ChatModel(name="c", model="llama3")
-        cm.id = await store.save_chat(cm)
-
-        from oterm.app.oterm import OTerm
-
-        app = OTerm()
-        async with app.run_test() as pilot:
-            await pilot.pause()
-            await app.action_pull_model()
-            await pilot.pause()
-            assert isinstance(app.screen, PullModel)
-            assert app.screen.model == "llama3"
-
-
 class TestShowLogs:
     async def test_show_logs_pushes_screen(self, fresh_app):
         from oterm.app.log_viewer import LogViewer
@@ -472,26 +451,6 @@ class TestActionDelegates:
             await app.action_mcp_prompt()
 
 
-class TestPullModelNoActivePane:
-    async def test_pushes_pull_model_with_empty_default(self, fresh_app):
-        from textual.widgets import TabbedContent
-
-        from oterm.app.pull_model import PullModel
-
-        app = fresh_app
-        async with app.run_test() as pilot:
-            await pilot.pause()
-            tabs = app.query_one(TabbedContent)
-            for pane in list(tabs.query("TabPane")):
-                await tabs.remove_pane(pane.id or "")
-            await pilot.pause()
-
-            await app.action_pull_model()
-            await pilot.pause()
-            assert isinstance(app.screen, PullModel)
-            assert app.screen.model == ""
-
-
 class TestPerformChecks:
     async def test_outdated_version_notifies(
         self, tmp_data_dir, app_config, stub_network, monkeypatch
@@ -628,7 +587,6 @@ class TestSystemCommands:
                 "Export chat",
                 "Regenerate last message",
                 "Use MCP prompt",
-                "Pull model",
                 "Show logs",
             ):
                 assert title in cmds
