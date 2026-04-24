@@ -9,35 +9,19 @@ from pydantic_ai.settings import ModelSettings
 
 from oterm.config import envConfig
 
-NO_THINK_SUFFIX = "/no_think"
-
 
 def _build_model_settings(
     parameters: dict[str, Any] | None,
-) -> ModelSettings | None:
-    if not parameters:
-        return None
-
-    settings: dict[str, Any] = {}
-    for key in ("temperature", "top_p", "max_tokens"):
-        if key in parameters:
-            settings[key] = parameters[key]
-
-    return ModelSettings(**settings) if settings else None
-
-
-def _apply_thinking_mode(
-    provider: str,
-    system: str | None,
     thinking: bool,
-) -> str:
-    effective_system = system or ""
+) -> ModelSettings | None:
+    settings: dict[str, Any] = {}
+    if parameters:
+        for key in ("temperature", "top_p", "max_tokens"):
+            if key in parameters:
+                settings[key] = parameters[key]
+    settings["thinking"] = thinking
 
-    if provider == "ollama":
-        if not thinking and effective_system:
-            effective_system = f"{effective_system}{NO_THINK_SUFFIX}"
-
-    return effective_system
+    return ModelSettings(**settings)
 
 
 def get_agent(
@@ -74,13 +58,10 @@ def get_agent(
     else:
         pydantic_model = f"{provider}:{model}"  # type: ignore[assignment]
 
-    effective_settings = _build_model_settings(parameters)
-    effective_system = _apply_thinking_mode(provider, system, thinking)
-
     agent: Agent[None, str] = Agent(
         pydantic_model,
-        instructions=effective_system,
+        instructions=system,
         tools=tools or [],  # type: ignore[arg-type]
-        model_settings=effective_settings,
+        model_settings=_build_model_settings(parameters, thinking),
     )
     return agent
