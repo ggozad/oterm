@@ -255,6 +255,165 @@ class TestListModelsFromApi:
         _install_fake_module(monkeypatch, "openai", {"OpenAI": boom})
         assert _list_models_from_api("deepseek") is None
 
+    def test_google_gla(self, monkeypatch):
+        class _Model:
+            def __init__(self, name):
+                self.name = name
+
+        class _GenaiClient:
+            def __init__(self, api_key):
+                self._key = api_key
+
+            class models:
+                @staticmethod
+                def list():
+                    return [_Model("models/gemini-pro"), _Model("models/gemini-flash")]
+
+        _install_fake_module(
+            monkeypatch,
+            "google",
+            {"genai": type("M", (), {"Client": _GenaiClient})()},
+        )
+        monkeypatch.setenv("GOOGLE_API_KEY", "k")
+        assert _list_models_from_api("google-gla") == ["gemini-flash", "gemini-pro"]
+
+    def test_google_gla_error_returns_none(self, monkeypatch):
+        def boom(**kw):
+            raise RuntimeError("x")
+
+        fake = type("M", (), {"Client": boom})
+        _install_fake_module(monkeypatch, "google", {"genai": fake})
+        assert _list_models_from_api("google-gla") is None
+
+    def test_mistral(self, monkeypatch):
+        # Build fake mistralai sub-modules the source imports.
+        class _BaseModelCard:
+            pass
+
+        class _FTModelCard:
+            pass
+
+        class _MistralModel(_BaseModelCard):
+            def __init__(self, id):
+                self.id = id
+
+        class _Response:
+            data = [_MistralModel("mistral-large"), _MistralModel("mistral-small")]
+
+        class _MistralClient:
+            def __init__(self, api_key):
+                pass
+
+            class models:
+                @staticmethod
+                def list():
+                    return _Response()
+
+        _install_fake_module(
+            monkeypatch, "mistralai.client", {"Mistral": _MistralClient}
+        )
+        _install_fake_module(
+            monkeypatch,
+            "mistralai.client.models.basemodelcard",
+            {"BaseModelCard": _BaseModelCard},
+        )
+        _install_fake_module(
+            monkeypatch,
+            "mistralai.client.models.ftmodelcard",
+            {"FTModelCard": _FTModelCard},
+        )
+        monkeypatch.setenv("MISTRAL_API_KEY", "k")
+        assert _list_models_from_api("mistral") == ["mistral-large", "mistral-small"]
+
+    def test_mistral_empty_response(self, monkeypatch):
+        class _Empty:
+            data = None
+
+        class _MistralClient:
+            def __init__(self, api_key):
+                pass
+
+            class models:
+                @staticmethod
+                def list():
+                    return _Empty()
+
+        _install_fake_module(
+            monkeypatch, "mistralai.client", {"Mistral": _MistralClient}
+        )
+        _install_fake_module(
+            monkeypatch,
+            "mistralai.client.models.basemodelcard",
+            {"BaseModelCard": object},
+        )
+        _install_fake_module(
+            monkeypatch,
+            "mistralai.client.models.ftmodelcard",
+            {"FTModelCard": object},
+        )
+        assert _list_models_from_api("mistral") is None
+
+    def test_mistral_error_returns_none(self, monkeypatch):
+        def boom(api_key):
+            raise RuntimeError("x")
+
+        _install_fake_module(monkeypatch, "mistralai.client", {"Mistral": boom})
+        _install_fake_module(
+            monkeypatch,
+            "mistralai.client.models.basemodelcard",
+            {"BaseModelCard": object},
+        )
+        _install_fake_module(
+            monkeypatch,
+            "mistralai.client.models.ftmodelcard",
+            {"FTModelCard": object},
+        )
+        assert _list_models_from_api("mistral") is None
+
+    def test_cohere(self, monkeypatch):
+        class _Model:
+            def __init__(self, name):
+                self.name = name
+
+        class _Response:
+            models = [_Model("command-r"), _Model("command-r-plus")]
+
+        class _CohereV2:
+            def __init__(self, api_key):
+                pass
+
+            class models:
+                @staticmethod
+                def list():
+                    return _Response()
+
+        _install_fake_module(monkeypatch, "cohere", {"ClientV2": _CohereV2})
+        monkeypatch.setenv("COHERE_API_KEY", "k")
+        assert _list_models_from_api("cohere") == ["command-r", "command-r-plus"]
+
+    def test_cohere_empty_response(self, monkeypatch):
+        class _Empty:
+            models = None
+
+        class _CohereV2:
+            def __init__(self, api_key):
+                pass
+
+            class models:
+                @staticmethod
+                def list():
+                    return _Empty()
+
+        _install_fake_module(monkeypatch, "cohere", {"ClientV2": _CohereV2})
+        assert _list_models_from_api("cohere") is None
+
+    def test_cohere_error_returns_none(self, monkeypatch):
+        def boom(api_key):
+            raise RuntimeError("x")
+
+        _install_fake_module(monkeypatch, "cohere", {"ClientV2": boom})
+        assert _list_models_from_api("cohere") is None
+
     def test_unknown_provider_returns_none(self):
         assert _list_models_from_api("noprovider") is None
 

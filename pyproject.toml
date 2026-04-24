@@ -66,9 +66,13 @@ dev = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = "--cov=oterm --cov-report=term-missing"
 markers = [
     "integration: requires VCR cassettes / marked opt-in",
+]
+filterwarnings = [
+    "ignore:coroutine 'Event.wait' was never awaited:RuntimeWarning",
+    "ignore:coroutine 'DirectoryTree.watch_path' was never awaited:RuntimeWarning",
+    "ignore:Image\\.Image\\.getdata is deprecated.*:DeprecationWarning:textual_image.*",
 ]
 
 [tool.coverage.run]

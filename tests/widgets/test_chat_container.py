@@ -292,6 +292,266 @@ class TestResponseTaskErrors:
             assert list(container.query(LoadingIndicator)) == []
 
 
+class TestEditChat:
+    async def test_edit_chat_updates_model_and_agent(
+        self, store, chat_model, monkeypatch
+    ):
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        from oterm.types import ChatModel
+
+        updated_json = ChatModel(
+            id=chat_id,
+            name="renamed",
+            model=chat_model.model,  # store.edit_chat doesn't update model
+            system="be terse",
+            provider="ollama",
+            parameters={"temperature": 0.2},
+            tools=[],
+            thinking=True,
+        ).model_dump_json()
+
+        app = _Host(chat_model, [])
+
+        async def fake_push_screen_wait(self, screen):
+            return updated_json
+
+        monkeypatch.setattr(type(app), "push_screen_wait", fake_push_screen_wait)
+
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.action_edit_chat()
+            for _ in range(20):
+                await pilot.pause()
+                if container.chat_model.system == "be terse":
+                    break
+            assert container.chat_model.system == "be terse"
+            assert container.chat_model.thinking is True
+            assert container.chat_model.parameters == {"temperature": 0.2}
+
+            reloaded = await store.get_chat(chat_id)
+            assert reloaded is not None
+            assert reloaded.system == "be terse"
+            assert reloaded.thinking is True
+            assert reloaded.parameters == {"temperature": 0.2}
+
+    async def test_edit_chat_cancelled_modal_is_noop(
+        self, store, chat_model, monkeypatch
+    ):
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        app = _Host(chat_model, [])
+
+        async def fake_push_screen_wait(self, screen):
+            return None
+
+        monkeypatch.setattr(type(app), "push_screen_wait", fake_push_screen_wait)
+
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            original_model = container.chat_model.model
+            container.action_edit_chat()
+            for _ in range(5):
+                await pilot.pause()
+            assert container.chat_model.model == original_model
+
+
+class TestRenameChat:
+    async def test_rename_chat_updates_store_and_notifies(
+        self, store, chat_model, monkeypatch
+    ):
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        from textual.widgets import TabbedContent, TabPane
+
+        class _Host2(App):
+            def __init__(self):
+                super().__init__()
+
+            def compose(self):
+                with TabbedContent():
+                    with TabPane("original", id=f"chat-{chat_id}"):
+                        yield ChatContainer(chat_model=chat_model, messages=[])
+
+        app = _Host2()
+
+        async def fake_push_screen_wait(self, screen):
+            return "new-name"
+
+        monkeypatch.setattr(type(app), "push_screen_wait", fake_push_screen_wait)
+
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.action_rename_chat()
+            for _ in range(20):
+                await pilot.pause()
+                reloaded = await store.get_chat(chat_id)
+                if reloaded and reloaded.name == "new-name":
+                    break
+            reloaded = await store.get_chat(chat_id)
+            assert reloaded and reloaded.name == "new-name"
+            assert any("renamed" in n.message for n in _notifications(app))
+
+    async def test_rename_chat_cancelled_is_noop(self, store, chat_model, monkeypatch):
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        chat_model.name = "unchanged"
+        await store.edit_chat(chat_model)
+
+        app = _Host(chat_model, [])
+
+        async def fake_push_screen_wait(self, screen):
+            return None
+
+        monkeypatch.setattr(type(app), "push_screen_wait", fake_push_screen_wait)
+
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.action_rename_chat()
+            for _ in range(5):
+                await pilot.pause()
+            reloaded = await store.get_chat(chat_id)
+            assert reloaded is not None
+            assert reloaded.name == "unchanged"
+
+
+class TestHistoryCallback:
+    async def test_selecting_history_entry_fills_prompt(self, store, chat_model):
+        from textual.widgets import OptionList
+
+        from oterm.app.prompt_history import PromptHistory
+        from oterm.app.widgets.prompt import FlexibleInput
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        msgs = [
+            MessageModel(chat_id=chat_id, role="user", text="previous"),
+            MessageModel(chat_id=chat_id, role="assistant", text="a"),
+        ]
+        app = _Host(chat_model, msgs)
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.action_history()
+            await pilot.pause()
+            assert isinstance(app.screen, PromptHistory)
+
+            option_list = app.screen.query_one(OptionList)
+            option_list.highlighted = 0
+            await pilot.press("enter")
+            await pilot.pause()
+
+            prompt = container.query_one(FlexibleInput)
+            assert prompt.text == "previous"
+
+    async def test_cancelling_history_leaves_prompt_unchanged(self, store, chat_model):
+        from oterm.app.widgets.prompt import FlexibleInput
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        msgs = [MessageModel(chat_id=chat_id, role="user", text="prev")]
+        app = _Host(chat_model, msgs)
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.action_history()
+            await pilot.pause()
+            await pilot.press("escape")
+            await pilot.pause()
+
+            prompt = container.query_one(FlexibleInput)
+            assert prompt.text == ""
+
+    async def test_selecting_multiline_history_switches_to_multiline(
+        self, store, chat_model
+    ):
+        from textual.widgets import OptionList
+
+        from oterm.app.widgets.prompt import FlexibleInput
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        msgs = [MessageModel(chat_id=chat_id, role="user", text="line1\nline2")]
+        app = _Host(chat_model, msgs)
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.action_history()
+            await pilot.pause()
+
+            option_list = app.screen.query_one(OptionList)
+            option_list.highlighted = 0
+            await pilot.press("enter")
+            await pilot.pause()
+
+            prompt = container.query_one(FlexibleInput)
+            assert prompt.has_class("multiline")
+
+
+class TestMCPPrompt:
+    async def test_mcp_prompt_cancelled_is_noop(self, store, chat_model, monkeypatch):
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        app = _Host(chat_model, [])
+
+        async def fake_push_screen_wait(self, screen):
+            return None
+
+        monkeypatch.setattr(type(app), "push_screen_wait", fake_push_screen_wait)
+
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.action_mcp_prompt()
+            for _ in range(5):
+                await pilot.pause()
+            assert container.messages == []
+
+    async def test_mcp_prompt_appends_messages_and_runs_last_user(
+        self, store, chat_model, monkeypatch
+    ):
+        import json as _json
+        from collections.abc import AsyncIterator
+
+        from pydantic_ai.messages import ModelMessage
+        from pydantic_ai.models.function import AgentInfo
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        payload = _json.dumps(
+            [
+                {"role": "assistant", "content": "intro"},
+                {"role": "user", "content": "ask me"},
+            ]
+        )
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            yield "sure "
+            yield "thing"
+
+        async def fake_push_screen_wait(self, screen):
+            return payload
+
+        app = _Host(chat_model, [])
+        monkeypatch.setattr(type(app), "push_screen_wait", fake_push_screen_wait)
+
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+            container.action_mcp_prompt()
+            for _ in range(50):
+                await pilot.pause()
+                if len(container.messages) >= 3:
+                    break
+            # One from the prompt (assistant), two from response_task flow
+            roles = [m.role for m in container.messages]
+            assert "assistant" in roles
+            assert "user" in roles
+
+
 class TestChatItemClickCopy:
     async def test_clicking_copies_text_to_clipboard(self, chat_model):
         app = _Host(chat_model, [])
@@ -313,3 +573,64 @@ class TestChatItemClickCopy:
             await pilot.click(markdown)
             await pilot.pause()
             assert copied == ["the answer"]
+
+
+class TestChatItemUserAndJSON:
+    async def test_user_chat_item_renders_with_static(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "user"
+            item.text = "hello"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            from textual.widgets import Static
+
+            statics = list(item.query(Static))
+            assert any(s.has_class("text") for s in statics)
+            # User items don't render a thinking label
+            assert not list(item.query(".thinking-label"))
+
+    async def test_assistant_json_text_rendered_as_code_block(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            item.text = '{"key": "value"}'
+            await pilot.pause()
+            # No assertion on Markdown internals — just that no exception raised
+            markdown = item.query_one(".response", Markdown)
+            assert markdown is not None
+
+    async def test_setting_text_on_user_item_is_noop(self, chat_model):
+        """watch_text short-circuits for user items since they render via Static."""
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "user"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            item.text = "hi"
+            await pilot.pause()
+            # No Markdown should be queried — and no exception raised.
+            assert not list(item.query(Markdown))
+
+    async def test_setting_thinking_on_user_item_is_noop(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "user"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            item.thinking = "hmm"  # should be swallowed without exception
+            await pilot.pause()

@@ -16,7 +16,7 @@ from oterm.config import appConfig
 from oterm.store.store import Store
 from oterm.tools.mcp.setup import setup_mcp_servers, teardown_mcp_servers
 from oterm.types import ChatModel
-from oterm.utils import check_ollama, is_up_to_date
+from oterm.utils import is_up_to_date
 
 
 class OTerm(App):
@@ -208,7 +208,6 @@ class OTerm(App):
 
     @work(exclusive=True)
     async def perform_checks(self) -> None:
-        await check_ollama()
         up_to_date, _, latest = await is_up_to_date()
         if not up_to_date:
             self.notify(

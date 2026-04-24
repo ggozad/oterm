@@ -103,6 +103,34 @@ async def test_argless_prompt_enables_submit_and_returns_messages(fake_prompts):
         assert messages == [{"role": "user", "content": "hi"}]
 
 
+async def test_prompt_option_widget_renders_name_and_description(fake_prompts):
+    from oterm.app.mcp_prompt import PromptOptionWidget
+
+    app = _Host()
+    async with app.run_test():
+        prompt = fake_prompts["server"][0]["prompt"]
+        widget = PromptOptionWidget("server", prompt)
+        text = str(widget.render())
+        assert "server" in text
+        assert prompt.name in text
+
+
+async def test_cancel_button_dismisses(fake_prompts):
+    from textual.widgets import Button
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        received: list[str | None] = []
+        screen = MCPPrompt()
+        app.push_screen(screen, lambda r: received.append(r))
+        await pilot.pause()
+
+        cancel_btn = next(b for b in screen.query(Button) if b.name == "cancel")
+        screen.on_button_pressed(Button.Pressed(cancel_btn))
+        await pilot.pause()
+        assert received == [None]
+
+
 async def test_required_prompt_initially_disables_submit(fake_prompts):
     app = _Host()
     async with app.run_test() as pilot:

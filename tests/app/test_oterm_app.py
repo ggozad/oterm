@@ -10,9 +10,6 @@ def stub_network(monkeypatch):
     import oterm.app.oterm as oterm_mod
     import oterm.utils as utils_mod
 
-    async def _ok():
-        return True
-
     async def _up_to_date():
         from importlib import metadata
 
@@ -24,9 +21,7 @@ def stub_network(monkeypatch):
     async def _no_mcp():
         return {}, {}
 
-    monkeypatch.setattr(utils_mod, "check_ollama", _ok)
     monkeypatch.setattr(utils_mod, "is_up_to_date", _up_to_date)
-    monkeypatch.setattr(oterm_mod, "check_ollama", _ok)
     monkeypatch.setattr(oterm_mod, "is_up_to_date", _up_to_date)
     monkeypatch.setattr(oterm_mod, "setup_mcp_servers", _no_mcp)
 
@@ -357,6 +352,265 @@ class TestQuit:
                 if not app.is_running:
                     break
             assert not app.is_running
+
+
+class TestActionDelegates:
+    """OTerm.action_* methods that just forward to ChatContainer.action_*."""
+
+    async def test_edit_chat_delegates_to_active_container(
+        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
+    ):
+        from oterm.app.oterm import OTerm
+        from oterm.app.widgets.chat import ChatContainer
+
+        app_config.set("splash-screen", False)
+        cm = ChatModel(name="c", model="m")
+        cm.id = await store.save_chat(cm)
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            called: list[bool] = []
+
+            def spy(self):
+                called.append(True)
+
+            monkeypatch.setattr(ChatContainer, "action_edit_chat", spy)
+            await app.action_edit_chat()
+            await pilot.pause()
+            assert called == [True]
+
+    async def test_rename_chat_delegates(
+        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
+    ):
+        from oterm.app.oterm import OTerm
+        from oterm.app.widgets.chat import ChatContainer
+
+        app_config.set("splash-screen", False)
+        cm = ChatModel(name="c", model="m")
+        cm.id = await store.save_chat(cm)
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            called: list[bool] = []
+
+            def spy(self):
+                called.append(True)
+
+            monkeypatch.setattr(ChatContainer, "action_rename_chat", spy)
+            await app.action_rename_chat()
+            await pilot.pause()
+            assert called == [True]
+
+    async def test_regenerate_last_message_delegates(
+        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
+    ):
+        from oterm.app.oterm import OTerm
+        from oterm.app.widgets.chat import ChatContainer
+
+        app_config.set("splash-screen", False)
+        cm = ChatModel(name="c", model="m")
+        cm.id = await store.save_chat(cm)
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            called: list[bool] = []
+
+            async def spy(self):
+                called.append(True)
+
+            monkeypatch.setattr(ChatContainer, "action_regenerate_llm_message", spy)
+            await app.action_regenerate_last_message()
+            await pilot.pause()
+            assert called == [True]
+
+    async def test_mcp_prompt_delegates(
+        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
+    ):
+        from oterm.app.oterm import OTerm
+        from oterm.app.widgets.chat import ChatContainer
+
+        app_config.set("splash-screen", False)
+        cm = ChatModel(name="c", model="m")
+        cm.id = await store.save_chat(cm)
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            called: list[bool] = []
+
+            def spy(self):
+                called.append(True)
+
+            monkeypatch.setattr(ChatContainer, "action_mcp_prompt", spy)
+            await app.action_mcp_prompt()
+            await pilot.pause()
+            assert called == [True]
+
+    async def test_action_delegates_are_noop_without_active_pane(self, fresh_app):
+        from textual.widgets import TabbedContent
+
+        app = fresh_app
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            tabs = app.query_one(TabbedContent)
+            for pane in list(tabs.query("TabPane")):
+                await tabs.remove_pane(pane.id or "")
+            await pilot.pause()
+
+            # None of these should raise.
+            await app.action_edit_chat()
+            await app.action_rename_chat()
+            await app.action_export_chat()
+            await app.action_regenerate_last_message()
+            await app.action_mcp_prompt()
+
+
+class TestPullModelNoActivePane:
+    async def test_pushes_pull_model_with_empty_default(self, fresh_app):
+        from textual.widgets import TabbedContent
+
+        from oterm.app.pull_model import PullModel
+
+        app = fresh_app
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            tabs = app.query_one(TabbedContent)
+            for pane in list(tabs.query("TabPane")):
+                await tabs.remove_pane(pane.id or "")
+            await pilot.pause()
+
+            await app.action_pull_model()
+            await pilot.pause()
+            assert isinstance(app.screen, PullModel)
+            assert app.screen.model == ""
+
+
+class TestPerformChecks:
+    async def test_outdated_version_notifies(
+        self, tmp_data_dir, app_config, stub_network, monkeypatch
+    ):
+        import oterm.app.oterm as oterm_mod
+
+        async def _outdated():
+            from packaging.version import parse
+
+            return False, parse("0.0.0"), parse("99.0.0")
+
+        monkeypatch.setattr(oterm_mod, "is_up_to_date", _outdated)
+
+        app_config.set("splash-screen", False)
+        from oterm.app.oterm import OTerm
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            # perform_checks fires as part of on_mount after splash_done
+            for _ in range(20):
+                await pilot.pause()
+                if any("available" in n.message for n in list(app._notifications)):
+                    break
+            assert any("available" in n.message for n in list(app._notifications))
+
+
+class TestTheme:
+    async def test_dark_theme_from_config(self, tmp_data_dir, app_config, stub_network):
+        app_config.set("splash-screen", False)
+        app_config.set("theme", "dark")
+        from oterm.app.oterm import OTerm
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            assert app.theme == "textual-dark"
+
+    async def test_light_theme_from_config(
+        self, tmp_data_dir, app_config, stub_network
+    ):
+        app_config.set("splash-screen", False)
+        app_config.set("theme", "light")
+        from oterm.app.oterm import OTerm
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            assert app.theme == "textual-light"
+
+    async def test_custom_named_theme_from_config(
+        self, tmp_data_dir, app_config, stub_network
+    ):
+        app_config.set("splash-screen", False)
+        app_config.set("theme", "solarized-dark")
+        from oterm.app.oterm import OTerm
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            assert app.theme == "solarized-dark"
+
+
+class TestKeymap:
+    async def test_keymap_remaps_new_chat_binding(
+        self, tmp_data_dir, app_config, stub_network, monkeypatch
+    ):
+        import oterm.app.oterm as oterm_mod
+
+        calls: list[bool] = []
+        monkeypatch.setattr(
+            oterm_mod.OTerm,
+            "action_new_chat",
+            lambda self: calls.append(True),
+        )
+
+        app_config.set("splash-screen", False)
+        app_config.set("keymap", {"new.chat": "f5"})
+
+        app = oterm_mod.OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            calls.clear()  # ignore the on_mount auto-new-chat call
+            await pilot.press("f5")
+            await pilot.pause()
+            assert calls == [True]
+
+
+class TestSplashCallback:
+    async def test_splash_dismissal_triggers_post_splash_flow(
+        self, tmp_data_dir, app_config, stub_network, monkeypatch
+    ):
+        """With splash on, on_mount defers the first-chat + perform_checks flow until splash dismisses."""
+        from textual.screen import Screen
+
+        import oterm.app.oterm as oterm_mod
+
+        class _StubSplash(Screen):
+            async def on_mount(self):
+                self.dismiss("")
+
+        monkeypatch.setattr(oterm_mod, "splash", _StubSplash())
+
+        new_chat_calls: list[bool] = []
+        monkeypatch.setattr(
+            oterm_mod.OTerm,
+            "action_new_chat",
+            lambda self: new_chat_calls.append(True),
+        )
+
+        app_config.set("splash-screen", True)
+
+        app = oterm_mod.OTerm()
+        async with app.run_test() as pilot:
+            for _ in range(30):
+                await pilot.pause()
+                if new_chat_calls:
+                    break
+            assert new_chat_calls == [True]
 
 
 class TestSystemCommands:

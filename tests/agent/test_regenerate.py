@@ -134,3 +134,35 @@ class TestRegenerateErrorRestore:
 
             assert container.messages[-1].text == "old"
             assert any("Unexpected error" in n.message for n in _notifications(app))
+
+    async def test_model_http_error_restores_state_and_notifies(
+        self, store, chat_model
+    ):
+        from pydantic_ai.exceptions import ModelHTTPError
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="q")
+        user_msg.id = await store.save_message(user_msg)
+        old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
+        old_assistant.id = await store.save_message(old_assistant)
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            raise ModelHTTPError(status_code=500, model_name="x", body="boom")
+            yield  # pragma: no cover
+
+        app = _Host(chat_model, [user_msg, old_assistant])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+
+            await container.action_regenerate_llm_message()
+            await pilot.pause()
+
+            assert container.messages[-1].text == "old"
+            assert any(
+                "error running your request" in n.message for n in _notifications(app)
+            )

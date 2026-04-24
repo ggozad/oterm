@@ -19,19 +19,6 @@ if TYPE_CHECKING:
 setattr(pydantic_ai.models, "ALLOW_MODEL_REQUESTS", False)
 logging.getLogger("vcr.cassette").setLevel(logging.WARNING)
 
-DEFAULT_MODEL = "gpt-oss"
-
-
-@pytest.fixture(scope="session")
-def default_model() -> str:
-    return DEFAULT_MODEL
-
-
-@pytest.fixture(scope="session")
-def deterministic_parameters() -> dict[str, Any]:
-    """Parameters for deterministic test responses."""
-    return {"temperature": 0.0}
-
 
 @pytest.fixture
 def allow_model_requests():

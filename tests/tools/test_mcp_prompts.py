@@ -1,7 +1,40 @@
 import pytest
-from mcp.types import Prompt, PromptMessage, TextContent
+from mcp.types import ImageContent, Prompt, PromptMessage, TextContent
 
-from oterm.tools.mcp.prompts import MCPPromptCallable, mcp_prompt_to_messages
+from oterm.tools.mcp.prompts import (
+    MCPPromptCallable,
+    available_prompt_calls,
+    available_prompt_defs,
+    mcp_prompt_to_messages,
+)
+
+
+def test_mcp_prompt_to_messages_handles_image_content():
+    messages = [
+        PromptMessage(
+            role="user", content=TextContent(type="text", text="describe this")
+        ),
+        PromptMessage(
+            role="user",
+            content=ImageContent(type="image", data="b64", mimeType="image/png"),
+        ),
+    ]
+    assert mcp_prompt_to_messages(messages) == [
+        {"role": "user", "content": "describe this"},
+        {"role": "user", "images": ["b64"]},
+    ]
+
+
+def test_available_prompt_calls_flattens_registry(monkeypatch):
+    monkeypatch.setitem(
+        available_prompt_defs, "s1", [{"prompt": "a", "callable": None}]
+    )
+    monkeypatch.setitem(
+        available_prompt_defs, "s2", [{"prompt": "b", "callable": None}]
+    )
+    flat = available_prompt_calls()
+    prompts = {call["prompt"] for call in flat}
+    assert {"a", "b"}.issubset(prompts)
 
 
 @pytest.mark.asyncio
