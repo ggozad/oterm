@@ -6,12 +6,6 @@ from pydantic import BaseModel, Field
 from pydantic_ai import Tool as PydanticTool
 
 
-class ParsedResponse(BaseModel):
-    thought: str
-    response: str
-    formatted_output: str
-
-
 class ToolDef(TypedDict):
     name: str
     description: str

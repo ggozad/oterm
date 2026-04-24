@@ -26,9 +26,15 @@ ChatItem .assistant {
 }
 
 ChatItem .text{
+    height: auto;
     margin-bottom: 1;
     max-width: 90%;
     border: round $secondary-lighten-2;
+}
+
+ChatItem .response {
+    height: auto;
+    background: transparent;
 }
 
 ChatItem .user .text {
@@ -40,6 +46,20 @@ ChatItem .user .text {
 
 ChatItem .assistant .text {
    background: $panel;
+}
+
+ChatItem .thinking-label {
+    color: $text-muted;
+    text-style: bold;
+    padding: 0 1;
+    display: none;
+}
+
+ChatItem .thinking-body {
+    height: auto;
+    background: transparent;
+    color: $text-muted;
+    display: none;
 }
 
 #prompt {

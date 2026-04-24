@@ -9,8 +9,6 @@ from pathlib import Path
 import httpx
 from packaging.version import Version, parse
 
-from oterm.types import ParsedResponse
-
 
 def debounce(wait: float) -> Callable:
     """
@@ -75,32 +73,6 @@ def throttle(interval: float) -> Callable:
         return throttled
 
     return decorator
-
-
-def parse_response(input_text: str) -> ParsedResponse:
-    """
-    Parse a response from the chatbot.
-    """
-
-    thought = ""
-    response = input_text
-    formatted_output = input_text
-
-    # If the response contains a think tag, split the response into the thought process and the actual response
-    thought_end = input_text.find("</think>")
-    if input_text.startswith("<think>") and thought_end != -1:
-        thought = input_text[7:thought_end].lstrip("\n").rstrip("\n").strip()
-        response = input_text[thought_end + 8 :].lstrip("\n").rstrip("\n")
-        # transform the think tag into a markdown blockquote (for clarity)
-        if thought.strip():
-            thought = "\n".join([f"> {line}" for line in thought.split("\n")])
-            formatted_output = (
-                "> ### <thought\\>\n" + thought + "\n> ### </thought\\>\n" + response
-            )
-
-    return ParsedResponse(
-        thought=thought, response=response, formatted_output=formatted_output
-    )
 
 
 def get_default_data_dir() -> Path:

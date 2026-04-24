@@ -44,7 +44,6 @@ from oterm.app.widgets.prompt import FlexibleInput
 from oterm.store.store import Store
 from oterm.tools import available_tools
 from oterm.types import ChatModel, MessageModel
-from oterm.utils import parse_response
 
 
 def _resolve_tools(tool_names: list[str]):
@@ -124,9 +123,8 @@ class ChatContainer(Widget):
                     ModelRequest(parts=[UserPromptPart(content=msg_model.text)])
                 )
             elif msg_model.role == "assistant":
-                parsed = parse_response(msg_model.text)
                 pydantic_messages.append(
-                    ModelResponse(parts=[TextPart(content=parsed.response)])
+                    ModelResponse(parts=[TextPart(content=msg_model.text)])
                 )
         return pydantic_messages
 
@@ -135,7 +133,7 @@ class ChatContainer(Widget):
 
     async def stream_agent(
         self, prompt: str, images: list[str] = []
-    ) -> AsyncGenerator[str, Any]:
+    ) -> AsyncGenerator[tuple[str, str], Any]:
         if self.agent is None:
             raise RuntimeError(self._agent_error or "Agent is not configured")
         user_prompt: str | list[str | BinaryContent]
@@ -178,10 +176,7 @@ class ChatContainer(Widget):
                                     thinking += event.delta.content_delta or ""
                                 elif isinstance(event.delta, TextPartDelta):
                                     text += event.delta.content_delta or ""
-                                if thinking:
-                                    yield f"<think>{thinking}</think>{text}"
-                                else:
-                                    yield text
+                                yield thinking, text
             if run.result is not None:
                 self.pydantic_history = list(run.result.all_messages())
 
@@ -193,12 +188,8 @@ class ChatContainer(Widget):
         self.loading = True
         for message in self.messages:
             chat_item = ChatItem()
-            chat_item.text = (
-                message.text
-                if message.role == "user"
-                else parse_response(message.text).formatted_output
-            )
             chat_item.author = message.role
+            chat_item.text = message.text
             await message_container.mount(chat_item)
         self.loading = False
         self.loaded = True
@@ -224,15 +215,14 @@ class ChatContainer(Widget):
         message_container.scroll_end()
 
         try:
-            response = ""
+            thinking = ""
+            text = ""
 
-            async for response in self.stream_agent(
+            async for thinking, text in self.stream_agent(
                 message, [img for _, img in self.images]
             ):
-                response_chat_item.text = parse_response(response).formatted_output
-
-            parsed = parse_response(response)
-            response_chat_item.text = parsed.formatted_output
+                response_chat_item.thinking = thinking
+                response_chat_item.text = text
 
             if message_container.can_view_partial(response_chat_item):
                 message_container.scroll_end()
@@ -254,7 +244,7 @@ class ChatContainer(Widget):
                 id=None,
                 chat_id=self.chat_model.id,  # type: ignore
                 role="assistant",
-                text=parsed.response,
+                text=text,
                 images=[],
             )
             id = await store.save_message(assistant_message)
@@ -373,16 +363,18 @@ class ChatContainer(Widget):
 
         async def response_task() -> None:
             try:
-                response = ""
-                async for response in self.stream_agent(
+                thinking = ""
+                text = ""
+                async for thinking, text in self.stream_agent(
                     message.text,
                     images=message.images,
                 ):
-                    response_chat_item.text = parse_response(response).formatted_output
+                    response_chat_item.thinking = thinking
+                    response_chat_item.text = text
                     if message_container.can_view_partial(response_chat_item):
                         message_container.scroll_end()
 
-                if not response:
+                if not text:
                     restore_state()
                     self.app.notify("No response received", severity="error")
                     return
@@ -392,7 +384,7 @@ class ChatContainer(Widget):
                     id=response_message_id,
                     chat_id=self.chat_model.id,  # type: ignore
                     role="assistant",
-                    text=response,
+                    text=text,
                     images=[],
                 )
                 await store.save_message(regenerated_message)
@@ -480,6 +472,7 @@ class ChatContainer(Widget):
 
 class ChatItem(Widget):
     text: reactive[str] = reactive("")
+    thinking: reactive[str] = reactive("")
     author: reactive[str] = reactive("")
 
     @on(Click)
@@ -501,8 +494,21 @@ class ChatItem(Widget):
         except json.JSONDecodeError:
             pass
 
-        txt_widget = self.query_one(".text", Markdown)
+        txt_widget = self.query_one(".response", Markdown)
         await txt_widget.update(text)
+
+    async def watch_thinking(self, thinking: str) -> None:
+        if self.author == "user":
+            return
+        try:
+            label = self.query_one(".thinking-label")
+            body = self.query_one(".thinking-body", Markdown)
+        except Exception:
+            return
+        has_thinking = bool(thinking)
+        label.display = has_thinking
+        body.display = has_thinking
+        await body.update(thinking)
 
     def compose(self) -> ComposeResult:
         """A chat item."""
@@ -511,7 +517,7 @@ class ChatItem(Widget):
             if self.author == "user":
                 yield Static(self.text, markup=False, classes="text")
             else:
-                mrk_down = Markdown(
-                    classes="text",
-                )
-                yield mrk_down
+                with Vertical(classes="text"):
+                    yield Static("🤔 thinking", classes="thinking-label")
+                    yield Markdown(classes="thinking-body")
+                    yield Markdown(classes="response")

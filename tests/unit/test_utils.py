@@ -7,41 +7,9 @@ from oterm.utils import (
     debounce,
     get_default_data_dir,
     int_to_semantic_version,
-    parse_response,
     semantic_version_to_int,
     throttle,
 )
-
-
-class TestParseResponse:
-    def test_no_think_tag(self):
-        parsed = parse_response("plain text")
-        assert parsed.thought == ""
-        assert parsed.response == "plain text"
-        assert parsed.formatted_output == "plain text"
-
-    def test_empty_think_tag(self):
-        parsed = parse_response("<think></think>reply")
-        assert parsed.thought == ""
-        assert parsed.response == "reply"
-        assert parsed.formatted_output == "<think></think>reply"
-
-    def test_think_tag_formats_blockquote(self):
-        parsed = parse_response("<think>because</think>answer")
-        assert parsed.thought == "> because"
-        assert parsed.response == "answer"
-        assert "<thought" in parsed.formatted_output
-        assert "> because" in parsed.formatted_output
-        assert parsed.formatted_output.endswith("answer")
-
-    def test_multiline_think_blockquotes_each_line(self):
-        parsed = parse_response("<think>a\nb\nc</think>answer")
-        assert parsed.thought == "> a\n> b\n> c"
-
-    def test_malformed_think_without_close_is_passthrough(self):
-        parsed = parse_response("<think>unclosed")
-        assert parsed.thought == ""
-        assert parsed.response == "<think>unclosed"
 
 
 class TestSemanticVersion:

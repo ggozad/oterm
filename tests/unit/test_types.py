@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from oterm.types import ChatModel, MessageModel, ParsedResponse
+from oterm.types import ChatModel, MessageModel
 
 
 def test_chat_model_defaults():
@@ -48,10 +48,3 @@ def test_message_model_roundtrip():
     assert dumped["role"] == "assistant"
     assert dumped["images"] == ["b64data"]
     assert MessageModel(**dumped) == msg
-
-
-def test_parsed_response_fields():
-    p = ParsedResponse(thought="t", response="r", formatted_output="f")
-    assert p.thought == "t"
-    assert p.response == "r"
-    assert p.formatted_output == "f"
