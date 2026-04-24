@@ -325,7 +325,7 @@ class ChatContainer(Widget):
         if len(self.messages) < 2:
             return
         response_message_id = self.messages[-1].id
-        self.messages.pop()
+        popped_message = self.messages.pop()
         message_container = self.query_one("#messageContainer")
         message_container.children[-1].remove()
         response_chat_item = ChatItem()
@@ -336,34 +336,57 @@ class ChatContainer(Widget):
         message_container.scroll_end()
 
         # Remove the last request+response pair from pydantic history
+        popped_history = self.pydantic_history[-2:]
         if len(self.pydantic_history) >= 2:
             self.pydantic_history = self.pydantic_history[:-2]
         message = self.messages[-1]
 
+        def restore_state() -> None:
+            self.messages.append(popped_message)
+            self.pydantic_history = self.pydantic_history + popped_history
+            response_chat_item.remove()
+
         async def response_task() -> None:
-            response = ""
-            async for response in self.stream_agent(
-                message.text,
-                images=message.images,
-            ):
-                response_chat_item.text = parse_response(response).formatted_output
-                if message_container.can_view_partial(response_chat_item):
-                    message_container.scroll_end()
+            try:
+                response = ""
+                async for response in self.stream_agent(
+                    message.text,
+                    images=message.images,
+                ):
+                    response_chat_item.text = parse_response(response).formatted_output
+                    if message_container.can_view_partial(response_chat_item):
+                        message_container.scroll_end()
 
-            store = await Store.get_store()
+                if not response:
+                    restore_state()
+                    self.app.notify("No response received", severity="error")
+                    return
 
-            regenerated_message = MessageModel(
-                id=response_message_id,
-                chat_id=self.chat_model.id,  # type: ignore
-                role="assistant",
-                text=response,
-                images=[],
-            )
-            await store.save_message(regenerated_message)
-            regenerated_message.id = response_message_id
-            self.messages.append(regenerated_message)
-            self.images = []
-            loading.remove()
+                store = await Store.get_store()
+                regenerated_message = MessageModel(
+                    id=response_message_id,
+                    chat_id=self.chat_model.id,  # type: ignore
+                    role="assistant",
+                    text=response,
+                    images=[],
+                )
+                await store.save_message(regenerated_message)
+                regenerated_message.id = response_message_id
+                self.messages.append(regenerated_message)
+                self.images = []
+
+            except asyncio.CancelledError:
+                restore_state()
+            except ModelHTTPError as e:
+                restore_state()
+                self.app.notify(
+                    f"There was an error running your request: {e}", severity="error"
+                )
+            except Exception as e:
+                restore_state()
+                self.app.notify(f"Unexpected error: {e}", severity="error")
+            finally:
+                loading.remove()
 
         asyncio.create_task(response_task())
 
