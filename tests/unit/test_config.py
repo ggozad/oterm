@@ -6,7 +6,6 @@ from oterm.config import AppConfig, EnvConfig
 class TestEnvConfig:
     def test_defaults(self):
         cfg = EnvConfig.model_validate({})
-        assert cfg.ENV == "development"
         assert cfg.OLLAMA_HOST == "127.0.0.1:11434"
         assert cfg.OLLAMA_URL == ""
         assert cfg.OTERM_VERIFY_SSL is True
@@ -14,14 +13,12 @@ class TestEnvConfig:
     def test_env_overrides(self, tmp_path):
         cfg = EnvConfig.model_validate(
             {
-                "ENV": "production",
                 "OLLAMA_HOST": "example.com:1234",
                 "OLLAMA_URL": "https://example.com",
                 "OTERM_VERIFY_SSL": "false",
                 "OTERM_DATA_DIR": str(tmp_path),
             }
         )
-        assert cfg.ENV == "production"
         assert cfg.OLLAMA_HOST == "example.com:1234"
         assert cfg.OLLAMA_URL == "https://example.com"
         assert cfg.OTERM_VERIFY_SSL is False

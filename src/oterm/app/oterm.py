@@ -69,12 +69,12 @@ class OTerm(App):
         )
         yield SystemCommand(
             "Use MCP prompt",
-            "Create and copy to clipboard an MCP prompt.",
+            "Run an MCP prompt and insert its messages into the chat.",
             self.action_mcp_prompt,
         )
         yield SystemCommand(
             "Pull model",
-            "Pulls (or updates) the model from the Ollama server",
+            "Pulls (or updates) an Ollama model.",
             self.action_pull_model,
         )
         yield SystemCommand(
@@ -229,7 +229,6 @@ class OTerm(App):
                 self.theme = "textual-light"
             else:
                 self.theme = theme
-        self.dark = appConfig.get("theme") == "dark"
         self.watch(self.app, "theme", self.on_theme_change, init=False)
 
         saved_chats = await store.get_chats()

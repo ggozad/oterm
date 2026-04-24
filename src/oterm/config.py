@@ -11,12 +11,10 @@ load_dotenv()
 
 
 class EnvConfig(BaseModel):
-    ENV: str = "development"
     OLLAMA_HOST: str = "127.0.0.1:11434"
     OLLAMA_URL: str = ""
     OTERM_VERIFY_SSL: bool = True
     OTERM_DATA_DIR: Path = get_default_data_dir()
-    OPEN_WEATHER_MAP_API_KEY: str = ""
 
 
 envConfig = EnvConfig.model_validate(os.environ)

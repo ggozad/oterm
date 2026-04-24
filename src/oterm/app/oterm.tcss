@@ -224,14 +224,6 @@ LoadingIndicator {
     color: $secondary;
 }
 
-Label.keep-alive-label {
-    margin-top: 1;
-}
-
-.format {
-    margin-bottom: 1;
-}
-
 #chat-edit-screen {
     height: 100%;
 }
@@ -345,10 +337,6 @@ MarkdownFence {
 
 Button.icon {
     min-width: 5;
-}
-
-Input.keep-alive {
-    width: 10;
 }
 
 #app-root {
