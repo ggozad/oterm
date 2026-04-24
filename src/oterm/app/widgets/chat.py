@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import binascii
 import json
 from collections.abc import AsyncGenerator
 from pathlib import Path
@@ -133,10 +134,19 @@ class ChatContainer(Widget):
         user_prompt: str | list[str | BinaryContent]
         if images:
             user_prompt = [prompt]
+            skipped = 0
             for img_base64 in images:
-                img_bytes = base64.b64decode(img_base64)
+                try:
+                    img_bytes = base64.b64decode(img_base64, validate=True)
+                except (binascii.Error, ValueError):
+                    skipped += 1
+                    continue
                 user_prompt.append(
                     BinaryContent(data=img_bytes, media_type="image/png")  # type: ignore[reportCallIssue]
+                )
+            if skipped:
+                self.app.notify(
+                    f"Skipped {skipped} malformed image(s)", severity="warning"
                 )
         else:
             user_prompt = prompt
