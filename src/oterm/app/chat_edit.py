@@ -16,7 +16,6 @@ from textual.widgets import Button, Checkbox, Input, Label, Select, TextArea
 from oterm.app.widgets.caps import Capabilities
 from oterm.app.widgets.model_select import ModelSelect
 from oterm.app.widgets.tool_select import ToolSelector
-from oterm.ollamaclient import parse_ollama_parameters
 from oterm.providers import (
     get_available_providers,
     get_provider_name,
@@ -206,7 +205,7 @@ class ChatEdit(ModalScreen[str]):
 
             self.model_info = meta
             if not self.edit_mode:
-                self.parameters = parse_ollama_parameters(
+                self.parameters = ollama.parse_ollama_parameters(
                     self.model_info.parameters or ""
                 )
             self._populate_parameter_inputs(self.parameters)

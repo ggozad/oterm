@@ -1,8 +1,8 @@
 import pytest
 from ollama import ResponseError
 
-from oterm.ollamaclient import parse_ollama_parameters
 from oterm.providers import ollama
+from oterm.providers.ollama import parse_ollama_parameters
 
 
 def test_list():
