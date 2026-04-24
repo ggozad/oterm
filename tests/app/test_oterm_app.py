@@ -100,11 +100,11 @@ class TestCycleChat:
             tabs.active = f"chat-{ids[0]}"
             await pilot.pause()
 
-            await app.action_cycle_chat(1)
+            app.action_cycle_chat(1)
             await pilot.pause()
             assert tabs.active == f"chat-{ids[1]}"
 
-            await app.action_cycle_chat(-1)
+            app.action_cycle_chat(-1)
             await pilot.pause()
             assert tabs.active == f"chat-{ids[0]}"
 
@@ -120,7 +120,7 @@ class TestCycleChat:
             assert tabs.active_pane is None
 
             # Should return silently with no exception
-            await app.action_cycle_chat(1)
+            app.action_cycle_chat(1)
 
 
 class TestDeleteChat:

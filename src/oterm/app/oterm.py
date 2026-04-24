@@ -24,8 +24,16 @@ class OTerm(App):
     SUB_TITLE = "the terminal LLM client."
     CSS_PATH = "oterm.tcss"
     BINDINGS = [
-        Binding("ctrl+tab", "cycle_chat(+1)", "next chat", id="next.chat"),
-        Binding("ctrl+shift+tab", "cycle_chat(-1)", "prev chat", id="prev.chat"),
+        Binding(
+            "ctrl+tab", "cycle_chat(+1)", "next chat", id="next.chat", priority=True
+        ),
+        Binding(
+            "ctrl+shift+tab",
+            "cycle_chat(-1)",
+            "prev chat",
+            id="prev.chat",
+            priority=True,
+        ),
         Binding("ctrl+backspace", "delete_chat", "delete chat", id="delete.chat"),
         Binding("ctrl+n", "new_chat", "new chat", id="new.chat"),
         Binding("ctrl+l", "show_logs", "show logs", id="show.logs"),
@@ -78,20 +86,15 @@ class OTerm(App):
         await teardown_mcp_servers()
         return self.exit()
 
-    async def action_cycle_chat(self, change: int) -> None:
+    def action_cycle_chat(self, change: int) -> None:
         tabs = self.query_one(TabbedContent)
-        store = await Store.get_store()
-        saved_chats = await store.get_chats()
         if tabs.active_pane is None:
             return
-        active_id = int(str(tabs.active_pane.id).split("-")[1])
-        for chat_model in saved_chats:
-            if chat_model.id == active_id:
-                next_index = (saved_chats.index(chat_model) + change) % len(saved_chats)
-                next_id = saved_chats[next_index].id
-                if next_id is not None:
-                    tabs.active = f"chat-{next_id}"
-                break
+        pane_ids = [pane.id or "" for pane in tabs.query(TabPane)]
+        if tabs.active not in pane_ids:
+            return
+        idx = pane_ids.index(tabs.active)
+        tabs.active = pane_ids[(idx + change) % len(pane_ids)]
 
     @work
     async def action_new_chat(self) -> None:
