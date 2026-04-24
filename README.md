@@ -2,6 +2,10 @@
 
 the terminal client for [Ollama](https://github.com/ollama/ollama).
 
+> 🚀 **oterm is going multi-provider!**
+> A big refactor is on the way that adds support for OpenAI, Anthropic, Google, Mistral, Cohere, Groq, and any OpenAI-compatible endpoint (vLLM, LM Studio, OpenRouter, …) alongside Ollama.
+> **[Read the announcement and help test it →](https://github.com/ggozad/oterm/discussions/291)**
+
 ## Features
 
 * intuitive and simple terminal UI, no need to run servers, frontends, just type `oterm` in your terminal.
