@@ -52,12 +52,39 @@ dev = [
     "pdbpp",
     "pytest>=9.0.2",
     "pytest-asyncio>=0.25.3",
+    "pytest-cov>=5",
     "pytest-recording>=0.13.4",
+    "pytest-textual-snapshot>=1",
+    "pytest-xdist>=3",
     "textual-dev>=1.7.0",
     "homebrew-pypi-poet>=0.10.0",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.18",
     "pre-commit>=4.3.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "--cov=oterm --cov-report=term-missing"
+markers = [
+    "integration: requires VCR cassettes / marked opt-in",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["src/oterm"]
+omit = [
+    "src/oterm/cli/oterm.py",
+    "src/oterm/log.py",
+    "src/oterm/app/themes/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
 ]
 
 [tool.uv]

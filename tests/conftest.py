@@ -5,7 +5,6 @@ from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-import ollama
 import pydantic_ai.models
 import pytest
 import pytest_asyncio
@@ -21,15 +20,6 @@ setattr(pydantic_ai.models, "ALLOW_MODEL_REQUESTS", False)
 logging.getLogger("vcr.cassette").setLevel(logging.WARNING)
 
 DEFAULT_MODEL = "gpt-oss"
-
-
-@pytest_asyncio.fixture(autouse=True)
-async def load_test_models():
-    try:
-        ollama.show(DEFAULT_MODEL)
-    except ollama.ResponseError:
-        ollama.pull(DEFAULT_MODEL)
-    yield
 
 
 @pytest.fixture(scope="session")
