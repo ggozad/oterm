@@ -33,8 +33,16 @@ PROVIDER_NAMES: dict[str, str] = {
 }
 
 
+UNRESOLVED_API_KEY = "unresolved-api-key"
+"""Placeholder sent to OpenAI-compatible endpoints when no key is configured.
+
+Passed instead of ``None`` to prevent ``openai.AsyncOpenAI`` from falling back
+to the ``OPENAI_API_KEY`` environment variable, which would leak it to a
+different endpoint (e.g. a local vLLM or OpenRouter)."""
+
+
 def _resolve_api_key(api_key: str | None) -> str | None:
-    """Resolve an API key, expanding $ENV_VAR references."""
+    """Resolve an API key, expanding $ENV_VAR references. None if unresolved."""
     if api_key is None:
         return None
     if api_key.startswith("$"):
@@ -151,7 +159,7 @@ def _list_models_from_api(provider: str) -> list[str] | None:
         if not config:
             return None
         base_url = config["base_url"]
-        api_key = _resolve_api_key(config.get("api_key")) or "not-needed"
+        api_key = _resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
         try:
             from openai import OpenAI
 

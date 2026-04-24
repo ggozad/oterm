@@ -1,4 +1,5 @@
 from oterm.providers import (
+    UNRESOLVED_API_KEY,
     _resolve_api_key,
     get_available_providers,
     get_openai_compatible_providers,
@@ -73,3 +74,35 @@ def test_openai_compat_not_listed_when_empty(monkeypatch):
 def test_provider_name_for_openai_compat():
     assert get_provider_name("openai-compat/lmstudio") == "lmstudio"
     assert get_provider_name("openai-compat/my-vllm") == "my-vllm"
+
+
+def test_unresolved_api_key_does_not_leak_openai_key(monkeypatch):
+    """Ensure we never let the OpenAI client fall back to OPENAI_API_KEY.
+
+    A user configuring `api_key: "$MISSING_VAR"` for a local endpoint, or
+    omitting `api_key` entirely, must not cause their OPENAI_API_KEY to be
+    sent to that endpoint.
+    """
+    from oterm.agent import get_agent
+    from oterm.config import appConfig
+
+    monkeypatch.setattr(
+        appConfig,
+        "_data",
+        {
+            "openaiCompatible": {
+                "local": {
+                    "base_url": "http://localhost:1234/v1",
+                    "api_key": "$NONEXISTENT_VAR",
+                },
+            }
+        },
+    )
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-real-openai-key")
+    monkeypatch.delenv("NONEXISTENT_VAR", raising=False)
+
+    agent = get_agent(provider="openai-compat/local", model="some-model")
+    model = agent.model
+    openai_client = model.client  # ty: ignore[unresolved-attribute]
+    assert openai_client.api_key == UNRESOLVED_API_KEY
+    assert openai_client.api_key != "sk-real-openai-key"

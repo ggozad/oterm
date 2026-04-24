@@ -54,16 +54,21 @@ def get_agent(
             provider=OllamaProvider(base_url=f"{envConfig.OLLAMA_URL}/v1"),
         )
     elif provider.startswith("openai-compat/"):
-        from oterm.providers import _resolve_api_key, get_openai_compatible_providers
+        from oterm.providers import (
+            UNRESOLVED_API_KEY,
+            _resolve_api_key,
+            get_openai_compatible_providers,
+        )
 
         endpoint_name = provider.removeprefix("openai-compat/")
         configs = get_openai_compatible_providers()
         config = configs.get(endpoint_name, {})
+        api_key = _resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
         pydantic_model = OpenAIChatModel(
             model_name=model,
             provider=OpenAIProvider(
                 base_url=config.get("base_url", ""),
-                api_key=_resolve_api_key(config.get("api_key")),
+                api_key=api_key,
             ),
         )
     else:
