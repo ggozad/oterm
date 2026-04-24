@@ -84,18 +84,27 @@ class ChatContainer(Widget):
             messages
         )
 
-        tools = _resolve_tools(chat_model.tools)
-        self.agent = get_agent(
-            provider=chat_model.provider,
-            model=chat_model.model,
-            system=chat_model.system,
-            tools=tools,
-            parameters=chat_model.parameters,
-            thinking=chat_model.thinking,
-        )
+        self._rebuild_agent()
         self.loaded = False
         self.loading = False
         self.images = []
+
+    def _rebuild_agent(self) -> None:
+        """(Re)build the agent for the current chat_model. Defers errors to send time."""
+        tools = _resolve_tools(self.chat_model.tools)
+        try:
+            self.agent = get_agent(
+                provider=self.chat_model.provider,
+                model=self.chat_model.model,
+                system=self.chat_model.system,
+                tools=tools,
+                parameters=self.chat_model.parameters,
+                thinking=self.chat_model.thinking,
+            )
+            self._agent_error: str | None = None
+        except Exception as e:
+            self.agent = None  # type: ignore[assignment]
+            self._agent_error = str(e)
 
     def _build_pydantic_history(
         self, messages: list[MessageModel]
@@ -119,6 +128,8 @@ class ChatContainer(Widget):
     async def stream_agent(
         self, prompt: str, images: list[str] = []
     ) -> AsyncGenerator[str, Any]:
+        if self.agent is None:
+            raise RuntimeError(self._agent_error or "Agent is not configured")
         user_prompt: str | list[str | BinaryContent]
         if images:
             user_prompt = [prompt]
@@ -177,6 +188,11 @@ class ChatContainer(Widget):
         message_container.scroll_end()
 
     async def response_task(self, message: str) -> None:
+        if self.agent is None:
+            self.app.notify(
+                f"Cannot send message: {self._agent_error}", severity="error"
+            )
+            return
         message_container = self.query_one("#messageContainer")
 
         user_chat_item = ChatItem()
@@ -284,15 +300,7 @@ class ChatContainer(Widget):
         self.model = self.chat_model.model
         self.system = self.chat_model.system
 
-        tools = _resolve_tools(self.chat_model.tools)
-        self.agent = get_agent(
-            provider=self.chat_model.provider,
-            model=self.chat_model.model,
-            system=self.chat_model.system,
-            tools=tools,
-            parameters=self.chat_model.parameters,
-            thinking=self.chat_model.thinking,
-        )
+        self._rebuild_agent()
 
     @work
     async def action_rename_chat(self) -> None:
@@ -311,15 +319,7 @@ class ChatContainer(Widget):
         self.images = []
         self.pydantic_history = []
 
-        tools = _resolve_tools(self.chat_model.tools)
-        self.agent = get_agent(
-            provider=self.chat_model.provider,
-            model=self.model,
-            system=self.system,
-            tools=tools,
-            parameters=self.chat_model.parameters,
-            thinking=self.chat_model.thinking,
-        )
+        self._rebuild_agent()
         msg_container = self.query_one("#messageContainer")
         for child in msg_container.children:
             child.remove()
@@ -327,6 +327,9 @@ class ChatContainer(Widget):
         await store.clear_chat(self.chat_model.id)  # type: ignore
 
     async def action_regenerate_llm_message(self) -> None:
+        if self.agent is None:
+            self.app.notify(f"Cannot regenerate: {self._agent_error}", severity="error")
+            return
         if len(self.messages) < 2:
             return
         response_message_id = self.messages[-1].id

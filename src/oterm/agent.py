@@ -45,13 +45,17 @@ def get_agent(
         )
 
         endpoint_name = provider.removeprefix("openai-compat/")
-        configs = get_openai_compatible_providers()
-        config = configs.get(endpoint_name, {})
+        config = get_openai_compatible_providers().get(endpoint_name)
+        if config is None:
+            raise ValueError(
+                f"OpenAI-compatible endpoint {endpoint_name!r} is not configured. "
+                f"Add it to the `openaiCompatible` section of your config.json."
+            )
         api_key = _resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
         pydantic_model = OpenAIChatModel(
             model_name=model,
             provider=OpenAIProvider(
-                base_url=config.get("base_url", ""),
+                base_url=config["base_url"],
                 api_key=api_key,
             ),
         )

@@ -76,6 +76,18 @@ def test_provider_name_for_openai_compat():
     assert get_provider_name("openai-compat/my-vllm") == "my-vllm"
 
 
+def test_missing_endpoint_raises_clear_error(monkeypatch):
+    """get_agent must raise a clear error if the endpoint isn't configured."""
+    import pytest
+
+    from oterm.agent import get_agent
+    from oterm.config import appConfig
+
+    monkeypatch.setattr(appConfig, "_data", {})
+    with pytest.raises(ValueError, match="not configured"):
+        get_agent(provider="openai-compat/gone", model="some-model")
+
+
 def test_unresolved_api_key_does_not_leak_openai_key(monkeypatch):
     """Ensure we never let the OpenAI client fall back to OPENAI_API_KEY.
 
