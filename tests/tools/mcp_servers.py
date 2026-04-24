@@ -1,6 +1,5 @@
 from mcp import SamplingMessage
 from mcp.server.fastmcp import Context, FastMCP
-from mcp.server.fastmcp.prompts.base import AssistantMessage, Message, UserMessage
 from mcp.types import ModelHint, ModelPreferences, TextContent
 
 mcp = FastMCP("TestServer", port=8080)
@@ -38,19 +37,6 @@ async def puzzle_solver(puzzle_description: str, ctx: Context) -> str:
         max_tokens=100,
     )
     return sampling_response.content.text
-
-
-@mcp.prompt(name="oracle_prompt", description="Prompt to ask the oracle a question.")
-async def oracle_prompt(question: str) -> str:
-    return f"Oracle: {question}"
-
-
-@mcp.prompt(name="debug_error", description="Prompt to debug an error.")
-async def debug_error(error: str, language: str = "python") -> list[Message]:
-    return [
-        UserMessage(f"I'm seeing this {language} error: {error}"),
-        AssistantMessage("I'll help debug that. What have you tried so far?"),
-    ]
 
 
 if __name__ == "__main__":

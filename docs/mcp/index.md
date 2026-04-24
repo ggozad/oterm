@@ -17,12 +17,6 @@ By transforming [MCP tools](https://modelcontextprotocol.io/docs/concepts/tools)
 ![Tool support](../img/mcp_tools.svg)
 oterm using the `git` MCP server to access its own repo.
 
-#### Prompts
-`oterm` supports [MCP prompts](https://modelcontextprotocol.io/docs/concepts/prompts). Use the "Use MCP prompt" command to invoke a form with the prompt. Submitting will insert the prompt messages into the chat.
-
-![Prompt support](../img/mcp_prompts.svg)
-oterm displaying a test MCP prompt.
-
 #### Sampling
 `oterm` supports [MCP sampling](https://modelcontextprotocol.io/docs/concepts/sampling), acting as a geteway between Ollama and the servers it connects to. This way, an MCP server can request `oterm` to run a *completion* and even declare its model preferences and parameters!
 

@@ -67,11 +67,6 @@ class OTerm(App):
             self.action_regenerate_last_message,
         )
         yield SystemCommand(
-            "Use MCP prompt",
-            "Run an MCP prompt and insert its messages into the chat.",
-            self.action_mcp_prompt,
-        )
-        yield SystemCommand(
             "Show logs", "Shows the logs of the app", self.action_show_logs
         )
 
@@ -170,13 +165,6 @@ class OTerm(App):
         chat = tabs.active_pane.query_one(ChatContainer)
         await chat.action_regenerate_llm_message()
 
-    async def action_mcp_prompt(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
-            return
-        chat = tabs.active_pane.query_one(ChatContainer)
-        chat.action_mcp_prompt()
-
     async def action_show_logs(self) -> None:
         from oterm.app.log_viewer import LogViewer
 
@@ -185,14 +173,12 @@ class OTerm(App):
 
     async def load_tools(self):
         from oterm.tools import available_tool_defs, discover_tools
-        from oterm.tools.mcp.prompts import available_prompt_defs
 
         entry_point_tools = discover_tools()
         if entry_point_tools:
             available_tool_defs["oterm"] = entry_point_tools
-        mcp_tool_defs, mcp_prompt_calls = await setup_mcp_servers()
+        mcp_tool_defs = await setup_mcp_servers()
         available_tool_defs.update(mcp_tool_defs)
-        available_prompt_defs.update(mcp_prompt_calls)
 
     @work(exclusive=True)
     async def perform_checks(self) -> None:

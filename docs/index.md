@@ -6,7 +6,7 @@ the terminal client for [Ollama](https://github.com/ollama/ollama).
 
 * intuitive and simple terminal UI, no need to run servers, frontends, just type `oterm` in your terminal.
 * multiple persistent chat sessions, stored together with system prompt & parameter customizations in sqlite.
-* support for Model Context Protocol (MCP) tools & prompts integration.
+* support for Model Context Protocol (MCP) tools and sampling.
 * can use any of the models you have pulled in Ollama, or your own custom models.
 * allows for easy customization of the model's system prompt and parameters.
 * supports tools integration for providing external information to the model.

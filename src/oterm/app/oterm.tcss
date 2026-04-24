@@ -135,10 +135,6 @@ LoadingIndicator {
     margin-bottom: 1;
 }
 
-.subtitle {
-    color: $secondary
-}
-
 .screen-container .button-container {
     height: 3;
 }
@@ -299,22 +295,6 @@ LoadingIndicator {
 #image-select-container Input {
     margin: 1;
     padding: 0;
-}
-
-#prompt-form-container {
-    height: 100%;
-}
-
-#prompt-form-container .title, .subtitle {
-    margin-top: 1;
-    margin-bottom: 1;
-}
-
-#prompt-result {
-    height: auto;
-    padding: 1;
-    margin-top: 1;
-    margin-bottom: 1;
 }
 
 TabbedContent {

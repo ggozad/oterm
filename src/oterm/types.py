@@ -1,7 +1,5 @@
-from collections.abc import Awaitable, Callable
 from typing import Any, Literal, TypedDict
 
-from mcp.types import Prompt
 from pydantic import BaseModel, Field
 from pydantic_ai import Tool as PydanticTool
 
@@ -10,11 +8,6 @@ class ToolDef(TypedDict):
     name: str
     description: str
     tool: PydanticTool
-
-
-class PromptCall(TypedDict):
-    prompt: Prompt
-    callable: Callable | Awaitable
 
 
 class ChatModel(BaseModel):

@@ -80,24 +80,6 @@ class TestCallToolAndPrompt:
         messages = [msg for _, msg in oterm.log.log_lines[before:]]
         assert any("Error executing tool" in m for m in messages)
 
-    async def test_call_prompt(self, mcp_client):
-        from mcp.types import TextContent
-
-        messages = await mcp_client.call_prompt("oracle_prompt", {"question": "What?"})
-        assert len(messages) == 1
-        content = messages[0].content
-        assert isinstance(content, TextContent)
-        assert content.text == "Oracle: What?"
-
-    async def test_call_prompt_unknown_returns_empty(self, mcp_client):
-        import oterm.log
-
-        before = len(oterm.log.log_lines)
-        result = await mcp_client.call_prompt("ghost", {})
-        assert result == []
-        messages = [msg for _, msg in oterm.log.log_lines[before:]]
-        assert any("Error getting prompt" in m for m in messages)
-
     async def test_teardown_on_uninitialised_client_raises(self, mcp_server_config):
         client = MCPClient("stdio", mcp_server_config["stdio"])
         with pytest.raises(RuntimeError, match="Client is already closed"):
@@ -110,17 +92,7 @@ class TestNotInitialisedErrors:
         with pytest.raises(RuntimeError, match="Client is not initialized"):
             await client.get_available_tools()
 
-    async def test_get_prompts_before_init_raises(self, mcp_server_config):
-        client = MCPClient("stdio", mcp_server_config["stdio"])
-        with pytest.raises(RuntimeError, match="not initialized"):
-            await client.get_available_prompts()
-
     async def test_call_tool_before_init_raises(self, mcp_server_config):
         client = MCPClient("stdio", mcp_server_config["stdio"])
         with pytest.raises(RuntimeError, match="not initialized"):
             await client.call_tool("x", {})
-
-    async def test_call_prompt_before_init_raises(self, mcp_server_config):
-        client = MCPClient("stdio", mcp_server_config["stdio"])
-        with pytest.raises(RuntimeError, match="not initialized"):
-            await client.call_prompt("x", {})

@@ -19,7 +19,7 @@ def stub_network(monkeypatch):
         return True, v, v
 
     async def _no_mcp():
-        return {}, {}
+        return {}
 
     monkeypatch.setattr(utils_mod, "is_up_to_date", _up_to_date)
     monkeypatch.setattr(oterm_mod, "is_up_to_date", _up_to_date)
@@ -237,7 +237,7 @@ class TestLoadTools:
 
         async def fake_mcp_setup():
             called.append(("mcp",))
-            return {}, {}
+            return {}
 
         import oterm.tools as tools_mod
 
@@ -408,30 +408,6 @@ class TestActionDelegates:
             await pilot.pause()
             assert called == [True]
 
-    async def test_mcp_prompt_delegates(
-        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
-    ):
-        from oterm.app.oterm import OTerm
-        from oterm.app.widgets.chat import ChatContainer
-
-        app_config.set("splash-screen", False)
-        cm = ChatModel(name="c", model="m")
-        cm.id = await store.save_chat(cm)
-
-        app = OTerm()
-        async with app.run_test() as pilot:
-            await pilot.pause()
-
-            called: list[bool] = []
-
-            def spy(self):
-                called.append(True)
-
-            monkeypatch.setattr(ChatContainer, "action_mcp_prompt", spy)
-            await app.action_mcp_prompt()
-            await pilot.pause()
-            assert called == [True]
-
     async def test_action_delegates_are_noop_without_active_pane(self, fresh_app):
         from textual.widgets import TabbedContent
 
@@ -448,7 +424,6 @@ class TestActionDelegates:
             await app.action_rename_chat()
             await app.action_export_chat()
             await app.action_regenerate_last_message()
-            await app.action_mcp_prompt()
 
 
 class TestPerformChecks:
@@ -586,7 +561,6 @@ class TestSystemCommands:
                 "Delete chat",
                 "Export chat",
                 "Regenerate last message",
-                "Use MCP prompt",
                 "Show logs",
             ):
                 assert title in cmds

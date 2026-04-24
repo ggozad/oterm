@@ -3,19 +3,15 @@ from mcp import Tool as MCPTool
 from oterm.config import appConfig
 from oterm.log import log
 from oterm.tools.mcp.client import MCPClient
-from oterm.tools.mcp.prompts import MCPPromptCallable
 from oterm.tools.mcp.tools import MCPToolCallable, mcp_tool_to_pydantic_tool
-from oterm.types import PromptCall, ToolDef
+from oterm.types import ToolDef
 
 mcp_clients: list[MCPClient] = []
 
 
-async def setup_mcp_servers() -> tuple[
-    dict[str, list[ToolDef]], dict[str, list[PromptCall]]
-]:
+async def setup_mcp_servers() -> dict[str, list[ToolDef]]:
     mcp_servers = appConfig.get("mcpServers")
     tool_defs: dict[str, list[ToolDef]] = {}
-    prompt_calls: dict[str, list[PromptCall]] = {}
 
     if mcp_servers:
         for server, config in mcp_servers.items():
@@ -28,7 +24,6 @@ async def setup_mcp_servers() -> tuple[
             log.info(f"Initialized MCP server {server}")
 
             mcp_tools: list[MCPTool] = await client.get_available_tools()
-            mcp_prompts = await client.get_available_prompts()
 
             if mcp_tools:
                 tool_defs[server] = []
@@ -44,17 +39,7 @@ async def setup_mcp_servers() -> tuple[
                 )
                 log.info(f"Loaded MCP tool {mcp_tool.name} from {server}")
 
-            if mcp_prompts:
-                prompt_calls[server] = []
-
-            for prompt in mcp_prompts:
-                mcpPromptCallable = MCPPromptCallable(prompt.name, server, client)
-                prompt_calls[server].append(
-                    {"prompt": prompt, "callable": mcpPromptCallable.call}
-                )
-                log.info(f"Loaded MCP prompt {prompt.name} from {server}")
-
-    return tool_defs, prompt_calls
+    return tool_defs
 
 
 async def teardown_mcp_servers():

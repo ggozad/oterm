@@ -37,7 +37,6 @@ from textual.widgets import (
 from oterm.agent import get_agent
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_rename import ChatRename
-from oterm.app.mcp_prompt import MCPPrompt
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import FlexibleInput
@@ -431,40 +430,6 @@ class ChatContainer(Widget):
         prompts.reverse()
         screen = PromptHistory(prompts)
         self.app.push_screen(screen, on_history_selected)
-
-    @work
-    async def action_mcp_prompt(self) -> None:
-        screen = MCPPrompt()
-        messages = await self.app.push_screen_wait(screen)
-        if messages is None:
-            return
-        parsed_messages = json.loads(messages)
-        message_container = self.query_one("#messageContainer")
-        store = await Store.get_store()
-
-        last_user_message = None
-        if parsed_messages[-1]["role"] == "user":
-            last_user_message = parsed_messages.pop()
-
-        for msg in parsed_messages:
-            text = msg.get("content", "")
-            message_model = MessageModel(
-                id=None,
-                chat_id=self.chat_model.id,  # type: ignore
-                role=msg["role"],
-                text=text,
-                images=[],
-            )
-            id = await store.save_message(message_model)
-            message_model.id = id
-            self.messages.append(message_model)
-            chat_item = ChatItem()
-            chat_item.text = text
-            chat_item.author = msg["role"]
-            await message_container.mount(chat_item)
-        message_container.scroll_end()
-        if last_user_message is not None and last_user_message.get("content"):
-            await self.response_task(last_user_message["content"])
 
     @on(ImageAdded)
     def on_image_added(self, ev: ImageAdded) -> None:
