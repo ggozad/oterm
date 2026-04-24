@@ -32,6 +32,7 @@ def get_agent(
     parameters: dict[str, Any] | None = None,
     thinking: bool = False,
 ) -> Agent[None, str]:
+    pydantic_model: OpenAIChatModel | str
     if provider == "ollama":
         pydantic_model = OpenAIChatModel(
             model_name=model,
@@ -60,7 +61,7 @@ def get_agent(
             ),
         )
     else:
-        pydantic_model = f"{provider}:{model}"  # type: ignore[assignment]
+        pydantic_model = f"{provider}:{model}"
 
     agent: Agent[None, str] = Agent(
         pydantic_model,
