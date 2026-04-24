@@ -109,9 +109,7 @@ class TestGetAgent:
         assert agent.model.client.api_key == UNRESOLVED_API_KEY
 
     def test_fallthrough_provider_uses_prefix_string(self):
-        """Unknown / built-in providers are built as 'provider:model'."""
         agent = get_agent(provider="anthropic", model="claude-4")
-        # pydantic-ai resolves 'anthropic:claude-4' to its Anthropic model class.
         model = agent.model
         assert not isinstance(model, str) and model is not None
         assert model.model_name == "claude-4"
@@ -129,6 +127,5 @@ class TestGetAgent:
             system="be brief",
             tools=[tool],
         )
-        # pydantic-ai stores tools keyed by name on the agent's toolset.
         tool_names = [t.name for t in agent._function_toolset.tools.values()]
         assert "hello" in tool_names

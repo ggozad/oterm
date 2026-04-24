@@ -19,11 +19,9 @@ async def test_store_is_singleton_per_process(tmp_data_dir):
 async def test_singleton_reset_picks_up_new_data_dir(
     tmp_data_dir, tmp_path, monkeypatch
 ):
-    # First store lives under tmp_data_dir.
     first = await Store.get_store()
     assert first.db_path.parent == tmp_data_dir
 
-    # Swap env, reset singleton, and re-init.
     import oterm.config
 
     new_dir = tmp_path / "other"
@@ -169,16 +167,14 @@ async def test_existing_db_triggers_upgrades(tmp_data_dir, monkeypatch):
             """
         )
         await connection.commit()
-    # User version stays at 0 — "before any upgrade".
 
     calls: list[str] = []
 
     async def fake_step(path):
         calls.append(str(path))
 
-    # Patch the upgrades list to a single-step version to avoid running them
-    # on a schema that doesn't match their expectations — we're testing the
-    # *dispatcher*, not the upgrades themselves (those have their own tests).
+    # Swap in a single fake step so we can assert the dispatcher ran it
+    # without depending on the real upgrade SQL matching our seeded schema.
     monkeypatch.setattr(store_module, "upgrades", [("99.0.0", [fake_step])])
     monkeypatch.setattr(Store, "_store", None)
 

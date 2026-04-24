@@ -1,5 +1,3 @@
-"""Tests for each individual schema upgrade step."""
-
 import json
 
 import aiosqlite
@@ -119,7 +117,7 @@ class TestMigrateParameters:
             params = json.loads(list(rows)[0][0])
             assert params == {"max_tokens": 256}
 
-    async def test_empty_parameters_skipped(self, tmp_path):
+    async def test_empty_parameters_is_noop(self, tmp_path):
         db = tmp_path / "store.db"
         await _old_chat_schema(db)
         async with aiosqlite.connect(db) as c:
@@ -129,7 +127,6 @@ class TestMigrateParameters:
             )
             await c.commit()
 
-        # Should not raise or alter anything.
         await migrate_parameters(db)
         async with aiosqlite.connect(db) as c:
             rows = await c.execute_fetchall("SELECT parameters FROM chat")
@@ -179,7 +176,7 @@ class TestMigrateToolsToNames:
             rows = await c.execute_fetchall("SELECT tools FROM chat")
             assert json.loads(list(rows)[0][0]) == ["date_time"]
 
-    async def test_empty_tools_skipped(self, tmp_path):
+    async def test_empty_tools_is_noop(self, tmp_path):
         db = tmp_path / "store.db"
         await _old_chat_schema(db)
         async with aiosqlite.connect(db) as c:

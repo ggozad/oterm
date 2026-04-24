@@ -57,7 +57,6 @@ class TestAppConfig:
         cfg = AppConfig(path=path)
         assert cfg.get("theme") == "light"
         assert cfg.get("custom") == 42
-        # Default still present
         assert cfg.get("splash-screen") is True
 
     def test_create_dir_if_missing(self, tmp_path):

@@ -2,7 +2,6 @@ import asyncio
 import sys
 
 import httpx
-import pytest
 
 from oterm.utils import (
     debounce,
@@ -254,7 +253,6 @@ class TestIsUpToDate:
             lambda: _FakeAsyncClient(error=httpx.ConnectError("boom")),
         )
         up, running, latest = await utils.is_up_to_date()
-        # Network failure returns True and equal versions.
         assert up is True
         assert running == latest
 
@@ -271,10 +269,6 @@ class TestCheckOllama:
         assert await utils.check_ollama() is True
 
     async def test_unreachable_http_error(self, monkeypatch):
-        """When ollama is down, the util returns False and schedules notify+quit.
-
-        We stub out the scheduled quit task so nothing actually exits.
-        """
         from oterm import utils
 
         monkeypatch.setattr(
@@ -283,7 +277,8 @@ class TestCheckOllama:
             lambda: _FakeAsyncClient(error=httpx.ConnectError("nope")),
         )
 
-        # Don't actually import OTerm; stub app.notify + create_task to no-ops.
+        # Stub out app.notify and the scheduled quit task so the test doesn't
+        # import the full TUI or actually exit.
         class _StubApp:
             def notify(self, *args, **kwargs):
                 pass
@@ -320,8 +315,3 @@ class TestCheckOllama:
         )
 
         assert await utils.check_ollama() is False
-
-
-# asyncio_mode = "auto" lets us skip pytest.mark.asyncio on async test methods,
-# but the throttle/debounce tests need the event loop. They work under auto.
-pytest  # keep import referenced so linters don't flag it after edits

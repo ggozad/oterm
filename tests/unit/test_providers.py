@@ -83,7 +83,6 @@ class TestGetAllProviders:
         assert set(get_all_providers()) == set(PROVIDER_ENV_VARS.keys())
 
     def test_names_and_env_vars_aligned(self):
-        # Every env-var provider has a display name and vice versa
         assert set(PROVIDER_ENV_VARS) == set(PROVIDER_NAMES)
 
 
@@ -290,7 +289,6 @@ class TestListModels:
         assert list_models("ollama") == []
 
     def test_non_ollama_filters_non_chat_models(self, monkeypatch):
-        """list_models drops embedding / image models via is_chat_model()."""
         items = [_FakeModelItem("gpt-4o"), _FakeModelItem("text-embedding-3-small")]
         _install_fake_module(
             monkeypatch, "openai", {"OpenAI": lambda **kw: _FakeClient(items)}
@@ -307,5 +305,4 @@ class TestListModels:
         _install_fake_module(monkeypatch, "openai", {"OpenAI": boom})
         monkeypatch.setenv("OPENAI_API_KEY", "k")
         models = list_models("openai")
-        # Known list should yield at least one gpt-* model.
         assert any("gpt" in m for m in models)

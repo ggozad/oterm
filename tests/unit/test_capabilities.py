@@ -123,7 +123,6 @@ class TestGetCapabilities:
         assert caps == ModelCapabilities()
 
     def test_openai_thinking_via_pydantic_profile(self, monkeypatch):
-        """`_supports_thinking` delegates to pydantic-ai's OpenAIModelProfile."""
         from pydantic_ai.profiles import openai as openai_profile_mod
         from pydantic_ai.profiles.openai import OpenAIModelProfile
 
@@ -142,7 +141,6 @@ class TestGetCapabilities:
         assert get_capabilities("openai", "anything").supports_thinking is False
 
     def test_openai_thinking_non_openai_profile(self, monkeypatch):
-        """If pydantic-ai returns a non-OpenAI profile, fall back to False."""
         from pydantic_ai.profiles import openai as openai_profile_mod
 
         monkeypatch.setattr(

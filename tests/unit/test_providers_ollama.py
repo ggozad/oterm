@@ -1,5 +1,3 @@
-"""Ollama client wrappers and parameter parsing."""
-
 from oterm.providers import ollama as ollama_mod
 from oterm.providers.ollama import parse_ollama_parameters
 
