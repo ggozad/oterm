@@ -3,7 +3,13 @@ import os
 import re
 from typing import Any
 
-from pydantic_ai.mcp import MCPServer, MCPServerStdio, MCPServerStreamableHTTP
+from pydantic_ai.mcp import (
+    MCPServer,
+    MCPServerConfig,
+    MCPServerSSE,
+    MCPServerStdio,
+    MCPServerStreamableHTTP,
+)
 
 from oterm.config import appConfig
 from oterm.log import log
@@ -52,40 +58,35 @@ def _expand_env_vars(value: Any) -> Any:
     return value
 
 
-def _build_server(name: str, config: dict) -> MCPServer:
-    """Translate an entry in appConfig['mcpServers'] to a pydantic-ai MCPServer."""
-    config = _expand_env_vars(config)
-    if "command" in config:
-        env = {**_STDIO_LOG_ENV, **(config.get("env") or {})}
-        return MCPServerStdio(
-            command=config["command"],
-            args=list(config.get("args", [])),
-            env=env,
-            cwd=config.get("cwd"),
-            log_handler=Logger(),
-            id=name,
-        )
-    if "url" in config:
-        url = config["url"]
-        if url.startswith(("ws://", "wss://")):
+def _build_servers(raw: dict[str, dict]) -> dict[str, MCPServer]:
+    """Build MCP servers from oterm's config.
+
+    Schema matches pydantic-ai's MCPServerConfig: each entry is either an
+    stdio shape (`command` / `args` / `env`) or an HTTP shape (`url` /
+    `headers`). URLs ending in `/sse` resolve to MCPServerSSE.
+    """
+    expanded = _expand_env_vars(raw)
+
+    # Pre-validate: reject ws:// URLs explicitly so users get a clear error
+    # instead of pydantic-ai trying to speak streamable-HTTP to a websocket.
+    for name, entry in expanded.items():
+        url = entry.get("url") if isinstance(entry, dict) else None
+        if isinstance(url, str) and url.startswith(("ws://", "wss://")):
             raise ValueError(
                 f"MCP server {name!r}: WebSocket transport is no longer supported. "
                 "Use HTTP (http:// or https://) transport instead."
             )
-        headers: dict[str, str] | None = None
-        auth = config.get("auth") or {}
-        if auth.get("type") == "bearer" and auth.get("token"):
-            headers = {"Authorization": f"Bearer {auth['token']}"}
-        return MCPServerStreamableHTTP(
-            url=url,
-            headers=headers,
-            log_handler=Logger(),
-            id=name,
-        )
-    raise ValueError(
-        f"MCP server {name!r}: config must set either 'command' (stdio) "
-        "or 'url' (streamable HTTP)."
-    )
+
+    config = MCPServerConfig.model_validate({"mcpServers": expanded})
+
+    servers: dict[str, MCPServer] = {}
+    for name, server in config.mcp_servers.items():
+        server.id = name
+        server.log_handler = Logger()
+        if isinstance(server, MCPServerStdio):
+            server.env = {**_STDIO_LOG_ENV, **(server.env or {})}
+        servers[name] = server
+    return servers
 
 
 async def setup_mcp_servers() -> dict[str, list[ToolMeta]]:
@@ -101,12 +102,16 @@ async def setup_mcp_servers() -> dict[str, list[ToolMeta]]:
     mcp_tool_meta.clear()
     _exit_stack = contextlib.AsyncExitStack()
 
-    for name, config in configured.items():
-        try:
-            server = _build_server(name, config)
-        except ValueError as e:
-            log.error(f"MCP server {name!r} skipped: {e}")
-            continue
+    try:
+        built = _build_servers(configured)
+    except ValueError as e:
+        log.error(f"MCP config rejected: {e}")
+        return mcp_tool_meta
+    except Exception as e:
+        log.error(f"MCP config could not be parsed: {e}")
+        return mcp_tool_meta
+
+    for name, server in built.items():
         try:
             await _exit_stack.enter_async_context(server)
             tools = await server.list_tools()
@@ -133,3 +138,17 @@ async def teardown_mcp_servers() -> None:
         _exit_stack = None
         mcp_servers.clear()
         mcp_tool_meta.clear()
+
+
+# Re-export for tests + back-compat with anything that imported MCPServerSSE.
+__all__ = [
+    "MCPServer",
+    "MCPServerSSE",
+    "MCPServerStdio",
+    "MCPServerStreamableHTTP",
+    "ToolMeta",
+    "mcp_servers",
+    "mcp_tool_meta",
+    "setup_mcp_servers",
+    "teardown_mcp_servers",
+]

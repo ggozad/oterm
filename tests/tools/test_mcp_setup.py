@@ -1,20 +1,20 @@
 import pytest
-from pydantic_ai.mcp import MCPServerStdio, MCPServerStreamableHTTP
+from pydantic_ai.mcp import MCPServerSSE, MCPServerStdio, MCPServerStreamableHTTP
 
 from oterm.tools.mcp.setup import (
-    _build_server,
+    _build_servers,
     mcp_servers,
     setup_mcp_servers,
     teardown_mcp_servers,
 )
 
 
-class TestBuildServer:
+class TestBuildServers:
     def test_stdio_config(self):
-        server = _build_server(
-            "stdio",
-            {"command": "mcp", "args": ["run", "x"], "env": {"FOO": "bar"}},
+        built = _build_servers(
+            {"stdio": {"command": "mcp", "args": ["run", "x"], "env": {"FOO": "bar"}}}
         )
+        server = built["stdio"]
         assert isinstance(server, MCPServerStdio)
         env = server.env or {}
         assert env["LOGLEVEL"] == "ERROR"
@@ -23,47 +23,94 @@ class TestBuildServer:
     def test_stdio_does_not_inherit_parent_env(self, monkeypatch):
         """Secure default: parent env (PATH, secrets, etc.) is not leaked."""
         monkeypatch.setenv("SECRET_TOKEN", "leak-me")
-        server = _build_server("stdio", {"command": "mcp"})
+        built = _build_servers({"stdio": {"command": "mcp", "args": []}})
+        server = built["stdio"]
         assert isinstance(server, MCPServerStdio)
         env = server.env or {}
         assert "SECRET_TOKEN" not in env
         assert "PATH" not in env
 
     def test_stdio_user_env_overrides_logging_overrides(self):
-        server = _build_server(
-            "stdio",
-            {"command": "mcp", "args": [], "env": {"LOGLEVEL": "DEBUG"}},
+        built = _build_servers(
+            {"stdio": {"command": "mcp", "args": [], "env": {"LOGLEVEL": "DEBUG"}}}
         )
+        server = built["stdio"]
         assert isinstance(server, MCPServerStdio)
         env = server.env or {}
         assert env["LOGLEVEL"] == "DEBUG"
 
+    def test_http_config(self):
+        built = _build_servers({"http": {"url": "http://example.com/mcp"}})
+        assert isinstance(built["http"], MCPServerStreamableHTTP)
+
+    def test_http_with_authorization_header(self):
+        built = _build_servers(
+            {
+                "http": {
+                    "url": "http://example.com/mcp",
+                    "headers": {"Authorization": "Bearer secret"},
+                }
+            }
+        )
+        server = built["http"]
+        assert isinstance(server, MCPServerStreamableHTTP)
+        assert server.headers == {"Authorization": "Bearer secret"}
+
+    def test_url_ending_in_sse_resolves_to_sse_server(self):
+        built = _build_servers({"sse": {"url": "http://example.com/sse"}})
+        assert isinstance(built["sse"], MCPServerSSE)
+
+    def test_websocket_url_rejected(self):
+        with pytest.raises(ValueError, match="WebSocket transport"):
+            _build_servers({"ws": {"url": "ws://example.com/mcp"}})
+
+    def test_wss_url_rejected(self):
+        with pytest.raises(ValueError, match="WebSocket transport"):
+            _build_servers({"wss": {"url": "wss://example.com/mcp"}})
+
     def test_env_var_substitution_in_env_values(self, monkeypatch):
         monkeypatch.setenv("MY_TOKEN", "shh")
-        server = _build_server(
-            "stdio",
-            {"command": "mcp", "env": {"GITHUB_TOKEN": "${MY_TOKEN}"}},
+        built = _build_servers(
+            {
+                "stdio": {
+                    "command": "mcp",
+                    "args": [],
+                    "env": {"GITHUB_TOKEN": "${MY_TOKEN}"},
+                }
+            }
         )
+        server = built["stdio"]
         assert isinstance(server, MCPServerStdio)
         env = server.env or {}
         assert env["GITHUB_TOKEN"] == "shh"
 
     def test_env_var_substitution_in_command_and_args(self, monkeypatch):
         monkeypatch.setenv("MCP_BIN", "/opt/bin/mcp")
-        server = _build_server(
-            "stdio",
-            {"command": "${MCP_BIN}", "args": ["--config", "${MCP_BIN}.conf"]},
+        built = _build_servers(
+            {
+                "stdio": {
+                    "command": "${MCP_BIN}",
+                    "args": ["--config", "${MCP_BIN}.conf"],
+                }
+            }
         )
+        server = built["stdio"]
         assert isinstance(server, MCPServerStdio)
         assert server.command == "/opt/bin/mcp"
         assert list(server.args) == ["--config", "/opt/bin/mcp.conf"]
 
     def test_env_var_substitution_with_default(self, monkeypatch):
         monkeypatch.delenv("MISSING_VAR", raising=False)
-        server = _build_server(
-            "stdio",
-            {"command": "mcp", "env": {"DEFAULTED": "${MISSING_VAR:-fallback}"}},
+        built = _build_servers(
+            {
+                "stdio": {
+                    "command": "mcp",
+                    "args": [],
+                    "env": {"DEFAULTED": "${MISSING_VAR:-fallback}"},
+                }
+            }
         )
+        server = built["stdio"]
         assert isinstance(server, MCPServerStdio)
         env = server.env or {}
         assert env["DEFAULTED"] == "fallback"
@@ -71,49 +118,29 @@ class TestBuildServer:
     def test_env_var_substitution_missing_raises(self, monkeypatch):
         monkeypatch.delenv("UNDEFINED_VAR", raising=False)
         with pytest.raises(ValueError, match="UNDEFINED_VAR"):
-            _build_server(
-                "stdio",
-                {"command": "mcp", "env": {"X": "${UNDEFINED_VAR}"}},
+            _build_servers(
+                {
+                    "stdio": {
+                        "command": "mcp",
+                        "args": [],
+                        "env": {"X": "${UNDEFINED_VAR}"},
+                    }
+                }
             )
 
-    def test_env_var_substitution_in_bearer_token(self, monkeypatch):
+    def test_env_var_substitution_in_authorization_header(self, monkeypatch):
         monkeypatch.setenv("BEARER", "s3cret")
-        server = _build_server(
-            "http",
+        built = _build_servers(
             {
-                "url": "http://x/mcp",
-                "auth": {"type": "bearer", "token": "${BEARER}"},
-            },
+                "http": {
+                    "url": "http://x/mcp",
+                    "headers": {"Authorization": "Bearer ${BEARER}"},
+                }
+            }
         )
+        server = built["http"]
         assert isinstance(server, MCPServerStreamableHTTP)
         assert server.headers == {"Authorization": "Bearer s3cret"}
-
-    def test_http_config(self):
-        server = _build_server("http", {"url": "http://example.com/mcp"})
-        assert isinstance(server, MCPServerStreamableHTTP)
-
-    def test_http_with_bearer_sets_auth_header(self):
-        server = _build_server(
-            "http",
-            {
-                "url": "http://example.com/mcp",
-                "auth": {"type": "bearer", "token": "secret"},
-            },
-        )
-        assert isinstance(server, MCPServerStreamableHTTP)
-        assert server.headers == {"Authorization": "Bearer secret"}
-
-    def test_websocket_url_rejected(self):
-        with pytest.raises(ValueError, match="WebSocket transport"):
-            _build_server("ws", {"url": "ws://example.com/mcp"})
-
-    def test_wss_url_rejected(self):
-        with pytest.raises(ValueError, match="WebSocket transport"):
-            _build_server("wss", {"url": "wss://example.com/mcp"})
-
-    def test_empty_config_raises(self):
-        with pytest.raises(ValueError, match="command.*url"):
-            _build_server("empty", {})
 
 
 class TestSetupAndTeardown:
@@ -137,7 +164,7 @@ class TestSetupAndTeardown:
     async def test_failed_server_init_is_skipped(self, app_config):
         app_config.set(
             "mcpServers",
-            {"broken": {"command": "nonexistent-command-xyz"}},
+            {"broken": {"command": "nonexistent-command-xyz", "args": []}},
         )
         try:
             meta = await setup_mcp_servers()
@@ -146,22 +173,19 @@ class TestSetupAndTeardown:
         finally:
             await teardown_mcp_servers()
 
-    async def test_bad_config_is_skipped_and_logged(self, app_config):
+    async def test_websocket_in_config_logs_and_skips_all(self, app_config):
+        """Validation failures for the whole config block are logged once."""
         import oterm.log
 
         app_config.set(
             "mcpServers",
-            {
-                "ws-bad": {"url": "ws://localhost/mcp"},
-                "good": {"command": "mcp", "args": ["--help"]},
-            },
+            {"ws-bad": {"url": "ws://localhost/mcp"}},
         )
         before = len(oterm.log.log_lines)
         try:
-            await setup_mcp_servers()
+            meta = await setup_mcp_servers()
+            assert meta == {}
             messages = [msg for _, msg in oterm.log.log_lines[before:]]
             assert any("WebSocket" in m for m in messages)
-            # The "good" server fails init (mcp --help isn't a valid MCP server),
-            # but failure shouldn't crash the overall setup.
         finally:
             await teardown_mcp_servers()
