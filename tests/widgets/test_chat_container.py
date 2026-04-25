@@ -573,6 +573,123 @@ class TestChatItemUserAndJSON:
             await pilot.pause()
 
 
+class TestThinkingCollapse:
+    async def test_thinking_visible_before_response_starts(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            item.thinking = "musing…"
+            await pilot.pause()
+
+            from textual.widgets import Static
+
+            label = item.query_one(".thinking-label", Static)
+            body = item.query_one(".thinking-body", Markdown)
+            assert label.display is True
+            assert body.display is True
+            assert "Thinking" in str(label.render())
+
+    async def test_thinking_collapses_when_response_starts(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            item.thinking = "musing…"
+            await pilot.pause()
+            item.text = "answer"
+            await pilot.pause()
+
+            from textual.widgets import Static
+
+            label = item.query_one(".thinking-label", Static)
+            body = item.query_one(".thinking-body", Markdown)
+            assert label.display is True
+            assert body.display is False
+            assert "▸" in str(label.render())
+            assert "Thoughts" in str(label.render())
+
+    async def test_thinking_stays_collapsed_on_further_thinking_deltas(
+        self, chat_model
+    ):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            item.thinking = "musing…"
+            item.text = "answer"
+            await pilot.pause()
+            item.thinking = "musing… more"
+            await pilot.pause()
+
+            body = item.query_one(".thinking-body", Markdown)
+            assert body.display is False
+
+    async def test_clicking_collapsed_label_re_expands(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            item.thinking = "musing"
+            item.text = "answer"
+            await pilot.pause()
+
+            from textual.widgets import Static
+
+            label = item.query_one(".thinking-label", Static)
+            body = item.query_one(".thinking-body", Markdown)
+            assert body.display is False
+
+            copied: list[str] = []
+            app.copy_to_clipboard = lambda t: copied.append(t)  # ty: ignore[invalid-assignment]
+
+            await pilot.click(label)
+            await pilot.pause()
+            assert body.display is True
+            assert "▾" in str(label.render())
+            assert copied == []
+
+            await pilot.click(label)
+            await pilot.pause()
+            assert body.display is False
+            assert "▸" in str(label.render())
+
+    async def test_clicking_response_still_copies(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            item.thinking = "musing"
+            item.text = "answer"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            copied: list[str] = []
+            app.copy_to_clipboard = lambda t: copied.append(t)  # ty: ignore[invalid-assignment]
+
+            response = item.query_one(".response", Markdown)
+            await pilot.click(response)
+            await pilot.pause()
+            assert copied == ["answer"]
+
+
 class TestUsageStatus:
     async def test_zero_tokens_render_only_duration(self, chat_model):
         app = _Host(chat_model, [])

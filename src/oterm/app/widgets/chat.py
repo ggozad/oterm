@@ -509,16 +509,50 @@ class ChatContainer(Widget):
 class ChatItem(Widget):
     text: reactive[str] = reactive("")
     thinking: reactive[str] = reactive("")
+    thoughts_collapsed: reactive[bool] = reactive(False)
     author: reactive[str] = reactive("")
 
     @on(Click)
     async def on_click(self, event: Click) -> None:
+        cur: Widget | None = event.widget
+        while cur is not None and cur is not self:
+            if cur.has_class("thinking-label"):
+                if self.thinking and self.text:
+                    self.thoughts_collapsed = not self.thoughts_collapsed
+                return
+            if cur.has_class("thinking-body"):
+                return
+            cur = cur.parent  # ty: ignore[invalid-assignment]
+
         self.app.copy_to_clipboard(self.text)
         widgets = self.query(".text")
         for widget in widgets:
             widget.styles.animate("opacity", 0.5, duration=0.1)
             widget.styles.animate("opacity", 1.0, duration=0.1, delay=0.1)
         self.app.notify("Message copied to clipboard.")
+
+    def _refresh_thinking_chrome(self) -> None:
+        if self.author == "user":
+            return
+        try:
+            label = self.query_one(".thinking-label", Static)
+            body = self.query_one(".thinking-body", Markdown)
+        except NoMatches:
+            return
+        has_thinking = bool(self.thinking)
+        label.display = has_thinking
+        if not has_thinking:
+            body.display = False
+            return
+        if not self.text:
+            label.update("Thinking…")
+            body.display = True
+        elif self.thoughts_collapsed:
+            label.update("▸ Thoughts")
+            body.display = False
+        else:
+            label.update("▾ Thoughts")
+            body.display = True
 
     async def watch_text(self, text: str) -> None:
         if self.author == "user":
@@ -533,20 +567,22 @@ class ChatItem(Widget):
         txt_widget = self.query_one(".response", Markdown)
         await txt_widget.update(text)
 
+        if text and not self.thoughts_collapsed:
+            self.thoughts_collapsed = True
+        self._refresh_thinking_chrome()
+
     async def watch_thinking(self, thinking: str) -> None:
         if self.author == "user":
             return
         try:
-            label = self.query_one(".thinking-label", Static)
             body = self.query_one(".thinking-body", Markdown)
-        except Exception:
+        except NoMatches:
             return
-        has_thinking = bool(thinking)
-        label.display = has_thinking
-        body.display = has_thinking
-        if has_thinking:
-            label.update("Thinking…")
         await body.update(thinking)
+        self._refresh_thinking_chrome()
+
+    def watch_thoughts_collapsed(self, collapsed: bool) -> None:
+        self._refresh_thinking_chrome()
 
     def compose(self) -> ComposeResult:
         """A chat item."""
