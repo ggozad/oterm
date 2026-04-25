@@ -1,14 +1,14 @@
 # oterm
 
-the terminal client for [Ollama](https://github.com/ollama/ollama).
+the terminal client for [Ollama](https://github.com/ollama/ollama), OpenAI, Anthropic, and any [pydantic-ai](https://ai.pydantic.dev/)-supported provider.
 
 ## Features
 
 * intuitive and simple terminal UI, no need to run servers, frontends, just type `oterm` in your terminal.
 * supports Linux, MacOS, and Windows and most terminal emulators.
 * multiple persistent chat sessions, stored together with system prompt & parameter customizations in sqlite.
+* talks to Ollama, OpenAI, Anthropic, Google (AI / Vertex), Groq, Mistral, Cohere, AWS Bedrock, DeepSeek, Cerebras, Grok, Hugging Face, and any OpenAI-compatible endpoint — local (vLLM, LM Studio, llama.cpp, …) or hosted (OpenRouter, LiteLLM, …).
 * support for Model Context Protocol (MCP) tools and sampling.
-* can use any of the models you have pulled in Ollama, or your own custom models.
 * allows for easy customization of the model's system prompt and parameters.
 * supports tools integration for providing external information to the model.
 

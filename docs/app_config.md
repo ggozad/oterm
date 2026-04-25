@@ -33,6 +33,36 @@ We strive to have sane default key bindings, but there will always be cases wher
 }
 ```
 
+### Providers / API keys
+
+`oterm` discovers providers from your environment at startup. A provider appears in the new-chat dropdown only when its required environment variables are set. `.env` files in the working directory are loaded automatically.
+
+| Provider          | Provider ID       | Required env var(s)                             |
+| ----------------- | ----------------- | ----------------------------------------------- |
+| Ollama            | `ollama`          | none — uses `OLLAMA_HOST` / `OLLAMA_URL`        |
+| OpenAI            | `openai`          | `OPENAI_API_KEY`                                |
+| Anthropic         | `anthropic`       | `ANTHROPIC_API_KEY`                             |
+| Google AI         | `google-gla`      | `GOOGLE_API_KEY`                                |
+| Google Vertex AI  | `google-vertex`   | `GOOGLE_APPLICATION_CREDENTIALS`                |
+| Groq              | `groq`            | `GROQ_API_KEY`                                  |
+| Mistral           | `mistral`         | `MISTRAL_API_KEY`                               |
+| Cohere            | `cohere`          | `COHERE_API_KEY`                                |
+| AWS Bedrock       | `bedrock`         | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`    |
+| DeepSeek          | `deepseek`        | `DEEPSEEK_API_KEY`                              |
+| Grok              | `grok`            | `GROK_API_KEY`                                  |
+| Cerebras          | `cerebras`        | `CEREBRAS_API_KEY`                              |
+| Hugging Face      | `huggingface`     | `HF_TOKEN`                                      |
+
+For any other backend with an OpenAI-compatible API — local runners like vLLM, LM Studio, or llama.cpp, or hosted aggregators like OpenRouter or LiteLLM — see [OpenAI-compatible providers](#openai-compatible-providers) below.
+
+#### Ollama-specific environment variables
+
+| Variable            | Default            | Purpose                                                                 |
+| ------------------- | ------------------ | ----------------------------------------------------------------------- |
+| `OLLAMA_HOST`       | `127.0.0.1:11434`  | Ollama host/port. Used to derive `OLLAMA_URL` if it is not set.         |
+| `OLLAMA_URL`        | from `OLLAMA_HOST` | Full Ollama base URL (e.g. `https://ollama.example.com`).               |
+| `OTERM_VERIFY_SSL`  | `True`             | Set to `False` to disable SSL verification when talking to Ollama.      |
+
 ### OpenAI-compatible providers
 
 You can connect to any OpenAI API-compatible service (vLLM, OpenRouter, LiteLLM, etc.) by adding endpoints to the `openaiCompatible` section of your config:

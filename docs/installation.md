@@ -1,7 +1,7 @@
 ## Installation
 
 !!! note
-    Ollama needs to be installed and running in order to use `oterm`. Please follow the [Ollama Installation Guide](https://github.com/ollama/ollama?tab=readme-ov-file#ollama).
+    `oterm` works with multiple LLM providers — local and hosted. For local models, point it at [Ollama](https://github.com/ollama/ollama?tab=readme-ov-file#ollama), [vLLM](https://docs.vllm.ai/), [LM Studio](https://lmstudio.ai/), [llama.cpp](https://github.com/ggml-org/llama.cpp), or any OpenAI-compatible runner. For hosted providers (OpenAI, Anthropic, Groq, …), set the relevant API key. See [Providers / API keys](app_config.md#providers-api-keys) and [OpenAI-compatible providers](app_config.md#openai-compatible-providers).
 
 Using `uvx`:
 

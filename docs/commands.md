@@ -2,7 +2,7 @@
 By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette from where you can perform most of the chat actions. The following commands are available:
 
 * `New chat` - create a new chat session
-* `Edit chat parameters` - edit the current chat session (change system prompt, parameters or format)
+* `Edit chat parameters` - edit the current chat session (change system prompt, tools, parameters, or thinking)
 * `Rename chat` - rename the current chat session
 * `Export chat` - export the current chat session as markdown
 * `Delete chat` - delete the current chat session
@@ -31,7 +31,7 @@ The following keyboard shortcuts are supported:
 
 In multiline mode, you can press <kbd>Enter</kbd> to send the message, or <kbd>Shift</kbd>+<kbd>Enter</kbd> to add a new line at the cursor.
 
-While Ollama is inferring the next message, you can press <kbd>Esc</kbd> to cancel the inference.
+While the model is inferring the next message, you can press <kbd>Esc</kbd> to cancel the inference.
 
 !!! note
     Some of the shortcuts may not work in a certain context, if they are overridden by the widget in focus. For example pressing <kbd>↑</kbd> while the prompt is in multi-line mode.
