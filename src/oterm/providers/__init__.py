@@ -110,7 +110,7 @@ def _list_models_from_api(provider: str) -> list[str] | None:
 
     if provider == "google-gla":
         try:
-            from google import genai  # type: ignore[reportAttributeAccessIssue]
+            from google import genai
 
             client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
             return sorted(

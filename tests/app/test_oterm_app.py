@@ -143,7 +143,7 @@ class TestDeleteChat:
             await pilot.pause()
 
             assert tabs.tab_count == 0
-            assert await store.get_chat(cm.id) is None  # type: ignore[arg-type]
+            assert await store.get_chat(cm.id) is None
 
     async def test_delete_without_active_pane_is_noop(self, fresh_app):
         app = fresh_app
@@ -164,7 +164,7 @@ class TestClearChat:
         app_config.set("splash-screen", False)
         cm = ChatModel(name="c", model="m")
         cm.id = await store.save_chat(cm)
-        await store.save_message(MessageModel(chat_id=cm.id, role="user", text="hi"))  # type: ignore[arg-type]
+        await store.save_message(MessageModel(chat_id=cm.id, role="user", text="hi"))
 
         from oterm.app.oterm import OTerm
 
@@ -173,7 +173,7 @@ class TestClearChat:
             await pilot.pause()
             await app.action_clear_chat()
             await pilot.pause()
-            assert await store.get_messages(cm.id) == []  # type: ignore[arg-type]
+            assert await store.get_messages(cm.id) == []
 
 
 class TestExportChat:

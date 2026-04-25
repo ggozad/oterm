@@ -68,7 +68,7 @@ def get_agent(
     agent: Agent[None, str] = Agent(
         pydantic_model,
         instructions=system,
-        tools=tools or [],  # type: ignore[arg-type]
+        tools=tools or [],
         toolsets=toolsets or [],
         model_settings=_build_model_settings(parameters, thinking),
     )

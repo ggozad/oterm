@@ -74,7 +74,7 @@ class PastableInput(Input):
     ]
 
     def action_toggle_multiline(self) -> None:
-        input = cast(FlexibleInput, self.parent.parent)  # type: ignore
+        input = cast(FlexibleInput, self.parent.parent)  # ty: ignore[unresolved-attribute]
         input.text = self.value
         input.toggle_multiline()
 
@@ -82,7 +82,7 @@ class PastableInput(Input):
         if event.text:
             self.insert_text_at_cursor(event.text)
             if len(event.text.splitlines()) > 1:
-                input = cast(FlexibleInput, self.parent.parent)  # type: ignore
+                input = cast(FlexibleInput, self.parent.parent)  # ty: ignore[unresolved-attribute]
                 input.text = self.value
                 input.toggle_multiline()
         event.stop()

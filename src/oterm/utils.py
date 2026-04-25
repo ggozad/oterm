@@ -36,7 +36,7 @@ def debounce(wait: float) -> Callable:
 
             async def call_func():
                 await asyncio.sleep(wait)
-                if asyncio.get_event_loop().time() - last_call >= wait:  # type: ignore
+                if asyncio.get_event_loop().time() - last_call >= wait:  # ty: ignore[unsupported-operator]
                     await func(*args, **kwargs)
 
             task = asyncio.create_task(call_func())

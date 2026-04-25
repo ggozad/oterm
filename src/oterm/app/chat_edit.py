@@ -235,7 +235,7 @@ class ChatEdit(ModalScreen[str]):
         thinking_checkbox.disabled = "thinking" not in capabilities
 
         display_caps = [c for c in capabilities if c not in ("completion", "embedding")]
-        self.query_one(".caps", Capabilities).caps = display_caps  # type: ignore
+        self.query_one(".caps", Capabilities).caps = display_caps  # ty: ignore[invalid-assignment]
 
     def _populate_parameter_inputs(self, parameters: dict[str, Any]) -> None:
         self.query_one("#temperature-input", Input).value = str(

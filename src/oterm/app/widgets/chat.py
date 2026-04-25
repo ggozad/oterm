@@ -154,7 +154,7 @@ class ChatContainer(Widget):
             )
             self._agent_error: str | None = None
         except Exception as e:
-            self.agent = None  # type: ignore[assignment]
+            self.agent = None
             self._agent_error = str(e)
 
     def _build_pydantic_history(
@@ -191,7 +191,7 @@ class ChatContainer(Widget):
                     skipped += 1
                     continue
                 user_prompt.append(
-                    BinaryContent(data=img_bytes, media_type="image/png")  # type: ignore[reportCallIssue]
+                    BinaryContent(data=img_bytes, media_type="image/png")
                 )
             if skipped:
                 self.app.notify(
@@ -275,7 +275,7 @@ class ChatContainer(Widget):
 
             user_message = MessageModel(
                 id=None,
-                chat_id=self.chat_model.id,  # type: ignore
+                chat_id=self.chat_model.id,  # ty: ignore[invalid-argument-type]
                 role="user",
                 text=message,
                 images=[img for _, img in self.images],
@@ -286,7 +286,7 @@ class ChatContainer(Widget):
 
             assistant_message = MessageModel(
                 id=None,
-                chat_id=self.chat_model.id,  # type: ignore
+                chat_id=self.chat_model.id,  # ty: ignore[invalid-argument-type]
                 role="assistant",
                 text=text,
                 images=[],
@@ -362,7 +362,7 @@ class ChatContainer(Widget):
         if new_name is None:
             return
         tabs = self.app.query_one(TabbedContent)
-        await store.rename_chat(self.chat_model.id, new_name)  # type: ignore
+        await store.rename_chat(self.chat_model.id, new_name)  # ty: ignore[invalid-argument-type]
         tabs.get_tab(f"chat-{self.chat_model.id}").update(new_name)
         self.app.notify("Chat renamed")
 
@@ -376,7 +376,7 @@ class ChatContainer(Widget):
         for child in msg_container.children:
             child.remove()
         store = await Store.get_store()
-        await store.clear_chat(self.chat_model.id)  # type: ignore
+        await store.clear_chat(self.chat_model.id)  # ty: ignore[invalid-argument-type]
 
     async def action_regenerate_llm_message(self) -> None:
         if self.agent is None:
@@ -430,7 +430,7 @@ class ChatContainer(Widget):
                 store = await Store.get_store()
                 regenerated_message = MessageModel(
                     id=response_message_id,
-                    chat_id=self.chat_model.id,  # type: ignore
+                    chat_id=self.chat_model.id,  # ty: ignore[invalid-argument-type]
                     role="assistant",
                     text=text,
                     images=[],
