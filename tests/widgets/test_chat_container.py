@@ -778,7 +778,7 @@ class TestChatItemClickCopy:
             assert copied == ["the answer"]
 
 
-class TestChatItemUserAndJSON:
+class TestChatItemUser:
     async def test_user_chat_item_renders_with_static(self, chat_model):
         app = _Host(chat_model, [])
         async with app.run_test() as pilot:
@@ -795,21 +795,6 @@ class TestChatItemUserAndJSON:
             assert any(s.has_class("text") for s in statics)
             # User items don't render a thinking label
             assert not list(item.query(".thinking-label"))
-
-    async def test_assistant_json_text_rendered_as_code_block(self, chat_model):
-        app = _Host(chat_model, [])
-        async with app.run_test() as pilot:
-            container = app.query_one(ChatContainer)
-            item = ChatItem()
-            item.author = "assistant"
-            await container.query_one("#messageContainer").mount(item)
-            await pilot.pause()
-
-            item.text = '{"key": "value"}'
-            await pilot.pause()
-            # No assertion on Markdown internals — just that no exception raised
-            markdown = item.query_one(".response", Markdown)
-            assert markdown is not None
 
     async def test_setting_text_on_user_item_is_noop(self, chat_model):
         """watch_text short-circuits for user items since they render via Static."""
@@ -954,6 +939,118 @@ class TestThinkingCollapse:
             await pilot.click(response)
             await pilot.pause()
             assert copied == ["answer"]
+
+
+class TestChatItemStreaming:
+    """Streaming path: append_text / append_thinking / finish_stream.
+
+    These bypass the watch_text / watch_thinking re-render path and write
+    deltas to a Textual ``MarkdownStream`` so long responses render
+    incrementally instead of re-parsing the whole document per token.
+    """
+
+    async def test_append_text_updates_text_reactive(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.append_text("hello ")
+            await item.append_text("world")
+            await pilot.pause()
+
+            # Reactive kept in sync for click-to-copy and chrome refresh.
+            assert item.text == "hello world"
+
+    async def test_append_text_collapses_thoughts_on_first_delta(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.append_thinking("thinking…")
+            await pilot.pause()
+            assert item.thoughts_collapsed is False
+
+            await item.append_text("answer")
+            await pilot.pause()
+            assert item.thoughts_collapsed is True
+
+            from textual.widgets import Static
+
+            label = item.query_one(".thinking-label", Static)
+            body = item.query_one(".thinking-body", Markdown)
+            assert body.display is False
+            assert "▸" in str(label.render())
+
+    async def test_append_thinking_reveals_label_on_first_delta(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            from textual.widgets import Static
+
+            label = item.query_one(".thinking-label", Static)
+            assert label.display is False
+
+            await item.append_thinking("musing")
+            await pilot.pause()
+
+            assert label.display is True
+            assert item.thinking == "musing"
+
+    async def test_user_item_append_is_noop(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "user"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.append_text("ignored")
+            await item.append_thinking("ignored")
+            await pilot.pause()
+
+            assert item.text == ""
+            assert item.thinking == ""
+
+    async def test_finish_stream_idempotent_when_never_streamed(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.finish_stream()
+            await item.finish_stream()  # safe to call twice
+
+    async def test_cancel_streams_safe_after_appends(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.append_text("partial ")
+            item.cancel_streams()
+            # No exception, streams cleared.
+            assert item._response_stream is None
+            assert item._thinking_stream is None
 
 
 class TestUsageStatus:

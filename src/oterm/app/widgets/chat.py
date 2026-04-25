@@ -1,7 +1,6 @@
 import asyncio
 import base64
 import binascii
-import json
 import time
 from collections.abc import AsyncGenerator
 from pathlib import Path
@@ -35,6 +34,7 @@ from textual.widgets import (
     Static,
     TabbedContent,
 )
+from textual.widgets.markdown import MarkdownStream
 
 from oterm.agent import get_agent
 from oterm.app.chat_edit import ChatEdit
@@ -304,6 +304,8 @@ class ChatContainer(Widget):
         try:
             thinking = ""
             text = ""
+            prev_thinking = ""
+            prev_text = ""
 
             user_prompt, skipped = build_user_prompt(
                 message, [img for _, img in self.images]
@@ -314,14 +316,22 @@ class ChatContainer(Widget):
                 )
             async for thinking, text in self.stream_agent(user_prompt):
                 follow = _near_bottom(message_container)
-                response_chat_item.thinking = thinking
-                response_chat_item.text = text
+                t_delta = thinking[len(prev_thinking) :]
+                x_delta = text[len(prev_text) :]
+                prev_thinking = thinking
+                prev_text = text
+                if t_delta:
+                    await response_chat_item.append_thinking(t_delta)
+                if x_delta:
+                    await response_chat_item.append_text(x_delta)
                 status.update_usage(
                     self._stream_usage.input_tokens,
                     self._stream_usage.output_tokens,
                 )
                 if follow:
                     message_container.scroll_end()
+
+            await response_chat_item.finish_stream()
 
             status.update_usage(
                 self._stream_usage.input_tokens,
@@ -357,6 +367,7 @@ class ChatContainer(Widget):
             self.images = []
 
         except asyncio.CancelledError:
+            response_chat_item.cancel_streams()
             user_chat_item.remove()
             response_chat_item.remove()
             status.remove()
@@ -366,6 +377,7 @@ class ChatContainer(Widget):
                 pass
             self.images = []
         except ModelHTTPError as e:
+            response_chat_item.cancel_streams()
             user_chat_item.remove()
             response_chat_item.remove()
             status.remove()
@@ -374,6 +386,7 @@ class ChatContainer(Widget):
             )
             message_container.scroll_end()
         except Exception as e:
+            response_chat_item.cancel_streams()
             user_chat_item.remove()
             response_chat_item.remove()
             status.remove()
@@ -564,6 +577,11 @@ class ChatItem(Widget):
     thoughts_collapsed: reactive[bool] = reactive(False)
     author: reactive[str] = reactive("")
 
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self._response_stream: MarkdownStream | None = None
+        self._thinking_stream: MarkdownStream | None = None
+
     @on(Click)
     async def on_click(self, event: Click) -> None:
         cur: Widget | None = event.widget
@@ -609,16 +627,7 @@ class ChatItem(Widget):
     async def watch_text(self, text: str) -> None:
         if self.author == "user":
             return
-        try:
-            jsn = json.loads(text)
-            if isinstance(jsn, dict):
-                text = f"```json\n{self.text}\n```"
-        except json.JSONDecodeError:
-            pass
-
-        txt_widget = self.query_one(".response", Markdown)
-        await txt_widget.update(text)
-
+        await self.query_one(".response", Markdown).update(text)
         if text and not self.thoughts_collapsed:
             self.thoughts_collapsed = True
         self._refresh_thinking_chrome()
@@ -633,8 +642,68 @@ class ChatItem(Widget):
         await body.update(thinking)
         self._refresh_thinking_chrome()
 
-    def watch_thoughts_collapsed(self, collapsed: bool) -> None:
+    def watch_thoughts_collapsed(self) -> None:
         self._refresh_thinking_chrome()
+
+    async def append_text(self, delta: str) -> None:
+        """Stream a text delta into the response Markdown widget.
+
+        Writes the delta via Textual's ``MarkdownStream`` (which batches and
+        appends incrementally) instead of re-parsing the whole document each
+        token through ``watch_text``. ``self.text`` is kept in sync via
+        ``set_reactive`` so click-to-copy and chrome logic see live state
+        without firing the watcher's full re-render.
+        """
+        if self.author == "user" or not delta:
+            return
+        if self._response_stream is None:
+            try:
+                response = self.query_one(".response", Markdown)
+            except NoMatches:
+                return
+            self._response_stream = Markdown.get_stream(response)
+        self.set_reactive(ChatItem.text, self.text + delta)
+        if not self.thoughts_collapsed:
+            self.thoughts_collapsed = True
+        await self._response_stream.write(delta)
+
+    async def append_thinking(self, delta: str) -> None:
+        """Stream a thinking delta into the thinking-body Markdown widget."""
+        if self.author == "user" or not delta:
+            return
+        first_chunk = self._thinking_stream is None
+        if self._thinking_stream is None:
+            try:
+                body = self.query_one(".thinking-body", Markdown)
+            except NoMatches:
+                return
+            self._thinking_stream = Markdown.get_stream(body)
+        self.set_reactive(ChatItem.thinking, self.thinking + delta)
+        if first_chunk:
+            self._refresh_thinking_chrome()
+        await self._thinking_stream.write(delta)
+
+    async def finish_stream(self) -> None:
+        """Drain and stop any active streams started by ``append_*``."""
+        if self._response_stream is not None:
+            await self._response_stream.stop()
+            self._response_stream = None
+        if self._thinking_stream is not None:
+            await self._thinking_stream.stop()
+            self._thinking_stream = None
+
+    def cancel_streams(self) -> None:
+        """Cancel in-flight stream tasks without awaiting.
+
+        Used in error/cancellation paths where the chat item is about to be
+        removed; awaiting a graceful flush from inside an exception handler
+        is unsafe.
+        """
+        for stream in (self._response_stream, self._thinking_stream):
+            if stream is not None and stream._task is not None:
+                stream._task.cancel()
+        self._response_stream = None
+        self._thinking_stream = None
 
     def compose(self) -> ComposeResult:
         """A chat item."""
