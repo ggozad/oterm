@@ -60,9 +60,11 @@ class TestGetCapabilities:
         assert caps.supports_thinking is True
         assert caps.supports_vision is True
 
-    def test_anthropic_claude_2_no_thinking(self):
-        caps = get_capabilities("anthropic", "claude-2.1")
-        assert caps.supports_thinking is False
+    def test_anthropic_thinking_via_profile(self):
+        # pydantic-ai's anthropic profile reports supports_thinking=True
+        # uniformly; we delegate, so the toggle is enabled even on older
+        # models where Anthropic silently ignores the flag.
+        assert get_capabilities("anthropic", "claude-2.1").supports_thinking is True
 
     def test_openai_vision_models(self):
         for model in ("gpt-4o", "gpt-4-turbo", "gpt-4.1", "gpt-5", "o1", "o3", "o4"):
@@ -122,28 +124,14 @@ class TestGetCapabilities:
         caps = get_capabilities("ollama", "llama3")
         assert caps == ModelCapabilities()
 
-    def test_openai_thinking_via_pydantic_profile(self, monkeypatch):
-        from pydantic_ai.profiles import openai as openai_profile_mod
-        from pydantic_ai.profiles.openai import OpenAIModelProfile
+    def test_openai_o1_thinking_via_profile(self):
+        # OpenAIProvider.model_profile resolves o1 as reasoning-capable.
+        assert get_capabilities("openai", "o1").supports_thinking is True
 
-        monkeypatch.setattr(
-            openai_profile_mod,
-            "openai_model_profile",
-            lambda m: OpenAIModelProfile(openai_supports_reasoning=True),
-        )
-        assert get_capabilities("openai", "anything").supports_thinking is True
+    def test_openai_gpt4o_no_thinking(self):
+        assert get_capabilities("openai", "gpt-4o").supports_thinking is False
 
-        monkeypatch.setattr(
-            openai_profile_mod,
-            "openai_model_profile",
-            lambda m: OpenAIModelProfile(openai_supports_reasoning=False),
-        )
-        assert get_capabilities("openai", "anything").supports_thinking is False
-
-    def test_openai_thinking_non_openai_profile(self, monkeypatch):
-        from pydantic_ai.profiles import openai as openai_profile_mod
-
-        monkeypatch.setattr(
-            openai_profile_mod, "openai_model_profile", lambda m: object()
-        )
-        assert get_capabilities("openai", "x").supports_thinking is False
+    def test_unknown_provider_thinking_falls_back(self):
+        # huggingface isn't in pydantic-ai's infer_provider_class map; we
+        # should swallow the LookupError and return False rather than crash.
+        assert get_capabilities("huggingface", "some-model").supports_thinking is False

@@ -60,28 +60,23 @@ def get_capabilities(provider: str, model: str) -> ModelCapabilities:
 
 
 def _supports_thinking(provider: str, model: str) -> bool:
-    if provider == "openai":
-        from pydantic_ai.profiles.openai import OpenAIModelProfile, openai_model_profile
+    """Per-provider reasoning/thinking support, sourced from pydantic-ai profiles.
 
-        profile = openai_model_profile(model)
-        if isinstance(profile, OpenAIModelProfile):
-            return profile.openai_supports_reasoning
-        return False
-    if provider == "anthropic":
-        return (
-            "claude-3-7" in model
-            or "claude-4" in model
-            or "claude-opus-4" in model
-            or "claude-sonnet-4" in model
-            or "claude-haiku-4" in model
-        )
+    Falls back to ``False`` for providers pydantic-ai doesn't recognise (e.g.
+    ``huggingface``) and for malformed model names. DeepSeek is special-cased
+    because its profile delegates to the OpenAI profile, which doesn't know
+    about the ``-reasoner`` suffix.
+    """
     if provider == "deepseek":
         return "reasoner" in model
-    if provider in ("google-gla", "google-vertex"):
-        return "thinking" in model or "2.5" in model
-    if provider == "groq":
-        return "deepseek-r1" in model
-    return False
+
+    from pydantic_ai.providers import infer_provider_class
+
+    try:
+        profile = infer_provider_class(provider).model_profile(model)
+    except Exception:
+        return False
+    return bool(profile and profile.supports_thinking)
 
 
 def _supports_vision(provider: str, model: str) -> bool:
