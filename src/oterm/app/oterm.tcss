@@ -132,6 +132,30 @@ LoadingIndicator {
     padding: 1;
 }
 
+.screen-container Input,
+.screen-container TextArea,
+.screen-container OptionList,
+.screen-container SelectCurrent {
+    border: solid $primary-muted;
+}
+
+.screen-container Input:focus,
+.screen-container TextArea:focus,
+.screen-container OptionList:focus,
+.screen-container Select:focus > SelectCurrent {
+    border: solid $primary;
+}
+
+.screen-container Checkbox {
+    border: none;
+    padding: 0 1;
+    background: transparent;
+}
+
+.screen-container Checkbox:focus {
+    background: $boost;
+}
+
 .full-height {
     width: 95%;
     height: 95%;
@@ -289,7 +313,6 @@ LoadingIndicator {
 #image-select-container .title {
     width: 100%;
     padding-top: 1;
-    text-align: center;
 }
 
 #image-directory-tree {
