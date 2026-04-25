@@ -7,9 +7,9 @@ from pydantic_ai import Agent
 from pydantic_ai.messages import ModelMessage
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from textual.app import App, ComposeResult
-from textual.widgets import LoadingIndicator, Markdown
+from textual.widgets import Markdown
 
-from oterm.app.widgets.chat import ChatContainer, ChatItem
+from oterm.app.widgets.chat import ChatContainer, ChatItem, UsageStatus
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.types import ChatModel, MessageModel
 
@@ -291,8 +291,8 @@ class TestResponseTaskErrors:
 
             assert container.messages == []
             assert any("Unexpected error" in n.message for n in _notifications(app))
-            # LoadingIndicator removed in finally block
-            assert list(container.query(LoadingIndicator)) == []
+            # UsageStatus is removed when the turn fails.
+            assert list(container.query(UsageStatus)) == []
 
 
 class TestEditChat:
@@ -571,3 +571,80 @@ class TestChatItemUserAndJSON:
 
             item.thinking = "hmm"  # should be swallowed without exception
             await pilot.pause()
+
+
+class TestUsageStatus:
+    async def test_zero_tokens_render_only_duration(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            status = UsageStatus()
+            await container.query_one("#messageContainer").mount(status)
+            await pilot.pause()
+
+            rendered = str(status.render())
+            assert "↑" not in rendered
+            assert "↓" not in rendered
+            assert rendered.endswith("s")
+
+    async def test_update_usage_renders_token_arrows(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            status = UsageStatus()
+            await container.query_one("#messageContainer").mount(status)
+            await pilot.pause()
+
+            status.update_usage(input_tokens=42, output_tokens=7)
+            await pilot.pause()
+            rendered = str(status.render())
+            assert "↑ 42" in rendered
+            assert "↓ 7" in rendered
+
+    async def test_finish_drops_spinner_glyph(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            status = UsageStatus()
+            await container.query_one("#messageContainer").mount(status)
+            await pilot.pause()
+
+            status.update_usage(input_tokens=10, output_tokens=5)
+            status.finish()
+            await pilot.pause()
+
+            rendered = str(status.render())
+            assert not any(frame in rendered for frame in UsageStatus.SPINNER_FRAMES)
+            assert "↑ 10" in rendered
+            assert "↓ 5" in rendered
+
+    async def test_status_persists_after_successful_turn(self, store, chat_model):
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            yield "first "
+            yield "second"
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+
+            prompt = app.query_one(FlexibleInput)
+            prompt.text = "hello"
+            await pilot.press("enter")
+
+            for _ in range(50):
+                await asyncio.sleep(0)
+                await pilot.pause()
+                if len(container.messages) == 2:
+                    break
+
+            statuses = list(container.query(UsageStatus))
+            assert len(statuses) == 1
+            # After success, the spinner glyph is gone but the line remains.
+            rendered = str(statuses[0].render())
+            assert not any(frame in rendered for frame in UsageStatus.SPINNER_FRAMES)

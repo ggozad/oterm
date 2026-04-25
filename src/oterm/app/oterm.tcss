@@ -116,10 +116,13 @@ ChatItem .thinking-body {
     padding: 0 2;
 }
 
-LoadingIndicator {
+UsageStatus {
     height: 1;
-    padding: 0 0 0 2;
+    width: 100%;
+    padding: 0 2 0 0;
     background: transparent;
+    color: $text-disabled;
+    text-align: right;
 }
 
 .screen-container {

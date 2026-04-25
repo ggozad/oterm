@@ -2,6 +2,7 @@ import asyncio
 import base64
 import binascii
 import json
+import time
 from collections.abc import AsyncGenerator
 from pathlib import Path
 from typing import Any
@@ -20,6 +21,7 @@ from pydantic_ai import (
 )
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import ModelMessage, ThinkingPart
+from pydantic_ai.usage import RunUsage
 from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -29,7 +31,6 @@ from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import (
-    LoadingIndicator,
     Markdown,
     Static,
     TabbedContent,
@@ -138,6 +139,7 @@ class ChatContainer(Widget):
         self.loaded = False
         self.loading = False
         self.images = []
+        self._stream_usage: RunUsage = RunUsage()
 
     def _rebuild_agent(self) -> None:
         """(Re)build the agent for the current chat_model. Defers errors to send time."""
@@ -202,6 +204,7 @@ class ChatContainer(Widget):
 
         thinking = ""
         text = ""
+        self._stream_usage = RunUsage()
 
         async with self.agent.iter(
             user_prompt, message_history=self.pydantic_history
@@ -220,9 +223,11 @@ class ChatContainer(Widget):
                                     thinking += event.delta.content_delta or ""
                                 elif isinstance(event.delta, TextPartDelta):
                                     text += event.delta.content_delta or ""
+                                self._stream_usage = run.usage()
                                 yield thinking, text
             if run.result is not None:
                 self.pydantic_history = list(run.result.all_messages())
+                self._stream_usage = run.result.usage()
 
     async def load_messages(self) -> None:
         message_container = self.query_one("#messageContainer")
@@ -254,8 +259,8 @@ class ChatContainer(Widget):
         response_chat_item = ChatItem()
         response_chat_item.author = "assistant"
         message_container.mount(response_chat_item)
-        loading = LoadingIndicator()
-        await message_container.mount(loading)
+        status = UsageStatus()
+        await message_container.mount(status)
         message_container.scroll_end()
 
         try:
@@ -268,8 +273,20 @@ class ChatContainer(Widget):
                 follow = _near_bottom(message_container)
                 response_chat_item.thinking = thinking
                 response_chat_item.text = text
+                status.update_usage(
+                    self._stream_usage.input_tokens,
+                    self._stream_usage.output_tokens,
+                )
                 if follow:
                     message_container.scroll_end()
+
+            status.update_usage(
+                self._stream_usage.input_tokens,
+                self._stream_usage.output_tokens,
+            )
+            status.finish()
+            if _near_bottom(message_container):
+                self.call_after_refresh(message_container.scroll_end)
 
             store = await Store.get_store()
 
@@ -299,6 +316,7 @@ class ChatContainer(Widget):
         except asyncio.CancelledError:
             user_chat_item.remove()
             response_chat_item.remove()
+            status.remove()
             try:
                 self.query_one("#prompt", FlexibleInput).text = message
             except NoMatches:
@@ -307,6 +325,7 @@ class ChatContainer(Widget):
         except ModelHTTPError as e:
             user_chat_item.remove()
             response_chat_item.remove()
+            status.remove()
             self.app.notify(
                 f"There was an error running your request: {e}", severity="error"
             )
@@ -314,11 +333,9 @@ class ChatContainer(Widget):
         except Exception as e:
             user_chat_item.remove()
             response_chat_item.remove()
+            status.remove()
             self.app.notify(f"Unexpected error: {e}", severity="error")
             message_container.scroll_end()
-
-        finally:
-            loading.remove()
 
     @on(FlexibleInput.Submitted)
     async def on_submit(self, event: FlexibleInput.Submitted) -> None:
@@ -393,8 +410,8 @@ class ChatContainer(Widget):
         response_chat_item = ChatItem()
         response_chat_item.author = "assistant"
         message_container.mount(response_chat_item)
-        loading = LoadingIndicator()
-        await message_container.mount(loading)
+        status = UsageStatus()
+        await message_container.mount(status)
         message_container.scroll_end()
 
         turn_start = _last_user_prompt_index(self.pydantic_history) or 0
@@ -406,6 +423,7 @@ class ChatContainer(Widget):
             self.messages.append(popped_message)
             self.pydantic_history = self.pydantic_history + popped_history
             response_chat_item.remove()
+            status.remove()
 
         async def response_task() -> None:
             try:
@@ -418,6 +436,10 @@ class ChatContainer(Widget):
                     follow = _near_bottom(message_container)
                     response_chat_item.thinking = thinking
                     response_chat_item.text = text
+                    status.update_usage(
+                        self._stream_usage.input_tokens,
+                        self._stream_usage.output_tokens,
+                    )
                     if follow:
                         message_container.scroll_end()
 
@@ -425,6 +447,14 @@ class ChatContainer(Widget):
                     restore_state()
                     self.app.notify("No response received", severity="error")
                     return
+
+                status.update_usage(
+                    self._stream_usage.input_tokens,
+                    self._stream_usage.output_tokens,
+                )
+                status.finish()
+                if _near_bottom(message_container):
+                    self.call_after_refresh(message_container.scroll_end)
 
                 store = await Store.get_store()
                 regenerated_message = MessageModel(
@@ -449,8 +479,6 @@ class ChatContainer(Widget):
             except Exception as e:
                 restore_state()
                 self.app.notify(f"Unexpected error: {e}", severity="error")
-            finally:
-                loading.remove()
 
         asyncio.create_task(response_task())
 
@@ -534,3 +562,63 @@ class ChatItem(Widget):
                     yield Static("", classes="thinking-label")
                     yield Markdown(classes="thinking-body")
                     yield Markdown(classes="response")
+
+
+class UsageStatus(Static):
+    """Spinner-and-usage line shown below the active assistant response.
+
+    While streaming, cycles a braille glyph and surfaces token counts and
+    elapsed time as soon as the model reports them. After `finish()`, the
+    glyph drops and the line stays in place as a dimmed footer for the turn.
+    """
+
+    SPINNER_FRAMES = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+    TICK_INTERVAL = 0.1
+
+    def __init__(self, **kwargs: Any) -> None:
+        super().__init__("", **kwargs)
+        self._frame = 0
+        self._streaming = True
+        self._input_tokens = 0
+        self._output_tokens = 0
+        self._started_at = time.monotonic()
+        self._elapsed = 0.0
+        self._timer: Any = None
+
+    def on_mount(self) -> None:
+        self._timer = self.set_interval(self.TICK_INTERVAL, self._tick)
+        self._refresh_text()
+
+    def _tick(self) -> None:
+        if self._streaming:
+            self._frame = (self._frame + 1) % len(self.SPINNER_FRAMES)
+            self._elapsed = time.monotonic() - self._started_at
+        self._refresh_text()
+
+    def update_usage(self, input_tokens: int, output_tokens: int) -> None:
+        if input_tokens == self._input_tokens and output_tokens == self._output_tokens:
+            return
+        self._input_tokens = input_tokens
+        self._output_tokens = output_tokens
+        self._refresh_text()
+
+    def finish(self) -> None:
+        if not self._streaming:
+            return
+        self._streaming = False
+        self._elapsed = time.monotonic() - self._started_at
+        if self._timer is not None:
+            self._timer.stop()
+            self._timer = None
+        self._refresh_text()
+
+    def _refresh_text(self) -> None:
+        parts: list[str] = []
+        if self._streaming:
+            parts.append(self.SPINNER_FRAMES[self._frame])
+        if self._input_tokens:
+            parts.append(f"↑ {self._input_tokens}")
+        if self._output_tokens:
+            parts.append(f"↓ {self._output_tokens}")
+        parts.append(f"{self._elapsed:.1f}s")
+        self.update("  ".join(parts))
