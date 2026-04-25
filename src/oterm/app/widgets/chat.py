@@ -41,7 +41,7 @@ from oterm.app.chat_edit import ChatEdit
 from oterm.app.chat_rename import ChatRename
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
-from oterm.app.widgets.prompt import FlexibleInput
+from oterm.app.widgets.prompt import IMAGE_TOKEN_RE, FlexibleInput, PostableTextArea
 from oterm.store.store import Store
 from oterm.tools import builtin_tools
 from oterm.tools.mcp.setup import mcp_servers, mcp_tool_meta
@@ -55,6 +55,62 @@ _SCROLL_FOLLOW_THRESHOLD = 2
 
 def _near_bottom(container) -> bool:
     return container.max_scroll_y - container.scroll_y <= _SCROLL_FOLLOW_THRESHOLD
+
+
+def _decode_image(b64: str) -> BinaryContent | None:
+    try:
+        data = base64.b64decode(b64, validate=True)
+    except (binascii.Error, ValueError):
+        return None
+    return BinaryContent(data=data, media_type="image/png")
+
+
+def build_user_prompt(
+    text: str, images: list[str]
+) -> tuple[str | list[str | BinaryContent], int]:
+    """Interleave text and images by `[Image #N]` tokens, 1-indexed into images.
+
+    Falls back to appending all images at the end when no tokens appear, so
+    history saved before tokens existed still renders correctly on regenerate.
+    Returns (user_prompt, skipped_count).
+    """
+    matches = list(IMAGE_TOKEN_RE.finditer(text))
+    if not matches:
+        if not images:
+            return text, 0
+        parts: list[str | BinaryContent] = [text] if text else []
+        skipped = 0
+        for b64 in images:
+            content = _decode_image(b64)
+            if content is None:
+                skipped += 1
+            else:
+                parts.append(content)
+        if not any(isinstance(p, BinaryContent) for p in parts):
+            return text, skipped
+        return parts, skipped
+
+    parts = []
+    last = 0
+    skipped = 0
+    for m in matches:
+        if m.start() > last:
+            parts.append(text[last : m.start()])
+        idx = int(m.group(1))
+        if 1 <= idx <= len(images):
+            content = _decode_image(images[idx - 1])
+            if content is None:
+                skipped += 1
+            else:
+                parts.append(content)
+        else:
+            parts.append(m.group(0))
+        last = m.end()
+    if last < len(text):
+        parts.append(text[last:])
+    if not any(isinstance(p, BinaryContent) for p in parts):
+        return text, skipped
+    return parts, skipped
 
 
 def _last_user_prompt_index(history: list[ModelMessage]) -> int | None:
@@ -178,29 +234,10 @@ class ChatContainer(Widget):
         self.query_one("#prompt").focus()
 
     async def stream_agent(
-        self, prompt: str, images: list[str] = []
+        self, user_prompt: str | list[str | BinaryContent]
     ) -> AsyncGenerator[tuple[str, str], Any]:
         if self.agent is None:
             raise RuntimeError(self._agent_error or "Agent is not configured")
-        user_prompt: str | list[str | BinaryContent]
-        if images:
-            user_prompt = [prompt]
-            skipped = 0
-            for img_base64 in images:
-                try:
-                    img_bytes = base64.b64decode(img_base64, validate=True)
-                except (binascii.Error, ValueError):
-                    skipped += 1
-                    continue
-                user_prompt.append(
-                    BinaryContent(data=img_bytes, media_type="image/png")
-                )
-            if skipped:
-                self.app.notify(
-                    f"Skipped {skipped} malformed image(s)", severity="warning"
-                )
-        else:
-            user_prompt = prompt
 
         thinking = ""
         text = ""
@@ -267,9 +304,14 @@ class ChatContainer(Widget):
             thinking = ""
             text = ""
 
-            async for thinking, text in self.stream_agent(
+            user_prompt, skipped = build_user_prompt(
                 message, [img for _, img in self.images]
-            ):
+            )
+            if skipped:
+                self.app.notify(
+                    f"Skipped {skipped} malformed image(s)", severity="warning"
+                )
+            async for thinking, text in self.stream_agent(user_prompt):
                 follow = _near_bottom(message_container)
                 response_chat_item.thinking = thinking
                 response_chat_item.text = text
@@ -429,10 +471,12 @@ class ChatContainer(Widget):
             try:
                 thinking = ""
                 text = ""
-                async for thinking, text in self.stream_agent(
-                    message.text,
-                    images=message.images,
-                ):
+                user_prompt, skipped = build_user_prompt(message.text, message.images)
+                if skipped:
+                    self.app.notify(
+                        f"Skipped {skipped} malformed image(s)", severity="warning"
+                    )
+                async for thinking, text in self.stream_agent(user_prompt):
                     follow = _near_bottom(message_container)
                     response_chat_item.thinking = thinking
                     response_chat_item.text = text
@@ -498,6 +542,13 @@ class ChatContainer(Widget):
     @on(ImageAdded)
     def on_image_added(self, ev: ImageAdded) -> None:
         self.images.append((ev.path, ev.image))
+        token = f"[Image #{len(self.images)}] "
+        try:
+            textarea = self.query_one("#promptArea", PostableTextArea)
+            textarea.insert(token)
+            textarea.focus()
+        except NoMatches:
+            pass
         self.app.notify(f"Image {ev.path} added.")
 
     def compose(self) -> ComposeResult:

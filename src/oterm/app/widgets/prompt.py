@@ -1,5 +1,7 @@
+import re
 from dataclasses import dataclass
 
+from rich.style import Style
 from textual import on
 from textual.app import ComposeResult
 from textual.binding import Binding
@@ -14,6 +16,10 @@ from oterm.app.image_browser import ImageSelect
 from oterm.app.widgets.image import ImageAdded
 
 MAX_PROMPT_LINES = 10
+
+IMAGE_TOKEN_RE = re.compile(r"\[Image #(\d+)\]")
+_IMAGE_TOKEN_HIGHLIGHT = "image-token"
+_IMAGE_TOKEN_STYLE = Style(color="bright_cyan", bold=True)
 
 
 class PostableTextArea(TextArea):
@@ -59,16 +65,62 @@ class PostableTextArea(TextArea):
     def on_mount(self) -> None:
         self.soft_wrap = True
         self._resize_to_content()
+        if self._theme is not None:
+            self._theme.syntax_styles[_IMAGE_TOKEN_HIGHLIGHT] = _IMAGE_TOKEN_STYLE
+            self._build_highlight_map()
+            self.refresh()
 
     def _resize_to_content(self) -> None:
         line_count = max(self.wrapped_document.height, 1)
         self.styles.height = min(line_count, MAX_PROMPT_LINES)
+
+    def _build_highlight_map(self) -> None:
+        super()._build_highlight_map()
+        for line_idx in range(self.document.line_count):
+            line = self.document.get_line(line_idx)
+            for m in IMAGE_TOKEN_RE.finditer(line):
+                self._highlights[line_idx].append(
+                    (m.start(), m.end(), _IMAGE_TOKEN_HIGHLIGHT)
+                )
 
     def action_submit(self) -> None:
         self.post_message(PostableTextArea.Submitted(self, self.text))
 
     def action_newline(self) -> None:
         self.insert("\n")
+
+    def action_delete_left(self) -> None:
+        if self.selection.start != self.selection.end:
+            super().action_delete_left()
+            return
+        span = self._image_token_span_at_cursor("left")
+        if span is not None:
+            self.delete(*span)
+            return
+        super().action_delete_left()
+
+    def action_delete_right(self) -> None:
+        if self.selection.start != self.selection.end:
+            super().action_delete_right()
+            return
+        span = self._image_token_span_at_cursor("right")
+        if span is not None:
+            self.delete(*span)
+            return
+        super().action_delete_right()
+
+    def _image_token_span_at_cursor(
+        self, direction: str
+    ) -> tuple[tuple[int, int], tuple[int, int]] | None:
+        row, col = self.cursor_location
+        line = self.document.get_line(row)
+        for m in IMAGE_TOKEN_RE.finditer(line):
+            s, e = m.start(), m.end()
+            if direction == "left" and s < col <= e:
+                return (row, s), (row, e)
+            if direction == "right" and s <= col < e:
+                return (row, s), (row, e)
+        return None
 
 
 class FlexibleInput(Widget):

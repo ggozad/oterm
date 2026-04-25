@@ -95,6 +95,8 @@ class TestHistoryUpdate:
 
 class TestImagePrompt:
     async def test_valid_base64_image_accepted(self):
+        from oterm.app.widgets.chat import build_user_prompt
+
         async def stream_fn(
             messages: list[ModelMessage], info: AgentInfo
         ) -> AsyncIterator[str]:
@@ -105,5 +107,6 @@ class TestImagePrompt:
         _install_stream_agent(c, stream_fn)
 
         img_b64 = base64.b64encode(b"\x89PNG\r\n").decode()
-        chunks = await _collect(c.stream_agent("what is this?", images=[img_b64]))
+        user_prompt, _ = build_user_prompt("what is this?", [img_b64])
+        chunks = await _collect(c.stream_agent(user_prompt))
         assert chunks[-1] == ("", "see this")

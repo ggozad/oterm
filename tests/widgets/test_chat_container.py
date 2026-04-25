@@ -194,17 +194,152 @@ class TestClearChat:
 
 
 class TestImages:
-    async def test_image_added_appended_to_pending_images(self, chat_model):
+    async def test_image_added_appended_and_token_inserted_at_cursor(self, chat_model):
         from oterm.app.widgets.image import ImageAdded
+        from oterm.app.widgets.prompt import FlexibleInput, PostableTextArea
 
         app = _Host(chat_model, [])
         async with app.run_test() as pilot:
             container = app.query_one(ChatContainer)
+            prompt = container.query_one("#prompt", FlexibleInput)
+            textarea = prompt.query_one("#promptArea", PostableTextArea)
+            textarea.text = "before after"
+            textarea.cursor_location = (0, 7)  # between "before " and "after"
+            await pilot.pause()
+
             container.post_message(ImageAdded(Path("/tmp/a.png"), "base64data"))
             await pilot.pause()
+
             assert (Path("/tmp/a.png"), "base64data") in container.images
+            assert textarea.text == "before [Image #1] after"
+
+    async def test_second_image_gets_next_index(self, chat_model):
+        from oterm.app.widgets.image import ImageAdded
+        from oterm.app.widgets.prompt import FlexibleInput, PostableTextArea
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            prompt = container.query_one("#prompt", FlexibleInput)
+            textarea = prompt.query_one("#promptArea", PostableTextArea)
+            await pilot.pause()
+
+            container.post_message(ImageAdded(Path("/tmp/a.png"), "data1"))
+            await pilot.pause()
+            container.post_message(ImageAdded(Path("/tmp/b.png"), "data2"))
+            await pilot.pause()
+
+            assert "[Image #1]" in textarea.text
+            assert "[Image #2]" in textarea.text
+            assert textarea.text.index("[Image #1]") < textarea.text.index("[Image #2]")
+
+    async def test_token_is_highlighted(self, chat_model):
+        from oterm.app.widgets.image import ImageAdded
+        from oterm.app.widgets.prompt import FlexibleInput, PostableTextArea
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            prompt = container.query_one("#prompt", FlexibleInput)
+            textarea = prompt.query_one("#promptArea", PostableTextArea)
+            await pilot.pause()
+
+            container.post_message(ImageAdded(Path("/tmp/a.png"), "data"))
+            await pilot.pause()
+
+            highlights = textarea._highlights[0]
+            names = [name for _, _, name in highlights]
+            assert "image-token" in names
+            assert "image-token" in textarea._theme.syntax_styles
+
+    async def test_backspace_inside_token_deletes_whole_token(self, chat_model):
+        from oterm.app.widgets.image import ImageAdded
+        from oterm.app.widgets.prompt import FlexibleInput, PostableTextArea
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            prompt = container.query_one("#prompt", FlexibleInput)
+            textarea = prompt.query_one("#promptArea", PostableTextArea)
+            await pilot.pause()
+
+            container.post_message(ImageAdded(Path("/tmp/a.png"), "data"))
+            await pilot.pause()
+
+            assert textarea.text == "[Image #1] "
+            textarea.cursor_location = (0, 5)
+            await pilot.press("backspace")
+            await pilot.pause()
+
+            assert "[Image #1]" not in textarea.text
+            assert textarea.text == " "
+
+    async def test_backspace_just_after_token_deletes_token(self, chat_model):
+        from oterm.app.widgets.image import ImageAdded
+        from oterm.app.widgets.prompt import FlexibleInput, PostableTextArea
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            prompt = container.query_one("#prompt", FlexibleInput)
+            textarea = prompt.query_one("#promptArea", PostableTextArea)
+            await pilot.pause()
+
+            container.post_message(ImageAdded(Path("/tmp/a.png"), "data"))
+            await pilot.pause()
+
+            textarea.cursor_location = (0, 10)  # right after closing "]"
+            await pilot.press("backspace")
+            await pilot.pause()
+
+            assert textarea.text == " "
+
+    async def test_delete_at_token_start_deletes_whole_token(self, chat_model):
+        from oterm.app.widgets.image import ImageAdded
+        from oterm.app.widgets.prompt import FlexibleInput, PostableTextArea
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            prompt = container.query_one("#prompt", FlexibleInput)
+            textarea = prompt.query_one("#promptArea", PostableTextArea)
+            await pilot.pause()
+
+            container.post_message(ImageAdded(Path("/tmp/a.png"), "data"))
+            await pilot.pause()
+
+            textarea.cursor_location = (0, 0)
+            await pilot.press("delete")
+            await pilot.pause()
+
+            assert "[Image #1]" not in textarea.text
+
+    async def test_backspace_before_token_deletes_one_char(self, chat_model):
+        from oterm.app.widgets.image import ImageAdded
+        from oterm.app.widgets.prompt import FlexibleInput, PostableTextArea
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            prompt = container.query_one("#prompt", FlexibleInput)
+            textarea = prompt.query_one("#promptArea", PostableTextArea)
+            textarea.text = "abc"
+            textarea.cursor_location = (0, 3)
+            await pilot.pause()
+
+            container.post_message(ImageAdded(Path("/tmp/a.png"), "data"))
+            await pilot.pause()
+
+            assert textarea.text == "abc[Image #1] "
+            textarea.cursor_location = (0, 3)
+            await pilot.press("backspace")
+            await pilot.pause()
+
+            assert textarea.text == "ab[Image #1] "
 
     async def test_malformed_image_is_skipped_with_notification(self, chat_model):
+        from oterm.app.widgets.chat import build_user_prompt
+
         async def stream_fn(
             messages: list[ModelMessage], info: AgentInfo
         ) -> AsyncIterator[str]:
@@ -219,13 +354,68 @@ class TestImages:
             good = base64.b64encode(b"\x89PNG\r\n").decode()
             bad = "not-valid-base64!!"
 
+            user_prompt, skipped = build_user_prompt("look", [good, bad])
+            assert skipped == 1
+
             chunks = []
-            async for chunk in container.stream_agent("look", images=[good, bad]):
+            async for chunk in container.stream_agent(user_prompt):
                 chunks.append(chunk)
 
             assert chunks[-1] == ("", "ok response")
             await pilot.pause()
-            assert any("malformed" in n.message for n in _notifications(app))
+
+
+class TestBuildUserPrompt:
+    def test_no_tokens_no_images_returns_text(self):
+        from oterm.app.widgets.chat import build_user_prompt
+
+        assert build_user_prompt("hello", []) == ("hello", 0)
+
+    def test_no_tokens_with_images_appends_at_end(self):
+        from pydantic_ai import BinaryContent
+
+        from oterm.app.widgets.chat import build_user_prompt
+
+        good = base64.b64encode(b"\x89PNG\r\n").decode()
+        prompt, skipped = build_user_prompt("describe", [good])
+        assert skipped == 0
+        assert isinstance(prompt, list)
+        assert prompt[0] == "describe"
+        assert isinstance(prompt[1], BinaryContent)
+
+    def test_token_interleaves_image_at_position(self):
+        from pydantic_ai import BinaryContent
+
+        from oterm.app.widgets.chat import build_user_prompt
+
+        good = base64.b64encode(b"\x89PNG\r\n").decode()
+        prompt, skipped = build_user_prompt("see [Image #1] please", [good])
+        assert skipped == 0
+        assert isinstance(prompt, list)
+        assert prompt[0] == "see "
+        assert isinstance(prompt[1], BinaryContent)
+        assert prompt[2] == " please"
+
+    def test_unreferenced_image_is_dropped_when_tokens_present(self):
+        from pydantic_ai import BinaryContent
+
+        from oterm.app.widgets.chat import build_user_prompt
+
+        good1 = base64.b64encode(b"\x89PNG\r\n1").decode()
+        good2 = base64.b64encode(b"\x89PNG\r\n2").decode()
+        prompt, skipped = build_user_prompt("[Image #2] only", [good1, good2])
+        assert skipped == 0
+        assert isinstance(prompt, list)
+        # Only image #2 is referenced; image #1 is not appended.
+        binaries = [p for p in prompt if isinstance(p, BinaryContent)]
+        assert len(binaries) == 1
+
+    def test_invalid_token_index_preserved_as_literal(self):
+        from oterm.app.widgets.chat import build_user_prompt
+
+        prompt, skipped = build_user_prompt("[Image #5] hi", [])
+        assert skipped == 0
+        assert prompt == "[Image #5] hi"
 
 
 class TestHistory:
