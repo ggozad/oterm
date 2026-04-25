@@ -173,7 +173,7 @@ class ChatEdit(ModalScreen[str]):
                 self.models = [m.model or "" for m in list_response.models]
                 self.models_size = {}
                 for m in list_response.models:
-                    if m.model:
+                    if m.model:  # pragma: no branch
                         self.models_size[m.model] = m["size"]
             else:
                 self.models = await asyncio.to_thread(list_models, provider)

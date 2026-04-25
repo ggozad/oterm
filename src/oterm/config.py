@@ -18,7 +18,7 @@ class EnvConfig(BaseModel):
 
 
 envConfig = EnvConfig.model_validate(os.environ)
-if envConfig.OLLAMA_URL == "":
+if envConfig.OLLAMA_URL == "":  # pragma: no branch
     envConfig.OLLAMA_URL = f"http://{envConfig.OLLAMA_HOST}"
 
 

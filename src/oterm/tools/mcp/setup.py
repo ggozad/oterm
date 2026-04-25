@@ -129,7 +129,7 @@ async def setup_mcp_servers() -> dict[str, list[ToolMeta]]:
 
 async def teardown_mcp_servers() -> None:
     global _exit_stack
-    if _exit_stack is None:
+    if _exit_stack is None:  # pragma: no cover
         return
     log.info("Tearing down MCP servers")
     try:

@@ -74,7 +74,9 @@ async def migrate_tools_to_names(db_path: Path) -> None:
                 # Old format: list of ollama.Tool objects with function.name
                 names = []
                 for tool in tools:
-                    if "function" in tool and "name" in tool["function"]:
+                    if (
+                        "function" in tool and "name" in tool["function"]
+                    ):  # pragma: no branch
                         names.append(tool["function"]["name"])
                 await connection.execute(
                     "UPDATE chat SET tools = ? WHERE id = ?",

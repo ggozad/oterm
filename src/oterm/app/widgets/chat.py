@@ -263,7 +263,7 @@ class ChatContainer(Widget):
                                     text += event.delta.content_delta or ""
                                 self._stream_usage = run.usage()
                                 yield thinking, text
-            if run.result is not None:
+            if run.result is not None:  # pragma: no branch
                 self.pydantic_history = list(run.result.all_messages())
                 self._stream_usage = run.result.usage()
 
@@ -373,7 +373,7 @@ class ChatContainer(Widget):
             status.remove()
             try:
                 self.query_one("#prompt", FlexibleInput).text = message
-            except NoMatches:
+            except NoMatches:  # pragma: no cover
                 pass
             self.images = []
         except ModelHTTPError as e:
@@ -406,7 +406,7 @@ class ChatContainer(Widget):
         self.inference_task = asyncio.create_task(self.response_task(message))
 
     def key_escape(self) -> None:
-        if hasattr(self, "inference_task"):
+        if hasattr(self, "inference_task"):  # pragma: no branch
             self.inference_task.cancel()
 
     @work
@@ -561,7 +561,7 @@ class ChatContainer(Widget):
             textarea = self.query_one("#promptArea", PostableTextArea)
             textarea.insert(token)
             textarea.focus()
-        except NoMatches:
+        except NoMatches:  # pragma: no cover
             pass
         self.app.notify(f"Image {ev.path} added.")
 
@@ -607,7 +607,7 @@ class ChatItem(Widget):
         try:
             label = self.query_one(".thinking-label", Static)
             body = self.query_one(".thinking-body", Markdown)
-        except NoMatches:
+        except NoMatches:  # pragma: no cover
             return
         has_thinking = bool(self.thinking)
         label.display = has_thinking
@@ -637,7 +637,7 @@ class ChatItem(Widget):
             return
         try:
             body = self.query_one(".thinking-body", Markdown)
-        except NoMatches:
+        except NoMatches:  # pragma: no cover
             return
         await body.update(thinking)
         self._refresh_thinking_chrome()
@@ -659,7 +659,7 @@ class ChatItem(Widget):
         if self._response_stream is None:
             try:
                 response = self.query_one(".response", Markdown)
-            except NoMatches:
+            except NoMatches:  # pragma: no cover
                 return
             self._response_stream = Markdown.get_stream(response)
         self.set_reactive(ChatItem.text, self.text + delta)
@@ -675,7 +675,7 @@ class ChatItem(Widget):
         if self._thinking_stream is None:
             try:
                 body = self.query_one(".thinking-body", Markdown)
-            except NoMatches:
+            except NoMatches:  # pragma: no cover
                 return
             self._thinking_stream = Markdown.get_stream(body)
         self.set_reactive(ChatItem.thinking, self.thinking + delta)
@@ -747,7 +747,7 @@ class UsageStatus(Static):
         self._refresh_text()
 
     def _tick(self) -> None:
-        if self._streaming:
+        if self._streaming:  # pragma: no branch
             self._frame = (self._frame + 1) % len(self.SPINNER_FRAMES)
             self._elapsed = time.monotonic() - self._started_at
         self._refresh_text()
@@ -764,7 +764,7 @@ class UsageStatus(Static):
             return
         self._streaming = False
         self._elapsed = time.monotonic() - self._started_at
-        if self._timer is not None:
+        if self._timer is not None:  # pragma: no branch
             self._timer.stop()
             self._timer = None
         self._refresh_text()

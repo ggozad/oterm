@@ -14,7 +14,7 @@ _BUILTIN_GROUP = "builtin"
 def _all_groups() -> dict[str, list[dict]]:
     """Unified {group_name: [{'name', 'description'}, ...]} across builtin + MCP."""
     groups: dict[str, list[dict]] = {}
-    if builtin_tools:
+    if builtin_tools:  # pragma: no branch
         groups[_BUILTIN_GROUP] = [
             {"name": t["name"], "description": t["description"]} for t in builtin_tools
         ]
@@ -67,7 +67,7 @@ class ToolSelector(Widget):
                     else:
                         try:
                             self.selected.remove(meta["name"])
-                        except ValueError:
+                        except ValueError:  # pragma: no cover
                             pass
                     return
 

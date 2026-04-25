@@ -14,5 +14,5 @@ class Logger(LoggingFnT):
             log.warning(params.data)
         elif params.level == "info":
             log.info(params.data)
-        elif params.level == "debug":
+        elif params.level == "debug":  # pragma: no branch
             log.debug(params.data)

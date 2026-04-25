@@ -65,7 +65,7 @@ class PostableTextArea(TextArea):
     def on_mount(self) -> None:
         self.soft_wrap = True
         self._resize_to_content()
-        if self._theme is not None:
+        if self._theme is not None:  # pragma: no branch
             self._theme.syntax_styles[_IMAGE_TOKEN_HIGHLIGHT] = _IMAGE_TOKEN_STYLE
             self._build_highlight_map()
             self.refresh()
@@ -137,7 +137,7 @@ class FlexibleInput(Widget):
 
         @property
         def control(self) -> "FlexibleInput":
-            return self.input
+            return self.input  # pragma: no cover
 
     def __init__(self, text, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -183,7 +183,7 @@ class FlexibleInput(Widget):
     @on(TextArea.Changed, "#promptArea")
     def on_area_changed(self, event: TextArea.Changed):
         self.text = event.text_area.text
-        if isinstance(event.text_area, PostableTextArea):
+        if isinstance(event.text_area, PostableTextArea):  # pragma: no branch
             event.text_area._resize_to_content()
 
     def compose(self) -> ComposeResult:

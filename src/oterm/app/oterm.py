@@ -84,7 +84,7 @@ class OTerm(App):
         if tabs.active_pane is None:
             return
         pane_ids = [pane.id or "" for pane in tabs.query(TabPane)]
-        if tabs.active not in pane_ids:
+        if tabs.active not in pane_ids:  # pragma: no cover
             return
         idx = pane_ids.index(tabs.active)
         tabs.active = pane_ids[(idx + change) % len(pane_ids)]

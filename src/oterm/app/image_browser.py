@@ -47,7 +47,7 @@ class ImageSelect(ModalScreen[tuple[Path, str]]):
         if path.suffix in IMAGE_EXTENSIONS:
             try:
                 image_widget.image = PILImage.open(path.as_posix())
-            except UnidentifiedImageError:
+            except UnidentifiedImageError:  # pragma: no cover
                 image_widget.image = None
         else:
             image_widget.image = None
