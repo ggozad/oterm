@@ -15,6 +15,8 @@ from oterm.types import ChatModel, MessageModel
 
 
 class _Host(App):
+    CSS_PATH = "../../src/oterm/app/oterm.tcss"
+
     def __init__(self, chat_model: ChatModel, messages: list[MessageModel]):
         super().__init__()
         self._chat_model = chat_model
@@ -42,7 +44,7 @@ class TestMount:
         app = _Host(chat_model, [])
         async with app.run_test():
             assert app.focused is not None
-            assert app.focused.id == "promptInput"
+            assert app.focused.id == "promptArea"
 
 
 class TestLoadMessages:
@@ -227,7 +229,7 @@ class TestImages:
 
 
 class TestHistory:
-    async def test_up_opens_history_modal(self, store, chat_model):
+    async def test_action_history_opens_modal(self, store, chat_model):
         from oterm.app.prompt_history import PromptHistory
 
         chat_id = await store.save_chat(chat_model)
@@ -240,7 +242,8 @@ class TestHistory:
 
         app = _Host(chat_model, msgs)
         async with app.run_test() as pilot:
-            await pilot.press("up")
+            container = app.query_one(ChatContainer)
+            await container.action_history()
             await pilot.pause()
             assert isinstance(app.screen, PromptHistory)
 
@@ -463,9 +466,7 @@ class TestHistoryCallback:
             prompt = container.query_one(FlexibleInput)
             assert prompt.text == ""
 
-    async def test_selecting_multiline_history_switches_to_multiline(
-        self, store, chat_model
-    ):
+    async def test_selecting_history_populates_prompt(self, store, chat_model):
         from textual.widgets import OptionList
 
         from oterm.app.widgets.prompt import FlexibleInput
@@ -485,13 +486,13 @@ class TestHistoryCallback:
             await pilot.pause()
 
             prompt = container.query_one(FlexibleInput)
-            assert prompt.has_class("multiline")
+            assert prompt.text == "line1\nline2"
 
 
 class TestChatItemClickCopy:
     async def test_clicking_copies_text_to_clipboard(self, chat_model):
         app = _Host(chat_model, [])
-        async with app.run_test() as pilot:
+        async with app.run_test(size=(120, 40)) as pilot:
             container = app.query_one(ChatContainer)
             item = ChatItem()
             item.author = "assistant"

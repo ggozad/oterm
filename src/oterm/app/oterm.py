@@ -67,6 +67,11 @@ class OTerm(App):
             self.action_regenerate_last_message,
         )
         yield SystemCommand(
+            "Prompt history",
+            "Shows previously sent prompts in the current chat",
+            self.action_prompt_history,
+        )
+        yield SystemCommand(
             "Show logs", "Shows the logs of the app", self.action_show_logs
         )
 
@@ -164,6 +169,13 @@ class OTerm(App):
             return
         chat = tabs.active_pane.query_one(ChatContainer)
         await chat.action_regenerate_llm_message()
+
+    async def action_prompt_history(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        if tabs.active_pane is None:
+            return
+        chat = tabs.active_pane.query_one(ChatContainer)
+        await chat.action_history()
 
     async def action_show_logs(self) -> None:
         from oterm.app.log_viewer import LogViewer

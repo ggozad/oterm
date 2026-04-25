@@ -8,6 +8,7 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 * `Delete chat` - delete the current chat session
 * `Clear chat` - clear the chat history, preserving model and system prompt customizations
 * `Regenerate last message` - regenerates the last assistant message. Useful if you want to change the system prompt or parameters, or just try again.
+* `Prompt history` - browse previously sent prompts in the current chat and re-use one.
 * `Change theme` - choose among the available themes.
 * `Show logs` - shows the logs of the current oterm session.
 
@@ -17,10 +18,10 @@ The following keyboard shortcuts are supported:
 
 * <kbd>^ Ctrl</kbd>+<kbd>q</kbd> - quit
 
-* <kbd>^ Ctrl</kbd>+<kbd>m</kbd> - switch to multiline input mode
+* <kbd>Enter</kbd> - send the message
+* <kbd>Shift</kbd>+<kbd>Enter</kbd> or <kbd>^ Ctrl</kbd>+<kbd>m</kbd> - insert a newline; the prompt grows to fit (up to 10 lines)
 * <kbd>^ Ctrl</kbd>+<kbd>i</kbd> - select an image to include with the next message
 * <kbd>↑/↓</kbd> (while messages are focused) - navigate through the messages
-* <kbd>↑</kbd> (while prompt is focused)    - navigate through history of previous prompts
 * <kbd>^ Ctrl</kbd>+<kbd>l</kbd> - show logs
 
 * <kbd>^ Ctrl</kbd>+<kbd>n</kbd> - open a new chat
@@ -29,13 +30,11 @@ The following keyboard shortcuts are supported:
 * <kbd>^ Ctrl</kbd>+<kbd>Tab</kbd> - open the next chat
 * <kbd>^ Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> - open the previous chat
 
-In multiline mode, you can press <kbd>Enter</kbd> to send the message, or <kbd>Shift</kbd>+<kbd>Enter</kbd> to add a new line at the cursor.
+The prompt is always a multi-line input that auto-grows as you type or paste; long lines wrap. To recall a previously sent prompt, open `Prompt history` from the command palette (<kbd>^ Ctrl</kbd>+<kbd>p</kbd>).
 
 While the model is inferring the next message, you can press <kbd>Esc</kbd> to cancel the inference.
 
 !!! note
-    Some of the shortcuts may not work in a certain context, if they are overridden by the widget in focus. For example pressing <kbd>↑</kbd> while the prompt is in multi-line mode.
-
     If the key bindings clash with your terminal, it is possible to change them by editing the configuration file. See [Configuration](app_config.md).
 
 ### Copy / Paste

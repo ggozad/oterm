@@ -24,6 +24,7 @@ from textual import on, work
 from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
+from textual.css.query import NoMatches
 from textual.events import Click
 from textual.reactive import reactive
 from textual.widget import Widget
@@ -110,7 +111,6 @@ class ChatContainer(Widget):
     messages: reactive[list[MessageModel]] = reactive([])
     images: list[tuple[Path, str]] = []
     BINDINGS = [
-        Binding("up", "history", "history"),
         Binding(
             "escape", "cancel_inference", "cancel inference", show=False, priority=True
         ),
@@ -299,8 +299,10 @@ class ChatContainer(Widget):
         except asyncio.CancelledError:
             user_chat_item.remove()
             response_chat_item.remove()
-            input = self.query_one("#prompt", FlexibleInput)
-            input.text = message
+            try:
+                self.query_one("#prompt", FlexibleInput).text = message
+            except NoMatches:
+                pass
             self.images = []
         except ModelHTTPError as e:
             user_chat_item.remove()
@@ -457,8 +459,6 @@ class ChatContainer(Widget):
             if text is None:
                 return
             prompt = self.query_one("#prompt", FlexibleInput)
-            if "\n" in text and not prompt.is_multiline:
-                prompt.toggle_multiline()
             prompt.text = text
             prompt.focus()
 
@@ -473,12 +473,9 @@ class ChatContainer(Widget):
         self.app.notify(f"Image {ev.path} added.")
 
     def compose(self) -> ComposeResult:
-        with Vertical():
-            yield Static(f"model: {self.model}", id="info")
-            yield VerticalScroll(
-                id="messageContainer",
-            )
-            yield FlexibleInput("", id="prompt", classes="singleline")
+        yield Static(f"model: {self.model}", id="info")
+        yield VerticalScroll(id="messageContainer")
+        yield FlexibleInput("", id="prompt")
 
 
 class ChatItem(Widget):

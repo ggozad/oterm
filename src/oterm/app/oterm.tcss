@@ -1,12 +1,13 @@
 ChatContainer {
-    height: auto;
+    width: 100%;
+    height: 100%;
 }
 
 #messageContainer {
     overflow-y: auto;
     padding-bottom: 1;
     padding-right: 2;
-    height: 100%;
+    height: 1fr;
 }
 
 ChatItem {
@@ -79,6 +80,8 @@ ChatItem .thinking-body {
 
 #prompt {
     dock: bottom;
+    height: auto;
+    margin-bottom: 1;
     padding: 0 1;
     border-top: solid $primary-muted;
 }
@@ -87,39 +90,14 @@ ChatItem .thinking-body {
     border-top: solid $primary;
 }
 
-#prompt.singleline {
-    height: 4;
-}
-
-#prompt.multiline #promptInput {
-    display: none;
-}
-
-
-#prompt.singleline #promptArea {
-    display: none;
-}
-
-#prompt.multiline {
-    height: 12;
+#prompt > Horizontal {
+    height: auto;
 }
 
 #prompt #promptMarker {
     width: 2;
+    height: 1;
     color: $primary;
-    height: 3;
-    content-align: left middle;
-}
-
-#prompt #promptInput #promptArea {
-    dock: left;
-}
-
-#prompt #promptInput {
-    background: transparent;
-    border: none;
-    height: 3;
-    padding: 1 0;
 }
 
 #prompt #promptArea {
@@ -128,14 +106,8 @@ ChatItem .thinking-body {
     padding: 0;
 }
 
-#prompt #button-container {
-    padding-left: 1;
-    width: 24;
-    dock: right;
-}
-
-#prompt #button-container #toggle-multiline {
-    margin-left:1;
+#prompt #promptArea > .text-area--cursor-line {
+    background: transparent;
 }
 
 #info {
@@ -148,10 +120,6 @@ LoadingIndicator {
     height: 1;
     padding: 0 0 0 2;
     background: transparent;
-}
-
-ModalScreen {
-    background: $background;
 }
 
 .screen-container {
@@ -343,8 +311,12 @@ ModalScreen {
 }
 
 TabbedContent {
-    padding-top: 2;
-    layer: below;
+    height: 1fr;
+    padding-top: 1;
+}
+
+TabPane {
+    height: 1fr;
 }
 
 MarkdownFence {
