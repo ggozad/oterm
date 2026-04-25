@@ -93,6 +93,29 @@ class TestHistoryUpdate:
         assert len(c.pydantic_history) >= 2
 
 
+class TestResolveTools:
+    def test_empty_intersection_with_mcp_server_skips_filter(self, monkeypatch):
+        """When selected tools don't overlap a server's tools, no toolset is built.
+
+        Drives the false branch where ``chosen = selected & names_on_server`` is
+        empty: the loop iterates the server entry but skips ``filtered`` (line 153).
+        """
+        from oterm.app.widgets import chat as chat_mod
+        from oterm.tools.mcp.setup import ToolMeta
+
+        monkeypatch.setattr(
+            chat_mod,
+            "mcp_tool_meta",
+            {"server_a": [ToolMeta(name="other_tool", description="x")]},
+        )
+        monkeypatch.setattr(chat_mod, "mcp_servers", {})
+        monkeypatch.setattr(chat_mod, "builtin_tools", [])
+
+        tools, toolsets = chat_mod._resolve_tools(["nonexistent"])
+        assert tools == []
+        assert toolsets == []
+
+
 class TestImagePrompt:
     async def test_valid_base64_image_accepted(self):
         from oterm.app.widgets.chat import build_user_prompt

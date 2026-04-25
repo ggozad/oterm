@@ -259,7 +259,9 @@ class ChatContainer(Widget):
                             elif isinstance(event, PartDeltaEvent):
                                 if isinstance(event.delta, ThinkingPartDelta):
                                     thinking += event.delta.content_delta or ""
-                                elif isinstance(event.delta, TextPartDelta):
+                                elif isinstance(
+                                    event.delta, TextPartDelta
+                                ):  # pragma: no branch
                                     text += event.delta.content_delta or ""
                                 self._stream_usage = run.usage()
                                 yield thinking, text

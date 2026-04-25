@@ -417,6 +417,31 @@ class TestBuildUserPrompt:
         assert skipped == 0
         assert prompt == "[Image #5] hi"
 
+    def test_no_token_all_invalid_b64_returns_text(self):
+        from oterm.app.widgets.chat import build_user_prompt
+
+        prompt, skipped = build_user_prompt("describe", ["not-valid!!"])
+        assert skipped == 1
+        assert prompt == "describe"
+
+    def test_token_with_invalid_b64_increments_skipped(self):
+        from oterm.app.widgets.chat import build_user_prompt
+
+        prompt, skipped = build_user_prompt("see [Image #1]", ["not-valid!!"])
+        assert skipped == 1
+        assert prompt == "see [Image #1]"
+
+    def test_text_ending_at_token_keeps_no_trailing(self):
+        from pydantic_ai import BinaryContent
+
+        from oterm.app.widgets.chat import build_user_prompt
+
+        good = base64.b64encode(b"\x89PNG\r\n").decode()
+        prompt, skipped = build_user_prompt("see [Image #1]", [good])
+        assert skipped == 0
+        assert isinstance(prompt, list)
+        assert prompt[-1].__class__ is BinaryContent  # no trailing text part
+
 
 class TestPydanticHistoryRebuild:
     async def test_user_message_with_token_replays_image_inline(
@@ -940,6 +965,78 @@ class TestThinkingCollapse:
             await pilot.pause()
             assert copied == ["answer"]
 
+    async def test_clicking_thinking_label_without_text_does_not_toggle(
+        self, chat_model
+    ):
+        from textual.widgets import Static
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            item.thinking = "still thinking"
+            await pilot.pause()
+            label = item.query_one(".thinking-label", Static)
+            assert item.thoughts_collapsed is False
+
+            copied: list[str] = []
+            app.copy_to_clipboard = lambda t: copied.append(t)  # ty: ignore[invalid-assignment]
+
+            await pilot.click(label)
+            await pilot.pause()
+            # Click on label returns early — no toggle, no copy.
+            assert item.thoughts_collapsed is False
+            assert copied == []
+
+    async def test_clicking_thinking_body_does_not_copy(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            item.thinking = "musing"
+            item.text = "answer"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+            # Surface the body so it can receive a click.
+            item.thoughts_collapsed = False
+            await pilot.pause()
+
+            copied: list[str] = []
+            app.copy_to_clipboard = lambda t: copied.append(t)  # ty: ignore[invalid-assignment]
+
+            body = item.query_one(".thinking-body", Markdown)
+            await pilot.click(body)
+            await pilot.pause()
+            assert copied == []
+
+
+class TestUserItemClick:
+    async def test_clicking_user_item_animates_text(self, chat_model):
+        from textual.widgets import Static
+
+        app = _Host(chat_model, [])
+        async with app.run_test(size=(120, 40)) as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "user"
+            item.text = "my prompt"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            copied: list[str] = []
+            app.copy_to_clipboard = lambda t: copied.append(t)  # ty: ignore[invalid-assignment]
+
+            text_static = next(s for s in item.query(Static) if s.has_class("text"))
+            await pilot.click(text_static)
+            await pilot.pause()
+            # User-side click both copies and animates the text widgets.
+            assert copied == ["my prompt"]
+
 
 class TestChatItemStreaming:
     """Streaming path: append_text / append_thinking / finish_stream.
@@ -1052,6 +1149,241 @@ class TestChatItemStreaming:
             assert item._response_stream is None
             assert item._thinking_stream is None
 
+    async def test_append_thinking_twice_reuses_stream(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.append_thinking("first ")
+            stream = item._thinking_stream
+            assert stream is not None
+
+            await item.append_thinking("second")
+            await pilot.pause()
+            # Second call must reuse the same MarkdownStream, not recreate one.
+            assert item._thinking_stream is stream
+            assert item.thinking == "first second"
+
+    async def test_finish_stream_drains_thinking_stream(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.append_thinking("musing")
+            assert item._thinking_stream is not None
+            await item.finish_stream()
+            assert item._thinking_stream is None
+
+
+class TestSkippedImageNotify:
+    async def test_response_task_notifies_for_malformed_image(self, store, chat_model):
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            yield "ok "
+            yield "done"
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+            container.images = [(Path("/tmp/x.png"), "not-valid!!")]
+
+            prompt = app.query_one(FlexibleInput)
+            prompt.text = "see [Image #1]"
+            await pilot.press("enter")
+            for _ in range(50):
+                await asyncio.sleep(0)
+                await pilot.pause()
+                if len(container.messages) == 2:
+                    break
+            assert any(
+                "Skipped 1 malformed image" in n.message for n in _notifications(app)
+            )
+
+    async def test_regenerate_notifies_for_malformed_image(self, store, chat_model):
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(
+            chat_id=chat_id,
+            role="user",
+            text="see [Image #1]",
+            images=["not-valid!!"],
+        )
+        user_msg.id = await store.save_message(user_msg)
+        old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
+        old_assistant.id = await store.save_message(old_assistant)
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            yield "new "
+            yield "answer"
+
+        app = _Host(chat_model, [user_msg, old_assistant])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+
+            await container.action_regenerate_llm_message()
+            for _ in range(50):
+                await asyncio.sleep(0)
+                await pilot.pause()
+                if container.messages[-1].text == "new answer":
+                    break
+            assert any(
+                "Skipped 1 malformed image" in n.message for n in _notifications(app)
+            )
+
+
+class TestThinkingViaResponseTask:
+    async def test_thinking_then_text_streams_through_response_task(
+        self, store, chat_model
+    ):
+        from pydantic_ai.models.function import DeltaThinkingPart
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, DeltaThinkingPart]]:
+            yield {0: DeltaThinkingPart(content="weighing… ")}
+            yield {0: DeltaThinkingPart(content="options")}
+            yield "the "
+            yield "answer"
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+
+            prompt = app.query_one(FlexibleInput)
+            prompt.text = "ask"
+            await pilot.press("enter")
+            for _ in range(80):
+                await asyncio.sleep(0)
+                await pilot.pause()
+                if len(container.messages) == 2:
+                    break
+
+            assert container.messages[-1].text == "the answer"
+            items = list(container.query(ChatItem))
+            assistant = items[-1]
+            assert "weighing… options" in assistant.thinking
+
+
+class TestScrollFollow:
+    async def test_response_task_does_not_scroll_when_user_scrolled_up(
+        self, store, chat_model, monkeypatch
+    ):
+        from oterm.app.widgets import chat as chat_mod
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            yield "first "
+            yield "second"
+
+        # Force the auto-follow check to report "user scrolled away" so the
+        # streaming + final-scroll branches both take the not-following path.
+        monkeypatch.setattr(chat_mod, "_near_bottom", lambda c: False)
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+
+            prompt = app.query_one(FlexibleInput)
+            prompt.text = "ask"
+            await pilot.press("enter")
+            for _ in range(50):
+                await asyncio.sleep(0)
+                await pilot.pause()
+                if len(container.messages) == 2:
+                    break
+            assert container.messages[-1].text == "first second"
+
+    async def test_regenerate_does_not_scroll_when_user_scrolled_up(
+        self, store, chat_model, monkeypatch
+    ):
+        from oterm.app.widgets import chat as chat_mod
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="ask")
+        user_msg.id = await store.save_message(user_msg)
+        old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
+        old_assistant.id = await store.save_message(old_assistant)
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            yield "new "
+            yield "answer"
+
+        monkeypatch.setattr(chat_mod, "_near_bottom", lambda c: False)
+
+        app = _Host(chat_model, [user_msg, old_assistant])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+
+            await container.action_regenerate_llm_message()
+            for _ in range(50):
+                await asyncio.sleep(0)
+                await pilot.pause()
+                if container.messages[-1].text == "new answer":
+                    break
+            assert container.messages[-1].text == "new answer"
+
+
+class TestRegenerateCancellation:
+    async def test_cancellation_restores_state(self, store, chat_model):
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="ask")
+        user_msg.id = await store.save_message(user_msg)
+        old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
+        old_assistant.id = await store.save_message(old_assistant)
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            raise asyncio.CancelledError()
+            yield  # pragma: no cover
+
+        app = _Host(chat_model, [user_msg, old_assistant])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+
+            await container.action_regenerate_llm_message()
+            for _ in range(20):
+                await asyncio.sleep(0)
+                await pilot.pause()
+                if container.messages[-1].text == "old":
+                    break
+            assert container.messages[-1].text == "old"
+            assert list(container.query(UsageStatus)) == []
+
 
 class TestUsageStatus:
     async def test_zero_tokens_render_only_duration(self, chat_model):
@@ -1097,6 +1429,17 @@ class TestUsageStatus:
             assert not any(frame in rendered for frame in UsageStatus.SPINNER_FRAMES)
             assert "↑ 10" in rendered
             assert "↓ 5" in rendered
+
+    async def test_finish_is_idempotent(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            status = UsageStatus()
+            await container.query_one("#messageContainer").mount(status)
+            await pilot.pause()
+            status.finish()
+            # Second finish is a no-op — must not raise even with the timer gone.
+            status.finish()
 
     async def test_status_persists_after_successful_turn(self, store, chat_model):
         chat_id = await store.save_chat(chat_model)
