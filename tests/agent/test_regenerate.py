@@ -1,8 +1,16 @@
+import json
 from collections.abc import AsyncIterator
 
-from pydantic_ai import Agent
-from pydantic_ai.messages import ModelMessage
-from pydantic_ai.models.function import AgentInfo, FunctionModel
+from pydantic_ai import (
+    Agent,
+    ModelRequest,
+    ModelResponse,
+    TextPart,
+    Tool,
+    UserPromptPart,
+)
+from pydantic_ai.messages import ModelMessage, ToolCallPart, ToolReturnPart
+from pydantic_ai.models.function import AgentInfo, DeltaToolCall, FunctionModel
 from textual.app import App, ComposeResult
 
 from oterm.app.widgets.chat import ChatContainer
@@ -166,3 +174,102 @@ class TestRegenerateErrorRestore:
             assert any(
                 "error running your request" in n.message for n in _notifications(app)
             )
+
+
+def _count_user_prompts(history: list[ModelMessage]) -> int:
+    return sum(
+        1
+        for msg in history
+        if isinstance(msg, ModelRequest)
+        and any(isinstance(p, UserPromptPart) for p in msg.parts)
+    )
+
+
+def _has_orphan_tool_call(history: list[ModelMessage]) -> bool:
+    """Tool calls without a matching ToolReturnPart in a later request."""
+    pending: set[str] = set()
+    for msg in history:
+        for part in msg.parts:
+            if isinstance(part, ToolCallPart):
+                pending.add(part.tool_call_id)
+            elif isinstance(part, ToolReturnPart):
+                pending.discard(part.tool_call_id)
+    return bool(pending)
+
+
+class TestRegenerateAfterToolUse:
+    """Regenerate must truncate the entire prior turn, including tool messages.
+
+    Before the fix, regenerate sliced the last 2 messages off `pydantic_history`,
+    which left orphan ToolCallParts when the prior turn used a tool.
+    """
+
+    async def test_truncation_drops_full_tool_turn(self, store, chat_model):
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="ask")
+        user_msg.id = await store.save_message(user_msg)
+        old_assistant = MessageModel(
+            chat_id=chat_id, role="assistant", text="old answer"
+        )
+        old_assistant.id = await store.save_message(old_assistant)
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[dict[int, DeltaToolCall] | str]:
+            tool_returns_seen = sum(
+                1
+                for m in messages
+                if isinstance(m, ModelRequest)
+                and any(isinstance(p, ToolReturnPart) for p in m.parts)
+            )
+            if tool_returns_seen == 0:
+                yield {
+                    0: DeltaToolCall(name="ret_a", json_args=json.dumps({"x": "hi"}))
+                }
+            else:
+                yield "regenerated "
+                yield "answer"
+
+        async def ret_a(x: str) -> str:
+            return f"{x} world"
+
+        app = _Host(chat_model, [user_msg, old_assistant])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+
+            container.agent = Agent(
+                FunctionModel(stream_function=stream_fn),
+                tools=[Tool(ret_a, takes_ctx=False)],
+            )
+            # Seed pydantic_history as if the prior turn used a tool. This
+            # mirrors `run.result.all_messages()` after a tool turn:
+            # request(user) → response(tool_call) → request(tool_return) → response(text).
+            container.pydantic_history = [
+                ModelRequest(parts=[UserPromptPart(content="ask")]),
+                ModelResponse(
+                    parts=[
+                        ToolCallPart(
+                            tool_name="ret_a", args={"x": "hi"}, tool_call_id="t1"
+                        )
+                    ]
+                ),
+                ModelRequest(
+                    parts=[
+                        ToolReturnPart(
+                            tool_name="ret_a", content="hi world", tool_call_id="t1"
+                        )
+                    ]
+                ),
+                ModelResponse(parts=[TextPart(content="old answer")]),
+            ]
+
+            await container.action_regenerate_llm_message()
+            await pilot.pause()
+
+            # The new turn must keep history internally consistent: exactly one
+            # UserPromptPart (the regenerated turn) and no orphan tool calls.
+            assert _count_user_prompts(container.pydantic_history) == 1
+            assert not _has_orphan_tool_call(container.pydantic_history)
+            assert container.messages[-1].text == "regenerated answer"

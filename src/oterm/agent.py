@@ -14,7 +14,7 @@ from oterm.config import envConfig
 def _build_model_settings(
     parameters: dict[str, Any] | None,
     thinking: bool,
-) -> ModelSettings | None:
+) -> ModelSettings:
     settings: dict[str, Any] = {}
     if parameters:
         for key in ("temperature", "top_p", "max_tokens"):

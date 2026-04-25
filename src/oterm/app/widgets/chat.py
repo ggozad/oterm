@@ -55,6 +55,22 @@ def _near_bottom(container) -> bool:
     return container.max_scroll_y - container.scroll_y <= _SCROLL_FOLLOW_THRESHOLD
 
 
+def _last_user_prompt_index(history: list[ModelMessage]) -> int | None:
+    """Index of the most recent ModelRequest carrying a UserPromptPart.
+
+    A "turn" in pydantic-ai history starts at a UserPromptPart and ends at
+    the next assistant text response, but a tool-using turn fans out into
+    request/response/request/response. Slicing a fixed -2 corrupts that.
+    """
+    for i in range(len(history) - 1, -1, -1):
+        msg = history[i]
+        if isinstance(msg, ModelRequest) and any(
+            isinstance(p, UserPromptPart) for p in msg.parts
+        ):
+            return i
+    return None
+
+
 def _resolve_tools(tool_names: list[str]):
     """Split selected tool names into pydantic-ai Tool objects and filtered MCP toolsets."""
     from pydantic_ai import Tool as PydanticTool
@@ -285,6 +301,7 @@ class ChatContainer(Widget):
             response_chat_item.remove()
             input = self.query_one("#prompt", FlexibleInput)
             input.text = message
+            self.images = []
         except ModelHTTPError as e:
             user_chat_item.remove()
             response_chat_item.remove()
@@ -378,10 +395,12 @@ class ChatContainer(Widget):
         await message_container.mount(loading)
         message_container.scroll_end()
 
-        # Remove the last request+response pair from pydantic history
-        popped_history = self.pydantic_history[-2:]
-        if len(self.pydantic_history) >= 2:
-            self.pydantic_history = self.pydantic_history[:-2]
+        turn_start = _last_user_prompt_index(self.pydantic_history)
+        if turn_start is None:
+            popped_history: list[ModelMessage] = []
+        else:
+            popped_history = self.pydantic_history[turn_start:]
+            self.pydantic_history = self.pydantic_history[:turn_start]
         message = self.messages[-1]
 
         def restore_state() -> None:
