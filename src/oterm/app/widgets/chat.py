@@ -512,23 +512,28 @@ class ChatItem(Widget):
         if self.author == "user":
             return
         try:
-            label = self.query_one(".thinking-label")
+            label = self.query_one(".thinking-label", Static)
             body = self.query_one(".thinking-body", Markdown)
         except Exception:
             return
         has_thinking = bool(thinking)
         label.display = has_thinking
         body.display = has_thinking
+        if has_thinking:
+            label.update("Thinking…")
         await body.update(thinking)
 
     def compose(self) -> ComposeResult:
         """A chat item."""
 
-        with Horizontal(classes=f"{self.author} chatItem"):
-            if self.author == "user":
+        if self.author == "user":
+            with Horizontal(classes="user chatItem"):
+                yield Static("❯", classes="prompt-marker")
                 yield Static(self.text, markup=False, classes="text")
-            else:
-                with Vertical(classes="text"):
-                    yield Static("🤔 thinking", classes="thinking-label")
+        else:
+            with Horizontal(classes="assistant chatItem"):
+                yield Static("❯", classes="prompt-marker")
+                with Vertical(classes="response-column"):
+                    yield Static("", classes="thinking-label")
                     yield Markdown(classes="thinking-body")
                     yield Markdown(classes="response")

@@ -9,7 +9,7 @@ from textual.css.query import NoMatches
 from textual.message import Message
 from textual.reactive import reactive
 from textual.widget import Widget
-from textual.widgets import Button, Input, TextArea
+from textual.widgets import Button, Input, Static, TextArea
 
 from oterm.app.image_browser import ImageSelect
 from oterm.app.widgets.image import ImageAdded
@@ -210,6 +210,7 @@ class FlexibleInput(Widget):
 
     def compose(self) -> ComposeResult:
         with Horizontal():
+            yield Static("❯", id="promptMarker")
             yield PastableInput(
                 id="promptInput",
                 placeholder="Your message…",

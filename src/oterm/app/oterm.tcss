@@ -15,43 +15,57 @@ ChatItem {
 
 ChatItem .chatItem {
     height: auto;
+    padding: 0 1;
 }
 
 ChatItem .user {
-    align: right top;
+    layout: horizontal;
+    margin-top: 1;
+}
+
+ChatItem .user .prompt-marker {
+    width: 2;
+    color: $primary;
+}
+
+ChatItem .user .text {
+    width: 1fr;
+    height: auto;
+    background: transparent;
 }
 
 ChatItem .assistant {
-    align: left top;
+    layout: horizontal;
+    margin-top: 1;
 }
 
-ChatItem .text{
+ChatItem .assistant .prompt-marker {
+    width: 2;
+    color: $secondary;
+}
+
+ChatItem .assistant .response-column {
+    width: 1fr;
     height: auto;
-    margin-bottom: 1;
-    max-width: 90%;
-    border: round $secondary-lighten-2;
+    padding: 0;
+    margin: 0;
 }
 
 ChatItem .response {
     height: auto;
     background: transparent;
+    padding: 0;
+    margin: 0;
 }
 
-ChatItem .user .text {
-    background: $panel-lighten-1;
-    align: right top;
-
-    text-align: right;
- }
-
-ChatItem .assistant .text {
-   background: $panel;
+ChatItem .response > MarkdownBlock {
+    margin: 0;
+    padding: 0;
 }
 
 ChatItem .thinking-label {
     color: $text-muted;
-    text-style: bold;
-    padding: 0 1;
+    text-style: italic;
     display: none;
 }
 
@@ -59,17 +73,22 @@ ChatItem .thinking-body {
     height: auto;
     background: transparent;
     color: $text-muted;
+    text-style: italic;
     display: none;
 }
 
 #prompt {
-    background: $panel;
     dock: bottom;
-    padding: 1;
+    padding: 0 1;
+    border-top: solid $primary-muted;
+}
+
+#prompt:focus-within {
+    border-top: solid $primary;
 }
 
 #prompt.singleline {
-    height: 5;
+    height: 4;
 }
 
 #prompt.multiline #promptInput {
@@ -82,11 +101,31 @@ ChatItem .thinking-body {
 }
 
 #prompt.multiline {
-    height: 10;
+    height: 12;
+}
+
+#prompt #promptMarker {
+    width: 2;
+    color: $primary;
+    height: 3;
+    content-align: left middle;
 }
 
 #prompt #promptInput #promptArea {
     dock: left;
+}
+
+#prompt #promptInput {
+    background: transparent;
+    border: none;
+    height: 3;
+    padding: 1 0;
+}
+
+#prompt #promptArea {
+    background: transparent;
+    border: none;
+    padding: 0;
 }
 
 #prompt #button-container {
@@ -100,27 +139,34 @@ ChatItem .thinking-body {
 }
 
 #info {
-    color: $primary-lighten-1;
+    color: $text-muted;
     text-align: right;
-    padding-right: 5;
-    text-style: italic;
+    padding: 0 2;
 }
 
 LoadingIndicator {
-    height: 3;
+    height: 1;
+    padding: 0 0 0 2;
+    background: transparent;
 }
 
-.sceen-container {
-    width: auto;
+ModalScreen {
+    background: $background;
+}
+
+.screen-container {
+    width: 60%;
+    min-width: 50;
     height: auto;
     background: $panel;
-    border: $panel-lighten-2;
-    margin-top: 2;
-    margin-left: 2;
+    border: round $primary-muted;
+    margin: 1 2;
     padding: 1;
 }
 
 .full-height {
+    width: 95%;
+    height: 95%;
     margin: 1;
     padding: 1;
 }
@@ -198,7 +244,6 @@ LoadingIndicator {
     width: 100%;
     padding-top: 1;
     padding-bottom: 1;
-    background: $surface;
 }
 
 #tool-selector  .tool-group-select-all{
