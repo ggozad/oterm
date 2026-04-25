@@ -132,6 +132,23 @@ class TestMigrateParameters:
             rows = await c.execute_fetchall("SELECT parameters FROM chat")
             assert list(rows)[0][0] == "{}"
 
+    async def test_already_clean_parameters_skip_update(self, tmp_path):
+        """Params that already match the keep list and have no num_predict skip the UPDATE."""
+        db = tmp_path / "store.db"
+        await _old_chat_schema(db)
+        async with aiosqlite.connect(db) as c:
+            await c.execute(
+                "INSERT INTO chat(name, model, parameters) VALUES(?, ?, ?)",
+                ("c", "m", json.dumps({"temperature": 0.5})),
+            )
+            await c.commit()
+
+        await migrate_parameters(db)
+        async with aiosqlite.connect(db) as c:
+            rows = await c.execute_fetchall("SELECT parameters FROM chat")
+            params = json.loads(list(rows)[0][0])
+            assert params == {"temperature": 0.5}
+
 
 class TestMigrateToolsToNames:
     async def test_converts_old_tool_objects_to_names(self, tmp_path):

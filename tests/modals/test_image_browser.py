@@ -44,6 +44,35 @@ async def test_selecting_valid_image_dismisses_with_path_and_b64(tmp_path, llama
         assert isinstance(b64, str) and len(b64) > 0
 
 
+async def test_selecting_non_rgb_image_is_converted(tmp_path):
+    """Non-RGB images (e.g. RGBA) are converted to RGB before encoding."""
+    from io import BytesIO
+
+    from PIL import Image as PILImage
+
+    rgba_path = tmp_path / "with_alpha.png"
+    img = PILImage.new("RGBA", (8, 8), (255, 0, 0, 128))
+    buf = BytesIO()
+    img.save(buf, format="PNG")
+    rgba_path.write_bytes(buf.getvalue())
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        received: list = []
+        screen = ImageSelect()
+        app.push_screen(screen, lambda r: received.append(r))
+        await pilot.pause()
+
+        await screen.on_image_selected(
+            DirectoryTree.FileSelected(None, rgba_path)  # ty: ignore[invalid-argument-type]
+        )
+        await pilot.pause()
+        assert received
+        path, b64 = received[0]
+        assert path == rgba_path
+        assert isinstance(b64, str) and len(b64) > 0
+
+
 async def test_selecting_non_image_dismisses_with_none(tmp_path):
     bad = tmp_path / "not-an-image.txt"
     bad.write_text("nope")

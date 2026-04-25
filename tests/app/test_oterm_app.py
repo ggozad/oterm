@@ -415,6 +415,159 @@ class TestActionDelegates:
             await app.action_rename_chat()
             await app.action_export_chat()
             await app.action_regenerate_last_message()
+            await app.action_clear_chat()
+            await app.action_prompt_history()
+
+    async def test_prompt_history_delegates_to_active_container(
+        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
+    ):
+        from oterm.app.oterm import OTerm
+        from oterm.app.widgets.chat import ChatContainer
+
+        app_config.set("splash-screen", False)
+        cm = ChatModel(name="c", model="m")
+        cm.id = await store.save_chat(cm)
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            called: list[bool] = []
+
+            async def spy(self):
+                called.append(True)
+
+            monkeypatch.setattr(ChatContainer, "action_history", spy)
+            await app.action_prompt_history()
+            await pilot.pause()
+            assert called == [True]
+
+
+class TestNoneIdGuards:
+    """Chats lacking a database id (e.g. from a failed save) are skipped."""
+
+    async def test_delete_with_id_none_is_noop(
+        self, tmp_data_dir, app_config, stub_network, store
+    ):
+        from textual.widgets import TabbedContent, TabPane
+
+        from oterm.app.oterm import OTerm
+        from oterm.app.widgets.chat import ChatContainer
+
+        app_config.set("splash-screen", False)
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            tabs = app.query_one(TabbedContent)
+            # Replace the auto-created chat with one whose chat_model.id is None.
+            for pane in list(tabs.query("TabPane")):
+                await tabs.remove_pane(pane.id or "")
+            await pilot.pause()
+            cm = ChatModel(model="m", provider="ollama")
+            assert cm.id is None
+            pane = TabPane("orphan", id="chat-orphan")
+            pane.compose_add_child(ChatContainer(chat_model=cm, messages=[]))
+            await tabs.add_pane(pane)
+            tabs.active = "chat-orphan"
+            await pilot.pause()
+
+            await app.action_delete_chat()
+            await pilot.pause()
+            # Pane is preserved because the guard skipped the delete.
+            assert tabs.tab_count == 1
+
+    async def test_export_with_id_none_is_noop(
+        self, tmp_data_dir, app_config, stub_network, store
+    ):
+        from textual.widgets import TabbedContent, TabPane
+
+        from oterm.app.oterm import OTerm
+        from oterm.app.widgets.chat import ChatContainer
+
+        app_config.set("splash-screen", False)
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            tabs = app.query_one(TabbedContent)
+            for pane in list(tabs.query("TabPane")):
+                await tabs.remove_pane(pane.id or "")
+            await pilot.pause()
+            cm = ChatModel(model="m", provider="ollama")
+            pane = TabPane("orphan", id="chat-orphan")
+            pane.compose_add_child(ChatContainer(chat_model=cm, messages=[]))
+            await tabs.add_pane(pane)
+            tabs.active = "chat-orphan"
+            await pilot.pause()
+
+            original_screen = app.screen
+            await app.action_export_chat()
+            await pilot.pause()
+            # Without a chat id, no ChatExport screen is pushed.
+            assert app.screen is original_screen
+
+    async def test_saved_chat_with_id_none_is_skipped_on_load(
+        self, tmp_data_dir, app_config, stub_network, monkeypatch
+    ):
+        from textual.widgets import TabbedContent
+
+        from oterm.store.store import Store
+
+        app_config.set("splash-screen", False)
+
+        async def fake_get_chats(self):
+            return [ChatModel(id=None, name="orphan", model="m")]
+
+        monkeypatch.setattr(Store, "get_chats", fake_get_chats)
+
+        from oterm.app.oterm import OTerm
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            # The orphan chat is skipped; no panes added during the load loop.
+            tabs = app.query_one(TabbedContent)
+            assert tabs.tab_count == 0
+
+
+class TestThemeEdgeCases:
+    async def test_no_theme_in_config_does_not_set_theme(
+        self, tmp_data_dir, app_config, stub_network
+    ):
+        app_config.set("splash-screen", False)
+        # An empty-string theme falls through the `if theme:` guard.
+        app_config.set("theme", "")
+
+        from oterm.app.oterm import OTerm
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            # Textual default takes over; nothing was forced.
+            assert app.theme  # whatever default is, app started cleanly
+
+    async def test_theme_change_to_same_value_does_not_rewrite_config(
+        self, fresh_app, app_config, monkeypatch
+    ):
+        app = fresh_app
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            current_theme = app.theme
+            app_config.set("theme", current_theme)
+
+            writes: list[tuple] = []
+            original_set = app_config.set
+
+            def track_set(key, value):
+                writes.append((key, value))
+                original_set(key, value)
+
+            monkeypatch.setattr(app_config, "set", track_set)
+
+            # on_theme_change is the watcher; calling it directly with the same
+            # value must short-circuit (no config write).
+            app.on_theme_change(current_theme, current_theme)
+            await pilot.pause()
+            assert writes == []
 
 
 class TestPerformChecks:

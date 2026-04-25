@@ -95,6 +95,52 @@ async def test_add_image_action_pushes_image_select_screen(monkeypatch):
         assert isinstance(app.screen, ImageSelect)
 
 
+async def test_backspace_with_selection_uses_super():
+    """A non-empty selection deletes via TextArea.action_delete_left, not token logic."""
+    from oterm.app.widgets.prompt import PostableTextArea
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        flex = app.query_one(FlexibleInput)
+        ta = flex.query_one("#promptArea", PostableTextArea)
+        ta.text = "hello world"
+        ta.selection = ta.selection.__class__((0, 0), (0, 5))
+        await pilot.pause()
+        ta.action_delete_left()
+        await pilot.pause()
+        assert ta.text == " world"
+
+
+async def test_delete_with_selection_uses_super():
+    from oterm.app.widgets.prompt import PostableTextArea
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        flex = app.query_one(FlexibleInput)
+        ta = flex.query_one("#promptArea", PostableTextArea)
+        ta.text = "hello world"
+        ta.selection = ta.selection.__class__((0, 0), (0, 5))
+        await pilot.pause()
+        ta.action_delete_right()
+        await pilot.pause()
+        assert ta.text == " world"
+
+
+async def test_delete_in_plain_text_no_token():
+    from oterm.app.widgets.prompt import PostableTextArea
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        flex = app.query_one(FlexibleInput)
+        ta = flex.query_one("#promptArea", PostableTextArea)
+        ta.text = "abc"
+        ta.cursor_location = (0, 1)
+        await pilot.pause()
+        ta.action_delete_right()
+        await pilot.pause()
+        assert ta.text == "ac"
+
+
 async def test_add_image_callback_posts_image_added_message():
     """When the image screen returns a (path, b64), FlexibleInput posts ImageAdded."""
     from pathlib import Path

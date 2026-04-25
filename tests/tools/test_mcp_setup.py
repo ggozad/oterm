@@ -189,3 +189,33 @@ class TestSetupAndTeardown:
             assert any("WebSocket" in m for m in messages)
         finally:
             await teardown_mcp_servers()
+
+    async def test_unexpected_exception_during_build_is_logged(
+        self, app_config, monkeypatch
+    ):
+        """Non-ValueError exceptions during _build_servers are caught and logged."""
+        import oterm.log
+        import oterm.tools.mcp.setup as setup_mod
+
+        def boom(_raw):
+            raise RuntimeError("kaboom")
+
+        monkeypatch.setattr(setup_mod, "_build_servers", boom)
+        app_config.set("mcpServers", {"x": {"url": "http://example.com/mcp"}})
+        before = len(oterm.log.log_lines)
+        try:
+            meta = await setup_mcp_servers()
+            assert meta == {}
+            messages = [msg for _, msg in oterm.log.log_lines[before:]]
+            assert any("could not be parsed" in m for m in messages)
+        finally:
+            await teardown_mcp_servers()
+
+
+class TestExpandEnvVars:
+    def test_passthrough_for_non_string_dict_list(self):
+        from oterm.tools.mcp.setup import _expand_env_vars
+
+        assert _expand_env_vars(42) == 42
+        assert _expand_env_vars(None) is None
+        assert _expand_env_vars(True) is True
