@@ -1,0 +1,69 @@
+name: Tests
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync --all-extras
+      - name: Lint
+        run: uv run ruff check
+      - name: Format check
+        run: uv run ruff format --check
+      - name: Type check
+        run: uv run ty check
+
+  test:
+    needs: [lint]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        include:
+          - python-version: "3.10"
+            pytest-args: "--no-cov"
+          - python-version: "3.11"
+            pytest-args: "--no-cov"
+          - python-version: "3.12"
+            pytest-args: "--no-cov"
+          - python-version: "3.14"
+            pytest-args: "--no-cov"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync --all-extras
+      - name: Run tests
+        run: uv run pytest ${{ matrix.pytest-args || '--cov --cov-report=xml' }}
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == '3.13'
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: false
