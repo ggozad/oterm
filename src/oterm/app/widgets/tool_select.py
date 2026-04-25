@@ -5,7 +5,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Checkbox
 
-from oterm.tools import builtin_tools
+from oterm.tools import builtin_tools, known_tool_names
 from oterm.tools.mcp.setup import mcp_tool_meta
 
 _BUILTIN_GROUP = "builtin"
@@ -25,13 +25,6 @@ def _all_groups() -> dict[str, list[dict]]:
     return groups
 
 
-def _known_tool_names() -> set[str]:
-    names = {t["name"] for t in builtin_tools}
-    for metas in mcp_tool_meta.values():
-        names.update(m["name"] for m in metas)
-    return names
-
-
 class ToolSelector(Widget):
     selected: reactive[list[str]] = reactive([])
 
@@ -44,7 +37,7 @@ class ToolSelector(Widget):
         selected: list[str] = [],
     ) -> None:
         super().__init__(name=name, id=id, classes=classes, disabled=disabled)
-        known = _known_tool_names()
+        known = known_tool_names()
         self.selected = [n for n in selected if n in known]
 
     def on_mount(self) -> None:

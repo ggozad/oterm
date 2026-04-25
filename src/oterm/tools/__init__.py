@@ -9,6 +9,16 @@ from oterm.types import ToolDef
 builtin_tools: list[ToolDef] = []
 
 
+def known_tool_names() -> set[str]:
+    """Names of every tool currently available (builtin + connected MCP)."""
+    from oterm.tools.mcp.setup import mcp_tool_meta
+
+    names = {t["name"] for t in builtin_tools}
+    for metas in mcp_tool_meta.values():
+        names.update(m["name"] for m in metas)
+    return names
+
+
 def make_tool_def(func: Callable) -> ToolDef:
     pydantic_tool = PydanticTool(func, takes_ctx=False)
     return {

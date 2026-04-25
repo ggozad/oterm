@@ -1,4 +1,5 @@
 import os
+from collections.abc import Callable
 
 PROVIDER_ENV_VARS: dict[str, list[str]] = {
     "ollama": [],
@@ -87,111 +88,111 @@ def get_available_providers() -> list[str]:
     return available
 
 
+def _list_via_openai_client(base_url: str, api_key: str) -> list[str]:
+    from openai import OpenAI
+
+    client = OpenAI(base_url=base_url, api_key=api_key)
+    return sorted(m.id for m in client.models.list().data)
+
+
+def _list_openai() -> list[str]:
+    from openai import OpenAI
+
+    return sorted(m.id for m in OpenAI().models.list().data)
+
+
+def _list_anthropic() -> list[str]:
+    from anthropic import Anthropic
+
+    return sorted(m.id for m in Anthropic().models.list().data)
+
+
+def _list_google_gla() -> list[str]:
+    from google import genai
+
+    client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
+    return sorted(
+        m.name.removeprefix("models/") for m in client.models.list() if m.name
+    )
+
+
+def _list_mistral() -> list[str] | None:
+    from mistralai.client import Mistral
+    from mistralai.client.models.basemodelcard import BaseModelCard
+    from mistralai.client.models.ftmodelcard import FTModelCard
+
+    client = Mistral(api_key=os.getenv("MISTRAL_API_KEY", ""))
+    response = client.models.list()
+    if not (response and response.data):
+        return None
+    return sorted(
+        m.id
+        for m in response.data
+        if isinstance(m, (BaseModelCard, FTModelCard)) and m.id
+    )
+
+
+def _list_cohere() -> list[str] | None:
+    import cohere
+
+    client = cohere.ClientV2(api_key=os.getenv("COHERE_API_KEY", ""))
+    response = client.models.list()
+    if not (response and response.models):
+        return None
+    return sorted(m.name for m in response.models if m.name)
+
+
+_NATIVE_LISTERS: dict[str, Callable[[], list[str] | None]] = {
+    "openai": _list_openai,
+    "anthropic": _list_anthropic,
+    "google-gla": _list_google_gla,
+    "mistral": _list_mistral,
+    "cohere": _list_cohere,
+}
+
+# OpenAI-compatible providers shipped with oterm: hard-coded base URL + env var.
+_BUILTIN_OPENAI_COMPAT: dict[str, tuple[str, str]] = {
+    "groq": ("https://api.groq.com/openai/v1", "GROQ_API_KEY"),
+    "deepseek": ("https://api.deepseek.com/v1", "DEEPSEEK_API_KEY"),
+    "cerebras": ("https://api.cerebras.ai/v1", "CEREBRAS_API_KEY"),
+    "grok": ("https://api.x.ai/v1", "GROK_API_KEY"),
+}
+
+
 def _list_models_from_api(provider: str) -> list[str] | None:
     from oterm.log import log
 
-    if provider == "openai":
-        try:
-            from openai import OpenAI
-
-            return sorted(m.id for m in OpenAI().models.list().data)
-        except Exception as e:
-            log.warning(f"Failed to list OpenAI models: {e}")
-            return None
-
-    if provider == "anthropic":
-        try:
-            from anthropic import Anthropic
-
-            return sorted(m.id for m in Anthropic().models.list().data)
-        except Exception as e:
-            log.warning(f"Failed to list Anthropic models: {e}")
-            return None
-
-    if provider == "google-gla":
-        try:
-            from google import genai
-
-            client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
-            return sorted(
-                m.name.removeprefix("models/") for m in client.models.list() if m.name
-            )
-        except Exception as e:
-            log.warning(f"Failed to list Google AI models: {e}")
-            return None
-
-    if provider == "mistral":
-        try:
-            from mistralai.client import Mistral
-            from mistralai.client.models.basemodelcard import BaseModelCard
-            from mistralai.client.models.ftmodelcard import FTModelCard
-
-            client = Mistral(api_key=os.getenv("MISTRAL_API_KEY", ""))
-            response = client.models.list()
-            if response and response.data:
-                return sorted(
-                    m.id
-                    for m in response.data
-                    if isinstance(m, (BaseModelCard, FTModelCard)) and m.id
-                )
-            return None
-        except Exception as e:
-            log.warning(f"Failed to list Mistral models: {e}")
-            return None
-
-    if provider == "cohere":
-        try:
-            import cohere
-
-            client = cohere.ClientV2(api_key=os.getenv("COHERE_API_KEY", ""))
-            response = client.models.list()
-            if response and response.models:
-                return sorted(m.name for m in response.models if m.name)
-            return None
-        except Exception as e:
-            log.warning(f"Failed to list Cohere models: {e}")
-            return None
-
     if provider.startswith("openai-compat/"):
         endpoint_name = provider.removeprefix("openai-compat/")
-        configs = get_openai_compatible_providers()
-        config = configs.get(endpoint_name)
+        config = get_openai_compatible_providers().get(endpoint_name)
         if not config:
             return None
-        base_url = config["base_url"]
         api_key = _resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
         try:
-            from openai import OpenAI
-
-            client = OpenAI(base_url=base_url, api_key=api_key)
-            return sorted(m.id for m in client.models.list().data)
+            return _list_via_openai_client(config["base_url"], api_key)
         except Exception as e:
             log.warning(f"Failed to list models for {provider}: {e}")
             return None
 
-    # Built-in OpenAI-compatible providers
-    base_urls: dict[str, tuple[str, str]] = {
-        "groq": ("https://api.groq.com/openai/v1", "GROQ_API_KEY"),
-        "deepseek": ("https://api.deepseek.com/v1", "DEEPSEEK_API_KEY"),
-        "cerebras": ("https://api.cerebras.ai/v1", "CEREBRAS_API_KEY"),
-        "grok": ("https://api.x.ai/v1", "GROK_API_KEY"),
-    }
-
-    if provider in base_urls:
-        base_url, env_var = base_urls[provider]
+    if provider in _BUILTIN_OPENAI_COMPAT:
+        base_url, env_var = _BUILTIN_OPENAI_COMPAT[provider]
         api_key = os.getenv(env_var, "")
         if not api_key:
             return None
         try:
-            from openai import OpenAI
-
-            client = OpenAI(base_url=base_url, api_key=api_key)
-            return sorted(m.id for m in client.models.list().data)
+            return _list_via_openai_client(base_url, api_key)
         except Exception as e:
             log.warning(f"Failed to list {provider} models: {e}")
             return None
 
-    return None
+    lister = _NATIVE_LISTERS.get(provider)
+    if lister is None:
+        return None
+    try:
+        return lister()
+    except Exception as e:
+        log.warning(f"Failed to list {get_provider_name(provider)} models: {e}")
+        return None
 
 
 def _list_models_from_known(provider: str) -> list[str]:

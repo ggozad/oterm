@@ -81,6 +81,8 @@ class Store:
             )
 
     async def save_chat(self, chat_model: ChatModel) -> int:
+        # `INSERT OR REPLACE`: callers pass `id=None` for a new row (sqlite
+        # autoincrements) or a real id to overwrite an existing chat.
         async with aiosqlite.connect(self.db_path) as connection:
             res = await connection.execute_insert(
                 """
@@ -198,6 +200,8 @@ class Store:
             await connection.commit()
 
     async def save_message(self, message_model: MessageModel) -> int:
+        # `INSERT OR REPLACE`: regenerate reuses an existing message id to
+        # overwrite; new messages pass `id=None`.
         async with aiosqlite.connect(self.db_path) as connection:
             res = await connection.execute_insert(
                 """
