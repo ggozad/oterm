@@ -24,12 +24,13 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 [oterm Documentation](https://ggozad.github.io/oterm/)
 
 ## What's new
+* **Breaking:** `oterm` now talks to LLMs via [pydantic-ai](https://ai.pydantic.dev/), unlocking first-class support for OpenAI, Anthropic, Groq, OpenAI-compatible endpoints, and more — alongside Ollama.
+* **Breaking:** the MCP `mcpServers` config block adopts pydantic-ai's standard schema (compatible with Claude Desktop / Cursor). See migration notes in [docs/mcp](https://ggozad.github.io/oterm/mcp/).
 * [Example](https://ggozad.github.io/oterm/rag_example) on how to do RAG with [haiku.rag](https://github.com/ggozad/haiku.rag).
 * `oterm` is now part of Homebrew!
 * Support for "thinking" mode for models that support it.
 * Support for streaming with tools!
 * Messages UI styling improvements.
-* MCP Sampling is here in addition to MCP tools! Also support for Streamable HTTP transport for MCP servers.
 
 ### Screenshots
 ![Splash](https://raw.githubusercontent.com/ggozad/oterm/refs/heads/main/docs/img/splash.gif)

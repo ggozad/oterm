@@ -4,6 +4,16 @@
 
 Add MCP servers under the `mcpServers` key in `oterm`'s [config.json](../app_config.md). The schema matches the convention used by Claude Desktop, Cursor, and pydantic-ai — so you can copy a config block between hosts.
 
+!!! warning "Breaking changes from earlier oterm releases"
+    The MCP integration was rewritten on top of pydantic-ai's MCP support. If you're upgrading, your existing `mcpServers` config likely needs the following edits:
+
+    - **`auth: { type: bearer, token: "X" }`** is no longer recognised. Use `headers: { "Authorization": "Bearer X" }` instead. Old configs are silently dropped — you'll see 401s from the server until you migrate.
+    - **`cwd`** is no longer recognised. Use an absolute path in `command` (or pass the working directory via `args`).
+    - **`ws://` / `wss://` transports** are no longer supported. Use HTTP transport instead.
+    - **MCP prompts** are gone — the "Use MCP prompt" command, the modal, and the prompt config in test fixtures are all removed.
+    - **Sampling** is wired to pydantic-ai's defaults, which means a server that issues a sampling request without `sampling_model` configured will error. We may revisit if there's demand.
+    - **Stdio subprocess env is no longer inherited from the parent shell.** Declare every env var you need explicitly under `env`. Use `${VAR}` substitution to pull values from the parent environment without committing secrets — see [Environment variables](#environment-variables) below.
+
 ### Supported MCP Features
 #### Tools
 [MCP tools](https://modelcontextprotocol.io/docs/concepts/tools) appear in oterm's tool selector and can be enabled per chat.
