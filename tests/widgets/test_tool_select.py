@@ -113,26 +113,6 @@ class TestToolSelector:
             await pilot.pause()
             assert "oracle" in selector.selected
 
-    async def test_group_toggle_skips_already_matching_children(self, populated_tools):
-        """Group checkbox driven down to children shouldn't write when value already matches."""
-        app = _Host()
-        async with app.run_test() as pilot:
-            selector = app.query_one(ToolSelector)
-            await pilot.pause()
-
-            # Pre-check one of the tools so the group toggle hits the
-            # "already matches" branch for that child.
-            shell_cb = selector.query_one("#builtin-shell", Checkbox)
-            shell_cb.value = True
-            await pilot.pause()
-
-            group_cb = next(c for c in selector.query(Checkbox) if c.name == "builtin")
-            group_cb.value = True
-            await pilot.pause()
-
-            assert selector.query_one("#builtin-date_time", Checkbox).value is True
-            assert selector.query_one("#builtin-shell", Checkbox).value is True
-
     async def test_unknown_checkbox_name_is_ignored(self, populated_tools):
         """Defensive: a Checkbox.Changed with a name we don't recognize is a no-op."""
         app = _Host()

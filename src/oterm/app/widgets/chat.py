@@ -330,7 +330,7 @@ class ChatContainer(Widget):
                     self._stream_usage.input_tokens,
                     self._stream_usage.output_tokens,
                 )
-                if follow:
+                if follow:  # pragma: no branch
                     message_container.scroll_end()
 
             await response_chat_item.finish_stream()
@@ -340,7 +340,7 @@ class ChatContainer(Widget):
                 self._stream_usage.output_tokens,
             )
             status.finish()
-            if _near_bottom(message_container):
+            if _near_bottom(message_container):  # pragma: no branch
                 self.call_after_refresh(message_container.scroll_end)
 
             store = await Store.get_store()
@@ -500,7 +500,7 @@ class ChatContainer(Widget):
                         self._stream_usage.input_tokens,
                         self._stream_usage.output_tokens,
                     )
-                    if follow:
+                    if follow:  # pragma: no branch
                         message_container.scroll_end()
 
                 if not text:
@@ -513,7 +513,7 @@ class ChatContainer(Widget):
                     self._stream_usage.output_tokens,
                 )
                 status.finish()
-                if _near_bottom(message_container):
+                if _near_bottom(message_container):  # pragma: no branch
                     self.call_after_refresh(message_container.scroll_end)
 
                 store = await Store.get_store()

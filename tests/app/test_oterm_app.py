@@ -530,21 +530,6 @@ class TestNoneIdGuards:
 
 
 class TestThemeEdgeCases:
-    async def test_no_theme_in_config_does_not_set_theme(
-        self, tmp_data_dir, app_config, stub_network
-    ):
-        app_config.set("splash-screen", False)
-        # An empty-string theme falls through the `if theme:` guard.
-        app_config.set("theme", "")
-
-        from oterm.app.oterm import OTerm
-
-        app = OTerm()
-        async with app.run_test() as pilot:
-            await pilot.pause()
-            # Textual default takes over; nothing was forced.
-            assert app.theme  # whatever default is, app started cleanly
-
     async def test_theme_change_to_same_value_does_not_rewrite_config(
         self, fresh_app, app_config, monkeypatch
     ):

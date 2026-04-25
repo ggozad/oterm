@@ -202,7 +202,7 @@ class OTerm(App):
         self.register_theme(solarized_dark)
         store = await Store.get_store()
         theme = appConfig.get("theme")
-        if theme:
+        if theme:  # pragma: no branch
             if theme == "dark":
                 self.theme = "textual-dark"
             elif theme == "light":

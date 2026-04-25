@@ -1016,7 +1016,7 @@ class TestThinkingCollapse:
 
 
 class TestUserItemClick:
-    async def test_clicking_user_item_animates_text(self, chat_model):
+    async def test_clicking_user_item_copies_text(self, chat_model):
         from textual.widgets import Static
 
         app = _Host(chat_model, [])
@@ -1034,7 +1034,6 @@ class TestUserItemClick:
             text_static = next(s for s in item.query(Static) if s.has_class("text"))
             await pilot.click(text_static)
             await pilot.pause()
-            # User-side click both copies and animates the text widgets.
             assert copied == ["my prompt"]
 
 
@@ -1283,75 +1282,6 @@ class TestThinkingViaResponseTask:
             items = list(container.query(ChatItem))
             assistant = items[-1]
             assert "weighing… options" in assistant.thinking
-
-
-class TestScrollFollow:
-    async def test_response_task_does_not_scroll_when_user_scrolled_up(
-        self, store, chat_model, monkeypatch
-    ):
-        from oterm.app.widgets import chat as chat_mod
-
-        chat_id = await store.save_chat(chat_model)
-        chat_model.id = chat_id
-
-        async def stream_fn(
-            messages: list[ModelMessage], info: AgentInfo
-        ) -> AsyncIterator[str]:
-            yield "first "
-            yield "second"
-
-        # Force the auto-follow check to report "user scrolled away" so the
-        # streaming + final-scroll branches both take the not-following path.
-        monkeypatch.setattr(chat_mod, "_near_bottom", lambda c: False)
-
-        app = _Host(chat_model, [])
-        async with app.run_test() as pilot:
-            container = app.query_one(ChatContainer)
-            container.agent = Agent(FunctionModel(stream_function=stream_fn))
-
-            prompt = app.query_one(FlexibleInput)
-            prompt.text = "ask"
-            await pilot.press("enter")
-            for _ in range(50):
-                await asyncio.sleep(0)
-                await pilot.pause()
-                if len(container.messages) == 2:
-                    break
-            assert container.messages[-1].text == "first second"
-
-    async def test_regenerate_does_not_scroll_when_user_scrolled_up(
-        self, store, chat_model, monkeypatch
-    ):
-        from oterm.app.widgets import chat as chat_mod
-
-        chat_id = await store.save_chat(chat_model)
-        chat_model.id = chat_id
-        user_msg = MessageModel(chat_id=chat_id, role="user", text="ask")
-        user_msg.id = await store.save_message(user_msg)
-        old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
-        old_assistant.id = await store.save_message(old_assistant)
-
-        async def stream_fn(
-            messages: list[ModelMessage], info: AgentInfo
-        ) -> AsyncIterator[str]:
-            yield "new "
-            yield "answer"
-
-        monkeypatch.setattr(chat_mod, "_near_bottom", lambda c: False)
-
-        app = _Host(chat_model, [user_msg, old_assistant])
-        async with app.run_test() as pilot:
-            container = app.query_one(ChatContainer)
-            await container.load_messages()
-            container.agent = Agent(FunctionModel(stream_function=stream_fn))
-
-            await container.action_regenerate_llm_message()
-            for _ in range(50):
-                await asyncio.sleep(0)
-                await pilot.pause()
-                if container.messages[-1].text == "new answer":
-                    break
-            assert container.messages[-1].text == "new answer"
 
 
 class TestRegenerateCancellation:

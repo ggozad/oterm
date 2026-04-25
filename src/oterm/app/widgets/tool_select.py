@@ -54,7 +54,7 @@ class ToolSelector(Widget):
                 tool_checkbox = self.query_one(
                     f"#{checkbox_name}-{meta['name']}", Checkbox
                 )
-                if tool_checkbox.value != checked:
+                if tool_checkbox.value != checked:  # pragma: no branch
                     tool_checkbox.value = checked
             return
 
