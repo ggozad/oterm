@@ -221,8 +221,9 @@ class ChatContainer(Widget):
         pydantic_messages: list[ModelMessage] = []
         for msg_model in messages:
             if msg_model.role == "user":
+                content, _ = build_user_prompt(msg_model.text, msg_model.images)
                 pydantic_messages.append(
-                    ModelRequest(parts=[UserPromptPart(content=msg_model.text)])
+                    ModelRequest(parts=[UserPromptPart(content=content)])
                 )
             elif msg_model.role == "assistant":
                 pydantic_messages.append(

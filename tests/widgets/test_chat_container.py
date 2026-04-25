@@ -418,6 +418,82 @@ class TestBuildUserPrompt:
         assert prompt == "[Image #5] hi"
 
 
+class TestPydanticHistoryRebuild:
+    async def test_user_message_with_token_replays_image_inline(
+        self, store, chat_model
+    ):
+        from pydantic_ai import BinaryContent
+        from pydantic_ai.messages import ModelRequest, UserPromptPart
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        good = base64.b64encode(b"\x89PNG\r\n").decode()
+        msg = MessageModel(
+            chat_id=chat_id,
+            role="user",
+            text="see [Image #1] please",
+            images=[good],
+        )
+        msg.id = await store.save_message(msg)
+
+        app = _Host(chat_model, [msg])
+        async with app.run_test():
+            container = app.query_one(ChatContainer)
+            history = container.pydantic_history
+            assert len(history) == 1
+            req = history[0]
+            assert isinstance(req, ModelRequest)
+            user_part = req.parts[0]
+            assert isinstance(user_part, UserPromptPart)
+            assert isinstance(user_part.content, list)
+            assert any(isinstance(p, BinaryContent) for p in user_part.content)
+
+    async def test_legacy_user_message_without_tokens_appends_images(
+        self, store, chat_model
+    ):
+        from pydantic_ai import BinaryContent
+        from pydantic_ai.messages import ModelRequest, UserPromptPart
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        good = base64.b64encode(b"\x89PNG\r\n").decode()
+        msg = MessageModel(
+            chat_id=chat_id,
+            role="user",
+            text="describe",
+            images=[good],
+        )
+        msg.id = await store.save_message(msg)
+
+        app = _Host(chat_model, [msg])
+        async with app.run_test():
+            container = app.query_one(ChatContainer)
+            req = container.pydantic_history[0]
+            assert isinstance(req, ModelRequest)
+            user_part = req.parts[0]
+            assert isinstance(user_part, UserPromptPart)
+            assert isinstance(user_part.content, list)
+            assert user_part.content[0] == "describe"
+            assert isinstance(user_part.content[1], BinaryContent)
+
+    async def test_text_only_user_message_replays_as_string(self, store, chat_model):
+        from pydantic_ai.messages import ModelRequest, UserPromptPart
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        msg = MessageModel(chat_id=chat_id, role="user", text="hi", images=[])
+        msg.id = await store.save_message(msg)
+
+        app = _Host(chat_model, [msg])
+        async with app.run_test():
+            container = app.query_one(ChatContainer)
+            req = container.pydantic_history[0]
+            assert isinstance(req, ModelRequest)
+            user_part = req.parts[0]
+            assert isinstance(user_part, UserPromptPart)
+            assert user_part.content == "hi"
+
+
 class TestHistory:
     async def test_action_history_opens_modal(self, store, chat_model):
         from oterm.app.prompt_history import PromptHistory
