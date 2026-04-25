@@ -37,6 +37,32 @@ class TestResolveTools:
         assert tools == [tool]
         assert toolsets == []
 
+    def test_mcp_tools_become_filtered_toolset(self, monkeypatch):
+        class _FakeServer:
+            def __init__(self) -> None:
+                self.filtered_args: list = []
+
+            def filtered(self, predicate):
+                self.filtered_args.append(predicate)
+                return f"toolset-{id(predicate)}"
+
+        server = _FakeServer()
+        monkeypatch.setattr("oterm.app.widgets.chat.builtin_tools", [])
+        monkeypatch.setattr(
+            "oterm.app.widgets.chat.mcp_tool_meta",
+            {"oracle": [{"name": "ask_oracle", "description": ""}]},
+        )
+        monkeypatch.setattr("oterm.app.widgets.chat.mcp_servers", {"oracle": server})
+        tools, toolsets = _resolve_tools(["ask_oracle"])
+        assert tools == []
+        assert len(toolsets) == 1
+        # The filter predicate accepts the chosen tool name and rejects others.
+        from types import SimpleNamespace
+
+        predicate = server.filtered_args[0]
+        assert predicate(None, SimpleNamespace(name="ask_oracle")) is True
+        assert predicate(None, SimpleNamespace(name="other")) is False
+
 
 class TestRebuildAgent:
     def test_success_populates_agent(self):
@@ -62,3 +88,41 @@ class TestStreamAgentGuards:
         with pytest.raises(RuntimeError, match="not configured"):
             async for _ in container.stream_agent("hello"):
                 pass
+
+
+class TestResponseTaskErrors:
+    async def test_model_http_error_notifies(self, store, chat_model):
+        from collections.abc import AsyncIterator
+
+        from pydantic_ai import Agent
+        from pydantic_ai.exceptions import ModelHTTPError
+        from pydantic_ai.messages import ModelMessage
+        from pydantic_ai.models.function import AgentInfo, FunctionModel
+        from textual.app import App, ComposeResult
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            raise ModelHTTPError(status_code=500, model_name="x", body="boom")
+            yield  # pragma: no cover
+
+        class _Host(App):
+            def compose(self) -> ComposeResult:
+                yield ChatContainer(chat_model=chat_model, messages=[])
+
+        app = _Host()
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+            await container.response_task("hello")
+            await pilot.pause()
+            assert any(
+                "error running your request" in n.message
+                for n in list(app._notifications)
+            )
+            stored = await store.get_messages(chat_id)
+            assert stored == []
+            assert container.messages == []

@@ -395,12 +395,9 @@ class ChatContainer(Widget):
         await message_container.mount(loading)
         message_container.scroll_end()
 
-        turn_start = _last_user_prompt_index(self.pydantic_history)
-        if turn_start is None:
-            popped_history: list[ModelMessage] = []
-        else:
-            popped_history = self.pydantic_history[turn_start:]
-            self.pydantic_history = self.pydantic_history[:turn_start]
+        turn_start = _last_user_prompt_index(self.pydantic_history) or 0
+        popped_history = self.pydantic_history[turn_start:]
+        self.pydantic_history = self.pydantic_history[:turn_start]
         message = self.messages[-1]
 
         def restore_state() -> None:

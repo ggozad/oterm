@@ -176,6 +176,38 @@ class TestRegenerateErrorRestore:
             )
 
 
+class TestLastUserPromptIndex:
+    def test_empty_history_returns_none(self):
+        from oterm.app.widgets.chat import _last_user_prompt_index
+
+        assert _last_user_prompt_index([]) is None
+
+    def test_finds_most_recent_user_prompt(self):
+        from oterm.app.widgets.chat import _last_user_prompt_index
+
+        history: list[ModelMessage] = [
+            ModelRequest(parts=[UserPromptPart(content="first")]),
+            ModelResponse(parts=[TextPart(content="a")]),
+            ModelRequest(parts=[UserPromptPart(content="second")]),
+            ModelResponse(parts=[TextPart(content="b")]),
+        ]
+        assert _last_user_prompt_index(history) == 2
+
+    def test_skips_tool_return_requests(self):
+        from oterm.app.widgets.chat import _last_user_prompt_index
+
+        history: list[ModelMessage] = [
+            ModelRequest(parts=[UserPromptPart(content="ask")]),
+            ModelResponse(
+                parts=[ToolCallPart(tool_name="t", args={}, tool_call_id="1")]
+            ),
+            ModelRequest(
+                parts=[ToolReturnPart(tool_name="t", content="r", tool_call_id="1")]
+            ),
+        ]
+        assert _last_user_prompt_index(history) == 0
+
+
 def _count_user_prompts(history: list[ModelMessage]) -> int:
     return sum(
         1

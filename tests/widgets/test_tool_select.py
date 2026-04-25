@@ -23,6 +23,7 @@ def populated_tools(monkeypatch):
     """Inject fake builtin tools and MCP metadata so ToolSelector has content."""
     import oterm.app.widgets.tool_select as sel_mod
     import oterm.tools as tools_mod
+    import oterm.tools.mcp.setup as mcp_setup_mod
 
     builtin = [_tool_def("date_time"), _tool_def("shell")]
     mcp_meta = {
@@ -32,6 +33,7 @@ def populated_tools(monkeypatch):
     monkeypatch.setattr(tools_mod, "builtin_tools", builtin)
     monkeypatch.setattr(sel_mod, "builtin_tools", builtin)
     monkeypatch.setattr(sel_mod, "mcp_tool_meta", mcp_meta)
+    monkeypatch.setattr(mcp_setup_mod, "mcp_tool_meta", mcp_meta)
     return builtin, mcp_meta
 
 
