@@ -6,6 +6,14 @@ from ollama import Client, ListResponse, Options, ShowResponse
 from oterm.config import envConfig
 
 
+def openai_compat_base_url() -> str:
+    """OLLAMA_URL with a single ``/v1`` suffix, regardless of how it was set."""
+    base = envConfig.OLLAMA_URL.rstrip("/")
+    if base.endswith("/v1"):
+        return base
+    return f"{base}/v1"
+
+
 def list_models() -> ListResponse:
     client = Client(host=envConfig.OLLAMA_URL, verify=envConfig.OTERM_VERIFY_SSL)
     return client.list()

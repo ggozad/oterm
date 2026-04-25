@@ -1,5 +1,5 @@
 from oterm.providers import ollama as ollama_mod
-from oterm.providers.ollama import parse_ollama_parameters
+from oterm.providers.ollama import openai_compat_base_url, parse_ollama_parameters
 
 
 class _FakeClient:
@@ -30,6 +30,26 @@ class TestClientWrappers:
     def test_show_model_uses_env_config(self, monkeypatch):
         monkeypatch.setattr(ollama_mod, "Client", _FakeClient)
         assert ollama_mod.show_model("llama3") == "show-llama3"
+
+
+class TestOpenAICompatBaseUrl:
+    def test_appends_v1(self, monkeypatch):
+        import oterm.config
+
+        monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", "http://h:1")
+        assert openai_compat_base_url() == "http://h:1/v1"
+
+    def test_idempotent_when_already_v1(self, monkeypatch):
+        import oterm.config
+
+        monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", "http://h:1/v1")
+        assert openai_compat_base_url() == "http://h:1/v1"
+
+    def test_strips_trailing_slash(self, monkeypatch):
+        import oterm.config
+
+        monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", "http://h:1/v1/")
+        assert openai_compat_base_url() == "http://h:1/v1"
 
 
 class TestParseOllamaParameters:

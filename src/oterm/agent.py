@@ -8,7 +8,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import AbstractToolset
 
-from oterm.config import envConfig
+from oterm.providers.ollama import openai_compat_base_url
 
 
 def _build_model_settings(
@@ -38,7 +38,7 @@ def get_agent(
     if provider == "ollama":
         pydantic_model = OpenAIChatModel(
             model_name=model,
-            provider=OllamaProvider(base_url=f"{envConfig.OLLAMA_URL}/v1"),
+            provider=OllamaProvider(base_url=openai_compat_base_url()),
         )
     elif provider.startswith("openai-compat/"):
         from oterm.providers import (

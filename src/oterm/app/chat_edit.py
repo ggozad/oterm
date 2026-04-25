@@ -169,7 +169,7 @@ class ChatEdit(ModalScreen[str]):
                     if m.model:
                         self.models_size[m.model] = m["size"]
             else:
-                self.models = list_models(provider)
+                self.models = await asyncio.to_thread(list_models, provider)
         except Exception as e:
             self.app.notify(
                 f"Failed to load models for {provider}: {e}", severity="error"

@@ -53,14 +53,10 @@ def get_capabilities(provider: str, model: str) -> ModelCapabilities:
         return ModelCapabilities(supports_tools=True)
 
     return ModelCapabilities(
-        supports_tools=_supports_tools(provider, model),
+        supports_tools=True,
         supports_thinking=_supports_thinking(provider, model),
         supports_vision=_supports_vision(provider, model),
     )
-
-
-def _supports_tools(provider: str, model: str) -> bool:
-    return True
 
 
 def _supports_thinking(provider: str, model: str) -> bool:
