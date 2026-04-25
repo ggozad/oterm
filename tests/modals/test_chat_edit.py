@@ -330,3 +330,191 @@ async def test_load_models_failure_notifies(app_config, monkeypatch):
         assert any(
             "Failed to load models" in n.message for n in list(app._notifications)
         )
+
+
+async def test_load_model_info_skips_when_already_loaded(app_config, monkeypatch):
+    """A second call with the same model name short-circuits without re-fetching."""
+    import oterm.app.chat_edit as ce
+
+    calls: list[str] = []
+
+    def show(m):
+        calls.append(m)
+
+        class _Show(dict):
+            parameters = ""
+
+            def get(self, key, default=""):
+                return default
+
+        return _Show()
+
+    monkeypatch.setattr(ce.ollama, "show_model", show)
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        screen = ChatEdit()
+        app.push_screen(screen)
+        await pilot.pause()
+
+        await screen._load_model_info("dup-model")
+        await screen._load_model_info("dup-model")
+        await pilot.pause()
+        assert calls == ["dup-model"]
+
+
+async def test_load_model_info_uses_cached_meta(app_config, monkeypatch):
+    """Cached models_info entries skip the ollama.show_model fetch."""
+    import oterm.app.chat_edit as ce
+
+    calls: list[str] = []
+
+    def show(m):
+        calls.append(m)
+        raise AssertionError("show_model should not be called when cached")
+
+    monkeypatch.setattr(ce.ollama, "show_model", show)
+
+    class _Cached(dict):
+        parameters = ""
+
+        def __bool__(self) -> bool:
+            return True
+
+        def get(self, key, default=""):
+            if key == "capabilities":
+                return ["tools"]
+            return default
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        screen = ChatEdit()
+        app.push_screen(screen)
+        await pilot.pause()
+
+        ChatEdit.models_info["cached-model"] = _Cached()  # ty: ignore[invalid-assignment]
+        try:
+            await screen._load_model_info("cached-model")
+            await pilot.pause()
+            assert calls == []
+        finally:
+            ChatEdit.models_info.pop("cached-model", None)
+
+
+async def test_load_model_info_non_ollama_populates_caps(app_config, monkeypatch):
+    """For non-ollama providers, caps come from get_capabilities."""
+    import oterm.app.chat_edit as ce
+    from oterm.providers.capabilities import ModelCapabilities
+
+    monkeypatch.setattr(
+        ce,
+        "get_capabilities",
+        lambda provider, model: ModelCapabilities(
+            supports_tools=True, supports_thinking=True, supports_vision=True
+        ),
+    )
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        chat_model = ChatModel(model="claude-sonnet", provider="anthropic")
+        screen = ChatEdit(chat_model=chat_model)
+        screen.provider = "anthropic"
+        app.push_screen(screen)
+        await pilot.pause()
+
+        await screen._load_model_info("claude-sonnet")
+        await pilot.pause()
+
+        from oterm.app.widgets.caps import Capabilities
+
+        caps_widget = screen.query_one(".caps", Capabilities)
+        assert set(caps_widget.caps) == {"tools", "thinking", "vision"}
+
+
+async def test_load_model_info_non_ollama_no_caps(app_config, monkeypatch):
+    """A non-ollama provider with no capabilities renders an empty caps strip."""
+    import oterm.app.chat_edit as ce
+    from oterm.providers.capabilities import ModelCapabilities
+
+    monkeypatch.setattr(
+        ce,
+        "get_capabilities",
+        lambda provider, model: ModelCapabilities(),
+    )
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        chat_model = ChatModel(model="basic", provider="anthropic")
+        screen = ChatEdit(chat_model=chat_model)
+        screen.provider = "anthropic"
+        app.push_screen(screen)
+        await pilot.pause()
+
+        await screen._load_model_info("basic")
+        await pilot.pause()
+
+        from oterm.app.widgets.caps import Capabilities
+
+        caps_widget = screen.query_one(".caps", Capabilities)
+        assert list(caps_widget.caps) == []
+
+
+async def test_on_model_submitted_loads_model(app_config, monkeypatch):
+    import oterm.app.chat_edit as ce
+
+    loaded: list[str] = []
+
+    async def fake_load(self, model):
+        loaded.append(model)
+
+    monkeypatch.setattr(ce.ChatEdit, "_load_model_info", fake_load)
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        screen = ChatEdit()
+        app.push_screen(screen)
+        await pilot.pause()
+
+        await screen.on_model_submitted(ModelSelect.Submitted("picked"))
+        await pilot.pause()
+        assert loaded == ["picked"]
+
+
+async def test_on_select_changed_ignores_other_selects(app_config):
+    """Select.Changed for non-provider selects is a no-op."""
+    from textual.widgets import Select
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        screen = ChatEdit()
+        app.push_screen(screen)
+        await pilot.pause()
+
+        # Construct a fresh Select with no id; the handler must short-circuit
+        # because event.select.id != "provider-select".
+        fake_select: Select = Select([("a", "a")], id="other-select")
+        ev = Select.Changed(fake_select, "ollama")
+        original_provider = screen.provider
+        await screen.on_select_changed(ev)
+        await pilot.pause()
+        assert screen.provider == original_provider
+
+
+async def test_on_select_changed_same_provider_is_noop(app_config):
+    """Selecting the already-active provider does not reset state."""
+    from textual.widgets import Select
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        chat_model = ChatModel(model="llama3", provider="ollama")
+        screen = ChatEdit(chat_model=chat_model)
+        app.push_screen(screen)
+        await pilot.pause()
+        screen.model_name = "llama3"
+
+        provider_select = screen.query_one("#provider-select", Select)
+        ev = Select.Changed(provider_select, "ollama")
+        await screen.on_select_changed(ev)
+        await pilot.pause()
+        # No reset — model_name preserved.
+        assert screen.model_name == "llama3"
