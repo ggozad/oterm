@@ -33,7 +33,6 @@ class OTerm(App):
             id="prev.chat",
             priority=True,
         ),
-        Binding("ctrl+backspace", "delete_chat", "delete chat", id="delete.chat"),
         Binding("ctrl+n", "new_chat", "new chat", id="new.chat"),
         Binding("ctrl+l", "show_logs", "show logs", id="show.logs"),
         Binding("ctrl+q", "quit", "quit", id="quit"),
