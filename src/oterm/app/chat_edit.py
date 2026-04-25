@@ -146,6 +146,13 @@ class ChatEdit(ModalScreen[str]):
         provider_select = self.query_one("#provider-select", Select)
         provider_select.value = self.provider
 
+        if self.provider not in get_available_providers():
+            self.app.notify(
+                f"Provider {get_provider_name(self.provider)!r} is not currently "
+                "available. Check your environment or `openaiCompatible` config.",
+                severity="warning",
+            )
+
         await self._load_models_for_provider(self.provider)
 
         model_select = self.query_one(ModelSelect)
@@ -272,6 +279,13 @@ class ChatEdit(ModalScreen[str]):
     def compose(self) -> ComposeResult:
         providers = get_available_providers()
         provider_options = [(get_provider_name(p), p) for p in providers]
+        # Preserve a chat's saved provider even when the endpoint is no longer
+        # configured (e.g. an `openai-compat/<name>` removed from config.json).
+        # Without this the Select would reject the value at mount time.
+        if self.provider and self.provider not in providers:
+            provider_options.insert(
+                0, (f"{get_provider_name(self.provider)} (unavailable)", self.provider)
+            )
 
         with Container(id="chat-edit-screen", classes="screen-container full-height"):
             with Horizontal(id="top-labels"):

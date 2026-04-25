@@ -284,6 +284,32 @@ async def test_provider_change_resets_model(app_config, monkeypatch):
         assert screen.model_name == ""
 
 
+async def test_edit_chat_with_unconfigured_openai_compat(app_config, monkeypatch):
+    """Opening an existing chat whose openai-compat endpoint is no longer
+    configured must not crash. The provider stays on its saved value (the
+    Select is disabled in edit mode anyway) so saving preserves the original.
+    """
+    import oterm.providers as prov
+
+    # Endpoint is no longer in the available list.
+    monkeypatch.setattr(prov, "get_available_providers", lambda: ["ollama"])
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        chat_model = ChatModel(
+            id=1, name="x", model="some-model", provider="openai-compat/gone"
+        )
+        screen = ChatEdit(chat_model=chat_model, edit_mode=True)
+        app.push_screen(screen)
+        await pilot.pause()
+
+        # No InvalidSelectValueError; provider preserved.
+        assert screen.provider == "openai-compat/gone"
+        assert any(
+            "not currently available" in n.message for n in list(app._notifications)
+        )
+
+
 async def test_load_models_failure_notifies(app_config, monkeypatch):
     import oterm.app.chat_edit as ce
 
