@@ -300,6 +300,10 @@ UsageStatus {
     margin-right: 1;
 }
 
+.param-row Checkbox {
+    margin-top: 1;
+}
+
 #prompt-history {
     height: 90%;
 }
