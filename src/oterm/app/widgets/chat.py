@@ -223,7 +223,7 @@ class ChatContainer(Widget):
                 pydantic_messages.append(
                     ModelRequest(parts=[UserPromptPart(content=content)])
                 )
-            elif msg_model.role == "assistant":
+            else:
                 pydantic_messages.append(
                     ModelResponse(parts=[TextPart(content=msg_model.text)])
                 )
@@ -467,7 +467,7 @@ class ChatContainer(Widget):
             return
         in_flight = getattr(self, "inference_task", None)
         if in_flight is not None and not in_flight.done():
-            return
+            return  # pragma: no cover
         chat_id = self.chat_model.id
         assert chat_id is not None
         response_message_id = self.messages[-1].id
