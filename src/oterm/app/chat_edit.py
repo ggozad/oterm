@@ -1,4 +1,6 @@
 import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 from ollama import ListResponse, ShowResponse
@@ -23,7 +25,56 @@ from oterm.providers import (
     ollama,
 )
 from oterm.providers.capabilities import get_capabilities
+from oterm.providers.settings import get_supported_setting_keys
 from oterm.types import ChatModel
+
+
+@dataclass(frozen=True)
+class _ParamSpec:
+    key: str
+    label: str
+    parser: Callable[[str], Any]
+    placeholder: str
+    range_check: Callable[[Any], bool] | None = None
+    range_text: str | None = None
+
+    @property
+    def input_id(self) -> str:
+        return f"{self.key.replace('_', '-')}-input"
+
+
+_PARAM_SPECS: tuple[_ParamSpec, ...] = (
+    _ParamSpec(
+        key="temperature",
+        label="Temperature",
+        parser=float,
+        placeholder="0.0 - 2.0",
+        range_check=lambda v: 0.0 <= v <= 2.0,
+        range_text="between 0.0 and 2.0",
+    ),
+    _ParamSpec(
+        key="top_p",
+        label="Top P",
+        parser=float,
+        placeholder="0.0 - 1.0",
+        range_check=lambda v: 0.0 <= v <= 1.0,
+        range_text="between 0.0 and 1.0",
+    ),
+    _ParamSpec(
+        key="max_tokens",
+        label="Max Tokens",
+        parser=int,
+        placeholder="e.g. 4096",
+        range_check=lambda v: v > 0,
+        range_text="greater than 0",
+    ),
+    _ParamSpec(
+        key="seed",
+        label="Seed",
+        parser=int,
+        placeholder="integer",
+    ),
+)
 
 
 class ChatEdit(ModalScreen[str]):
@@ -77,48 +128,23 @@ class ChatEdit(ModalScreen[str]):
         system = system if system != model_system else None
 
         parameters: dict[str, Any] = {}
-        temp_input = self.query_one("#temperature-input", Input)
-        top_p_input = self.query_one("#top-p-input", Input)
-        max_tokens_input = self.query_one("#max-tokens-input", Input)
-
-        if temp_input.value.strip():
+        for spec in _PARAM_SPECS:
+            if spec.key not in get_supported_setting_keys(self.provider):
+                continue
+            raw = self.query_one(f"#{spec.input_id}", Input).value.strip()
+            if not raw:
+                continue
             try:
-                temp = float(temp_input.value)
-                if not 0.0 <= temp <= 2.0:
-                    self.app.notify(
-                        "Temperature must be between 0.0 and 2.0", severity="error"
-                    )
-                    return
-                parameters["temperature"] = temp
+                value = spec.parser(raw)
             except ValueError:
-                self.app.notify("Invalid temperature value", severity="error")
+                self.app.notify(f"Invalid {spec.label} value", severity="error")
                 return
-
-        if top_p_input.value.strip():
-            try:
-                top_p = float(top_p_input.value)
-                if not 0.0 <= top_p <= 1.0:
-                    self.app.notify(
-                        "Top P must be between 0.0 and 1.0", severity="error"
-                    )
-                    return
-                parameters["top_p"] = top_p
-            except ValueError:
-                self.app.notify("Invalid Top P value", severity="error")
+            if spec.range_check is not None and not spec.range_check(value):
+                self.app.notify(
+                    f"{spec.label} must be {spec.range_text}", severity="error"
+                )
                 return
-
-        if max_tokens_input.value.strip():
-            try:
-                max_tokens = int(max_tokens_input.value)
-                if max_tokens <= 0:
-                    self.app.notify(
-                        "Max Tokens must be greater than 0", severity="error"
-                    )
-                    return
-                parameters["max_tokens"] = max_tokens
-            except ValueError:
-                self.app.notify("Invalid Max Tokens value", severity="error")
-                return
+            parameters[spec.key] = value
 
         self.tools = self.query_one(ToolSelector).selected
         self.thinking = self.query_one("#thinking-checkbox", Checkbox).value
@@ -241,12 +267,13 @@ class ChatEdit(ModalScreen[str]):
         self.query_one(".caps", Capabilities).caps = display_caps  # ty: ignore[invalid-assignment]
 
     def _populate_parameter_inputs(self, parameters: dict[str, Any]) -> None:
-        self.query_one("#temperature-input", Input).value = str(
-            parameters.get("temperature", "")
-        )
-        self.query_one("#top-p-input", Input).value = str(parameters.get("top_p", ""))
-        max_tokens = parameters.get("max_tokens", parameters.get("num_predict", ""))
-        self.query_one("#max-tokens-input", Input).value = str(max_tokens)
+        supported = get_supported_setting_keys(self.provider)
+        for spec in _PARAM_SPECS:
+            if spec.key not in supported:
+                continue
+            self.query_one(f"#{spec.input_id}", Input).value = str(
+                parameters.get(spec.key, "")
+            )
 
     @on(ModelSelect.Submitted)
     async def on_model_submitted(self, event: ModelSelect.Submitted) -> None:
@@ -313,31 +340,21 @@ class ChatEdit(ModalScreen[str]):
                         id="tool-selector-container", selected=self.tools
                     )
                 with Vertical():
-                    with Horizontal(classes="param-row"):
-                        yield Label("Temperature:", classes="title")
-                        yield Input(
-                            value=str(self.parameters.get("temperature", "")),
-                            id="temperature-input",
-                            placeholder="0.0 - 2.0",
-                        )
-                        yield Label("Top P:", classes="title")
-                        yield Input(
-                            value=str(self.parameters.get("top_p", "")),
-                            id="top-p-input",
-                            placeholder="0.0 - 1.0",
-                        )
-                    with Horizontal(classes="param-row"):
-                        yield Label("Max Tokens:", classes="title")
-                        yield Input(
-                            value=str(
-                                self.parameters.get(
-                                    "max_tokens",
-                                    self.parameters.get("num_predict", ""),
+                    visible_specs = [
+                        s
+                        for s in _PARAM_SPECS
+                        if s.key in get_supported_setting_keys(self.provider)
+                    ]
+                    for i in range(0, len(visible_specs), 2):
+                        with Horizontal(classes="param-row"):
+                            for spec in visible_specs[i : i + 2]:
+                                yield Label(f"{spec.label}:", classes="title")
+                                yield Input(
+                                    value=str(self.parameters.get(spec.key, "")),
+                                    id=spec.input_id,
+                                    placeholder=spec.placeholder,
                                 )
-                            ),
-                            id="max-tokens-input",
-                            placeholder="e.g. 4096",
-                        )
+                    with Horizontal(classes="param-row"):
                         yield Label("Thinking:", classes="title")
                         yield Checkbox(
                             "",

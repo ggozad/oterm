@@ -49,8 +49,33 @@ async def test_compose_renders_core_widgets(app_config):
         assert screen.query_one("#temperature-input", Input)
         assert screen.query_one("#top-p-input", Input)
         assert screen.query_one("#max-tokens-input", Input)
+        assert screen.query_one("#seed-input", Input)
         assert screen.query_one("#thinking-checkbox", Checkbox)
         assert screen.query_one("#save-btn", Button)
+
+
+async def test_compose_renders_param_inputs_for_anthropic(app_config, monkeypatch):
+    """Common sampling fields are surfaced for every supported provider."""
+    import oterm.providers as prov
+
+    monkeypatch.setattr(prov, "list_models", lambda p: ["claude-sonnet-4"])
+    monkeypatch.setattr(
+        prov, "get_available_providers", lambda: ["ollama", "anthropic"]
+    )
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        chat_model = ChatModel(model="claude-sonnet-4", provider="anthropic")
+        app.push_screen(ChatEdit(chat_model=chat_model))
+        await pilot.pause()
+        screen = app.screen
+        for input_id in (
+            "#temperature-input",
+            "#top-p-input",
+            "#max-tokens-input",
+            "#seed-input",
+        ):
+            assert screen.query_one(input_id, Input)
 
 
 async def test_escape_dismisses_with_none(app_config):
@@ -108,12 +133,14 @@ async def test_missing_model_notifies_and_does_not_dismiss(app_config):
 @pytest.mark.parametrize(
     "field,value,message_fragment",
     [
-        ("#temperature-input", "nope", "Invalid temperature"),
+        ("#temperature-input", "nope", "Invalid Temperature"),
         ("#temperature-input", "3.0", "Temperature must be"),
         ("#top-p-input", "nope", "Invalid Top P"),
         ("#top-p-input", "2.0", "Top P must be"),
         ("#max-tokens-input", "nope", "Invalid Max Tokens"),
         ("#max-tokens-input", "-1", "Max Tokens must be"),
+        ("#seed-input", "nope", "Invalid Seed"),
+        ("#seed-input", "1.5", "Invalid Seed"),
     ],
 )
 async def test_parameter_validation_errors(app_config, field, value, message_fragment):
@@ -150,6 +177,7 @@ async def test_valid_parameters_are_persisted(app_config):
         screen.query_one("#temperature-input", Input).value = "0.3"
         screen.query_one("#top-p-input", Input).value = "0.9"
         screen.query_one("#max-tokens-input", Input).value = "512"
+        screen.query_one("#seed-input", Input).value = "1234"
         await pilot.pause()
 
         screen._return_chat_meta()
@@ -161,6 +189,7 @@ async def test_valid_parameters_are_persisted(app_config):
             "temperature": 0.3,
             "top_p": 0.9,
             "max_tokens": 512,
+            "seed": 1234,
         }
 
 
