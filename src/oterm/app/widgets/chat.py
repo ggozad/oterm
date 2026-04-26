@@ -455,6 +455,9 @@ class ChatContainer(Widget):
             return
         if len(self.messages) < 2:
             return
+        in_flight = getattr(self, "inference_task", None)
+        if in_flight is not None and not in_flight.done():
+            return
         response_message_id = self.messages[-1].id
         popped_message = self.messages.pop()
         message_container = self.query_one("#messageContainer")
@@ -534,7 +537,7 @@ class ChatContainer(Widget):
                 restore_state()
                 self.app.notify(f"Unexpected error: {e}", severity="error")
 
-        asyncio.create_task(response_task())
+        self.inference_task = asyncio.create_task(response_task())
 
     async def action_history(self) -> None:
         def on_history_selected(text: str | None) -> None:
