@@ -141,7 +141,8 @@ class TestGetAgent:
         assert isinstance(agent.model, OpenAIChatModel)
         assert agent.model.client.api_key == UNRESOLVED_API_KEY
 
-    def test_fallthrough_provider_uses_prefix_string(self):
+    def test_fallthrough_provider_uses_prefix_string(self, monkeypatch):
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
         agent = get_agent(provider="anthropic", model="claude-4")
         model = agent.model
         assert not isinstance(model, str) and model is not None
