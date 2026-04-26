@@ -115,14 +115,18 @@ class TestGetCapabilities:
         assert caps.supports_vision is True
 
     def test_ollama_falls_back_to_empty_on_error(self, monkeypatch):
+        from oterm.log import log_lines
         from oterm.providers import ollama as ollama_mod
 
         def boom(model):
             raise RuntimeError("ollama down")
 
         monkeypatch.setattr(ollama_mod, "show_model", boom)
+        before = len(log_lines)
         caps = get_capabilities("ollama", "llama3")
         assert caps == ModelCapabilities()
+        new_lines = [text for _group, text in log_lines[before:]]
+        assert any("ollama down" in line for line in new_lines)
 
     def test_openai_o1_thinking_via_profile(self):
         # OpenAIProvider.model_profile resolves o1 as reasoning-capable.

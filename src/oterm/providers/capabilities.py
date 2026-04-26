@@ -1,6 +1,8 @@
 import re
 from dataclasses import dataclass
 
+from oterm.log import log
+
 
 @dataclass
 class ModelCapabilities:
@@ -112,11 +114,13 @@ def _get_ollama_capabilities(model: str) -> ModelCapabilities:
 
     try:
         info = ollama.show_model(model)
-        capabilities: list[str] = info.get("capabilities", [])
-        return ModelCapabilities(
-            supports_tools="tools" in capabilities,
-            supports_thinking="thinking" in capabilities,
-            supports_vision="vision" in capabilities,
-        )
-    except Exception:
+    except Exception as e:
+        log.warning(f"Ollama show_model({model!r}) failed: {e}")
         return ModelCapabilities()
+
+    capabilities: list[str] = info.get("capabilities", [])
+    return ModelCapabilities(
+        supports_tools="tools" in capabilities,
+        supports_thinking="thinking" in capabilities,
+        supports_vision="vision" in capabilities,
+    )
