@@ -98,3 +98,7 @@ Declare env vars in the `env` dict of each server. Any string value (in `env`, `
 ```
 
 If a referenced variable is not set and has no default, server setup fails with an error naming the missing variable.
+
+### Sampling
+
+MCP [sampling](https://modelcontextprotocol.io/docs/concepts/sampling) is not currently supported — `oterm` advertises sampling as disabled to every server, so any sampling request is rejected by the protocol rather than crashing the chat.

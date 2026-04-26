@@ -60,6 +60,16 @@ class TestBuildServers:
         built = _build_servers({"sse": {"url": "http://example.com/sse"}})
         assert isinstance(built["sse"], MCPServerSSE)
 
+    def test_sampling_is_disabled(self):
+        built = _build_servers(
+            {
+                "stdio": {"command": "mcp", "args": []},
+                "http": {"url": "http://example.com/mcp"},
+            }
+        )
+        assert built["stdio"].allow_sampling is False
+        assert built["http"].allow_sampling is False
+
     def test_websocket_url_rejected(self):
         with pytest.raises(ValueError, match="WebSocket transport"):
             _build_servers({"ws": {"url": "ws://example.com/mcp"}})

@@ -83,6 +83,9 @@ def _build_servers(raw: dict[str, dict]) -> dict[str, MCPServer]:
     for name, server in config.mcp_servers.items():
         server.id = name
         server.log_handler = Logger()
+        # No sampling_model is configured, so disable sampling rather than let
+        # pydantic-ai advertise it and then crash when a server requests it.
+        server.allow_sampling = False
         if isinstance(server, MCPServerStdio):
             server.env = {**_STDIO_LOG_ENV, **(server.env or {})}
         servers[name] = server
