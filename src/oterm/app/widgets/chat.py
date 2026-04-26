@@ -212,6 +212,10 @@ class ChatContainer(Widget):
     def _build_pydantic_history(
         self, messages: list[MessageModel]
     ) -> list[ModelMessage]:
+        # Tool calls/responses from prior turns are not preserved across
+        # reloads: the message schema only stores user/assistant text and
+        # images, so a turn that fanned out into tool calls reconstructs as
+        # a single TextPart of the final answer.
         pydantic_messages: list[ModelMessage] = []
         for msg_model in messages:
             if msg_model.role == "user":

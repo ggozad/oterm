@@ -1,19 +1,12 @@
-import logging
-import os
 from io import BytesIO
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
 
 import pydantic_ai.models
 import pytest
 import pytest_asyncio
 from PIL import Image
 
-if TYPE_CHECKING:
-    from vcr import VCR
-
 setattr(pydantic_ai.models, "ALLOW_MODEL_REQUESTS", False)
-logging.getLogger("vcr.cassette").setLevel(logging.WARNING)
 
 
 @pytest.fixture
@@ -104,32 +97,4 @@ def mcp_server_config() -> dict:
         "ws": {
             "url": "ws://localhost:8000/ws",
         },
-    }
-
-
-@pytest.fixture(autouse=True)
-def set_mock_api_keys(monkeypatch):
-    """Set mock API keys for providers that require them during VCR playback."""
-    if not os.getenv("OPENAI_API_KEY"):
-        monkeypatch.setenv("OPENAI_API_KEY", "sk-mock-key-for-vcr-playback")
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-mock-key-for-vcr-playback")
-    if not os.getenv("GROQ_API_KEY"):
-        monkeypatch.setenv("GROQ_API_KEY", "mock-groq-key-for-vcr-playback")
-    if not os.getenv("GOOGLE_API_KEY"):
-        monkeypatch.setenv("GOOGLE_API_KEY", "mock-google-key-for-vcr-playback")
-
-
-def pytest_recording_configure(config: Any, vcr: "VCR"):
-    from . import json_body_serializer
-
-    vcr.register_serializer("yaml", json_body_serializer)
-
-
-@pytest.fixture(scope="module")
-def vcr_config():
-    return {
-        "ignore_localhost": False,
-        "filter_headers": ["authorization", "x-api-key"],
-        "decode_compressed_response": True,
     }

@@ -32,19 +32,6 @@ def test_assistant_messages_become_model_responses():
     assert history[0].parts[0].content == "answer"
 
 
-def test_system_and_tool_roles_are_skipped():
-    msgs = [
-        MessageModel(chat_id=1, role="user", text="u"),
-        MessageModel(chat_id=1, role="system", text="s"),
-        MessageModel(chat_id=1, role="tool", text="t"),
-        MessageModel(chat_id=1, role="assistant", text="a"),
-    ]
-    history = _container(msgs)._build_pydantic_history(msgs)
-    assert len(history) == 2
-    assert isinstance(history[0], ModelRequest)
-    assert isinstance(history[1], ModelResponse)
-
-
 def test_alternating_conversation_preserved():
     msgs = [
         MessageModel(chat_id=1, role="user", text="q1"),

@@ -28,6 +28,6 @@ class MessageModel(BaseModel):
 
     id: int | None = None
     chat_id: int
-    role: Literal["user", "assistant", "system", "tool"]
+    role: Literal["user", "assistant"]
     text: str
     images: list[str] = Field(default_factory=list)
