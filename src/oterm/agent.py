@@ -15,6 +15,7 @@ from oterm.providers.ollama import openai_compat_base_url
 def _build_model_settings(
     parameters: dict[str, Any] | None,
     thinking: bool,
+    provider: str,
 ) -> ModelSettings:
     settings: dict[str, Any] = {}
     if parameters:
@@ -22,6 +23,18 @@ def _build_model_settings(
             if key in parameters:
                 settings[key] = parameters[key]
     settings["thinking"] = thinking
+
+    # Anthropic rejects temperature / top_p when extended thinking is on
+    # (must be temperature=1 and top_p>=0.95). pydantic-ai only auto-drops
+    # these for Opus 4.7+, so handle every other thinking-capable Anthropic
+    # model here. Anthropic also requires max_tokens > thinking.budget_tokens
+    # (pydantic-ai uses 10000 for thinking=True), so bump it if needed.
+    if thinking and provider == "anthropic":
+        settings.pop("temperature", None)
+        settings.pop("top_p", None)
+        min_max_tokens = 14096
+        if settings.get("max_tokens", 0) < min_max_tokens:
+            settings["max_tokens"] = min_max_tokens
 
     return ModelSettings(**settings)
 
@@ -71,6 +84,6 @@ def get_agent(
         instructions=system,
         tools=tools or [],
         toolsets=toolsets or [],
-        model_settings=_build_model_settings(parameters, thinking),
+        model_settings=_build_model_settings(parameters, thinking, provider),
     )
     return agent

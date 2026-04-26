@@ -10,13 +10,13 @@ from oterm.providers import UNRESOLVED_API_KEY
 
 class TestBuildModelSettings:
     def test_none_parameters_only_sets_thinking(self):
-        settings = _build_model_settings(None, thinking=True)
+        settings = _build_model_settings(None, thinking=True, provider="ollama")
         assert settings is not None
         assert settings.get("thinking") is True  # pydantic-ai dict-like settings
         assert "temperature" not in settings
 
     def test_empty_parameters_only_sets_thinking(self):
-        settings = _build_model_settings({}, thinking=False)
+        settings = _build_model_settings({}, thinking=False, provider="ollama")
         assert settings is not None
         assert settings.get("thinking") is False
         assert "temperature" not in settings
@@ -30,12 +30,45 @@ class TestBuildModelSettings:
                 "ignored": "nope",
             },
             thinking=False,
+            provider="ollama",
         )
         assert settings is not None
         assert settings["temperature"] == 0.7
         assert settings["top_p"] == 0.9
         assert settings["max_tokens"] == 128
         assert "ignored" not in settings
+
+    def test_anthropic_thinking_drops_sampling_params_and_bumps_max_tokens(self):
+        settings = _build_model_settings(
+            {"temperature": 0.7, "top_p": 0.9, "max_tokens": 128},
+            thinking=True,
+            provider="anthropic",
+        )
+        assert settings is not None
+        assert "temperature" not in settings
+        assert "top_p" not in settings
+        # Anthropic requires max_tokens > thinking.budget_tokens (10000).
+        assert settings["max_tokens"] > 10000
+        assert settings.get("thinking") is True
+
+    def test_anthropic_thinking_keeps_high_user_max_tokens(self):
+        settings = _build_model_settings(
+            {"max_tokens": 32000},
+            thinking=True,
+            provider="anthropic",
+        )
+        assert settings is not None
+        assert settings["max_tokens"] == 32000
+
+    def test_anthropic_thinking_off_keeps_sampling_params(self):
+        settings = _build_model_settings(
+            {"temperature": 0.7, "top_p": 0.9},
+            thinking=False,
+            provider="anthropic",
+        )
+        assert settings is not None
+        assert settings["temperature"] == 0.7
+        assert settings["top_p"] == 0.9
 
 
 class TestGetAgent:
