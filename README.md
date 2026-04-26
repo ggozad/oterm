@@ -1,5 +1,8 @@
 # oterm
 
+[![Tests](https://github.com/ggozad/oterm/actions/workflows/test.yml/badge.svg)](https://github.com/ggozad/oterm/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/ggozad/oterm/graph/badge.svg)](https://codecov.io/gh/ggozad/oterm)
+
 the terminal client for [Ollama](https://github.com/ollama/ollama), OpenAI, Anthropic, and any [pydantic-ai](https://ai.pydantic.dev/)-supported provider.
 
 ## Features
