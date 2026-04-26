@@ -37,6 +37,32 @@ class TestBuildModelSettings:
         assert settings["max_tokens"] == 128
         assert "ignored" not in settings
 
+    @pytest.mark.parametrize("provider", ["openai", "anthropic", "groq", "ollama"])
+    def test_seed_roundtrips_for_supported_providers(self, provider):
+        settings = _build_model_settings(
+            {"seed": 42}, thinking=False, provider=provider
+        )
+        assert settings is not None
+        assert settings["seed"] == 42
+
+    def test_unknown_keys_are_dropped_silently(self):
+        """Stale Ollama-native keys from older oterm chats must not raise."""
+        settings = _build_model_settings(
+            {
+                "num_ctx": 8192,
+                "repeat_penalty": 1.1,
+                "made_up": True,
+                "temperature": 0.3,
+            },
+            thinking=False,
+            provider="ollama",
+        )
+        assert settings is not None
+        assert settings["temperature"] == 0.3
+        assert "num_ctx" not in settings
+        assert "repeat_penalty" not in settings
+        assert "made_up" not in settings
+
     def test_anthropic_thinking_drops_sampling_params_and_bumps_max_tokens(self):
         settings = _build_model_settings(
             {"temperature": 0.7, "top_p": 0.9, "max_tokens": 128},

@@ -8,6 +8,7 @@ from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import AbstractToolset
 
 from oterm.providers.ollama import openai_compat_base_url
+from oterm.providers.settings import get_supported_setting_keys
 
 
 def _build_model_settings(
@@ -17,9 +18,10 @@ def _build_model_settings(
 ) -> ModelSettings:
     settings: dict[str, Any] = {}
     if parameters:
-        for key in ("temperature", "top_p", "max_tokens"):
-            if key in parameters:
-                settings[key] = parameters[key]
+        supported = get_supported_setting_keys(provider)
+        for key, value in parameters.items():
+            if key in supported:
+                settings[key] = value
     settings["thinking"] = thinking
 
     # Anthropic rejects temperature / top_p when extended thinking is on
