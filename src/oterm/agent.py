@@ -32,6 +32,7 @@ def _build_model_settings(
     if thinking and provider == "anthropic":
         settings.pop("temperature", None)
         settings.pop("top_p", None)
+        # 10000 (pydantic-ai's default thinking.budget_tokens) + 4096 output buffer.
         min_max_tokens = 14096
         if settings.get("max_tokens", 0) < min_max_tokens:
             settings["max_tokens"] = min_max_tokens

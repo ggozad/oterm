@@ -708,11 +708,13 @@ class ChatItem(Widget):
 
         Used in error/cancellation paths where the chat item is about to be
         removed; awaiting a graceful flush from inside an exception handler
-        is unsafe.
+        is unsafe. Reaches into ``MarkdownStream._task`` (Textual private API,
+        verified against textual==8.2.4) because ``stream.stop()`` awaits.
         """
         for stream in (self._response_stream, self._thinking_stream):
-            if stream is not None and stream._task is not None:
-                stream._task.cancel()
+            task = getattr(stream, "_task", None)
+            if task is not None:
+                task.cancel()
         self._response_stream = None
         self._thinking_stream = None
 

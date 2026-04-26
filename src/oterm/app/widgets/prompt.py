@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from typing import Literal
 
 from rich.style import Style
 from textual import on
@@ -110,7 +111,7 @@ class PostableTextArea(TextArea):
         super().action_delete_right()
 
     def _image_token_span_at_cursor(
-        self, direction: str
+        self, direction: Literal["left", "right"]
     ) -> tuple[tuple[int, int], tuple[int, int]] | None:
         row, col = self.cursor_location
         line = self.document.get_line(row)
