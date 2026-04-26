@@ -2,14 +2,49 @@ import asyncio
 import sys
 
 import httpx
+import pytest
 
 from oterm.utils import (
     debounce,
+    expand_env_vars,
     get_default_data_dir,
     int_to_semantic_version,
     semantic_version_to_int,
     throttle,
 )
+
+
+class TestExpandEnvVars:
+    def test_required_var_expands(self, monkeypatch):
+        monkeypatch.setenv("FOO", "bar")
+        assert expand_env_vars("${FOO}") == "bar"
+
+    def test_default_when_missing(self, monkeypatch):
+        monkeypatch.delenv("MAYBE", raising=False)
+        assert expand_env_vars("${MAYBE:-fallback}") == "fallback"
+
+    def test_default_when_present_uses_value(self, monkeypatch):
+        monkeypatch.setenv("MAYBE", "real")
+        assert expand_env_vars("${MAYBE:-fallback}") == "real"
+
+    def test_substring_substitution(self, monkeypatch):
+        monkeypatch.setenv("TOKEN", "abc")
+        assert expand_env_vars("Bearer ${TOKEN}") == "Bearer abc"
+
+    def test_missing_required_raises(self, monkeypatch):
+        monkeypatch.delenv("NOPE", raising=False)
+        with pytest.raises(ValueError, match="NOPE"):
+            expand_env_vars("${NOPE}")
+
+    def test_recurses_into_dict_and_list(self, monkeypatch):
+        monkeypatch.setenv("X", "1")
+        out = expand_env_vars({"a": ["${X}", "${X}b"], "b": "lit"})
+        assert out == {"a": ["1", "1b"], "b": "lit"}
+
+    def test_passthrough_for_non_string_dict_list(self):
+        assert expand_env_vars(42) == 42
+        assert expand_env_vars(None) is None
+        assert expand_env_vars(True) is True
 
 
 class TestSemanticVersion:

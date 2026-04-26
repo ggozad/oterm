@@ -1,7 +1,4 @@
 import contextlib
-import os
-import re
-from typing import Any
 
 from pydantic_ai.mcp import (
     MCPServer,
@@ -14,6 +11,7 @@ from pydantic_ai.mcp import (
 from oterm.config import appConfig
 from oterm.log import log
 from oterm.tools.mcp.logging import Logger
+from oterm.utils import expand_env_vars
 
 # Subprocess env overrides that quiet common MCP server runtimes.
 _STDIO_LOG_ENV = {
@@ -22,9 +20,6 @@ _STDIO_LOG_ENV = {
     "RUST_LOG": "error",
     "FASTMCP_LOG_LEVEL": "ERROR",
 }
-
-# Matches ${VAR} and ${VAR:-default} in string config values.
-_ENV_VAR_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:-([^}]*))?\}")
 
 
 class ToolMeta(dict):
@@ -36,28 +31,6 @@ mcp_tool_meta: dict[str, list[ToolMeta]] = {}
 _exit_stack: contextlib.AsyncExitStack | None = None
 
 
-def _expand_env_vars(value: Any) -> Any:
-    """Recursively expand ${VAR} / ${VAR:-default} in string values."""
-    if isinstance(value, str):
-
-        def replace(match: re.Match[str]) -> str:
-            name = match.group(1)
-            has_default = match.group(2) is not None
-            default = match.group(3) or ""
-            if name in os.environ:
-                return os.environ[name]
-            if has_default:
-                return default
-            raise ValueError(f"Environment variable ${{{name}}} is not defined")
-
-        return _ENV_VAR_PATTERN.sub(replace, value)
-    if isinstance(value, dict):
-        return {k: _expand_env_vars(v) for k, v in value.items()}
-    if isinstance(value, list):
-        return [_expand_env_vars(v) for v in value]
-    return value
-
-
 def _build_servers(raw: dict[str, dict]) -> dict[str, MCPServer]:
     """Build MCP servers from oterm's config.
 
@@ -65,7 +38,7 @@ def _build_servers(raw: dict[str, dict]) -> dict[str, MCPServer]:
     stdio shape (`command` / `args` / `env`) or an HTTP shape (`url` /
     `headers`). URLs ending in `/sse` resolve to MCPServerSSE.
     """
-    expanded = _expand_env_vars(raw)
+    expanded = expand_env_vars(raw)
 
     # Pre-validate: reject ws:// URLs explicitly so users get a clear error
     # instead of pydantic-ai trying to speak streamable-HTTP to a websocket.

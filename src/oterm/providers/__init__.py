@@ -1,6 +1,8 @@
 import os
 from collections.abc import Callable
 
+from oterm.utils import expand_env_vars
+
 PROVIDER_ENV_VARS: dict[str, list[str]] = {
     "ollama": [],
     "openai": ["OPENAI_API_KEY"],
@@ -43,12 +45,20 @@ different endpoint (e.g. a local vLLM or OpenRouter)."""
 
 
 def _resolve_api_key(api_key: str | None) -> str | None:
-    """Resolve an API key, expanding $ENV_VAR references. None if unresolved."""
+    """Resolve an API key, expanding ``${VAR}`` / ``${VAR:-default}`` references.
+
+    Returns ``None`` if a referenced variable is undefined and no default is
+    provided. Logs a warning so the misconfiguration is visible in oterm.log.
+    """
     if api_key is None:
         return None
-    if api_key.startswith("$"):
-        return os.getenv(api_key[1:])
-    return api_key
+    try:
+        return expand_env_vars(api_key)
+    except ValueError as e:
+        from oterm.log import log
+
+        log.warning(f"openaiCompatible api_key cannot be resolved: {e}")
+        return None
 
 
 def get_openai_compatible_providers() -> dict[str, dict]:

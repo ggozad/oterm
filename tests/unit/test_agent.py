@@ -104,7 +104,7 @@ class TestGetAgent:
             {
                 "local": {
                     "base_url": "http://localhost:1234/v1",
-                    "api_key": "$MY_LOCAL_KEY",
+                    "api_key": "${MY_LOCAL_KEY}",
                 }
             },
         )
@@ -123,7 +123,7 @@ class TestGetAgent:
             {
                 "sketchy": {
                     "base_url": "http://localhost:1234/v1",
-                    "api_key": "$MY_MISSING_VAR",
+                    "api_key": "${MY_MISSING_VAR}",
                 }
             },
         )

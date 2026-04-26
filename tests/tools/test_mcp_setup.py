@@ -220,12 +220,3 @@ class TestSetupAndTeardown:
             assert any("could not be parsed" in m for m in messages)
         finally:
             await teardown_mcp_servers()
-
-
-class TestExpandEnvVars:
-    def test_passthrough_for_non_string_dict_list(self):
-        from oterm.tools.mcp.setup import _expand_env_vars
-
-        assert _expand_env_vars(42) == 42
-        assert _expand_env_vars(None) is None
-        assert _expand_env_vars(True) is True

@@ -37,7 +37,7 @@ A complete example showing every supported key:
     },
     "openrouter": {
       "base_url": "https://openrouter.ai/api/v1",
-      "api_key": "$OPENROUTER_API_KEY"
+      "api_key": "${OPENROUTER_API_KEY}"
     }
   },
   "mcpServers": {
@@ -82,7 +82,7 @@ Connect to any OpenAI API-compatible service — local runners (vLLM, LM Studio,
     },
     "openrouter": {
       "base_url": "https://openrouter.ai/api/v1",
-      "api_key": "$OPENROUTER_API_KEY"
+      "api_key": "${OPENROUTER_API_KEY}"
     }
   }
 }
@@ -91,7 +91,7 @@ Connect to any OpenAI API-compatible service — local runners (vLLM, LM Studio,
 Each entry takes:
 
 - `base_url` (required) — the OpenAI-compatible API base URL.
-- `api_key` (optional) — an API key. Use `$ENV_VAR` to read it from the environment, or pass a literal string. Omit for local endpoints that don't require authentication.
+- `api_key` (optional) — an API key. Reference an environment variable with `${VAR}` (or `${VAR:-default}` to fall back when unset), or pass a literal string. Omit for local endpoints that don't require authentication.
 
 When configured, an **OpenAI Compatible** provider appears in the provider dropdown. Select it, choose your endpoint, and type the model name. If the endpoint exposes `/v1/models`, suggestions appear as you type.
 

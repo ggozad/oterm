@@ -25,11 +25,15 @@ class TestResolveApiKey:
 
     def test_env_var_expansion(self, monkeypatch):
         monkeypatch.setenv("MY_KEY", "secret")
-        assert _resolve_api_key("$MY_KEY") == "secret"
+        assert _resolve_api_key("${MY_KEY}") == "secret"
+
+    def test_env_var_with_default(self, monkeypatch):
+        monkeypatch.delenv("MAYBE_KEY", raising=False)
+        assert _resolve_api_key("${MAYBE_KEY:-fallback}") == "fallback"
 
     def test_missing_env_var_returns_none(self, monkeypatch):
         monkeypatch.delenv("MISSING_VAR", raising=False)
-        assert _resolve_api_key("$MISSING_VAR") is None
+        assert _resolve_api_key("${MISSING_VAR}") is None
 
     def test_unresolved_api_key_constant(self):
         assert UNRESOLVED_API_KEY == "unresolved-api-key"
@@ -46,7 +50,7 @@ class TestGetOpenAICompatibleProviders:
                 "vllm": {"base_url": "http://localhost:8000/v1"},
                 "openrouter": {
                     "base_url": "https://openrouter.ai/api/v1",
-                    "api_key": "$OPENROUTER_API_KEY",
+                    "api_key": "${OPENROUTER_API_KEY}",
                 },
             },
         )
@@ -130,7 +134,7 @@ class TestGetAvailableProviders:
             {
                 "strict": {
                     "base_url": "http://localhost:1/v1",
-                    "api_key": "$MISSING_COMPAT_KEY",
+                    "api_key": "${MISSING_COMPAT_KEY}",
                 }
             },
         )

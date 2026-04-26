@@ -1,13 +1,43 @@
 import asyncio
 import os
+import re
 import sys
 from collections.abc import Callable
 from functools import wraps
 from importlib import metadata
 from pathlib import Path
+from typing import Any
 
 import httpx
 from packaging.version import Version, parse
+
+_ENV_VAR_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:-([^}]*))?\}")
+
+
+def expand_env_vars(value: Any) -> Any:
+    """Recursively expand ``${VAR}`` and ``${VAR:-default}`` in string values.
+
+    Matches pydantic-ai's MCP config convention. Raises ``ValueError`` when a
+    required variable is missing and no default is provided.
+    """
+    if isinstance(value, str):
+
+        def replace(match: re.Match[str]) -> str:
+            name = match.group(1)
+            has_default = match.group(2) is not None
+            default = match.group(3) or ""
+            if name in os.environ:
+                return os.environ[name]
+            if has_default:
+                return default
+            raise ValueError(f"Environment variable ${{{name}}} is not defined")
+
+        return _ENV_VAR_PATTERN.sub(replace, value)
+    if isinstance(value, dict):
+        return {k: expand_env_vars(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [expand_env_vars(v) for v in value]
+    return value
 
 
 def debounce(wait: float) -> Callable:
