@@ -50,7 +50,11 @@ def get_capabilities(provider: str, model: str) -> ModelCapabilities:
         return _get_ollama_capabilities(model)
 
     if provider.startswith("openai-compat/"):
-        return ModelCapabilities(supports_tools=True)
+        return ModelCapabilities(
+            supports_tools=True,
+            supports_thinking=True,
+            supports_vision=True,
+        )
 
     return ModelCapabilities(
         supports_tools=True,

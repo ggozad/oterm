@@ -44,11 +44,11 @@ class TestIsChatModel:
 
 
 class TestGetCapabilities:
-    def test_openai_compat_always_supports_tools(self):
+    def test_openai_compat_claims_all_capabilities(self):
         caps = get_capabilities("openai-compat/vllm", "any-model")
         assert caps.supports_tools is True
-        assert caps.supports_thinking is False
-        assert caps.supports_vision is False
+        assert caps.supports_thinking is True
+        assert caps.supports_vision is True
 
     def test_anthropic_claude_3_has_vision(self):
         caps = get_capabilities("anthropic", "claude-3-opus")
