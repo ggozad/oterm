@@ -2,9 +2,7 @@ from typing import Any
 
 from pydantic_ai import Agent
 from pydantic_ai import Tool as PydanticTool
-from pydantic_ai.models.ollama import OllamaModel
 from pydantic_ai.models.openai import OpenAIChatModel
-from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import AbstractToolset
@@ -51,9 +49,12 @@ def get_agent(
 ) -> Agent[None, str]:
     pydantic_model: OpenAIChatModel | str
     if provider == "ollama":
-        pydantic_model = OllamaModel(
+        pydantic_model = OpenAIChatModel(
             model_name=model,
-            provider=OllamaProvider(base_url=openai_compat_base_url()),
+            provider=OpenAIProvider(
+                base_url=openai_compat_base_url(),
+                api_key="ollama",
+            ),
         )
     elif provider.startswith("openai-compat/"):
         from oterm.providers import (

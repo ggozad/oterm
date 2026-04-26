@@ -211,10 +211,6 @@ class ChatEdit(ModalScreen[str]):
                 self.models_info[model] = meta
 
             self.model_info = meta
-            if not self.edit_mode:
-                self.parameters = ollama.parse_ollama_parameters(
-                    self.model_info.parameters or ""
-                )
             self._populate_parameter_inputs(self.parameters)
             self.query_one(".system", TextArea).load_text(
                 self.system or self.model_info.get("system", "")

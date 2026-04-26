@@ -1,7 +1,6 @@
 import pytest
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
-from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from oterm.agent import _build_model_settings, get_agent
@@ -72,11 +71,19 @@ class TestBuildModelSettings:
 
 
 class TestGetAgent:
-    def test_ollama_provider(self):
+    def test_ollama_provider(self, monkeypatch):
+        import oterm.config
+
+        monkeypatch.setattr(
+            oterm.config.envConfig, "OLLAMA_URL", "http://localhost:11434"
+        )
         agent = get_agent(provider="ollama", model="llama3")
         assert isinstance(agent, Agent)
         assert isinstance(agent.model, OpenAIChatModel)
-        assert isinstance(agent.model._provider, OllamaProvider)
+        assert isinstance(agent.model._provider, OpenAIProvider)
+        assert (
+            str(agent.model.client.base_url).rstrip("/") == "http://localhost:11434/v1"
+        )
 
     def test_openai_compat_missing_endpoint_raises(self, app_config):
         with pytest.raises(ValueError, match="not configured"):

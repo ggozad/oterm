@@ -208,7 +208,7 @@ async def test_save_action_triggers_return(app_config):
 
 
 async def test_loading_a_model_populates_inputs(app_config, monkeypatch):
-    """Selecting a model via ModelSelect loads its info and capabilities."""
+    """Selecting a model via ModelSelect loads its capabilities and system prompt."""
     import oterm.app.chat_edit as ce
 
     class _Show(dict):
@@ -232,10 +232,28 @@ async def test_loading_a_model_populates_inputs(app_config, monkeypatch):
         await screen._load_model_info("some-model")
         await pilot.pause()
 
-        assert screen.query_one("#temperature-input", Input).value == "0.7"
-        assert screen.query_one("#top-p-input", Input).value == "0.95"
-        # Save button becomes enabled
+        assert screen.query_one(".system", TextArea).text == "default system"
+        assert screen.query_one("#temperature-input", Input).value == ""
+        assert screen.query_one("#top-p-input", Input).value == ""
         assert screen.query_one("#save-btn", Button).disabled is False
+
+
+async def test_chat_with_legacy_ollama_keys_loads(app_config):
+    """A chat persisted with Ollama-native keys (num_ctx) must still open."""
+    app = _Host()
+    async with app.run_test() as pilot:
+        chat_model = ChatModel(
+            id=1,
+            model="llama3",
+            provider="ollama",
+            parameters={"num_ctx": 8192, "temperature": 0.4},
+        )
+        screen = ChatEdit(chat_model=chat_model, edit_mode=True)
+        app.push_screen(screen)
+        await pilot.pause()
+
+        assert screen.query_one("#temperature-input", Input).value == "0.4"
+        assert screen.parameters["num_ctx"] == 8192
 
 
 async def test_load_model_info_show_failure_notifies(app_config, monkeypatch):
