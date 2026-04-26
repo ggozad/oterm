@@ -6,7 +6,7 @@
 <source  src="../img/haiku-rag-demo.mp4" type="video/mp4">
 </video>
 
-Transform oterm into a powerful RAG (Retrieval-Augmented Generation) system by integrating with [haiku.rag](https://github.com/ggozad/haiku.rag) (from the `oterm`'s author'), a SQLite-based RAG library that works seamlessly with oterm through MCP.
+Transform oterm into a powerful RAG (Retrieval-Augmented Generation) system by integrating with [haiku.rag](https://github.com/ggozad/haiku.rag) (from `oterm`'s author), a SQLite-based RAG library that works seamlessly with oterm through MCP.
 
 ## What is haiku.rag?
 

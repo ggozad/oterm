@@ -6,11 +6,12 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 * `Rename chat` - rename the current chat session
 * `Export chat` - export the current chat session as markdown
 * `Delete chat` - delete the current chat session
-* `Clear chat` - clear the chat history, preserving model and system prompt customizations
+* `Clear chat` - clear the chat history, preserving the chat configuration (provider, model, system prompt, tools, parameters, and thinking)
 * `Regenerate last message` - regenerates the last assistant message. Useful if you want to change the system prompt or parameters, or just try again.
 * `Prompt history` - browse previously sent prompts in the current chat and re-use one.
-* `Change theme` - choose among the available themes.
 * `Show logs` - shows the logs of the current oterm session.
+
+The palette also surfaces Textual's built-in commands (`Theme`, `Quit`, `Keys`, `Screenshot`, `Maximize`/`Minimize`).
 
 ### Keyboard shortcuts
 

@@ -5,11 +5,11 @@ the terminal client for [Ollama](https://github.com/ollama/ollama), OpenAI, Anth
 ## Features
 
 * intuitive and simple terminal UI, no need to run servers, frontends, just type `oterm` in your terminal.
+* supports Linux, MacOS, and Windows and most terminal emulators.
 * multiple persistent chat sessions, stored together with system prompt & parameter customizations in sqlite.
 * talks to Ollama, OpenAI, Anthropic, Google (AI / Vertex), Groq, Mistral, Cohere, AWS Bedrock, DeepSeek, Cerebras, Grok, Hugging Face, and any OpenAI-compatible endpoint — local (vLLM, LM Studio, llama.cpp, …) or hosted (OpenRouter, LiteLLM, …).
-* support for Model Context Protocol (MCP) tools and sampling.
+* tools — built-in (`shell`, `date_time`, `think`), custom Python plugins via entry points, and any [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server.
 * allows for easy customization of the model's system prompt and parameters.
-* supports tools integration for providing external information to the model.
 
 ## Installation
 
@@ -17,13 +17,9 @@ See the [Installation](installation.md) section.
 
 ## Using oterm
 
-`oterm` picks up providers automatically from your environment. If [Ollama](https://github.com/ollama/ollama) is running on `http://127.0.0.1:11434` it shows up out of the box; for any other hosted provider, set the relevant API key (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.) and it appears in the provider dropdown. For other local runners (vLLM, LM Studio, llama.cpp, …) or hosted OpenAI-compatible endpoints (OpenRouter, LiteLLM, …), add an entry to the `openaiCompatible` section of `config.json`. See [Providers / API keys](app_config.md#providers-api-keys) and [OpenAI-compatible providers](app_config.md#openai-compatible-providers).
+`oterm` picks up providers automatically from your environment. If [Ollama](https://github.com/ollama/ollama) is running on `http://127.0.0.1:11434` it shows up out of the box; for any other hosted provider, set the relevant API key (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.) and it appears in the provider dropdown. For other local runners (vLLM, LM Studio, llama.cpp, …) or hosted OpenAI-compatible endpoints (OpenRouter, LiteLLM, …), add an entry to the `openaiCompatible` section of `config.json`. See [Providers and API keys](app_config.md#providers-and-api-keys) and the [`openaiCompatible`](app_config.md#openaicompatible-custom-openai-compatible-endpoints) config block.
 
-If you are running Ollama inside docker or on a different host/port, use the `OLLAMA_HOST` environment variable to customize the host/port. Alternatively you can use `OLLAMA_URL` to specify the full http(s) url. Setting `OTERM_VERIFY_SSL` to `False` will disable SSL verification.
-
-```bash
-OLLAMA_URL=http://host:port
-```
+To point Ollama at a non-default host or disable SSL verification, see [Environment variables](app_config.md#environment-variables).
 
 To start `oterm` simply run:
 

@@ -11,23 +11,16 @@ Add MCP servers under the `mcpServers` key in `oterm`'s [config.json](../app_con
     - **`cwd`** is no longer recognised. Use an absolute path in `command` (or pass the working directory via `args`).
     - **`ws://` / `wss://` transports** are no longer supported. Use HTTP transport instead.
     - **MCP prompts** are gone — the "Use MCP prompt" command, the modal, and the prompt config in test fixtures are all removed.
-    - **Sampling** is wired to pydantic-ai's defaults, which means a server that issues a sampling request without `sampling_model` configured will error. We may revisit if there's demand.
     - **Stdio subprocess env is no longer inherited from the parent shell.** Declare every env var you need explicitly under `env`. Use `${VAR}` substitution to pull values from the parent environment without committing secrets — see [Environment variables](#environment-variables) below.
 
-### Supported MCP Features
-#### Tools
+### Tools
+
 [MCP tools](https://modelcontextprotocol.io/docs/concepts/tools) appear in oterm's tool selector and can be enabled per chat.
 
 !!! note
     Not all models support tools. For models that don't, the tool selection is disabled.
 
     Smaller LLMs are often less capable with tools than larger ones. If you have issues, try reducing the number of tools attached to a chat, increasing the context size, or using a larger LLM.
-
-![Tool support](../img/mcp_tools.svg)
-oterm using the `git` MCP server to access its own repo.
-
-#### Sampling
-`oterm` supports [MCP sampling](https://modelcontextprotocol.io/docs/concepts/sampling). An MCP server can ask oterm to run a completion using the active chat's model and parameters.
 
 ### Transports
 

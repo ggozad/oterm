@@ -2,7 +2,7 @@
 
 ## Inspecting logs
 
-You can inspect basic logs from oterm by invoking the log viewer with <kbd>^ Ctrl</kbd>+<kbd>l</kbd> or by using the command palette. This is particurly useful if you want to debug tool calling.
+You can inspect basic logs from oterm by invoking the log viewer with <kbd>^ Ctrl</kbd>+<kbd>l</kbd> or by using the command palette. This is particularly useful if you want to debug tool calling.
 
 ![Log viewer](../img/log_viewer.svg)
 oterm's internal log viewer showing the Brave Search MCP tool in action.
@@ -17,7 +17,7 @@ uv venv
 ```sh
 source .venv/bin/activate
 # or on Windows
-source .venv\Scripts\activate
+.venv\Scripts\activate
 ```
 
 - Install oterm
