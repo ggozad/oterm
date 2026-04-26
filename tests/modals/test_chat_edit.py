@@ -267,6 +267,45 @@ async def test_loading_a_model_populates_inputs(app_config, monkeypatch):
         assert screen.query_one("#save-btn", Button).disabled is False
 
 
+async def test_unsupported_param_specs_are_skipped(app_config, monkeypatch):
+    """Specs whose key isn't in the provider's supported set must be skipped
+    everywhere (compose, populate, save). Today every spec lives in base
+    ModelSettings so the gate is dormant; we stub the lookup to prove it
+    holds for future provider-specific additions, where the missing input
+    would otherwise crash the form."""
+    import oterm.app.chat_edit as ce
+
+    monkeypatch.setattr(
+        ce,
+        "get_supported_setting_keys",
+        lambda provider: frozenset({"temperature", "top_p", "max_tokens"}),
+    )
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        received: list[str | None] = []
+        chat_model = ChatModel(model="llama3", provider="ollama")
+        screen = ChatEdit(chat_model=chat_model, edit_mode=True)
+        app.push_screen(screen, lambda r: received.append(r))
+        await pilot.pause()
+
+        with pytest.raises(Exception):
+            screen.query_one("#seed-input", Input)
+
+        # No NoMatches: populate ignores the missing spec.
+        screen._populate_parameter_inputs({"temperature": 0.5, "seed": 99})
+        await pilot.pause()
+        assert screen.query_one("#temperature-input", Input).value == "0.5"
+
+        # No NoMatches: save ignores the missing spec and dismisses cleanly.
+        screen._return_chat_meta()
+        await pilot.pause()
+
+        assert received and received[0]
+        payload = json.loads(received[0])
+        assert "seed" not in payload["parameters"]
+
+
 async def test_chat_with_legacy_ollama_keys_loads(app_config):
     """A chat persisted with Ollama-native keys (num_ctx) must still open."""
     app = _Host()
