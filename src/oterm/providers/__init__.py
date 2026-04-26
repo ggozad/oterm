@@ -222,12 +222,14 @@ def list_models(provider: str) -> list[str]:
     from oterm.providers.capabilities import is_chat_model
 
     if provider == "ollama":
+        from oterm.log import log
         from oterm.providers import ollama
 
         try:
             response = ollama.list_models()
-            return [model.model or "" for model in response.models if model.model]
-        except Exception:
+            return [model.model for model in response.models if model.model]
+        except Exception as e:
+            log.warning(f"Failed to list Ollama models: {e}")
             return []
 
     models = _list_models_from_api(provider) or _list_models_from_known(provider)

@@ -284,6 +284,8 @@ class ChatContainer(Widget):
                 f"Cannot send message: {self._agent_error}", severity="error"
             )
             return
+        chat_id = self.chat_model.id
+        assert chat_id is not None
         message_container = self.query_one("#messageContainer")
 
         user_chat_item = ChatItem()
@@ -341,7 +343,7 @@ class ChatContainer(Widget):
 
             user_message = MessageModel(
                 id=None,
-                chat_id=self.chat_model.id,  # ty: ignore[invalid-argument-type]
+                chat_id=chat_id,
                 role="user",
                 text=message,
                 images=[img for _, img in self.images],
@@ -352,7 +354,7 @@ class ChatContainer(Widget):
 
             assistant_message = MessageModel(
                 id=None,
-                chat_id=self.chat_model.id,  # ty: ignore[invalid-argument-type]
+                chat_id=chat_id,
                 role="assistant",
                 text=text,
                 images=[],
@@ -427,17 +429,21 @@ class ChatContainer(Widget):
 
     @work
     async def action_rename_chat(self) -> None:
+        chat_id = self.chat_model.id
+        assert chat_id is not None
         store = await Store.get_store()
         screen = ChatRename(self.chat_model.name)
         new_name = await self.app.push_screen_wait(screen)
         if new_name is None:
             return
         tabs = self.app.query_one(TabbedContent)
-        await store.rename_chat(self.chat_model.id, new_name)  # ty: ignore[invalid-argument-type]
-        tabs.get_tab(f"chat-{self.chat_model.id}").update(new_name)
+        await store.rename_chat(chat_id, new_name)
+        tabs.get_tab(f"chat-{chat_id}").update(new_name)
         self.app.notify("Chat renamed")
 
     async def action_clear_chat(self) -> None:
+        chat_id = self.chat_model.id
+        assert chat_id is not None
         self.messages = []
         self.images = []
         self.pydantic_history = []
@@ -447,7 +453,7 @@ class ChatContainer(Widget):
         for child in msg_container.children:
             child.remove()
         store = await Store.get_store()
-        await store.clear_chat(self.chat_model.id)  # ty: ignore[invalid-argument-type]
+        await store.clear_chat(chat_id)
 
     async def action_regenerate_llm_message(self) -> None:
         if self.agent is None:
@@ -458,6 +464,8 @@ class ChatContainer(Widget):
         in_flight = getattr(self, "inference_task", None)
         if in_flight is not None and not in_flight.done():
             return
+        chat_id = self.chat_model.id
+        assert chat_id is not None
         response_message_id = self.messages[-1].id
         popped_message = self.messages.pop()
         message_container = self.query_one("#messageContainer")
@@ -516,7 +524,7 @@ class ChatContainer(Widget):
                 store = await Store.get_store()
                 regenerated_message = MessageModel(
                     id=response_message_id,
-                    chat_id=self.chat_model.id,  # ty: ignore[invalid-argument-type]
+                    chat_id=chat_id,
                     role="assistant",
                     text=text,
                     images=[],
