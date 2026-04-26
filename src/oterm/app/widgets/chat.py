@@ -23,7 +23,6 @@ from pydantic_ai.messages import ModelMessage, ThinkingPart
 from pydantic_ai.usage import RunUsage
 from textual import on, work
 from textual.app import ComposeResult
-from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.css.query import NoMatches
 from textual.events import Click
@@ -167,11 +166,6 @@ def _resolve_tools(tool_names: list[str]):
 class ChatContainer(Widget):
     messages: reactive[list[MessageModel]] = reactive([])
     images: list[tuple[Path, str]] = []
-    BINDINGS = [
-        Binding(
-            "escape", "cancel_inference", "cancel inference", show=False, priority=True
-        ),
-    ]
 
     def __init__(
         self,
