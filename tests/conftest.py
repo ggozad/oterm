@@ -1,37 +1,74 @@
-from collections.abc import AsyncGenerator
 from io import BytesIO
 from pathlib import Path
 
-import ollama
+import pydantic_ai.models
 import pytest
 import pytest_asyncio
-from mcp import StdioServerParameters
-from ollama import Options
 from PIL import Image
 
-from oterm.tools.mcp.client import MCPClient
-
-DEFAULT_MODEL = "llama3.2"
+setattr(pydantic_ai.models, "ALLOW_MODEL_REQUESTS", False)
 
 
-@pytest_asyncio.fixture(autouse=True)
-async def load_test_models():
-    try:
-        ollama.show(DEFAULT_MODEL)
-    except ollama.ResponseError:
-        ollama.pull(DEFAULT_MODEL)
-    yield
+@pytest.fixture
+def allow_model_requests():
+    with pydantic_ai.models.override_allow_model_requests(True):
+        yield
 
 
-@pytest.fixture(scope="session")
-def default_model() -> str:
-    return DEFAULT_MODEL
+@pytest.fixture
+def tmp_data_dir(tmp_path, monkeypatch) -> Path:
+    """Isolate OTERM_DATA_DIR per test and reset the Store singleton."""
+    import oterm.config
+    import oterm.store.store
+
+    monkeypatch.setattr(oterm.config.envConfig, "OTERM_DATA_DIR", tmp_path)
+    monkeypatch.setattr(oterm.store.store.Store, "_store", None)
+    return tmp_path
 
 
-@pytest.fixture(scope="session")
-def deterministic_options() -> Options:
-    """Ollama options for deterministic test responses."""
-    return Options(temperature=0.0)
+@pytest.fixture
+def app_config(tmp_data_dir, monkeypatch):
+    """Fresh AppConfig pointing at tmp_data_dir/config.json.
+
+    Also swaps the module-level ``appConfig`` so code reading it sees this one.
+    """
+    import oterm.config
+    from oterm.config import AppConfig
+
+    cfg = AppConfig(path=tmp_data_dir / "config.json")
+    monkeypatch.setattr(oterm.config.appConfig, "_data", cfg._data)
+    monkeypatch.setattr(oterm.config.appConfig, "_path", cfg._path)
+    return cfg
+
+
+@pytest_asyncio.fixture
+async def store(tmp_data_dir):
+    from oterm.store.store import Store
+
+    return await Store.get_store()
+
+
+@pytest.fixture
+def chat_model():
+    from oterm.types import ChatModel
+
+    return ChatModel(model="test-model", provider="ollama")
+
+
+@pytest.fixture
+def function_model():
+    """Factory for ``FunctionModel`` instances with a scripted callable."""
+    from pydantic_ai.models.function import FunctionModel
+
+    return FunctionModel
+
+
+@pytest.fixture
+def test_model():
+    """Factory for ``TestModel`` instances."""
+    from pydantic_ai.models.test import TestModel
+
+    return TestModel
 
 
 @pytest.fixture(scope="session")
@@ -55,24 +92,9 @@ def mcp_server_config() -> dict:
         },
         "streamable_http_bearer": {
             "url": "http://localhost:8081/mcp",
-            "auth": {
-                "type": "bearer",
-                "token": "test_token",
-            },
+            "headers": {"Authorization": "Bearer test_token"},
         },
         "ws": {
             "url": "ws://localhost:8000/ws",
         },
     }
-
-
-@pytest_asyncio.fixture(scope="function")
-async def mcp_client(mcp_server_config) -> AsyncGenerator[MCPClient, None]:
-    client = MCPClient(
-        "test_server",
-        StdioServerParameters.model_validate(mcp_server_config["stdio"]),
-    )
-    await client.initialize()
-
-    yield client
-    await client.teardown()

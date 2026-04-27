@@ -1,22 +1,7 @@
-from ollama import Tool
+def oracle(question: str) -> str:
+    """Function to return the Oracle's answer to any question.
 
-OracleTool = Tool(
-    type="function",
-    function=Tool.Function(
-        name="oracle",
-        description="Function to return the Oracle's answer to any question.",
-        parameters=Tool.Function.Parameters(
-            type="object",
-            properties={
-                "question": Tool.Function.Parameters.Property(
-                    type="str", description="The question to ask."
-                ),
-            },
-            required=["question"],
-        ),  # type: ignore
-    ),
-)
-
-
-def oracle(question: str):
+    Args:
+        question: The question to ask.
+    """
     return "oterm"

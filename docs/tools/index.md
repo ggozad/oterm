@@ -12,79 +12,48 @@ or
 
 ### Custom tools with oterm
 
-You can create your own custom tools and integrate them with `oterm`.
+You can create your own custom tools and integrate them with `oterm` using Python [entry points](https://packaging.python.org/en/latest/specifications/entry-points/).
 
-#### Create a python package.
+#### Create a python package
 
-You will need to create a python package that exports a `Tool` definition as well as a *callable* function that will be called when the tool is invoked.
+Create a python package that exports a callable function. The function's name, docstring, and type annotations are used to generate the tool definition for the model.
 
-Here is an [example](https://github.com/ggozad/oterm/tree/main/docs/oracle){:target="_blank"} of a simple tool that implements an Oracle. The tool is defined in the `oracle` package which exports the `OracleTool` tool definition and an `oracle` callable function.
+Here is an [example](https://github.com/ggozad/oterm/tree/main/docs/oracle){:target="_blank"} of a simple tool that implements an Oracle:
 
 ```python
-from ollama import Tool
+def oracle(question: str) -> str:
+    """Function to return the Oracle's answer to any question.
 
-OracleTool = Tool(
-    type="function",
-    function=Tool.Function(
-        name="oracle",
-        description="Function to return the Oracle's answer to any question.",
-        parameters=Tool.Function.Parameters(
-            type="object",
-            properties={
-                "question": Tool.Function.Parameters.Property(
-                    type="str", description="The question to ask."
-                ),
-            },
-            required=["question"],
-        ),
-    ),
-)
-
-
-def oracle(question: str):
+    Args:
+        question: The question to ask.
+    """
     return "oterm"
 ```
 
-You need to install the package in the same environment where `oterm` is installed so that `oterm` can resolve it.
+#### Register the tool as an entry point
+
+In your package's `pyproject.toml`, register the tool under the `oterm.tools` entry-point group:
+
+```toml
+[project.entry-points."oterm.tools"]
+oracle = "oracle.tool:oracle"
+```
+
+#### Install and use
+
+Install the package in the same environment where `oterm` is installed:
 
 ```bash
 cd oracle
 uv pip install . # or pip install .
 ```
 
-#### Register the tool with oterm
+That's it! `oterm` discovers all tools registered under the `oterm.tools` entry-point group at startup. You can now select the tool when creating or editing a chat.
 
-You can register the tool with `oterm` by adding the tool definittion and callable to the `tools` section of the `oterm` configuration file. You can find the location of the configuration file's directory by running `oterm --data-dir`.
+### Built-in tools
 
-```json
-{
-    ...
-    "tools": [{
-        "tool": "oracle.tool:OracleTool",
-        "callable": "oracle.tool:oracle"
-    }]
-}
-```
-Note the notation `module:object` for the tool and callable.
-
-That's it! You can now use the tool in `oterm` with models that support it.
-
-### Built-in example tools
-
-The following example tools are currently built-in to `oterm`:
+The following tools are built-in to `oterm` and available by default:
 
 * `think` - provides the model with a way to think about a question before answering it. This is useful for complex questions that require reasoning. Use it for adding a "thinking" step to the model's response.
 * `date_time` - provides the current date and time in ISO format.
 * `shell` - allows you to run shell commands and use the output as input to the model. Obviously this can be dangerous, so use with caution.
-
-These tools are defined in `src/oterm/tools`. You can make those tools available and enable them for selection when creating or editing a chat, by adding them to the `tools` section of the `oterm` configuration file. You can find the location of the configuration file's directory by running `oterm --data-dir`. So for example to enable the `shell` tool, you would add the following to the configuration file:
-
-```json
-{
-    ...
-    "tools": [{
-        "tool": "oterm.tools.think:ThinkTool",
-        "callable": "oterm.tools.think:think"
-    }]
-}
-```

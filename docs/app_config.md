@@ -1,40 +1,133 @@
-### App configuration
+## Configuration
 
-The app configuration is stored as JSON in `config.json` in a directory specific to your operating system. By default:
+`oterm` is configured through a JSON file (`config.json`) and a small set of environment variables.
+
+### Where `config.json` lives
+
+The file is stored in a directory specific to your operating system. By default:
 
 * Linux: `~/.local/share/oterm`
 * macOS: `~/Library/Application Support/oterm`
 * Windows: `C:/Users/<USER>/AppData/Roaming/oterm`
 
-On Linux & MacOS we honour the `XDG_DATA_HOME` environment variable. In that case, he directory will be `${XDG_DATA_HOME}/oterm`.
+On Linux & MacOS we honour the `XDG_DATA_HOME` environment variable; the directory becomes `${XDG_DATA_HOME}/oterm`. Override the location entirely by setting `OTERM_DATA_DIR`.
 
-If in doubt you can get the directory where `config.json` can be found by running `oterm --data-dir` or `uvx oterm --data-dir` if you installed oterm using uvx.
+If in doubt, run `oterm --data-dir` (or `uvx oterm --data-dir`) to print the resolved location.
 
-You can set the following options in the configuration file:
-```json
-{ "splash-screen": true }
-```
+### `config.json` at a glance
 
-`splash-screen` controls whether the splash screen is shown on startup.
-
-### Key bindings
-
-We strive to have sane default key bindings, but there will always be cases where your terminal emulator or shell will interfere. You can customize select keybindings by editing the app config `config.json` file. The following are the defaults:
+A complete example showing every supported key:
 
 ```json
 {
-  ...
+  "splash-screen": true,
+  "theme": "textual-dark",
   "keymap": {
     "next.chat": "ctrl+tab",
     "prev.chat": "ctrl+shift+tab",
+    "new.chat": "ctrl+n",
+    "show.logs": "ctrl+l",
     "quit": "ctrl+q",
-    "newline": "shift+enter"
+    "newline": "shift+enter",
+    "add.image": "ctrl+i"
+  },
+  "openaiCompatible": {
+    "vllm": {
+      "base_url": "http://localhost:8000/v1"
+    },
+    "openrouter": {
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key": "${OPENROUTER_API_KEY}"
+    }
+  },
+  "mcpServers": {
+    "everything": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-everything"]
+    }
   }
 }
 ```
 
-### Chat storage
+Each key is optional; the sections below cover them in turn. For `mcpServers`, see the full reference in [Model Context Protocol](mcp/index.md).
 
-All your chat sessions are stored locally in a sqlite database. You can customize the directory where the database is stored by setting the `OTERM_DATA_DIR` environment variable.
+### `splash-screen` and `theme`
 
-You can find the location of the database by running `oterm --db`.
+- `splash-screen` (boolean, default `true`) — whether the splash screen plays on startup.
+- `theme` (string, default `"textual-dark"`) — the active theme. `oterm` rewrites this whenever you switch themes from the command palette, so you generally don't need to set it by hand.
+
+### `keymap` — customizing key bindings
+
+Sane defaults are provided, but terminal emulators and shells will sometimes intercept them. Override any of the bindings below by setting the matching key in the `keymap` block:
+
+| ID          | Default            | Action                                                                  |
+| ----------- | ------------------ | ----------------------------------------------------------------------- |
+| `next.chat` | `ctrl+tab`         | Switch to the next chat tab.                                            |
+| `prev.chat` | `ctrl+shift+tab`   | Switch to the previous chat tab.                                        |
+| `new.chat`  | `ctrl+n`           | Open the new-chat dialog.                                               |
+| `show.logs` | `ctrl+l`           | Open the log viewer.                                                    |
+| `quit`      | `ctrl+q`           | Quit `oterm`.                                                           |
+| `newline`   | `shift+enter`      | Insert a newline in the prompt. `ctrl+m` is also accepted as a fallback for terminals that can't distinguish `shift+enter` from `enter`, and is not configurable. |
+| `add.image` | `ctrl+i`           | Attach an image to the next message.                                    |
+
+### `openaiCompatible` — custom OpenAI-compatible endpoints
+
+Connect to any OpenAI API-compatible service — local runners (vLLM, LM Studio, llama.cpp) or hosted aggregators (OpenRouter, LiteLLM) — by adding named endpoints under `openaiCompatible`:
+
+```json
+{
+  "openaiCompatible": {
+    "vllm": {
+      "base_url": "http://localhost:8000/v1"
+    },
+    "openrouter": {
+      "base_url": "https://openrouter.ai/api/v1",
+      "api_key": "${OPENROUTER_API_KEY}"
+    }
+  }
+}
+```
+
+Each entry takes:
+
+- `base_url` (required) — the OpenAI-compatible API base URL.
+- `api_key` (optional) — an API key. Reference an environment variable with `${VAR}` (or `${VAR:-default}` to fall back when unset), or pass a literal string. Omit for local endpoints that don't require authentication.
+
+When configured, an **OpenAI Compatible** provider appears in the provider dropdown. Select it, choose your endpoint, and type the model name. If the endpoint exposes `/v1/models`, suggestions appear as you type.
+
+## Providers and API keys
+
+`oterm` discovers providers from your environment at startup. A provider appears in the new-chat dropdown only when its required environment variables are set. `.env` files in the working directory are loaded automatically.
+
+| Provider          | Provider ID       | Required env var(s)                             |
+| ----------------- | ----------------- | ----------------------------------------------- |
+| Ollama            | `ollama`          | none — uses `OLLAMA_HOST` / `OLLAMA_URL`        |
+| OpenAI            | `openai`          | `OPENAI_API_KEY`                                |
+| Anthropic         | `anthropic`       | `ANTHROPIC_API_KEY`                             |
+| Google AI         | `google-gla`      | `GOOGLE_API_KEY`                                |
+| Google Vertex AI  | `google-vertex`   | `GOOGLE_APPLICATION_CREDENTIALS`                |
+| Groq              | `groq`            | `GROQ_API_KEY`                                  |
+| Mistral           | `mistral`         | `MISTRAL_API_KEY`                               |
+| Cohere            | `cohere`          | `COHERE_API_KEY`                                |
+| AWS Bedrock       | `bedrock`         | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`    |
+| DeepSeek          | `deepseek`        | `DEEPSEEK_API_KEY`                              |
+| Grok              | `grok`            | `GROK_API_KEY`                                  |
+| Cerebras          | `cerebras`        | `CEREBRAS_API_KEY`                              |
+| Hugging Face      | `huggingface`     | `HF_TOKEN`                                      |
+
+For any other backend with an OpenAI-compatible API, see the [`openaiCompatible`](#openaicompatible-custom-openai-compatible-endpoints) config block above.
+
+## Environment variables
+
+| Variable             | Default              | Purpose                                                                 |
+| -------------------- | -------------------- | ----------------------------------------------------------------------- |
+| `OTERM_DATA_DIR`     | OS-specific (above)  | Directory for `config.json` and `store.db`.                             |
+| `OTERM_VERIFY_SSL`   | `True`               | Set to `False` to disable SSL verification when talking to Ollama.      |
+| `OLLAMA_HOST`        | `127.0.0.1:11434`    | Ollama host/port. Used to derive `OLLAMA_URL` when it isn't set.        |
+| `OLLAMA_URL`         | from `OLLAMA_HOST`   | Full Ollama base URL (e.g. `https://ollama.example.com`).               |
+
+Provider-specific API keys (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, …) are listed in the [provider table](#providers-and-api-keys) above.
+
+## Chat storage
+
+All chat sessions are stored locally in a sqlite database under `OTERM_DATA_DIR`. Run `oterm --db` to print its path.

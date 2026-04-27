@@ -1,61 +1,130 @@
-from mcp import Tool as MCPTool
+import contextlib
+
+from pydantic_ai.mcp import (
+    MCPServer,
+    MCPServerConfig,
+    MCPServerSSE,
+    MCPServerStdio,
+    MCPServerStreamableHTTP,
+)
 
 from oterm.config import appConfig
 from oterm.log import log
-from oterm.tools.mcp.client import MCPClient
-from oterm.tools.mcp.prompts import MCPPromptCallable
-from oterm.tools.mcp.tools import MCPToolCallable, mcp_tool_to_ollama_tool
-from oterm.types import PromptCall, ToolCall
+from oterm.tools.mcp.logging import Logger
+from oterm.utils import expand_env_vars
 
-mcp_clients: list[MCPClient] = []
-
-
-async def setup_mcp_servers() -> tuple[
-    dict[str, list[ToolCall]], dict[str, list[PromptCall]]
-]:
-    mcp_servers = appConfig.get("mcpServers")
-    tool_calls: dict[str, list[ToolCall]] = {}
-    prompt_calls: dict[str, list[PromptCall]] = {}
-
-    if mcp_servers:
-        for server, config in mcp_servers.items():
-            client = MCPClient(server, config)
-            await client.initialize()
-            if not client.client:
-                continue
-            mcp_clients.append(client)
-
-            log.info(f"Initialized MCP server {server}")
-
-            mcp_tools: list[MCPTool] = await client.get_available_tools()
-            mcp_prompts = await client.get_available_prompts()
-
-            if mcp_tools:
-                tool_calls[server] = []
-            for mcp_tool in mcp_tools:
-                tool = mcp_tool_to_ollama_tool(mcp_tool)
-                mcpToolCallable = MCPToolCallable(mcp_tool.name, server, client)
-                tool_calls[server].append(
-                    {"tool": tool, "callable": mcpToolCallable.call}
-                )
-                log.info(f"Loaded MCP tool {mcp_tool.name} from {server}")
-
-            if mcp_prompts:
-                prompt_calls[server] = []
-
-            for prompt in mcp_prompts:
-                mcpPromptCallable = MCPPromptCallable(prompt.name, server, client)
-                prompt_calls[server].append(
-                    {"prompt": prompt, "callable": mcpPromptCallable.call}
-                )
-                log.info(f"Loaded MCP prompt {prompt.name} from {server}")
-
-    return tool_calls, prompt_calls
+# Subprocess env overrides that quiet common MCP server runtimes.
+_STDIO_LOG_ENV = {
+    "PYTHONUNBUFFERED": "0",
+    "LOGLEVEL": "ERROR",
+    "RUST_LOG": "error",
+    "FASTMCP_LOG_LEVEL": "ERROR",
+}
 
 
-async def teardown_mcp_servers():
+class ToolMeta(dict):
+    """Typed shape stored in `mcp_tool_meta`: {name, description}."""
+
+
+mcp_servers: dict[str, MCPServer] = {}
+mcp_tool_meta: dict[str, list[ToolMeta]] = {}
+_exit_stack: contextlib.AsyncExitStack | None = None
+
+
+def _build_servers(raw: dict[str, dict]) -> dict[str, MCPServer]:
+    """Build MCP servers from oterm's config.
+
+    Schema matches pydantic-ai's MCPServerConfig: each entry is either an
+    stdio shape (`command` / `args` / `env`) or an HTTP shape (`url` /
+    `headers`). URLs ending in `/sse` resolve to MCPServerSSE.
+    """
+    expanded = expand_env_vars(raw)
+
+    # Pre-validate: reject ws:// URLs explicitly so users get a clear error
+    # instead of pydantic-ai trying to speak streamable-HTTP to a websocket.
+    for name, entry in expanded.items():
+        url = entry.get("url") if isinstance(entry, dict) else None
+        if isinstance(url, str) and url.startswith(("ws://", "wss://")):
+            raise ValueError(
+                f"MCP server {name!r}: WebSocket transport is no longer supported. "
+                "Use HTTP (http:// or https://) transport instead."
+            )
+
+    config = MCPServerConfig.model_validate({"mcpServers": expanded})
+
+    servers: dict[str, MCPServer] = {}
+    for name, server in config.mcp_servers.items():
+        server.id = name
+        server.log_handler = Logger()
+        # No sampling_model is configured, so disable sampling rather than let
+        # pydantic-ai advertise it and then crash when a server requests it.
+        server.allow_sampling = False
+        if isinstance(server, MCPServerStdio):
+            server.env = {**_STDIO_LOG_ENV, **(server.env or {})}
+        servers[name] = server
+    return servers
+
+
+async def setup_mcp_servers() -> dict[str, list[ToolMeta]]:
+    """Build, enter, and probe each configured MCP server.
+
+    Returns a registry of tool metadata per server name. The server instances
+    themselves are stored in module-global `mcp_servers` and kept entered for
+    the app lifetime via `_exit_stack`.
+    """
+    global _exit_stack
+    configured = appConfig.get("mcpServers") or {}
+    mcp_servers.clear()
+    mcp_tool_meta.clear()
+    _exit_stack = contextlib.AsyncExitStack()
+
+    try:
+        built = _build_servers(configured)
+    except ValueError as e:
+        log.error(f"MCP config rejected: {e}")
+        return mcp_tool_meta
+    except Exception as e:
+        log.error(f"MCP config could not be parsed: {e}")
+        return mcp_tool_meta
+
+    for name, server in built.items():
+        try:
+            await _exit_stack.enter_async_context(server)
+            tools = await server.list_tools()
+        except Exception as e:
+            log.error(f"MCP server {name!r} failed to initialize: {e}")
+            continue
+        mcp_servers[name] = server
+        mcp_tool_meta[name] = [
+            ToolMeta(name=t.name, description=t.description or "") for t in tools
+        ]
+        log.info(f"Loaded MCP server {name} with {len(tools)} tool(s)")
+
+    return mcp_tool_meta
+
+
+async def teardown_mcp_servers() -> None:
+    global _exit_stack
+    if _exit_stack is None:  # pragma: no cover
+        return
     log.info("Tearing down MCP servers")
-    # Important to tear down in reverse order
-    mcp_clients.reverse()
-    for client in mcp_clients:
-        await client.teardown()
+    try:
+        await _exit_stack.aclose()
+    finally:
+        _exit_stack = None
+        mcp_servers.clear()
+        mcp_tool_meta.clear()
+
+
+# Re-export for tests + back-compat with anything that imported MCPServerSSE.
+__all__ = [
+    "MCPServer",
+    "MCPServerSSE",
+    "MCPServerStdio",
+    "MCPServerStreamableHTTP",
+    "ToolMeta",
+    "mcp_servers",
+    "mcp_tool_meta",
+    "setup_mcp_servers",
+    "teardown_mcp_servers",
+]

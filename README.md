@@ -1,6 +1,9 @@
 # oterm
 
-the terminal client for [Ollama](https://github.com/ollama/ollama).
+[![Tests](https://github.com/ggozad/oterm/actions/workflows/test.yml/badge.svg)](https://github.com/ggozad/oterm/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/ggozad/oterm/graph/badge.svg)](https://codecov.io/gh/ggozad/oterm)
+
+the terminal client for [Ollama](https://github.com/ollama/ollama), OpenAI, Anthropic, and any [pydantic-ai](https://ai.pydantic.dev/)-supported provider.
 
 > 🚀 **oterm is going multi-provider!**
 > A big refactor is on the way that adds support for OpenAI, Anthropic, Google, Mistral, Cohere, Groq, and any OpenAI-compatible endpoint (vLLM, LM Studio, OpenRouter, …) alongside Ollama.
@@ -11,10 +14,9 @@ the terminal client for [Ollama](https://github.com/ollama/ollama).
 * intuitive and simple terminal UI, no need to run servers, frontends, just type `oterm` in your terminal.
 * supports Linux, MacOS, and Windows and most terminal emulators.
 * multiple persistent chat sessions, stored together with system prompt & parameter customizations in sqlite.
-* support for Model Context Protocol (MCP) tools & prompts integration.
-* can use any of the models you have pulled in Ollama, or your own custom models.
+* talks to Ollama, OpenAI, Anthropic, Google (AI / Vertex), Groq, Mistral, Cohere, AWS Bedrock, DeepSeek, Cerebras, Grok, Hugging Face, and any OpenAI-compatible endpoint — local (vLLM, LM Studio, llama.cpp, …) or hosted (OpenRouter, LiteLLM, …).
+* tools — built-in (`shell`, `date_time`, `think`), custom Python plugins via entry points, and any [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server.
 * allows for easy customization of the model's system prompt and parameters.
-* supports tools integration for providing external information to the model.
 
 ## Quick install
 
@@ -28,12 +30,12 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 [oterm Documentation](https://ggozad.github.io/oterm/)
 
 ## What's new
+* **Multi-provider, via pydantic-ai (breaking).** `oterm` is no longer Ollama-only — it drives any [pydantic-ai](https://ai.pydantic.dev/)-supported provider: OpenAI, Anthropic, Google (AI / Vertex), Groq, Mistral, Cohere, AWS Bedrock, DeepSeek, Cerebras, Grok, Hugging Face, OpenAI-compatible endpoints (vLLM, LM Studio, llama.cpp, OpenRouter, LiteLLM, …), and Ollama. Set the matching API key and the provider appears in the new-chat dropdown.
+* **Refreshed chat UI.** Borderless accent-driven layout, auto-growing prompt, inline `[Image #N]` attachment tokens, a collapsing thinking section, and a live token-usage footer in place of the spinner.
+* **Faster streaming.** Markdown is now updated as deltas arrive instead of being re-rendered on every token, so long responses don't slow the terminal as they grow.
+* **MCP rewrite (breaking).** The `mcpServers` config block adopts pydantic-ai's standard schema (compatible with Claude Desktop / Cursor). See [docs/mcp](https://ggozad.github.io/oterm/mcp/) for the full migration notes.
 * [Example](https://ggozad.github.io/oterm/rag_example) on how to do RAG with [haiku.rag](https://github.com/ggozad/haiku.rag).
 * `oterm` is now part of Homebrew!
-* Support for "thinking" mode for models that support it.
-* Support for streaming with tools!
-* Messages UI styling improvements.
-* MCP Sampling is here in addition to MCP tools & prompts! Also support for Streamable HTTP & WebSocket transports for MCP servers.
 
 ### Screenshots
 ![Splash](https://raw.githubusercontent.com/ggozad/oterm/refs/heads/main/docs/img/splash.gif)
@@ -42,11 +44,8 @@ The splash screen animation that greets users when they start oterm.
 ![Chat](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/chat.png)
 A view of the chat interface, showcasing the conversation between the user and the model.
 
-![Model selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/customizations.png)
-The model selection screen, allowing users to choose and customize available models.
-
-![Tool support](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/mcp_tools.svg)
-oterm using the `git` MCP server to access its own repo.
+![Provider and model selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/customizations.png)
+The new-chat screen, where you pick the provider and model and customize the system prompt, tools, parameters, and thinking.
 
 ![Image selection](https://raw.githubusercontent.com/ggozad/oterm/main/docs/img/image_selection.png)
 The image selection interface, demonstrating how users can include images in their conversations.

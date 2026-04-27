@@ -2,15 +2,16 @@
 By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette from where you can perform most of the chat actions. The following commands are available:
 
 * `New chat` - create a new chat session
-* `Edit chat parameters` - edit the current chat session (change system prompt, parameters or format)
+* `Edit chat parameters` - edit the current chat session (change system prompt, tools, parameters, or thinking)
 * `Rename chat` - rename the current chat session
 * `Export chat` - export the current chat session as markdown
 * `Delete chat` - delete the current chat session
-* `Clear chat` - clear the chat history, preserving model and system prompt customizations
-* `Regenerate last Ollama message` - regenerates the last message from Ollama (will override the `seed` for the specific message with a random one.) Useful if you want to change the system prompt or parameters or just want to try again.
-* `Pull model` - pull a model or update an existing one.
-* `Change theme` - choose among the available themes.
+* `Clear chat` - clear the chat history, preserving the chat configuration (provider, model, system prompt, tools, parameters, and thinking)
+* `Regenerate last message` - regenerates the last assistant message. Useful if you want to change the system prompt or parameters, or just try again.
+* `Prompt history` - browse previously sent prompts in the current chat and re-use one.
 * `Show logs` - shows the logs of the current oterm session.
+
+The palette also surfaces Textual's built-in commands (`Theme`, `Quit`, `Keys`, `Screenshot`, `Maximize`/`Minimize`).
 
 ### Keyboard shortcuts
 
@@ -18,25 +19,22 @@ The following keyboard shortcuts are supported:
 
 * <kbd>^ Ctrl</kbd>+<kbd>q</kbd> - quit
 
-* <kbd>^ Ctrl</kbd>+<kbd>m</kbd> - switch to multiline input mode
+* <kbd>Enter</kbd> - send the message
+* <kbd>Shift</kbd>+<kbd>Enter</kbd> or <kbd>^ Ctrl</kbd>+<kbd>m</kbd> - insert a newline; the prompt grows to fit (up to 10 lines)
 * <kbd>^ Ctrl</kbd>+<kbd>i</kbd> - select an image to include with the next message
 * <kbd>↑/↓</kbd> (while messages are focused) - navigate through the messages
-* <kbd>↑</kbd> (while prompt is focused)    - navigate through history of previous prompts
 * <kbd>^ Ctrl</kbd>+<kbd>l</kbd> - show logs
 
 * <kbd>^ Ctrl</kbd>+<kbd>n</kbd> - open a new chat
-* <kbd>^ Ctrl</kbd>+<kbd>Backspace</kbd> - close the current chat
 
 * <kbd>^ Ctrl</kbd>+<kbd>Tab</kbd> - open the next chat
 * <kbd>^ Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> - open the previous chat
 
-In multiline mode, you can press <kbd>Enter</kbd> to send the message, or <kbd>Shift</kbd>+<kbd>Enter</kbd> to add a new line at the cursor.
+The prompt is always a multi-line input that auto-grows as you type or paste; long lines wrap. To recall a previously sent prompt, open `Prompt history` from the command palette (<kbd>^ Ctrl</kbd>+<kbd>p</kbd>).
 
-While Ollama is inferring the next message, you can press <kbd>Esc</kbd> to cancel the inference.
+While the model is inferring the next message, you can press <kbd>Esc</kbd> to cancel the inference.
 
 !!! note
-    Some of the shortcuts may not work in a certain context, if they are overridden by the widget in focus. For example pressing <kbd>↑</kbd> while the prompt is in multi-line mode.
-
     If the key bindings clash with your terminal, it is possible to change them by editing the configuration file. See [Configuration](app_config.md).
 
 ### Copy / Paste

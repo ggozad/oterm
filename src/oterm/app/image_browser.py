@@ -42,12 +42,12 @@ class ImageSelect(ModalScreen[tuple[Path, str]]):
 
     @on(DirectoryTree.NodeHighlighted)
     async def on_image_highlighted(self, ev: DirectoryTree.NodeHighlighted) -> None:
-        path = ev.node.data.path  # type: ignore
+        path = ev.node.data.path  # ty: ignore[unresolved-attribute]
         image_widget = self.query_one(Image)
         if path.suffix in IMAGE_EXTENSIONS:
             try:
                 image_widget.image = PILImage.open(path.as_posix())
-            except UnidentifiedImageError:
+            except UnidentifiedImageError:  # pragma: no cover
                 image_widget.image = None
         else:
             image_widget.image = None

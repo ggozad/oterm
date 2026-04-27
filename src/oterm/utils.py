@@ -1,15 +1,43 @@
 import asyncio
 import os
+import re
 import sys
 from collections.abc import Callable
 from functools import wraps
 from importlib import metadata
 from pathlib import Path
+from typing import Any
 
 import httpx
 from packaging.version import Version, parse
 
-from oterm.types import ParsedResponse
+_ENV_VAR_PATTERN = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(:-([^}]*))?\}")
+
+
+def expand_env_vars(value: Any) -> Any:
+    """Recursively expand ``${VAR}`` and ``${VAR:-default}`` in string values.
+
+    Matches pydantic-ai's MCP config convention. Raises ``ValueError`` when a
+    required variable is missing and no default is provided.
+    """
+    if isinstance(value, str):
+
+        def replace(match: re.Match[str]) -> str:
+            name = match.group(1)
+            has_default = match.group(2) is not None
+            default = match.group(3) or ""
+            if name in os.environ:
+                return os.environ[name]
+            if has_default:
+                return default
+            raise ValueError(f"Environment variable ${{{name}}} is not defined")
+
+        return _ENV_VAR_PATTERN.sub(replace, value)
+    if isinstance(value, dict):
+        return {k: expand_env_vars(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [expand_env_vars(v) for v in value]
+    return value
 
 
 def debounce(wait: float) -> Callable:
@@ -38,7 +66,7 @@ def debounce(wait: float) -> Callable:
 
             async def call_func():
                 await asyncio.sleep(wait)
-                if asyncio.get_event_loop().time() - last_call >= wait:  # type: ignore
+                if asyncio.get_event_loop().time() - last_call >= wait:  # ty: ignore[unsupported-operator]  # pragma: no branch
                     await func(*args, **kwargs)
 
             task = asyncio.create_task(call_func())
@@ -75,32 +103,6 @@ def throttle(interval: float) -> Callable:
         return throttled
 
     return decorator
-
-
-def parse_response(input_text: str) -> ParsedResponse:
-    """
-    Parse a response from the chatbot.
-    """
-
-    thought = ""
-    response = input_text
-    formatted_output = input_text
-
-    # If the response contains a think tag, split the response into the thought process and the actual response
-    thought_end = input_text.find("</think>")
-    if input_text.startswith("<think>") and thought_end != -1:
-        thought = input_text[7:thought_end].lstrip("\n").rstrip("\n").strip()
-        response = input_text[thought_end + 8 :].lstrip("\n").rstrip("\n")
-        # transform the think tag into a markdown blockquote (for clarity)
-        if thought.strip():
-            thought = "\n".join([f"> {line}" for line in thought.split("\n")])
-            formatted_output = (
-                "> ### <thought\\>\n" + thought + "\n> ### </thought\\>\n" + response
-            )
-
-    return ParsedResponse(
-        thought=thought, response=response, formatted_output=formatted_output
-    )
 
 
 def get_default_data_dir() -> Path:
@@ -179,41 +181,3 @@ async def is_up_to_date() -> tuple[bool, Version, Version]:
             # If no network connection, do not raise alarms.
             pypi_version = running_version
     return running_version >= pypi_version, running_version, pypi_version
-
-
-async def check_ollama() -> bool:
-    """
-    Check if the Ollama server is up and running
-    """
-    from oterm.config import envConfig
-
-    up = False
-    try:
-        async with httpx.AsyncClient() as client:
-            response = await client.get(envConfig.OLLAMA_URL)
-            up = response.status_code == 200
-    except httpx.HTTPError:
-        up = False
-    finally:
-        if not up:
-            from oterm.app.oterm import app
-
-            app.notify(
-                f"The Ollama server is not reachable at {envConfig.OLLAMA_URL}, please check your connection or set the OLLAMA_URL environment variable. oterm will now quit.",
-                severity="error",
-                timeout=10,
-            )
-
-            async def quit():
-                await asyncio.sleep(10.0)
-                try:
-                    from oterm.tools.mcp.setup import teardown_mcp_servers
-
-                    await teardown_mcp_servers()
-                    exit()
-
-                except Exception:
-                    pass
-
-            asyncio.create_task(quit())
-    return up

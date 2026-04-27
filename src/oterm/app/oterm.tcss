@@ -1,12 +1,13 @@
 ChatContainer {
-    height: auto;
+    width: 100%;
+    height: 100%;
 }
 
 #messageContainer {
     overflow-y: auto;
     padding-bottom: 1;
     padding-right: 2;
-    height: 100%;
+    height: 1fr;
 }
 
 ChatItem {
@@ -15,92 +16,152 @@ ChatItem {
 
 ChatItem .chatItem {
     height: auto;
+    padding: 0 1;
 }
 
 ChatItem .user {
-    align: right top;
+    layout: horizontal;
+    margin-top: 1;
 }
 
-ChatItem .assistant {
-    align: left top;
-}
-
-ChatItem .text{
-    margin-bottom: 1;
-    max-width: 90%;
-    border: round $secondary-lighten-2;
+ChatItem .user .prompt-marker {
+    width: 2;
+    color: $primary;
 }
 
 ChatItem .user .text {
-    background: $panel-lighten-1;
-    align: right top;
+    width: 1fr;
+    height: auto;
+    background: transparent;
+}
 
-    text-align: right;
- }
+ChatItem .assistant {
+    layout: horizontal;
+    margin-top: 1;
+}
 
-ChatItem .assistant .text {
-   background: $panel;
+ChatItem .assistant .prompt-marker {
+    width: 2;
+    color: $secondary;
+}
+
+ChatItem .assistant .response-column {
+    width: 1fr;
+    height: auto;
+    padding: 0;
+    margin: 0;
+}
+
+ChatItem .response {
+    height: auto;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+ChatItem .response > MarkdownBlock {
+    margin: 0;
+    padding: 0;
+}
+
+ChatItem .thinking-label {
+    color: $text-muted;
+    text-style: italic;
+    display: none;
+}
+
+ChatItem .thinking-body {
+    height: auto;
+    background: transparent;
+    color: $text-muted;
+    text-style: italic;
+    display: none;
 }
 
 #prompt {
-    background: $panel;
     dock: bottom;
-    padding: 1;
+    height: auto;
+    margin-bottom: 1;
+    padding: 0 1;
+    border-top: solid $primary-muted;
 }
 
-#prompt.singleline {
-    height: 5;
+#prompt:focus-within {
+    border-top: solid $primary;
 }
 
-#prompt.multiline #promptInput {
-    display: none;
+#prompt > Horizontal {
+    height: auto;
 }
 
-
-#prompt.singleline #promptArea {
-    display: none;
+#prompt #promptMarker {
+    width: 2;
+    height: 1;
+    color: $primary;
 }
 
-#prompt.multiline {
-    height: 10;
+#prompt #promptArea {
+    background: transparent;
+    border: none;
+    padding: 0;
 }
 
-#prompt #promptInput #promptArea {
-    dock: left;
-}
-
-#prompt #button-container {
-    padding-left: 1;
-    width: 24;
-    dock: right;
-}
-
-#prompt #button-container #toggle-multiline {
-    margin-left:1;
+#prompt #promptArea > .text-area--cursor-line {
+    background: transparent;
 }
 
 #info {
-    color: $primary-lighten-1;
+    color: $text-muted;
     text-align: right;
-    padding-right: 5;
-    text-style: italic;
+    padding: 0 2;
 }
 
-LoadingIndicator {
-    height: 3;
+UsageStatus {
+    height: 1;
+    width: 100%;
+    padding: 0 2 0 0;
+    background: transparent;
+    color: $text-disabled;
+    text-align: right;
 }
 
-.sceen-container {
-    width: auto;
+.screen-container {
+    width: 60%;
+    min-width: 50;
     height: auto;
     background: $panel;
-    border: $panel-lighten-2;
-    margin-top: 2;
-    margin-left: 2;
+    border: round $primary-muted;
+    margin: 1 2;
     padding: 1;
 }
 
+.screen-container Input,
+.screen-container TextArea,
+.screen-container OptionList,
+.screen-container SelectCurrent {
+    border: solid $primary-muted;
+}
+
+.screen-container Input:focus,
+.screen-container TextArea:focus,
+.screen-container OptionList:focus,
+.screen-container Select:focus > SelectCurrent {
+    border: solid $primary;
+}
+
+.screen-container Checkbox {
+    border: none;
+    padding: 0 1;
+    background: transparent;
+}
+
+.screen-container Checkbox:focus {
+    background: $boost;
+}
+
 .full-height {
+    width: 95%;
+    height: 95%;
     margin: 1;
     padding: 1;
 }
@@ -113,10 +174,6 @@ LoadingIndicator {
     color: $primary;
     margin-right: 1;
     margin-bottom: 1;
-}
-
-.subtitle {
-    color: $secondary
 }
 
 .screen-container .button-container {
@@ -136,23 +193,40 @@ LoadingIndicator {
     margin-right: 1
 }
 
-#model-select {
-    max-height: 50%;
-}
-
-#model-info {
+#top-labels {
     height: 1;
 }
 
-#model-info .name, .tag, .size {
-    margin-right: 1;
+#bottom-labels {
+    height: 1;
+    margin-top: 1;
+}
+
+#top-labels .info-left,
+#top-labels .info-right {
+    width: 1fr;
+    height: 1;
+}
+
+#top-labels .title,
+#bottom-labels .title {
+    color: $primary;
+    margin: 0 1 0 0;
+}
+
+#top-labels .name, #top-labels .size {
+    color: $secondary;
+    margin: 0 2 0 0;
+}
+
+#bottom-labels > Label {
+    width: 1fr;
 }
 
 #tool-selector-container {
-    height: auto;
-    max-height: 50%;
+    height: 1fr;
     padding-bottom: 2;
-    padding-right:2;
+    padding-right: 2;
 }
 
 #tool-selector {
@@ -165,7 +239,6 @@ LoadingIndicator {
     width: 100%;
     padding-top: 1;
     padding-bottom: 1;
-    background: $surface;
 }
 
 #tool-selector  .tool-group-select-all{
@@ -182,18 +255,53 @@ LoadingIndicator {
     margin: 1;
 }
 
-#edit-chat-container .json-format {
-    background: $panel;
-    color: $secondary;
+#chat-edit-screen {
+    height: 100%;
 }
 
-Label.keep-alive-label {
+#top-row {
+    height: 1fr;
     margin-top: 1;
 }
 
-#model-select, .system, .parameters, .format, #tool-selector-container  {
+#top-row > Vertical {
+    width: 1fr;
+    height: 1fr;
+}
+
+#bottom-row {
+    height: 1fr;
     margin-top: 1;
-    margin-bottom: 1;
+}
+
+#bottom-row > Vertical {
+    width: 1fr;
+    height: 1fr;
+}
+
+.system {
+    height: 1fr;
+}
+
+.param-row {
+    height: auto;
+    max-height: 3;
+}
+
+.param-row .title {
+    width: 14;
+    margin-top: 1;
+    margin-bottom: 0;
+    margin-right: 0;
+}
+
+.param-row Input, .param-row Checkbox {
+    width: 1fr;
+    margin-right: 1;
+}
+
+.param-row Checkbox {
+    margin-top: 1;
 }
 
 #prompt-history {
@@ -207,7 +315,6 @@ Label.keep-alive-label {
 #image-select-container .title {
     width: 100%;
     padding-top: 1;
-    text-align: center;
 }
 
 #image-directory-tree {
@@ -228,34 +335,13 @@ Label.keep-alive-label {
     padding: 0;
 }
 
-#pull-model-container Horizontal {
-    margin-top: 1;
-    height: 3;
-}
-
-#pull-model-container Input {
-    width: 60;
-}
-
-#prompt-form-container {
-    height: 100%;
-}
-
-#prompt-form-container .title, .subtitle {
-    margin-top: 1;
-    margin-bottom: 1;
-}
-
-#prompt-result {
-    height: auto;
-    padding: 1;
-    margin-top: 1;
-    margin-bottom: 1;
-}
-
 TabbedContent {
-    padding-top: 2;
-    layer: below;
+    height: 1fr;
+    padding-top: 1;
+}
+
+TabPane {
+    height: 1fr;
 }
 
 MarkdownFence {
@@ -264,10 +350,6 @@ MarkdownFence {
 
 Button.icon {
     min-width: 5;
-}
-
-Input.keep-alive {
-    width: 10;
 }
 
 #app-root {

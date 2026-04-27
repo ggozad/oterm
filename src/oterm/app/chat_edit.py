@@ -1,6 +1,10 @@
-from ollama import Options, ShowResponse
-from pydantic import ValidationError
-from rich.text import Text
+import asyncio
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
+
+from ollama import ListResponse, ShowResponse
+from textual import on
 from textual.app import ComposeResult
 from textual.containers import (
     Container,
@@ -9,33 +13,82 @@ from textual.containers import (
 )
 from textual.reactive import reactive
 from textual.screen import ModalScreen
-from textual.widgets import Button, Checkbox, Input, Label, OptionList, TextArea
+from textual.widgets import Button, Checkbox, Input, Label, Select, TextArea
 
 from oterm.app.widgets.caps import Capabilities
+from oterm.app.widgets.model_select import ModelSelect
 from oterm.app.widgets.tool_select import ToolSelector
-from oterm.ollamaclient import (
-    OllamaLLM,
-    jsonify_options,
-    parse_format,
-    parse_ollama_parameters,
+from oterm.providers import (
+    get_available_providers,
+    get_provider_name,
+    list_models,
+    ollama,
 )
-from oterm.types import ChatModel, OtermOllamaOptions, Tool
+from oterm.providers.capabilities import get_capabilities
+from oterm.providers.settings import get_supported_setting_keys
+from oterm.types import ChatModel
+
+
+@dataclass(frozen=True)
+class _ParamSpec:
+    key: str
+    label: str
+    parser: Callable[[str], Any]
+    placeholder: str
+    range_check: Callable[[Any], bool] | None = None
+    range_text: str | None = None
+
+    @property
+    def input_id(self) -> str:
+        return f"{self.key.replace('_', '-')}-input"
+
+
+_PARAM_SPECS: tuple[_ParamSpec, ...] = (
+    _ParamSpec(
+        key="temperature",
+        label="Temperature",
+        parser=float,
+        placeholder="0.0 - 2.0",
+        range_check=lambda v: 0.0 <= v <= 2.0,
+        range_text="between 0.0 and 2.0",
+    ),
+    _ParamSpec(
+        key="top_p",
+        label="Top P",
+        parser=float,
+        placeholder="0.0 - 1.0",
+        range_check=lambda v: 0.0 <= v <= 1.0,
+        range_text="between 0.0 and 1.0",
+    ),
+    _ParamSpec(
+        key="max_tokens",
+        label="Max Tokens",
+        parser=int,
+        placeholder="e.g. 4096",
+        range_check=lambda v: v > 0,
+        range_text="greater than 0",
+    ),
+    _ParamSpec(
+        key="seed",
+        label="Seed",
+        parser=int,
+        placeholder="integer",
+    ),
+)
 
 
 class ChatEdit(ModalScreen[str]):
-    models = []
+    models: list[str] = []
     models_info: dict[str, ShowResponse] = {}
+    models_size: dict[str, int] = {}
 
+    provider: reactive[str] = reactive("ollama")
     model_name: reactive[str] = reactive("")
-    tag: reactive[str] = reactive("")
     bytes: reactive[int] = reactive(0)
     model_info: ShowResponse
     system: reactive[str] = reactive("")
-    parameters: reactive[Options] = reactive(Options())
-    format: reactive[str] = reactive("")
-    keep_alive: reactive[int] = reactive(5)
-    last_highlighted_index = None
-    tools: reactive[list[Tool]] = reactive([])
+    parameters: reactive[dict[str, Any]] = reactive({})
+    tools: reactive[list[str]] = reactive([])
     edit_mode: reactive[bool] = reactive(False)
     thinking: reactive[bool] = reactive(False)
 
@@ -55,58 +108,54 @@ class ChatEdit(ModalScreen[str]):
             chat_model = ChatModel()
 
         self.chat_model = chat_model
-        self.model_name, self.tag = (
-            chat_model.model.split(":") if chat_model.model else ("", "")
-        )
+        self.provider = chat_model.provider
+        self.model_name = chat_model.model or ""
         self.system = chat_model.system or ""
         self.parameters = chat_model.parameters
-        self.format = chat_model.format
-        self.keep_alive = chat_model.keep_alive
         self.tools = chat_model.tools
         self.edit_mode = edit_mode
         self.thinking = chat_model.thinking
+        self._loaded_model: str = ""
 
     def _return_chat_meta(self) -> None:
-        model = f"{self.model_name}:{self.tag}"
+        model = self.query_one(ModelSelect).value.strip()
+        if not model:
+            self.app.notify("Please enter a model name", severity="error")
+            return
+
         system = self.query_one(".system", TextArea).text
-        system = system if system != self.model_info.get("system", "") else None
-        keep_alive = int(self.query_one(".keep-alive", Input).value)
-        p_area = self.query_one(".parameters", TextArea)
-        try:
-            parameters = OtermOllamaOptions.model_validate_json(
-                p_area.text, strict=True
-            )
+        model_system = getattr(self, "model_info", {}).get("system", "")
+        system = system if system != model_system else None
 
-            if isinstance(parameters.stop, str):
-                parameters.stop = [parameters.stop]
-
-        except ValidationError:
-            self.app.notify("Error validating parameters", severity="error")
-            p_area = self.query_one(".parameters", TextArea)
-            p_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
-            return
-
-        f_area = self.query_one(".format", TextArea)
-        try:
-            parse_format(f_area.text)
-            format = f_area.text
-        except Exception:
-            self.app.notify("Error parsing format", severity="error")
-            f_area.styles.animate("opacity", 0.0, final_value=1.0, duration=0.5)
-            return
+        parameters: dict[str, Any] = {}
+        for spec in _PARAM_SPECS:
+            if spec.key not in get_supported_setting_keys(self.provider):
+                continue
+            raw = self.query_one(f"#{spec.input_id}", Input).value.strip()
+            if not raw:
+                continue
+            try:
+                value = spec.parser(raw)
+            except ValueError:
+                self.app.notify(f"Invalid {spec.label} value", severity="error")
+                return
+            if spec.range_check is not None and not spec.range_check(value):
+                self.app.notify(
+                    f"{spec.label} must be {spec.range_text}", severity="error"
+                )
+                return
+            parameters[spec.key] = value
 
         self.tools = self.query_one(ToolSelector).selected
         self.thinking = self.query_one("#thinking-checkbox", Checkbox).value
 
-        # Create updated chat model
         updated_chat_model = ChatModel(
             id=self.chat_model.id,
             name=self.chat_model.name,
             model=model,
             system=system,
-            format=format,
+            provider=self.provider,
             parameters=parameters,
-            keep_alive=keep_alive,
             tools=self.tools,
             thinking=self.thinking,
         )
@@ -119,84 +168,130 @@ class ChatEdit(ModalScreen[str]):
     def action_save(self) -> None:
         self._return_chat_meta()
 
-    def select_model(self, model: str) -> None:
-        select = self.query_one("#model-select", OptionList)
-        for index, option in enumerate(select._options):
-            if str(option.prompt) == model:
-                select.highlighted = index
-                break
-
     async def on_mount(self) -> None:
-        self.models = OllamaLLM.list().models
+        provider_select = self.query_one("#provider-select", Select)
+        provider_select.value = self.provider
 
-        models = [model.model or "" for model in self.models]
-        for model in models:
-            info = OllamaLLM.show(model)
-            self.models_info[model] = info
-        option_list = self.query_one("#model-select", OptionList)
-        option_list.clear_options()
-        for model in models:
-            option_list.add_option(option=self.model_option(model))
-        option_list.highlighted = self.last_highlighted_index
-        if self.model_name and self.tag:
-            self.select_model(f"{self.model_name}:{self.tag}")
+        if self.provider not in get_available_providers():
+            self.app.notify(
+                f"Provider {get_provider_name(self.provider)!r} is not currently "
+                "available. Check your environment or `openaiCompatible` config.",
+                severity="warning",
+            )
 
-        # Disable the model select widget if we are in edit mode.
-        widget = self.query_one("#model-select", OptionList)
-        widget.disabled = self.edit_mode
+        await self._load_models_for_provider(self.provider)
 
-    def on_option_list_option_highlighted(
-        self, option: OptionList.OptionHighlighted
-    ) -> None:
-        model = option.option.prompt
-        model_meta = next((m for m in self.models if m.model == str(model)), None)
-        if model_meta:
-            name, tag = (model_meta.model or "").split(":")
-            self.model_name = name
-            widget = self.query_one(".name", Label)
-            widget.update(f"{self.model_name}")
+        model_select = self.query_one(ModelSelect)
+        if self.chat_model.model:
+            model_select.set_value(self.chat_model.model)
+            await self._load_model_info(self.chat_model.model)
 
-            self.tag = tag
-            widget = self.query_one(".tag", Label)
-            widget.update(f"{self.tag}")
+        provider_select.disabled = self.edit_mode
+        model_select.disabled = self.edit_mode
 
-            self.bytes = model_meta["size"]
-            widget = self.query_one(".size", Label)
-            widget.update(f"{(self.bytes / 1.0e9):.2f} GB")
-
-            meta = self.models_info.get(model_meta.model or "")
-            self.model_info = meta  # type: ignore
-            if not self.edit_mode:
-                self.parameters = parse_ollama_parameters(
-                    self.model_info.parameters or ""
+    async def _load_models_for_provider(self, provider: str) -> None:
+        """Fetch models and update the model select."""
+        try:
+            if provider == "ollama":
+                list_response: ListResponse = await asyncio.to_thread(
+                    ollama.list_models
                 )
-            widget = self.query_one(".parameters", TextArea)
-            widget.load_text(jsonify_options(self.parameters))
-            widget = self.query_one(".system", TextArea)
+                self.models = [m.model or "" for m in list_response.models]
+                self.models_size = {}
+                for m in list_response.models:
+                    if m.model:  # pragma: no branch
+                        self.models_size[m.model] = m["size"]
+            else:
+                self.models = await asyncio.to_thread(list_models, provider)
+        except Exception as e:
+            self.app.notify(
+                f"Failed to load models for {provider}: {e}", severity="error"
+            )
+            self.models = []
+        self.query_one(ModelSelect).set_options(self.models)
 
-            # XXX Does not work as expected, there is no longer system in model_info
-            widget.load_text(self.system or self.model_info.get("system", ""))
+    async def _load_model_info(self, model: str) -> None:
+        """Load model info (capabilities, system prompt, parameters) for the given model."""
+        if not model or model == self._loaded_model:
+            return
+        self._loaded_model = model
 
-            capabilities: list[str] = self.model_info.get("capabilities", [])
-            tools_supported = "tools" in capabilities
-            tool_selector = self.query_one(ToolSelector)
-            tool_selector.disabled = not tools_supported
+        self.model_name = model
+        self.query_one(".name", Label).update(model)
 
-            thinking_checkbox = self.query_one("#thinking-checkbox", Checkbox)
-            thinking_checkbox.disabled = "thinking" not in capabilities
+        if self.provider == "ollama":
+            size = self.models_size.get(model)
+            if size:
+                self.bytes = size
+                self.query_one(".size", Label).update(f"{(self.bytes / 1.0e9):.2f} GB")
+            else:
+                self.query_one(".size", Label).update("")
 
-            if "completion" in capabilities:
-                capabilities.remove("completion")  #
-            if "embedding" in capabilities:
-                capabilities.remove("embedding")
+            meta = self.models_info.get(model)
+            if not meta:
+                try:
+                    meta = await asyncio.to_thread(ollama.show_model, model)
+                except Exception as e:
+                    self.app.notify(f"Failed to load model info: {e}", severity="error")
+                    return
+                self.models_info[model] = meta
 
-            widget = self.query_one(".caps", Capabilities)
-            widget.caps = capabilities  # type: ignore
+            self.model_info = meta
+            self._populate_parameter_inputs(self.parameters)
+            self.query_one(".system", TextArea).load_text(
+                self.system or self.model_info.get("system", "")
+            )
+            capabilities: list[str] = list(self.model_info.get("capabilities", []))
+        else:
+            self.query_one(".size", Label).update("")
+            caps = get_capabilities(self.provider, model)
+            capabilities = []
+            if caps.supports_tools:
+                capabilities.append("tools")
+            if caps.supports_thinking:
+                capabilities.append("thinking")
+            if caps.supports_vision:
+                capabilities.append("vision")
 
-        # Now that there is a model selected we can save the chat.
-        save_button = self.query_one("#save-btn", Button)
-        save_button.disabled = False
-        ChatEdit.last_highlighted_index = option.option_index
+        self._update_capabilities_ui(capabilities)
+        self.query_one("#save-btn", Button).disabled = False
+
+    def _update_capabilities_ui(self, capabilities: list[str]) -> None:
+        tool_selector = self.query_one(ToolSelector)
+        tool_selector.disabled = "tools" not in capabilities
+
+        thinking_checkbox = self.query_one("#thinking-checkbox", Checkbox)
+        thinking_checkbox.disabled = "thinking" not in capabilities
+
+        display_caps = [c for c in capabilities if c not in ("completion", "embedding")]
+        self.query_one(".caps", Capabilities).caps = display_caps  # ty: ignore[invalid-assignment]
+
+    def _populate_parameter_inputs(self, parameters: dict[str, Any]) -> None:
+        supported = get_supported_setting_keys(self.provider)
+        for spec in _PARAM_SPECS:
+            if spec.key not in supported:
+                continue
+            self.query_one(f"#{spec.input_id}", Input).value = str(
+                parameters.get(spec.key, "")
+            )
+
+    @on(ModelSelect.Submitted)
+    async def on_model_submitted(self, event: ModelSelect.Submitted) -> None:
+        await self._load_model_info(event.value)
+
+    async def on_select_changed(self, event: Select.Changed) -> None:
+        if event.select.id == "provider-select":
+            new_provider = str(event.value)
+            if new_provider != self.provider:
+                self.provider = new_provider
+                self.model_name = ""
+                self._loaded_model = ""
+                self.query_one(".name", Label).update("")
+                self.query_one(".size", Label).update("")
+                self.query_one(".caps", Capabilities).caps = []
+                self.query_one(ModelSelect).set_value("")
+                self.query_one("#save-btn", Button).disabled = True
+                await self._load_models_for_provider(new_provider)
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.name == "save":
@@ -204,59 +299,69 @@ class ChatEdit(ModalScreen[str]):
         else:
             self.dismiss()
 
-    @staticmethod
-    def model_option(model: str) -> Text:
-        return Text(model)
-
     def compose(self) -> ComposeResult:
-        with Container(classes="screen-container full-height"):
-            with Horizontal():
+        providers = get_available_providers()
+        provider_options = [(get_provider_name(p), p) for p in providers]
+        # Preserve a chat's saved provider even when the endpoint is no longer
+        # configured (e.g. an `openai-compat/<name>` removed from config.json).
+        # Without this the Select would reject the value at mount time.
+        if self.provider and self.provider not in providers:
+            provider_options.insert(
+                0, (f"{get_provider_name(self.provider)} (unavailable)", self.provider)
+            )
+
+        with Container(id="chat-edit-screen", classes="screen-container full-height"):
+            with Horizontal(id="top-labels"):
+                with Horizontal(classes="info-left"):
+                    yield Label("Model:", classes="title")
+                    yield Label("", classes="name")
+                    yield Label("Size:", classes="title")
+                    yield Label("", classes="size")
+                    yield Label("Caps:", classes="title")
+                    yield Capabilities([], classes="caps")
+                yield Label("System:", classes="title info-right")
+            with Horizontal(id="top-row"):
                 with Vertical():
-                    with Horizontal(id="model-info"):
-                        yield Label("Model:", classes="title")
-                        yield Label(f"{self.model_name}", classes="name")
-                        yield Label("Tag:", classes="title")
-                        yield Label(f"{self.tag}", classes="tag")
-                        yield Label("Size:", classes="title")
-                        yield Label(f"{self.size}", classes="size")
-                        yield Label("Caps:", classes="title")
-                        yield Capabilities([], classes="caps")
-                    yield OptionList(id="model-select")
-                    yield Label("Tools:", classes="title")
+                    yield Select(
+                        provider_options,
+                        id="provider-select",
+                        value=self.provider,
+                        allow_blank=False,
+                    )
+                    yield ModelSelect(id="model-select")
+                with Vertical():
+                    yield TextArea(self.system, classes="system log")
+            with Horizontal(id="bottom-labels"):
+                yield Label("Tools:", classes="title")
+                yield Label("Parameters:", classes="title")
+            with Horizontal(id="bottom-row"):
+                with Vertical():
                     yield ToolSelector(
                         id="tool-selector-container", selected=self.tools
                     )
-
                 with Vertical():
-                    yield Label("System:", classes="title")
-                    yield TextArea(self.system, classes="system log")
-                    yield Label("Parameters:", classes="title")
-                    yield TextArea(
-                        jsonify_options(self.parameters),
-                        classes="parameters log",
-                        language="json",
-                    )
-                    yield Label("Format:", classes="title")
-                    yield TextArea(
-                        self.format or "",
-                        classes="format log",
-                        language="json",
-                    )
-
-                    with Horizontal():
-                        with Horizontal():
-                            yield Checkbox(
-                                "Thinking",
-                                id="thinking-checkbox",
-                                name="thinking",
-                                value=self.thinking,
-                            )
-                            yield Label(
-                                "Keep-alive (min)", classes="title keep-alive-label"
-                            )
-                            yield Input(
-                                classes="keep-alive", value=str(self.keep_alive)
-                            )
+                    visible_specs = [
+                        s
+                        for s in _PARAM_SPECS
+                        if s.key in get_supported_setting_keys(self.provider)
+                    ]
+                    for i in range(0, len(visible_specs), 2):
+                        with Horizontal(classes="param-row"):
+                            for spec in visible_specs[i : i + 2]:
+                                yield Label(f"{spec.label}:", classes="title")
+                                yield Input(
+                                    value=str(self.parameters.get(spec.key, "")),
+                                    id=spec.input_id,
+                                    placeholder=spec.placeholder,
+                                )
+                    with Horizontal(classes="param-row"):
+                        yield Label("Thinking:", classes="title")
+                        yield Checkbox(
+                            "",
+                            id="thinking-checkbox",
+                            name="thinking",
+                            value=self.thinking,
+                        )
 
             with Horizontal(classes="button-container"):
                 yield Button(
