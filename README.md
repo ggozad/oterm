@@ -5,9 +5,9 @@
 
 the terminal client for [Ollama](https://github.com/ollama/ollama), OpenAI, Anthropic, and any [pydantic-ai](https://ai.pydantic.dev/)-supported provider.
 
-> 🚀 **oterm is going multi-provider!**
-> A big refactor is on the way that adds support for OpenAI, Anthropic, Google, Mistral, Cohere, Groq, and any OpenAI-compatible endpoint (vLLM, LM Studio, OpenRouter, …) alongside Ollama.
-> **[Read the announcement and help test it →](https://github.com/ggozad/oterm/discussions/291)**
+> 🚀 **oterm is now multi-provider!**
+> Alongside Ollama, oterm drives OpenAI, Anthropic, Google (AI / Vertex), Groq, Mistral, Cohere, AWS Bedrock, DeepSeek, Cerebras, Grok, Hugging Face, and any OpenAI-compatible endpoint (vLLM, LM Studio, llama.cpp, OpenRouter, LiteLLM, …).
+> See [What's new](#whats-new) below for the full set of changes.
 
 ## Features
 
@@ -34,8 +34,6 @@ See [Installation](https://ggozad.github.io/oterm/installation) for more details
 * **Refreshed chat UI.** Borderless accent-driven layout, auto-growing prompt, inline `[Image #N]` attachment tokens, a collapsing thinking section, and a live token-usage footer in place of the spinner.
 * **Faster streaming.** Markdown is now updated as deltas arrive instead of being re-rendered on every token, so long responses don't slow the terminal as they grow.
 * **MCP rewrite (breaking).** The `mcpServers` config block adopts pydantic-ai's standard schema (compatible with Claude Desktop / Cursor). See [docs/mcp](https://ggozad.github.io/oterm/mcp/) for the full migration notes.
-* [Example](https://ggozad.github.io/oterm/rag_example) on how to do RAG with [haiku.rag](https://github.com/ggozad/haiku.rag).
-* `oterm` is now part of Homebrew!
 
 ### Screenshots
 ![Splash](https://raw.githubusercontent.com/ggozad/oterm/refs/heads/main/docs/img/splash.gif)
