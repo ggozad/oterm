@@ -57,3 +57,18 @@ The following tools are built-in to `oterm` and available by default:
 * `think` - provides the model with a way to think about a question before answering it. This is useful for complex questions that require reasoning. Use it for adding a "thinking" step to the model's response.
 * `date_time` - provides the current date and time in ISO format.
 * `shell` - allows you to run shell commands and use the output as input to the model. Obviously this can be dangerous, so use with caution.
+
+### Tool calls in the chat
+
+When the model invokes a tool during a response, `oterm` renders the call inline as a collapsible entry between any "thoughts" and the response itself:
+
+```
+▸ tool call: search_repo
+```
+
+Click the line (or its arrow) to expand it. The expanded body shows:
+
+* `args:` — the arguments the model passed to the tool. Dictionaries and JSON-encoded strings are pretty-printed with syntax highlighting; plain strings are shown verbatim and truncated if very long.
+* `result:` — the value the tool returned, formatted the same way. Appears once the tool has finished.
+
+Click again to collapse. Multiple calls within the same turn each get their own entry.
