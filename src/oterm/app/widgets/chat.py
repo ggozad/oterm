@@ -323,6 +323,11 @@ class ChatContainer(Widget):
             chat_item.author = message.role
             chat_item.text = message.text
             await message_container.mount(chat_item)
+            if message.role == "assistant":
+                for b64 in message.images:
+                    decoded = _decode_image(b64)
+                    if decoded is not None:  # pragma: no branch
+                        await chat_item.add_image(decoded.data)
         self.loading = False
         self.loaded = True
         message_container.scroll_end()
@@ -350,6 +355,7 @@ class ChatContainer(Widget):
 
         try:
             text = ""
+            assistant_images: list[str] = []
             user_prompt, skipped = build_user_prompt(
                 message, [img for _, img in self.images]
             )
@@ -375,6 +381,7 @@ class ChatContainer(Widget):
                         content=BinaryContent(data=data)
                     ):  # pragma: no branch
                         await response_chat_item.add_image(data)
+                        assistant_images.append(base64.b64encode(data).decode())
                 status.update_usage(
                     self._stream_usage.input_tokens,
                     self._stream_usage.output_tokens,
@@ -410,7 +417,7 @@ class ChatContainer(Widget):
                 chat_id=chat_id,
                 role="assistant",
                 text=text,
-                images=[],
+                images=assistant_images,
             )
             id = await store.save_message(assistant_message)
             assistant_message.id = id
@@ -545,6 +552,7 @@ class ChatContainer(Widget):
             try:
                 thinking = ""
                 text = ""
+                assistant_images: list[str] = []
                 user_prompt, skipped = build_user_prompt(message.text, message.images)
                 if skipped:
                     self.app.notify(
@@ -569,6 +577,7 @@ class ChatContainer(Widget):
                             content=BinaryContent(data=data)
                         ):
                             await response_chat_item.add_image(data)
+                            assistant_images.append(base64.b64encode(data).decode())
                     status.update_usage(
                         self._stream_usage.input_tokens,
                         self._stream_usage.output_tokens,
@@ -590,7 +599,7 @@ class ChatContainer(Widget):
                     chat_id=chat_id,
                     role="assistant",
                     text=text,
-                    images=[],
+                    images=assistant_images,
                 )
                 await store.save_message(regenerated_message)
                 regenerated_message.id = response_message_id

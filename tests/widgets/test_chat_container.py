@@ -1380,6 +1380,48 @@ class TestThinkingViaResponseTask:
             assert len(images) == 1
             assert images[0].image is not None
 
+            # Persisted: the assistant row carries the image as base64.
+            assistant_row = container.messages[-1]
+            assert len(assistant_row.images) == 1
+            assert base64.b64decode(assistant_row.images[0]) == png_bytes
+            stored = await store.get_messages(chat_id)
+            assistant_rows = [m for m in stored if m.role == "assistant"]
+            assert len(assistant_rows[0].images) == 1
+
+    async def test_persisted_assistant_image_renders_on_load(self, store, chat_model):
+        from io import BytesIO
+
+        from PIL import Image as PILImage
+        from textual_image.widget import Image as ImageWidget
+
+        buf = BytesIO()
+        PILImage.new("RGB", (4, 4), "blue").save(buf, format="PNG")
+        png_bytes = buf.getvalue()
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="draw")
+        user_msg.id = await store.save_message(user_msg)
+        assistant_msg = MessageModel(
+            chat_id=chat_id,
+            role="assistant",
+            text="here you go",
+            images=[base64.b64encode(png_bytes).decode()],
+        )
+        assistant_msg.id = await store.save_message(assistant_msg)
+
+        app = _Host(chat_model, [user_msg, assistant_msg])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            await pilot.pause()
+
+            items = list(container.query(ChatItem))
+            assert items[-1].author == "assistant"
+            images = list(items[-1].query(ImageWidget))
+            assert len(images) == 1
+            assert images[0].image is not None
+
 
 class TestRegenerateCancellation:
     async def test_cancellation_restores_state(self, store, chat_model):
