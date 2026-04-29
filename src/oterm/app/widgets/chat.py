@@ -19,7 +19,7 @@ from pydantic_ai import (
     UserPromptPart,
 )
 from pydantic_ai.exceptions import ModelHTTPError
-from pydantic_ai.messages import ModelMessage, ThinkingPart
+from pydantic_ai.messages import FilePart, ModelMessage, ThinkingPart
 from pydantic_ai.usage import RunUsage
 from textual import on, work
 from textual.app import ComposeResult
@@ -234,12 +234,10 @@ class ChatContainer(Widget):
 
     async def stream_agent(
         self, user_prompt: str | list[str | BinaryContent]
-    ) -> AsyncGenerator[tuple[str, str], Any]:
+    ) -> AsyncGenerator[TextPartDelta | ThinkingPartDelta | FilePart, Any]:
         if self.agent is None:
             raise RuntimeError(self._agent_error or "Agent is not configured")
 
-        thinking = ""
-        text = ""
         self._stream_usage = RunUsage()
 
         async with self.agent.iter(
@@ -251,18 +249,23 @@ class ChatContainer(Widget):
                         async for event in request_stream:
                             if isinstance(event, PartStartEvent):
                                 if isinstance(event.part, ThinkingPart):
-                                    thinking += event.part.content or ""
+                                    if event.part.content:
+                                        yield ThinkingPartDelta(
+                                            content_delta=event.part.content
+                                        )
                                 elif isinstance(event.part, TextPart):
-                                    text += event.part.content or ""
+                                    if event.part.content:
+                                        yield TextPartDelta(
+                                            content_delta=event.part.content
+                                        )
+                                elif isinstance(event.part, FilePart):
+                                    yield event.part
                             elif isinstance(event, PartDeltaEvent):
-                                if isinstance(event.delta, ThinkingPartDelta):
-                                    thinking += event.delta.content_delta or ""
-                                elif isinstance(
-                                    event.delta, TextPartDelta
+                                if isinstance(
+                                    event.delta, (TextPartDelta, ThinkingPartDelta)
                                 ):  # pragma: no branch
-                                    text += event.delta.content_delta or ""
-                                self._stream_usage = run.usage()
-                                yield thinking, text
+                                    self._stream_usage = run.usage()
+                                    yield event.delta
             if run.result is not None:  # pragma: no branch
                 self.pydantic_history = list(run.result.all_messages())
                 self._stream_usage = run.result.usage()
@@ -304,11 +307,7 @@ class ChatContainer(Widget):
         message_container.scroll_end()
 
         try:
-            thinking = ""
             text = ""
-            prev_thinking = ""
-            prev_text = ""
-
             user_prompt, skipped = build_user_prompt(
                 message, [img for _, img in self.images]
             )
@@ -316,16 +315,14 @@ class ChatContainer(Widget):
                 self.app.notify(
                     f"Skipped {skipped} malformed image(s)", severity="warning"
                 )
-            async for thinking, text in self.stream_agent(user_prompt):
+            async for piece in self.stream_agent(user_prompt):
                 follow = _near_bottom(message_container)
-                t_delta = thinking[len(prev_thinking) :]
-                x_delta = text[len(prev_text) :]
-                prev_thinking = thinking
-                prev_text = text
-                if t_delta:
-                    await response_chat_item.append_thinking(t_delta)
-                if x_delta:
-                    await response_chat_item.append_text(x_delta)
+                match piece:
+                    case ThinkingPartDelta(content_delta=delta):
+                        await response_chat_item.append_thinking(delta or "")
+                    case TextPartDelta(content_delta=delta):
+                        text += delta
+                        await response_chat_item.append_text(delta)
                 status.update_usage(
                     self._stream_usage.input_tokens,
                     self._stream_usage.output_tokens,
@@ -501,21 +498,21 @@ class ChatContainer(Widget):
                     self.app.notify(
                         f"Skipped {skipped} malformed image(s)", severity="warning"
                     )
-                async for thinking, text in self.stream_agent(user_prompt):
+                async for piece in self.stream_agent(user_prompt):
                     follow = _near_bottom(message_container)
-                    response_chat_item.thinking = thinking
-                    response_chat_item.text = text
+                    match piece:
+                        case ThinkingPartDelta(content_delta=delta):
+                            thinking += delta or ""
+                            response_chat_item.thinking = thinking
+                        case TextPartDelta(content_delta=delta):
+                            text += delta or ""
+                            response_chat_item.text = text
                     status.update_usage(
                         self._stream_usage.input_tokens,
                         self._stream_usage.output_tokens,
                     )
                     if follow:  # pragma: no branch
                         message_container.scroll_end()
-
-                if not text:
-                    restore_state()
-                    self.app.notify("No response received", severity="error")
-                    return
 
                 status.update_usage(
                     self._stream_usage.input_tokens,

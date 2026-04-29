@@ -4,7 +4,7 @@ from collections.abc import AsyncIterator
 from pathlib import Path
 
 from pydantic_ai import Agent
-from pydantic_ai.messages import ModelMessage
+from pydantic_ai.messages import ModelMessage, TextPartDelta
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from textual.app import App, ComposeResult
 from textual.widgets import Markdown
@@ -361,7 +361,10 @@ class TestImages:
             async for chunk in container.stream_agent(user_prompt):
                 chunks.append(chunk)
 
-            assert chunks[-1] == ("", "ok response")
+            text = "".join(
+                p.content_delta for p in chunks if isinstance(p, TextPartDelta)
+            )
+            assert text == "ok response"
             await pilot.pause()
 
 
@@ -1282,6 +1285,45 @@ class TestThinkingViaResponseTask:
             items = list(container.query(ChatItem))
             assistant = items[-1]
             assert "weighing… options" in assistant.thinking
+
+    async def test_file_part_streamed_through_response_task(self, store, chat_model):
+        """A `FilePart` flows through `stream_agent` without breaking the text stream.
+
+        Phase A leaves `FilePart` unhandled by the consumer; this test pins that
+        behavior so the elif chain in `response_task` is exercised end-to-end.
+        Phase B will replace this with an `add_image`-style assertion.
+        """
+        from pydantic_ai.messages import BinaryImage, FilePart
+
+        from tests._stream_helpers import make_file_aware_agent
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | FilePart]:
+            yield "before "
+            yield FilePart(
+                content=BinaryImage(data=b"\x89PNG\r\n", media_type="image/png")
+            )
+            yield "after"
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = make_file_aware_agent(stream_fn)
+
+            prompt = app.query_one(FlexibleInput)
+            prompt.text = "draw"
+            await pilot.press("enter")
+            for _ in range(80):
+                await asyncio.sleep(0)
+                await pilot.pause()
+                if len(container.messages) == 2:
+                    break
+
+            assert container.messages[-1].text == "before after"
 
 
 class TestRegenerateCancellation:

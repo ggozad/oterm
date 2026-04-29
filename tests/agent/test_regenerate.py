@@ -10,7 +10,12 @@ from pydantic_ai import (
     UserPromptPart,
 )
 from pydantic_ai.messages import ModelMessage, ToolCallPart, ToolReturnPart
-from pydantic_ai.models.function import AgentInfo, DeltaToolCall, FunctionModel
+from pydantic_ai.models.function import (
+    AgentInfo,
+    DeltaThinkingPart,
+    DeltaToolCall,
+    FunctionModel,
+)
 from textual.app import App, ComposeResult
 
 from oterm.app.widgets.chat import ChatContainer
@@ -88,22 +93,19 @@ class TestRegenerateHappyPath:
             assert len(assistant_rows) == 1
             assert assistant_rows[0].text == "new answer"
 
-
-class TestRegenerateErrorRestore:
-    async def test_empty_response_restores_state(self, store, chat_model):
+    async def test_thinking_streamed_into_chat_item(self, store, chat_model):
         chat_id = await store.save_chat(chat_model)
         chat_model.id = chat_id
-        user_msg = MessageModel(chat_id=chat_id, role="user", text="q")
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="ask")
         user_msg.id = await store.save_message(user_msg)
         old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
         old_assistant.id = await store.save_message(old_assistant)
 
         async def stream_fn(
             messages: list[ModelMessage], info: AgentInfo
-        ) -> AsyncIterator[str]:
-            # Single token only → PartStartEvent but no PartDeltaEvent → stream_agent
-            # yields no chunks → regenerate sees an empty response.
-            yield "only"
+        ) -> AsyncIterator[str | dict[int, DeltaThinkingPart]]:
+            yield {0: DeltaThinkingPart(content="hmm")}
+            yield "answer"
 
         app = _Host(chat_model, [user_msg, old_assistant])
         async with app.run_test() as pilot:
@@ -114,9 +116,42 @@ class TestRegenerateErrorRestore:
             await container.action_regenerate_llm_message()
             await pilot.pause()
 
-            assert container.messages[-1].text == "old"
-            assert any("No response received" in n.message for n in _notifications(app))
+            assert container.messages[-1].text == "answer"
 
+    async def test_file_part_streamed_through_regenerate(self, store, chat_model):
+        from pydantic_ai.messages import BinaryImage, FilePart
+
+        from tests._stream_helpers import make_file_aware_agent
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="ask")
+        user_msg.id = await store.save_message(user_msg)
+        old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
+        old_assistant.id = await store.save_message(old_assistant)
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | FilePart]:
+            yield "redo "
+            yield FilePart(
+                content=BinaryImage(data=b"\x89PNG\r\n", media_type="image/png")
+            )
+            yield "answer"
+
+        app = _Host(chat_model, [user_msg, old_assistant])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = make_file_aware_agent(stream_fn)
+
+            await container.action_regenerate_llm_message()
+            await pilot.pause()
+
+            assert container.messages[-1].text == "redo answer"
+
+
+class TestRegenerateErrorRestore:
     async def test_exception_restores_state_and_notifies(self, store, chat_model):
         chat_id = await store.save_chat(chat_model)
         chat_model.id = chat_id

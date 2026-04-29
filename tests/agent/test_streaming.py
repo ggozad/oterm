@@ -2,11 +2,18 @@ import base64
 from collections.abc import AsyncIterator
 
 from pydantic_ai import Agent
-from pydantic_ai.messages import ModelMessage
+from pydantic_ai.messages import (
+    BinaryImage,
+    FilePart,
+    ModelMessage,
+    TextPartDelta,
+    ThinkingPartDelta,
+)
 from pydantic_ai.models.function import AgentInfo, DeltaThinkingPart, FunctionModel
 
 from oterm.app.widgets.chat import ChatContainer
 from oterm.types import ChatModel
+from tests._stream_helpers import make_file_aware_agent
 
 
 def _container() -> ChatContainer:
@@ -19,6 +26,10 @@ def _install_stream_agent(container: ChatContainer, stream_fn):
     container.agent = Agent(FunctionModel(stream_function=stream_fn))
 
 
+def _install_file_aware_stream_agent(container: ChatContainer, stream_fn):
+    container.agent = make_file_aware_agent(stream_fn)
+
+
 async def _collect(gen):
     out = []
     async for chunk in gen:
@@ -27,7 +38,7 @@ async def _collect(gen):
 
 
 class TestTextStreaming:
-    async def test_text_deltas_are_accumulated(self):
+    async def test_text_deltas_yielded_in_order(self):
         async def stream_fn(
             messages: list[ModelMessage], info: AgentInfo
         ) -> AsyncIterator[str]:
@@ -38,14 +49,10 @@ class TestTextStreaming:
         _install_stream_agent(c, stream_fn)
 
         chunks = await _collect(c.stream_agent("hi"))
-        # First token arrives via PartStartEvent (no yield), then each delta
-        # triggers a cumulative (thinking, text) yield. With no thinking
-        # content, the thinking slot stays empty.
-        assert chunks == [("", "Hello world"), ("", "Hello world!")]
+        assert all(isinstance(p, TextPartDelta) for p in chunks)
+        assert "".join(p.content_delta for p in chunks) == "Hello world!"
 
-    async def test_single_token_produces_no_chunks(self):
-        """With only a PartStartEvent and no deltas, stream_agent yields nothing."""
-
+    async def test_single_token_yields_one_delta(self):
         async def stream_fn(
             messages: list[ModelMessage], info: AgentInfo
         ) -> AsyncIterator[str]:
@@ -54,11 +61,12 @@ class TestTextStreaming:
         c = _container()
         _install_stream_agent(c, stream_fn)
 
-        assert await _collect(c.stream_agent("hi")) == []
+        chunks = await _collect(c.stream_agent("hi"))
+        assert chunks == [TextPartDelta(content_delta="only")]
 
 
 class TestThinkingStreaming:
-    async def test_thinking_and_text_yielded_separately(self):
+    async def test_thinking_then_text_preserved_in_order(self):
         async def stream_fn(
             messages: list[ModelMessage], info: AgentInfo
         ) -> AsyncIterator[str | dict[int, DeltaThinkingPart]]:
@@ -71,10 +79,62 @@ class TestThinkingStreaming:
         _install_stream_agent(c, stream_fn)
 
         chunks = await _collect(c.stream_agent("q"))
-        assert chunks[-1] == ("because reasons", "answer here")
-        # Thinking accumulates before text begins.
-        thinking_values = {th for th, _ in chunks}
-        assert "because reasons" in thinking_values
+        thinking = "".join(
+            p.content_delta for p in chunks if isinstance(p, ThinkingPartDelta)
+        )
+        text = "".join(p.content_delta for p in chunks if isinstance(p, TextPartDelta))
+        assert thinking == "because reasons"
+        assert text == "answer here"
+        # Thinking arrives before text in the yielded sequence.
+        first_text_index = next(
+            i for i, p in enumerate(chunks) if isinstance(p, TextPartDelta)
+        )
+        last_thinking_index = max(
+            i for i, p in enumerate(chunks) if isinstance(p, ThinkingPartDelta)
+        )
+        assert last_thinking_index < first_text_index
+
+
+class TestEmptyAndIgnoredParts:
+    async def test_empty_thinking_and_text_parts_skipped(self):
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, DeltaThinkingPart]]:
+            yield {0: DeltaThinkingPart(content="")}
+            yield ""
+            yield "real"
+
+        c = _container()
+        _install_stream_agent(c, stream_fn)
+
+        chunks = await _collect(c.stream_agent("hi"))
+        assert chunks == [TextPartDelta(content_delta="real")]
+
+
+class TestFilePartStreaming:
+    async def test_file_part_yielded_as_is(self):
+        png_bytes = b"\x89PNG\r\nfake"
+        file_part = FilePart(
+            content=BinaryImage(data=png_bytes, media_type="image/png")
+        )
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | FilePart]:
+            yield "see "
+            yield file_part
+            yield "this"
+
+        c = _container()
+        _install_file_aware_stream_agent(c, stream_fn)
+
+        chunks = await _collect(c.stream_agent("draw"))
+        files = [p for p in chunks if isinstance(p, FilePart)]
+        assert len(files) == 1
+        assert files[0].content.data == png_bytes
+        assert files[0].content.media_type == "image/png"
+        text = "".join(p.content_delta for p in chunks if isinstance(p, TextPartDelta))
+        assert text == "see this"
 
 
 class TestHistoryUpdate:
@@ -89,7 +149,6 @@ class TestHistoryUpdate:
         assert c.pydantic_history == []
 
         await _collect(c.stream_agent("hello"))
-        # One request + one response = at least 2 messages.
         assert len(c.pydantic_history) >= 2
 
 
@@ -132,4 +191,5 @@ class TestImagePrompt:
         img_b64 = base64.b64encode(b"\x89PNG\r\n").decode()
         user_prompt, _ = build_user_prompt("what is this?", [img_b64])
         chunks = await _collect(c.stream_agent(user_prompt))
-        assert chunks[-1] == ("", "see this")
+        text = "".join(p.content_delta for p in chunks if isinstance(p, TextPartDelta))
+        assert text == "see this"
