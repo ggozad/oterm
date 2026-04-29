@@ -1,6 +1,6 @@
 [project]
 name = "oterm"
-version = "0.15.0"
+version = "0.16.0"
 description = "The terminal client for Ollama, OpenAI, Anthropic, and any pydantic-ai-supported provider."
 authors = [{ name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }]
 license = { text = "MIT" }
