@@ -189,7 +189,7 @@ class OTerm(App):
         builtin_tools.extend(discover_tools())
         await setup_mcp_servers()
 
-    @work(exclusive=True)
+    @work(exclusive=True, group="checks")
     async def perform_checks(self) -> None:
         up_to_date, _, latest = await is_up_to_date()
         if not up_to_date:

@@ -32,11 +32,21 @@ def stub_network(monkeypatch):
 
 
 @pytest.fixture
-def fresh_app(tmp_data_dir, app_config, stub_network):
-    """Build a fresh OTerm app wired to an isolated data dir, splash off."""
+def fresh_app(tmp_data_dir, app_config, stub_network, monkeypatch):
+    """Build a fresh OTerm app wired to an isolated data dir, splash off.
+
+    Patches ``push_screen_wait`` to return ``None`` so the empty-store path
+    that auto-fires the new-chat modal during ``on_mount`` doesn't leave a
+    modal pinned on the stack and swallowing app-level key bindings.
+    """
     app_config.set("splash-screen", False)
 
     from oterm.app.oterm import OTerm
+
+    async def _no_modal(self, screen):
+        return None
+
+    monkeypatch.setattr(OTerm, "push_screen_wait", _no_modal)
 
     return OTerm()
 
@@ -60,6 +70,35 @@ class TestStartup:
         async with app.run_test() as pilot:
             await pilot.pause()
             assert called == [True]
+
+    async def test_empty_store_first_chat_survives_perform_checks(
+        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
+    ):
+        """The action_new_chat worker fired from on_splash_done must not be
+        cancelled by perform_checks' exclusive=True. Otherwise the modal opens
+        but its result is dropped and the user lands on an empty main window."""
+        app_config.set("splash-screen", False)
+
+        from oterm.app.oterm import OTerm
+
+        chat_json = ChatModel(model="llama3", provider="ollama").model_dump_json(
+            exclude_none=True
+        )
+
+        async def fake_push_screen_wait(self, screen):
+            return chat_json
+
+        monkeypatch.setattr(OTerm, "push_screen_wait", fake_push_screen_wait)
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            for _ in range(30):
+                await pilot.pause()
+                if app.query_one(TabbedContent).tab_count > 0:
+                    break
+            assert app.query_one(TabbedContent).tab_count == 1
+            chats = await store.get_chats()
+            assert len(chats) == 1
 
     async def test_existing_chats_loaded_into_tabs(
         self, tmp_data_dir, app_config, stub_network, store
