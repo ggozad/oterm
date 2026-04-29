@@ -52,53 +52,16 @@ def fresh_app(tmp_data_dir, app_config, stub_network, monkeypatch):
 
 
 class TestStartup:
-    async def test_splash_off_creates_first_chat(self, fresh_app, store, monkeypatch):
-        """On empty store, on_mount triggers action_new_chat."""
-        called: list[bool] = []
-
-        from oterm.app.oterm import OTerm
-
-        original = OTerm.action_new_chat
-
-        def spy(self):
-            called.append(True)
-            return original(self)
-
-        monkeypatch.setattr(OTerm, "action_new_chat", spy)
+    async def test_empty_store_shows_welcome(self, fresh_app):
+        """On empty store, on_mount shows the EmptyState welcome and hides tabs."""
+        from oterm.app.widgets.empty_state import EmptyState
 
         app = fresh_app
         async with app.run_test() as pilot:
             await pilot.pause()
-            assert called == [True]
-
-    async def test_empty_store_first_chat_survives_perform_checks(
-        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
-    ):
-        """The action_new_chat worker fired from on_splash_done must not be
-        cancelled by perform_checks' exclusive=True. Otherwise the modal opens
-        but its result is dropped and the user lands on an empty main window."""
-        app_config.set("splash-screen", False)
-
-        from oterm.app.oterm import OTerm
-
-        chat_json = ChatModel(model="llama3", provider="ollama").model_dump_json(
-            exclude_none=True
-        )
-
-        async def fake_push_screen_wait(self, screen):
-            return chat_json
-
-        monkeypatch.setattr(OTerm, "push_screen_wait", fake_push_screen_wait)
-
-        app = OTerm()
-        async with app.run_test() as pilot:
-            for _ in range(30):
-                await pilot.pause()
-                if app.query_one(TabbedContent).tab_count > 0:
-                    break
-            assert app.query_one(TabbedContent).tab_count == 1
-            chats = await store.get_chats()
-            assert len(chats) == 1
+            assert app.query_one(TabbedContent).tab_count == 0
+            assert app.query_one(EmptyState).display is True
+            assert app.query_one(TabbedContent).display is False
 
     async def test_existing_chats_loaded_into_tabs(
         self, tmp_data_dir, app_config, stub_network, store
@@ -117,6 +80,11 @@ class TestStartup:
             await pilot.pause()
             tabs = app.query_one(TabbedContent)
             assert tabs.tab_count == 2
+
+            from oterm.app.widgets.empty_state import EmptyState
+
+            assert app.query_one(EmptyState).display is False
+            assert tabs.display is True
 
 
 class TestCycleChat:
@@ -171,6 +139,7 @@ class TestDeleteChat:
         cm.id = await store.save_chat(cm)
 
         from oterm.app.oterm import OTerm
+        from oterm.app.widgets.empty_state import EmptyState
 
         app = OTerm()
         async with app.run_test() as pilot:
@@ -183,6 +152,8 @@ class TestDeleteChat:
 
             assert tabs.tab_count == 0
             assert await store.get_chat(cm.id) is None
+            assert app.query_one(EmptyState).display is True
+            assert tabs.display is False
 
     async def test_delete_without_active_pane_is_noop(self, fresh_app):
         app = fresh_app
@@ -329,6 +300,11 @@ class TestNewChat:
             assert app.query_one(TabbedContent).tab_count == initial + 1
             chats = await store.get_chats()
             assert any(c.model == "llama3" for c in chats)
+
+            from oterm.app.widgets.empty_state import EmptyState
+
+            assert app.query_one(EmptyState).display is False
+            assert app.query_one(TabbedContent).display is True
 
     async def test_new_chat_cancelled_modal_noop(self, fresh_app, store, monkeypatch):
         from oterm.app.oterm import OTerm
@@ -686,7 +662,7 @@ class TestSplashCallback:
     async def test_splash_dismissal_triggers_post_splash_flow(
         self, tmp_data_dir, app_config, stub_network, monkeypatch
     ):
-        """With splash on, on_mount defers the first-chat + perform_checks flow until splash dismisses."""
+        """With splash on, on_mount defers the post-splash flow until splash dismisses."""
         from textual.screen import Screen
 
         import oterm.app.oterm as oterm_mod
@@ -697,11 +673,11 @@ class TestSplashCallback:
 
         monkeypatch.setattr(oterm_mod, "splash", _StubSplash())
 
-        new_chat_calls: list[bool] = []
+        checks_calls: list[bool] = []
         monkeypatch.setattr(
             oterm_mod.OTerm,
-            "action_new_chat",
-            lambda self: new_chat_calls.append(True),
+            "perform_checks",
+            lambda self: checks_calls.append(True),
         )
 
         app_config.set("splash-screen", True)
@@ -710,9 +686,9 @@ class TestSplashCallback:
         async with app.run_test() as pilot:
             for _ in range(30):
                 await pilot.pause()
-                if new_chat_calls:
+                if checks_calls:
                     break
-            assert new_chat_calls == [True]
+            assert checks_calls == [True]
 
 
 class TestSystemCommands:
