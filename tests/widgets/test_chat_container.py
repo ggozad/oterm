@@ -23,6 +23,7 @@ from oterm.app.widgets.chat import (
 )
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.types import ChatModel, MessageModel
+from tests._helpers import wait_until
 
 
 class _Host(App):
@@ -124,12 +125,7 @@ class TestOnSubmit:
             prompt.text = "hello"
             await pilot.press("enter")
 
-            # Wait for the inference task to finish.
-            for _ in range(50):
-                await asyncio.sleep(0)
-                await pilot.pause()
-                if len(container.messages) == 2:
-                    break
+            await wait_until(pilot, lambda: len(container.messages) == 2)
 
             assert container.messages[0].role == "user"
             assert container.messages[0].text == "hello"
@@ -1286,11 +1282,7 @@ class TestThinkingViaResponseTask:
             prompt = app.query_one(FlexibleInput)
             prompt.text = "ask"
             await pilot.press("enter")
-            for _ in range(80):
-                await asyncio.sleep(0)
-                await pilot.pause()
-                if len(container.messages) == 2:
-                    break
+            await wait_until(pilot, lambda: len(container.messages) == 2)
 
             assert container.messages[-1].text == "the answer"
             items = list(container.query(ChatItem))
@@ -1334,11 +1326,7 @@ class TestThinkingViaResponseTask:
             prompt = app.query_one(FlexibleInput)
             prompt.text = "go"
             await pilot.press("enter")
-            for _ in range(80):
-                await asyncio.sleep(0)
-                await pilot.pause()
-                if len(container.messages) == 2:
-                    break
+            await wait_until(pilot, lambda: len(container.messages) == 2)
 
             from textual.widgets import Static
 
@@ -1393,11 +1381,7 @@ class TestThinkingViaResponseTask:
             prompt = app.query_one(FlexibleInput)
             prompt.text = "draw"
             await pilot.press("enter")
-            for _ in range(80):
-                await asyncio.sleep(0)
-                await pilot.pause()
-                if len(container.messages) == 2:
-                    break
+            await wait_until(pilot, lambda: len(container.messages) == 2)
 
             assert container.messages[-1].text == "before after"
 

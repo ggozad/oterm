@@ -20,6 +20,7 @@ from textual.app import App, ComposeResult
 
 from oterm.app.widgets.chat import ChatContainer
 from oterm.types import ChatModel, MessageModel
+from tests._helpers import wait_until
 
 
 class _Host(App):
@@ -114,8 +115,7 @@ class TestRegenerateHappyPath:
             container.agent = Agent(FunctionModel(stream_function=stream_fn))
 
             await container.action_regenerate_llm_message()
-            await pilot.pause()
-
+            await wait_until(pilot, lambda: container.messages[-1].text == "answer")
             assert container.messages[-1].text == "answer"
 
     async def test_file_part_streamed_through_regenerate(self, store, chat_model):
@@ -146,8 +146,9 @@ class TestRegenerateHappyPath:
             container.agent = make_file_aware_agent(stream_fn)
 
             await container.action_regenerate_llm_message()
-            await pilot.pause()
-
+            await wait_until(
+                pilot, lambda: container.messages[-1].text == "redo answer"
+            )
             assert container.messages[-1].text == "redo answer"
 
 
