@@ -560,11 +560,10 @@ class TestResponseTaskErrors:
             prompt = app.query_one(FlexibleInput)
             prompt.text = "hello"
             await pilot.press("enter")
-            await pilot.pause()
-            # Inference task should have notified immediately.
-            for _ in range(10):
-                await asyncio.sleep(0)
-                await pilot.pause()
+            await wait_until(
+                pilot,
+                lambda: any("Cannot send" in n.message for n in _notifications(app)),
+            )
             assert any("Cannot send" in n.message for n in _notifications(app))
             assert container.messages == []
 
@@ -586,9 +585,12 @@ class TestResponseTaskErrors:
             prompt = app.query_one(FlexibleInput)
             prompt.text = "trigger"
             await pilot.press("enter")
-            for _ in range(20):
-                await asyncio.sleep(0)
-                await pilot.pause()
+            await wait_until(
+                pilot,
+                lambda: any(
+                    "Unexpected error" in n.message for n in _notifications(app)
+                ),
+            )
 
             assert container.messages == []
             assert any("Unexpected error" in n.message for n in _notifications(app))
@@ -626,10 +628,7 @@ class TestEditChat:
         async with app.run_test() as pilot:
             container = app.query_one(ChatContainer)
             container.action_edit_chat()
-            for _ in range(20):
-                await pilot.pause()
-                if container.chat_model.system == "be terse":
-                    break
+            await wait_until(pilot, lambda: container.chat_model.system == "be terse")
             assert container.chat_model.system == "be terse"
             assert container.chat_model.thinking is True
             assert container.chat_model.parameters == {"temperature": 0.2}
@@ -690,11 +689,10 @@ class TestRenameChat:
         async with app.run_test() as pilot:
             container = app.query_one(ChatContainer)
             container.action_rename_chat()
-            for _ in range(20):
-                await pilot.pause()
-                reloaded = await store.get_chat(chat_id)
-                if reloaded and reloaded.name == "new-name":
-                    break
+            await wait_until(
+                pilot,
+                lambda: any("renamed" in n.message for n in _notifications(app)),
+            )
             reloaded = await store.get_chat(chat_id)
             assert reloaded and reloaded.name == "new-name"
             assert any("renamed" in n.message for n in _notifications(app))
@@ -1212,11 +1210,7 @@ class TestSkippedImageNotify:
             prompt = app.query_one(FlexibleInput)
             prompt.text = "see [Image #1]"
             await pilot.press("enter")
-            for _ in range(50):
-                await asyncio.sleep(0)
-                await pilot.pause()
-                if len(container.messages) == 2:
-                    break
+            await wait_until(pilot, lambda: len(container.messages) == 2)
             assert any(
                 "Skipped 1 malformed image" in n.message for n in _notifications(app)
             )
@@ -1247,11 +1241,7 @@ class TestSkippedImageNotify:
             container.agent = Agent(FunctionModel(stream_function=stream_fn))
 
             await container.action_regenerate_llm_message()
-            for _ in range(50):
-                await asyncio.sleep(0)
-                await pilot.pause()
-                if container.messages[-1].text == "new answer":
-                    break
+            await wait_until(pilot, lambda: container.messages[-1].text == "new answer")
             assert any(
                 "Skipped 1 malformed image" in n.message for n in _notifications(app)
             )
@@ -1408,11 +1398,7 @@ class TestRegenerateCancellation:
             container.agent = Agent(FunctionModel(stream_function=stream_fn))
 
             await container.action_regenerate_llm_message()
-            for _ in range(20):
-                await asyncio.sleep(0)
-                await pilot.pause()
-                if container.messages[-1].text == "old":
-                    break
+            await wait_until(pilot, lambda: container.messages[-1].text == "old")
             assert container.messages[-1].text == "old"
             assert list(container.query(UsageStatus)) == []
 
@@ -1568,11 +1554,7 @@ class TestUsageStatus:
             prompt.text = "hello"
             await pilot.press("enter")
 
-            for _ in range(50):
-                await asyncio.sleep(0)
-                await pilot.pause()
-                if len(container.messages) == 2:
-                    break
+            await wait_until(pilot, lambda: len(container.messages) == 2)
 
             statuses = list(container.query(UsageStatus))
             assert len(statuses) == 1

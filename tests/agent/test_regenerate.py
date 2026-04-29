@@ -55,7 +55,12 @@ class TestRegenerateGuards:
             container = app.query_one(ChatContainer)
             assert container.agent is None
             await container.action_regenerate_llm_message()
-            await pilot.pause()
+            await wait_until(
+                pilot,
+                lambda: any(
+                    "Cannot regenerate" in n.message for n in _notifications(app)
+                ),
+            )
             assert any("Cannot regenerate" in n.message for n in _notifications(app))
 
 
@@ -83,7 +88,7 @@ class TestRegenerateHappyPath:
             container.agent = Agent(FunctionModel(stream_function=stream_fn))
 
             await container.action_regenerate_llm_message()
-            await pilot.pause()
+            await wait_until(pilot, lambda: container.messages[-1].text == "new answer")
 
             assert len(container.messages) == 2
             assert container.messages[-1].role == "assistant"
@@ -174,7 +179,12 @@ class TestRegenerateErrorRestore:
             container.agent = Agent(FunctionModel(stream_function=stream_fn))
 
             await container.action_regenerate_llm_message()
-            await pilot.pause()
+            await wait_until(
+                pilot,
+                lambda: any(
+                    "Unexpected error" in n.message for n in _notifications(app)
+                ),
+            )
 
             assert container.messages[-1].text == "old"
             assert any("Unexpected error" in n.message for n in _notifications(app))
@@ -204,7 +214,13 @@ class TestRegenerateErrorRestore:
             container.agent = Agent(FunctionModel(stream_function=stream_fn))
 
             await container.action_regenerate_llm_message()
-            await pilot.pause()
+            await wait_until(
+                pilot,
+                lambda: any(
+                    "error running your request" in n.message
+                    for n in _notifications(app)
+                ),
+            )
 
             assert container.messages[-1].text == "old"
             assert any(
@@ -334,7 +350,9 @@ class TestRegenerateAfterToolUse:
             ]
 
             await container.action_regenerate_llm_message()
-            await pilot.pause()
+            await wait_until(
+                pilot, lambda: container.messages[-1].text == "regenerated answer"
+            )
 
             # The new turn must keep history internally consistent: exactly one
             # UserPromptPart (the regenerated turn) and no orphan tool calls.
