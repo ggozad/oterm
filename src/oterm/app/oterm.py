@@ -11,6 +11,7 @@ from oterm.app.chat_export import ChatExport, slugify
 from oterm.app.splash import splash
 from oterm.app.themes.solarized_dark import solarized_dark
 from oterm.app.widgets.chat import ChatContainer
+from oterm.app.widgets.empty_state import EmptyState
 from oterm.config import appConfig
 from oterm.store.store import Store
 from oterm.tools.mcp.setup import setup_mcp_servers, teardown_mcp_servers
@@ -115,6 +116,7 @@ class OTerm(App):
         )
         await tabs.add_pane(pane)
         tabs.active = f"chat-{id}"
+        self._update_empty_state()
 
     async def action_edit_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
@@ -148,6 +150,7 @@ class OTerm(App):
             await store.delete_chat(chat.chat_model.id)
             await tabs.remove_pane(tabs.active)
             self.notify(f"Deleted {chat.chat_model.name}", severity="information")
+            self._update_empty_state()
 
     async def action_export_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
@@ -189,7 +192,7 @@ class OTerm(App):
         builtin_tools.extend(discover_tools())
         await setup_mcp_servers()
 
-    @work(exclusive=True)
+    @work(exclusive=True, group="checks")
     async def perform_checks(self) -> None:
         up_to_date, _, latest = await is_up_to_date()
         if not up_to_date:
@@ -220,22 +223,20 @@ class OTerm(App):
         await self.load_tools()
 
         async def on_splash_done(message) -> None:
-            if not saved_chats:
-                self.action_new_chat()
-            else:
-                tabs = self.query_one(TabbedContent)
-                for chat_model in saved_chats:
-                    # Only process chats with a valid ID
-                    if chat_model.id is not None:
-                        messages = await store.get_messages(chat_model.id)
-                        container = ChatContainer(
-                            chat_model=chat_model,
-                            messages=messages,
-                        )
-                        pane = TabPane(
-                            chat_model.name, container, id=f"chat-{chat_model.id}"
-                        )
-                        tabs.add_pane(pane)
+            tabs = self.query_one(TabbedContent)
+            for chat_model in saved_chats:
+                # Only process chats with a valid ID
+                if chat_model.id is not None:
+                    messages = await store.get_messages(chat_model.id)
+                    container = ChatContainer(
+                        chat_model=chat_model,
+                        messages=messages,
+                    )
+                    pane = TabPane(
+                        chat_model.name, container, id=f"chat-{chat_model.id}"
+                    )
+                    tabs.add_pane(pane)
+            self._update_empty_state()
             self.perform_checks()
 
         if appConfig.get("splash-screen"):
@@ -256,7 +257,13 @@ class OTerm(App):
     def compose(self) -> ComposeResult:
         yield Header()
         yield TabbedContent(id="tabs")
+        yield EmptyState(id="empty-state")
         yield Footer()
+
+    def _update_empty_state(self) -> None:
+        has_chats = self.query_one(TabbedContent).tab_count > 0
+        self.query_one(TabbedContent).display = has_chats
+        self.query_one(EmptyState).display = not has_chats
 
 
 app = OTerm()
