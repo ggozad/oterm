@@ -94,6 +94,13 @@ ChatItem .tool-call-body {
     display: none;
 }
 
+ChatItem .assistantImage {
+    width: auto;
+    height: auto;
+    max-height: 20;
+    margin: 1 0;
+}
+
 #prompt {
     dock: bottom;
     height: auto;

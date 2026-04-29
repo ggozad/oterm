@@ -4,9 +4,12 @@ import binascii
 import json
 import time
 from collections.abc import AsyncGenerator
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
+import PIL.Image as PILImage
+from PIL import UnidentifiedImageError
 from pydantic_ai import (
     Agent,
     BinaryContent,
@@ -47,6 +50,7 @@ from textual.widgets import (
     TabbedContent,
 )
 from textual.widgets.markdown import MarkdownStream
+from textual_image.widget import Image as TerminalImage
 
 from oterm.agent import get_agent
 from oterm.app.chat_edit import ChatEdit
@@ -367,6 +371,10 @@ class ChatContainer(Widget):
                         response_chat_item.update_tool_result(
                             piece.tool_call_id, piece.content
                         )
+                    case FilePart(
+                        content=BinaryContent(data=data)
+                    ):  # pragma: no branch
+                        await response_chat_item.add_image(data)
                 status.update_usage(
                     self._stream_usage.input_tokens,
                     self._stream_usage.output_tokens,
@@ -557,6 +565,10 @@ class ChatContainer(Widget):
                             response_chat_item.update_tool_result(
                                 piece.tool_call_id, piece.content
                             )
+                        case FilePart(  # pragma: no branch
+                            content=BinaryContent(data=data)
+                        ):
+                            await response_chat_item.add_image(data)
                     status.update_usage(
                         self._stream_usage.input_tokens,
                         self._stream_usage.output_tokens,
@@ -844,6 +856,22 @@ class ChatItem(Widget):
         if item is None:  # pragma: no cover
             return
         item.set_result(content)
+
+    async def add_image(self, data: bytes) -> None:
+        """Render an image emitted by the assistant before the response widget."""
+        if self.author == "user":
+            return
+        try:
+            response = self.query_one(".response", Markdown)
+        except NoMatches:  # pragma: no cover
+            return
+        try:
+            pil_image = PILImage.open(BytesIO(data))
+        except UnidentifiedImageError:  # pragma: no cover
+            return
+        await self.mount(
+            TerminalImage(pil_image, classes="assistantImage"), before=response
+        )
 
     async def finish_stream(self) -> None:
         """Drain and stop any active streams started by ``append_*``."""

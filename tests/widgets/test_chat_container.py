@@ -1341,15 +1341,18 @@ class TestThinkingViaResponseTask:
             assert "▾ tool call: echo" in str(header.render())
 
     async def test_file_part_streamed_through_response_task(self, store, chat_model):
-        """A `FilePart` flows through `stream_agent` without breaking the text stream.
+        """A `FilePart` arrives during streaming and renders as an Image widget."""
+        from io import BytesIO
 
-        Phase A leaves `FilePart` unhandled by the consumer; this test pins that
-        behavior so the elif chain in `response_task` is exercised end-to-end.
-        Phase B will replace this with an `add_image`-style assertion.
-        """
+        from PIL import Image as PILImage
         from pydantic_ai.messages import BinaryImage, FilePart
+        from textual_image.widget import Image as ImageWidget
 
         from tests._stream_helpers import make_file_aware_agent
+
+        buf = BytesIO()
+        PILImage.new("RGB", (4, 4), "red").save(buf, format="PNG")
+        png_bytes = buf.getvalue()
 
         chat_id = await store.save_chat(chat_model)
         chat_model.id = chat_id
@@ -1358,9 +1361,7 @@ class TestThinkingViaResponseTask:
             messages: list[ModelMessage], info: AgentInfo
         ) -> AsyncIterator[str | FilePart]:
             yield "before "
-            yield FilePart(
-                content=BinaryImage(data=b"\x89PNG\r\n", media_type="image/png")
-            )
+            yield FilePart(content=BinaryImage(data=png_bytes, media_type="image/png"))
             yield "after"
 
         app = _Host(chat_model, [])
@@ -1374,6 +1375,10 @@ class TestThinkingViaResponseTask:
             await wait_until(pilot, lambda: len(container.messages) == 2)
 
             assert container.messages[-1].text == "before after"
+            assistant = list(container.query(ChatItem))[-1]
+            images = list(assistant.query(ImageWidget))
+            assert len(images) == 1
+            assert images[0].image is not None
 
 
 class TestRegenerateCancellation:
@@ -1445,6 +1450,20 @@ class TestToolCallRendering:
                 ToolCallPart(tool_name="x", args="{}", tool_call_id="tc-x")
             )
             assert list(item.query(ToolCallItem)) == []
+
+    async def test_add_image_is_a_no_op_for_user_items(self, chat_model):
+        from textual_image.widget import Image as ImageWidget
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "user"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.add_image(b"\x89PNG\r\n")
+            assert list(item.query(ImageWidget)) == []
 
     async def test_expand_before_result_shows_only_args(self, chat_model):
         from pydantic_ai.messages import ToolCallPart
