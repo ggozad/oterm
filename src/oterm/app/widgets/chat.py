@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import binascii
+import json
 import time
 from collections.abc import AsyncGenerator
 from pathlib import Path
@@ -19,8 +20,20 @@ from pydantic_ai import (
     UserPromptPart,
 )
 from pydantic_ai.exceptions import ModelHTTPError
-from pydantic_ai.messages import ModelMessage, ThinkingPart
+from pydantic_ai.messages import (
+    BuiltinToolCallPart,
+    BuiltinToolReturnPart,
+    FilePart,
+    FunctionToolResultEvent,
+    ModelMessage,
+    ThinkingPart,
+    ToolCallPart,
+    ToolReturnPart,
+)
 from pydantic_ai.usage import RunUsage
+from rich.console import Group, RenderableType
+from rich.json import JSON
+from rich.text import Text
 from textual import on, work
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll
@@ -234,12 +247,19 @@ class ChatContainer(Widget):
 
     async def stream_agent(
         self, user_prompt: str | list[str | BinaryContent]
-    ) -> AsyncGenerator[tuple[str, str], Any]:
+    ) -> AsyncGenerator[
+        TextPartDelta
+        | ThinkingPartDelta
+        | FilePart
+        | ToolCallPart
+        | BuiltinToolCallPart
+        | ToolReturnPart
+        | BuiltinToolReturnPart,
+        Any,
+    ]:
         if self.agent is None:
             raise RuntimeError(self._agent_error or "Agent is not configured")
 
-        thinking = ""
-        text = ""
         self._stream_usage = RunUsage()
 
         async with self.agent.iter(
@@ -251,18 +271,39 @@ class ChatContainer(Widget):
                         async for event in request_stream:
                             if isinstance(event, PartStartEvent):
                                 if isinstance(event.part, ThinkingPart):
-                                    thinking += event.part.content or ""
+                                    if event.part.content:
+                                        yield ThinkingPartDelta(
+                                            content_delta=event.part.content
+                                        )
                                 elif isinstance(event.part, TextPart):
-                                    text += event.part.content or ""
-                            elif isinstance(event, PartDeltaEvent):
-                                if isinstance(event.delta, ThinkingPartDelta):
-                                    thinking += event.delta.content_delta or ""
+                                    if event.part.content:
+                                        yield TextPartDelta(
+                                            content_delta=event.part.content
+                                        )
+                                elif isinstance(event.part, FilePart):
+                                    yield event.part
                                 elif isinstance(
-                                    event.delta, TextPartDelta
+                                    event.part,
+                                    (
+                                        ToolCallPart,
+                                        BuiltinToolCallPart,
+                                        BuiltinToolReturnPart,
+                                    ),
                                 ):  # pragma: no branch
-                                    text += event.delta.content_delta or ""
-                                self._stream_usage = run.usage()
-                                yield thinking, text
+                                    yield event.part
+                            elif isinstance(event, PartDeltaEvent):
+                                if isinstance(
+                                    event.delta, (TextPartDelta, ThinkingPartDelta)
+                                ):  # pragma: no branch
+                                    self._stream_usage = run.usage()
+                                    yield event.delta
+                elif Agent.is_call_tools_node(node):
+                    async with node.stream(run.ctx) as tools_stream:
+                        async for event in tools_stream:
+                            if isinstance(
+                                event, FunctionToolResultEvent
+                            ) and isinstance(event.result, ToolReturnPart):
+                                yield event.result
             if run.result is not None:  # pragma: no branch
                 self.pydantic_history = list(run.result.all_messages())
                 self._stream_usage = run.result.usage()
@@ -304,11 +345,7 @@ class ChatContainer(Widget):
         message_container.scroll_end()
 
         try:
-            thinking = ""
             text = ""
-            prev_thinking = ""
-            prev_text = ""
-
             user_prompt, skipped = build_user_prompt(
                 message, [img for _, img in self.images]
             )
@@ -316,16 +353,20 @@ class ChatContainer(Widget):
                 self.app.notify(
                     f"Skipped {skipped} malformed image(s)", severity="warning"
                 )
-            async for thinking, text in self.stream_agent(user_prompt):
+            async for piece in self.stream_agent(user_prompt):
                 follow = _near_bottom(message_container)
-                t_delta = thinking[len(prev_thinking) :]
-                x_delta = text[len(prev_text) :]
-                prev_thinking = thinking
-                prev_text = text
-                if t_delta:
-                    await response_chat_item.append_thinking(t_delta)
-                if x_delta:
-                    await response_chat_item.append_text(x_delta)
+                match piece:
+                    case ThinkingPartDelta(content_delta=delta):
+                        await response_chat_item.append_thinking(delta or "")
+                    case TextPartDelta(content_delta=delta):
+                        text += delta
+                        await response_chat_item.append_text(delta)
+                    case ToolCallPart() | BuiltinToolCallPart():
+                        await response_chat_item.add_tool_call(piece)
+                    case ToolReturnPart() | BuiltinToolReturnPart():
+                        response_chat_item.update_tool_result(
+                            piece.tool_call_id, piece.content
+                        )
                 status.update_usage(
                     self._stream_usage.input_tokens,
                     self._stream_usage.output_tokens,
@@ -501,21 +542,27 @@ class ChatContainer(Widget):
                     self.app.notify(
                         f"Skipped {skipped} malformed image(s)", severity="warning"
                     )
-                async for thinking, text in self.stream_agent(user_prompt):
+                async for piece in self.stream_agent(user_prompt):
                     follow = _near_bottom(message_container)
-                    response_chat_item.thinking = thinking
-                    response_chat_item.text = text
+                    match piece:
+                        case ThinkingPartDelta(content_delta=delta):
+                            thinking += delta or ""
+                            response_chat_item.thinking = thinking
+                        case TextPartDelta(content_delta=delta):
+                            text += delta or ""
+                            response_chat_item.text = text
+                        case ToolCallPart() | BuiltinToolCallPart():
+                            await response_chat_item.add_tool_call(piece)
+                        case ToolReturnPart() | BuiltinToolReturnPart():
+                            response_chat_item.update_tool_result(
+                                piece.tool_call_id, piece.content
+                            )
                     status.update_usage(
                         self._stream_usage.input_tokens,
                         self._stream_usage.output_tokens,
                     )
                     if follow:  # pragma: no branch
                         message_container.scroll_end()
-
-                if not text:
-                    restore_state()
-                    self.app.notify("No response received", severity="error")
-                    return
 
                 status.update_usage(
                     self._stream_usage.input_tokens,
@@ -582,6 +629,90 @@ class ChatContainer(Widget):
         yield FlexibleInput("", id="prompt")
 
 
+_TOOL_TEXT_LIMIT = 1500
+_NO_RESULT = object()
+
+
+def _format_value(value: Any) -> RenderableType:
+    """Type-aware rendering of a tool arg or result for the expanded body."""
+    if isinstance(value, (dict, list)):
+        return JSON.from_data(value, indent=2)
+    if isinstance(value, str):
+        try:
+            return JSON.from_data(json.loads(value), indent=2)
+        except (json.JSONDecodeError, ValueError, TypeError):
+            return Text(_truncate(value, _TOOL_TEXT_LIMIT))
+    if value is None:
+        return Text("(none)", style="dim italic")
+    return Text(_truncate(repr(value), _TOOL_TEXT_LIMIT))
+
+
+def _format_field(label: str, value: Any) -> Group:
+    return Group(
+        Text(f"{label}:", style="bold cyan"),
+        _format_value(value),
+        Text(""),
+    )
+
+
+def _truncate(text: str, limit: int) -> str:
+    if len(text) <= limit:
+        return text
+    return text[:limit] + "…"
+
+
+class ToolCallItem(Widget):
+    """Expandable marker for an assistant tool invocation.
+
+    Header shows ``▸ tool call: <tool_name>`` (or ``▾`` when expanded). Body
+    shows the args as type-aware Rich content and, once available, the result.
+    """
+
+    collapsed: reactive[bool] = reactive(True)
+
+    def __init__(self, call: ToolCallPart | BuiltinToolCallPart, **kwargs: Any) -> None:
+        super().__init__(**kwargs)
+        self.tool_name = call.tool_name
+        self.tool_call_id = call.tool_call_id
+        self.args: str | dict[str, Any] | None = call.args
+        self.result: Any = _NO_RESULT
+
+    def compose(self) -> ComposeResult:
+        yield Static("", classes="tool-call-header")
+        yield Static("", classes="tool-call-body")
+
+    def on_mount(self) -> None:
+        self._refresh()
+
+    def set_result(self, content: Any) -> None:
+        self.result = content
+        self._refresh()
+
+    async def on_click(self, event: Click) -> None:
+        self.collapsed = not self.collapsed
+        event.stop()
+
+    def watch_collapsed(self) -> None:
+        self._refresh()
+
+    def _refresh(self) -> None:
+        try:
+            header = self.query_one(".tool-call-header", Static)
+            body = self.query_one(".tool-call-body", Static)
+        except NoMatches:  # pragma: no cover
+            return
+        arrow = "▸" if self.collapsed else "▾"
+        header.update(f"{arrow} tool call: {self.tool_name}")
+        if self.collapsed:
+            body.display = False
+            return
+        fields = [_format_field("args", self.args)]
+        if self.result is not _NO_RESULT:
+            fields.append(_format_field("result", self.result))
+        body.update(Group(*fields))
+        body.display = True
+
+
 class ChatItem(Widget):
     text: reactive[str] = reactive("")
     thinking: reactive[str] = reactive("")
@@ -592,6 +723,7 @@ class ChatItem(Widget):
         super().__init__(**kwargs)
         self._response_stream: MarkdownStream | None = None
         self._thinking_stream: MarkdownStream | None = None
+        self._tool_calls: dict[str, ToolCallItem] = {}
 
     @on(Click)
     async def on_click(self, event: Click) -> None:
@@ -626,13 +758,13 @@ class ChatItem(Widget):
             body.display = False
             return
         if not self.text:
-            label.update("Thinking…")
+            label.update("thinking…")
             body.display = True
         elif self.thoughts_collapsed:
-            label.update("▸ Thoughts")
+            label.update("▸ thoughts")
             body.display = False
         else:
-            label.update("▾ Thoughts")
+            label.update("▾ thoughts")
             body.display = True
 
     async def watch_text(self, text: str) -> None:
@@ -693,6 +825,25 @@ class ChatItem(Widget):
         if first_chunk:
             self._refresh_thinking_chrome()
         await self._thinking_stream.write(delta)
+
+    async def add_tool_call(self, call: ToolCallPart | BuiltinToolCallPart) -> None:
+        """Render an expandable tool-call marker before the response widget."""
+        if self.author == "user":
+            return
+        try:
+            response = self.query_one(".response", Markdown)
+        except NoMatches:  # pragma: no cover
+            return
+        item = ToolCallItem(call)
+        self._tool_calls[call.tool_call_id] = item
+        await self.mount(item, before=response)
+
+    def update_tool_result(self, tool_call_id: str, content: Any) -> None:
+        """Attach a tool result to a previously rendered tool-call marker."""
+        item = self._tool_calls.get(tool_call_id)
+        if item is None:  # pragma: no cover
+            return
+        item.set_result(content)
 
     async def finish_stream(self) -> None:
         """Drain and stop any active streams started by ``append_*``."""

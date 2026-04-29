@@ -78,6 +78,22 @@ ChatItem .thinking-body {
     display: none;
 }
 
+ChatItem ToolCallItem {
+    height: auto;
+    color: $text-muted;
+    text-style: italic;
+}
+
+ChatItem .tool-call-header {
+    height: 1;
+}
+
+ChatItem .tool-call-body {
+    height: auto;
+    padding-left: 2;
+    display: none;
+}
+
 #prompt {
     dock: bottom;
     height: auto;

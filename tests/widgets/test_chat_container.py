@@ -3,13 +3,24 @@ import base64
 from collections.abc import AsyncIterator
 from pathlib import Path
 
+import pytest
 from pydantic_ai import Agent
-from pydantic_ai.messages import ModelMessage
+from pydantic_ai.messages import ModelMessage, TextPartDelta
 from pydantic_ai.models.function import AgentInfo, FunctionModel
+from rich.console import Console
+from rich.json import JSON
+from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.widgets import Markdown
 
-from oterm.app.widgets.chat import ChatContainer, ChatItem, UsageStatus
+from oterm.app.widgets.chat import (
+    ChatContainer,
+    ChatItem,
+    ToolCallItem,
+    UsageStatus,
+    _format_value,
+    _truncate,
+)
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.types import ChatModel, MessageModel
 
@@ -361,7 +372,10 @@ class TestImages:
             async for chunk in container.stream_agent(user_prompt):
                 chunks.append(chunk)
 
-            assert chunks[-1] == ("", "ok response")
+            text = "".join(
+                p.content_delta for p in chunks if isinstance(p, TextPartDelta)
+            )
+            assert text == "ok response"
             await pilot.pause()
 
 
@@ -868,7 +882,7 @@ class TestThinkingCollapse:
             body = item.query_one(".thinking-body", Markdown)
             assert label.display is True
             assert body.display is True
-            assert "Thinking" in str(label.render())
+            assert "thinking" in str(label.render())
 
     async def test_thinking_collapses_when_response_starts(self, chat_model):
         app = _Host(chat_model, [])
@@ -891,7 +905,7 @@ class TestThinkingCollapse:
             assert label.display is True
             assert body.display is False
             assert "▸" in str(label.render())
-            assert "Thoughts" in str(label.render())
+            assert "thoughts" in str(label.render())
 
     async def test_thinking_stays_collapsed_on_further_thinking_deltas(
         self, chat_model
@@ -1283,6 +1297,110 @@ class TestThinkingViaResponseTask:
             assistant = items[-1]
             assert "weighing… options" in assistant.thinking
 
+    async def test_tool_call_renders_inside_assistant_item(self, store, chat_model):
+        from pydantic_ai import Tool
+        from pydantic_ai.models.function import DeltaToolCall
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        def echo(s: str) -> str:
+            return f"echoed: {s}"
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, DeltaToolCall]]:
+            already_called = any(
+                getattr(m, "parts", None)
+                and any(getattr(p, "part_kind", "") == "tool-return" for p in m.parts)
+                for m in messages
+            )
+            if already_called:
+                yield "all done"
+                return
+            yield {
+                0: DeltaToolCall(
+                    name="echo", json_args='{"s": "hi"}', tool_call_id="tc-1"
+                )
+            }
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = Agent(
+                FunctionModel(stream_function=stream_fn), tools=[Tool(echo)]
+            )
+
+            prompt = app.query_one(FlexibleInput)
+            prompt.text = "go"
+            await pilot.press("enter")
+            for _ in range(80):
+                await asyncio.sleep(0)
+                await pilot.pause()
+                if len(container.messages) == 2:
+                    break
+
+            from textual.widgets import Static
+
+            assistant = list(container.query(ChatItem))[-1]
+            tool_items = list(assistant.query(ToolCallItem))
+            assert len(tool_items) == 1
+            tool_item = tool_items[0]
+            assert tool_item.tool_name == "echo"
+            assert tool_item.tool_call_id == "tc-1"
+            assert tool_item.result == "echoed: hi"
+
+            header = tool_item.query_one(".tool-call-header", Static)
+            assert "▸ tool call: echo" in str(header.render())
+            # Click the tool-call to expand; args + result should land in body.
+            await pilot.click(ToolCallItem)
+            await pilot.pause()
+            body_text = _capture(tool_item.query_one(".tool-call-body", Static).content)
+            assert '"s": "hi"' in body_text
+            assert "echoed: hi" in body_text
+            assert "args:" in body_text
+            assert "result:" in body_text
+            assert "▾ tool call: echo" in str(header.render())
+
+    async def test_file_part_streamed_through_response_task(self, store, chat_model):
+        """A `FilePart` flows through `stream_agent` without breaking the text stream.
+
+        Phase A leaves `FilePart` unhandled by the consumer; this test pins that
+        behavior so the elif chain in `response_task` is exercised end-to-end.
+        Phase B will replace this with an `add_image`-style assertion.
+        """
+        from pydantic_ai.messages import BinaryImage, FilePart
+
+        from tests._stream_helpers import make_file_aware_agent
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | FilePart]:
+            yield "before "
+            yield FilePart(
+                content=BinaryImage(data=b"\x89PNG\r\n", media_type="image/png")
+            )
+            yield "after"
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = make_file_aware_agent(stream_fn)
+
+            prompt = app.query_one(FlexibleInput)
+            prompt.text = "draw"
+            await pilot.press("enter")
+            for _ in range(80):
+                await asyncio.sleep(0)
+                await pilot.pause()
+                if len(container.messages) == 2:
+                    break
+
+            assert container.messages[-1].text == "before after"
+
 
 class TestRegenerateCancellation:
     async def test_cancellation_restores_state(self, store, chat_model):
@@ -1313,6 +1431,82 @@ class TestRegenerateCancellation:
                     break
             assert container.messages[-1].text == "old"
             assert list(container.query(UsageStatus)) == []
+
+
+class TestToolCallHelpers:
+    def test_truncate_keeps_short_text(self):
+        assert _truncate("short", 10) == "short"
+
+    def test_truncate_appends_ellipsis(self):
+        assert _truncate("abcdefghij", 5) == "abcde…"
+
+    @pytest.mark.parametrize(
+        ("value", "expected_type", "expected_substring"),
+        [
+            ({"a": 1}, JSON, None),
+            ('{"a": 1}', JSON, None),
+            ("hello world", Text, "hello"),
+            (None, Text, "(none)"),
+            (42, Text, "42"),
+        ],
+    )
+    def test_format_value_dispatches_by_type(
+        self, value, expected_type, expected_substring
+    ):
+        rendered = _format_value(value)
+        assert isinstance(rendered, expected_type)
+        if expected_substring is not None:
+            assert expected_substring in rendered.plain
+
+
+class TestToolCallRendering:
+    async def test_add_tool_call_is_a_no_op_for_user_items(self, chat_model):
+        from pydantic_ai.messages import ToolCallPart
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "user"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.add_tool_call(
+                ToolCallPart(tool_name="x", args="{}", tool_call_id="tc-x")
+            )
+            assert list(item.query(ToolCallItem)) == []
+
+    async def test_expand_before_result_shows_only_args(self, chat_model):
+        from pydantic_ai.messages import ToolCallPart
+        from textual.widgets import Static
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.add_tool_call(
+                ToolCallPart(tool_name="search", args='{"q": "x"}', tool_call_id="tc-1")
+            )
+            tool_item = item.query_one(ToolCallItem)
+            tool_item.collapsed = False
+            await pilot.pause()
+
+            body_text = _capture(tool_item.query_one(".tool-call-body", Static).content)
+            assert '"q": "x"' in body_text
+            assert "args:" in body_text
+            assert "result:" not in body_text
+
+
+def _capture(renderable) -> str:
+    """Render a Rich renderable to plain text without ANSI styling."""
+    console = Console(width=80, color_system=None)
+    with console.capture() as capture:
+        console.print(renderable)
+    return capture.get()
 
 
 class TestUsageStatus:
