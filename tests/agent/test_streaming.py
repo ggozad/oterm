@@ -1,15 +1,21 @@
 import base64
 from collections.abc import AsyncIterator
 
-from pydantic_ai import Agent
+from pydantic_ai import Agent, Tool
 from pydantic_ai.messages import (
     BinaryImage,
     FilePart,
     ModelMessage,
     TextPartDelta,
     ThinkingPartDelta,
+    ToolCallPart,
 )
-from pydantic_ai.models.function import AgentInfo, DeltaThinkingPart, FunctionModel
+from pydantic_ai.models.function import (
+    AgentInfo,
+    DeltaThinkingPart,
+    DeltaToolCall,
+    FunctionModel,
+)
 
 from oterm.app.widgets.chat import ChatContainer
 from oterm.types import ChatModel
@@ -135,6 +141,37 @@ class TestFilePartStreaming:
         assert files[0].content.media_type == "image/png"
         text = "".join(p.content_delta for p in chunks if isinstance(p, TextPartDelta))
         assert text == "see this"
+
+
+class TestToolCallStreaming:
+    async def test_tool_call_part_yielded(self):
+        def echo(s: str) -> str:
+            return f"echoed: {s}"
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, DeltaToolCall]]:
+            already_called = any(
+                getattr(m, "parts", None)
+                and any(getattr(p, "part_kind", "") == "tool-return" for p in m.parts)
+                for m in messages
+            )
+            if already_called:
+                yield "done"
+                return
+            yield {
+                0: DeltaToolCall(
+                    name="echo", json_args='{"s": "hi"}', tool_call_id="tc-1"
+                )
+            }
+
+        c = _container()
+        c.agent = Agent(FunctionModel(stream_function=stream_fn), tools=[Tool(echo)])
+
+        chunks = await _collect(c.stream_agent("call it"))
+        tool_calls = [p for p in chunks if isinstance(p, ToolCallPart)]
+        assert len(tool_calls) == 1
+        assert tool_calls[0].tool_name == "echo"
 
 
 class TestHistoryUpdate:
