@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- **Render assistant-emitted images inline.** When a model returns a `FilePart` during streaming, the image renders between the thinking section and the response, persists alongside the assistant message in the chat store, and reappears on chat reload. Works with Google Gemini image-preview models out of the box.
+- **New `openai-responses` provider.** Routes through pydantic-ai's `OpenAIResponsesModel` and enables the `ImageGenerationTool` builtin on every Agent built for it. Pick "OpenAI Responses" in the chat-edit modal, choose a Responses-compatible model (e.g. `gpt-5.4`), and image generation is implicit — no per-chat toggle. Reuses `OPENAI_API_KEY` and the existing OpenAI model lister.
+
+### Fixed
+
+- **Suppress duplicate `FilePart` yields.** OpenAI Responses' `image_generation` streaming emits the same image twice — once as a partial event and again on completion — under one vendor part id. `stream_agent` now tracks seen `FilePart.id`s and drops repeats so the assistant ChatItem mounts the image once.
+
 ## [0.16.0] - 2026-04-29
 
 ### Added

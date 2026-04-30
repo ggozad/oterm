@@ -8,12 +8,16 @@ from pydantic_ai.models.google import GoogleModelSettings
 from pydantic_ai.models.groq import GroqModelSettings
 from pydantic_ai.models.huggingface import HuggingFaceModelSettings
 from pydantic_ai.models.mistral import MistralModelSettings
-from pydantic_ai.models.openai import OpenAIChatModelSettings
+from pydantic_ai.models.openai import (
+    OpenAIChatModelSettings,
+    OpenAIResponsesModelSettings,
+)
 from pydantic_ai.settings import ModelSettings
 
 PROVIDER_SETTINGS_TYPE: dict[str, type] = {
     "ollama": OpenAIChatModelSettings,
     "openai": OpenAIChatModelSettings,
+    "openai-responses": OpenAIResponsesModelSettings,
     "deepseek": OpenAIChatModelSettings,
     "grok": OpenAIChatModelSettings,
     "anthropic": AnthropicModelSettings,

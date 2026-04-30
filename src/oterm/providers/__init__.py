@@ -6,6 +6,7 @@ from oterm.utils import expand_env_vars
 PROVIDER_ENV_VARS: dict[str, list[str]] = {
     "ollama": [],
     "openai": ["OPENAI_API_KEY"],
+    "openai-responses": ["OPENAI_API_KEY"],
     "anthropic": ["ANTHROPIC_API_KEY"],
     "google-gla": ["GOOGLE_API_KEY"],
     "google-vertex": ["GOOGLE_APPLICATION_CREDENTIALS"],
@@ -22,6 +23,7 @@ PROVIDER_ENV_VARS: dict[str, list[str]] = {
 PROVIDER_NAMES: dict[str, str] = {
     "ollama": "Ollama",
     "openai": "OpenAI",
+    "openai-responses": "OpenAI Responses",
     "anthropic": "Anthropic",
     "google-gla": "Google AI",
     "google-vertex": "Google Vertex AI",
@@ -154,6 +156,7 @@ def _list_cohere() -> list[str] | None:
 
 _NATIVE_LISTERS: dict[str, Callable[[], list[str] | None]] = {
     "openai": _list_openai,
+    "openai-responses": _list_openai,
     "anthropic": _list_anthropic,
     "google-gla": _list_google_gla,
     "mistral": _list_mistral,
