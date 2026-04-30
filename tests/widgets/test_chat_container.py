@@ -1507,6 +1507,123 @@ class TestToolCallRendering:
             await item.add_image(b"\x89PNG\r\n")
             assert list(item.query(ImageWidget)) == []
 
+    async def test_clicking_assistant_image_saves_it_to_disk(
+        self, chat_model, tmp_path, monkeypatch
+    ):
+        from io import BytesIO
+
+        from PIL import Image as PILImage
+        from textual_image.widget import Image as ImageWidget
+
+        import oterm.config
+
+        monkeypatch.setattr(oterm.config.envConfig, "OTERM_DATA_DIR", tmp_path)
+
+        buf = BytesIO()
+        PILImage.new("RGB", (4, 4), "lime").save(buf, format="PNG")
+        png_bytes = buf.getvalue()
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.add_image(png_bytes)
+            await pilot.pause()
+            assistant_image = item.query_one(".assistantImage", ImageWidget)
+            await item._save_assistant_image(assistant_image)
+            await pilot.pause()
+
+            saved = list((tmp_path / "downloads").iterdir())
+            assert len(saved) == 1
+            assert saved[0].read_bytes() == png_bytes
+            assert saved[0].suffix == ".png"
+            assert any("Image saved" in n.message for n in _notifications(app))
+
+    async def test_jpeg_assistant_image_saves_with_jpg_extension(
+        self, chat_model, tmp_path, monkeypatch
+    ):
+        from io import BytesIO
+
+        from PIL import Image as PILImage
+        from textual_image.widget import Image as ImageWidget
+
+        import oterm.config
+
+        monkeypatch.setattr(oterm.config.envConfig, "OTERM_DATA_DIR", tmp_path)
+
+        buf = BytesIO()
+        PILImage.new("RGB", (4, 4), "orange").save(buf, format="JPEG")
+        jpg_bytes = buf.getvalue()
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.add_image(jpg_bytes)
+            await pilot.pause()
+            await item._save_assistant_image(
+                item.query_one(".assistantImage", ImageWidget)
+            )
+
+            saved = list((tmp_path / "downloads").iterdir())
+            assert len(saved) == 1
+            assert saved[0].suffix == ".jpg"
+
+    async def test_chat_item_click_on_image_dispatches_save(
+        self, chat_model, tmp_path, monkeypatch
+    ):
+        from io import BytesIO
+
+        from PIL import Image as PILImage
+        from textual.events import Click
+        from textual_image.widget import Image as ImageWidget
+
+        import oterm.config
+
+        monkeypatch.setattr(oterm.config.envConfig, "OTERM_DATA_DIR", tmp_path)
+
+        buf = BytesIO()
+        PILImage.new("RGB", (4, 4), "navy").save(buf, format="PNG")
+        png_bytes = buf.getvalue()
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.add_image(png_bytes)
+            await pilot.pause()
+            assistant_image = item.query_one(".assistantImage", ImageWidget)
+
+            click = Click(
+                widget=assistant_image,
+                x=0,
+                y=0,
+                delta_x=0,
+                delta_y=0,
+                button=1,
+                shift=False,
+                meta=False,
+                ctrl=False,
+            )
+            await item.on_click(click)
+            await pilot.pause()
+
+            saved = list((tmp_path / "downloads").iterdir())
+            assert len(saved) == 1
+            assert saved[0].read_bytes() == png_bytes
+
     async def test_expand_before_result_shows_only_args(self, chat_model):
         from pydantic_ai.messages import ToolCallPart
         from textual.widgets import Static
@@ -1553,6 +1670,19 @@ class TestUsageStatus:
             assert "↑" not in rendered
             assert "↓" not in rendered
             assert rendered.endswith("s")
+
+    async def test_tick_advances_spinner_frame(self, chat_model):
+        """Direct call so we don't depend on the 0.1s timer firing in time."""
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            status = UsageStatus()
+            await container.query_one("#messageContainer").mount(status)
+            await pilot.pause()
+
+            before = status._frame
+            status._tick()
+            assert status._frame == (before + 1) % len(UsageStatus.SPINNER_FRAMES)
 
     async def test_update_usage_renders_token_arrows(self, chat_model):
         app = _Host(chat_model, [])
