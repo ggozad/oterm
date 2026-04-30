@@ -765,6 +765,9 @@ class ChatItem(Widget):
                 return
             if cur.has_class("thinking-body"):
                 return
+            if cur.has_class("assistantImage"):
+                await self._save_assistant_image(cur)
+                return
             cur = cur.parent  # ty: ignore[invalid-assignment]
 
         self.app.copy_to_clipboard(self.text)
@@ -876,7 +879,11 @@ class ChatItem(Widget):
         item.set_result(content)
 
     async def add_image(self, data: bytes) -> None:
-        """Render an image emitted by the assistant before the response widget."""
+        """Render an image emitted by the assistant before the response widget.
+
+        Stashes the source bytes on the widget so a later click can save them
+        to disk via ``_save_assistant_image``.
+        """
         if self.author == "user":
             return
         try:
@@ -887,9 +894,26 @@ class ChatItem(Widget):
             pil_image = PILImage.open(BytesIO(data))
         except UnidentifiedImageError:  # pragma: no cover
             return
-        await self.mount(
-            TerminalImage(pil_image, classes="assistantImage"), before=response
-        )
+        widget = TerminalImage(pil_image, classes="assistantImage")
+        widget.image_bytes = data  # ty: ignore[invalid-assignment]
+        widget.image_format = pil_image.format  # ty: ignore[invalid-assignment]
+        await self.mount(widget, before=response)
+
+    async def _save_assistant_image(self, image: Widget) -> None:
+        """Write an assistant-emitted image to ``$OTERM_DATA_DIR/downloads``."""
+        from oterm.config import envConfig
+
+        data = getattr(image, "image_bytes", None)
+        if data is None:  # pragma: no cover
+            return
+        fmt = (getattr(image, "image_format", None) or "png").lower()
+        if fmt == "jpeg":
+            fmt = "jpg"
+        dest_dir = envConfig.OTERM_DATA_DIR / "downloads"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        path = dest_dir / f"oterm-image-{int(time.time() * 1000)}.{fmt}"
+        path.write_bytes(data)
+        self.app.notify(f"Image saved to {path}")
 
     async def finish_stream(self) -> None:
         """Drain and stop any active streams started by ``append_*``."""
