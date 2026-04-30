@@ -2,7 +2,8 @@ from typing import Any
 
 from pydantic_ai import Agent
 from pydantic_ai import Tool as PydanticTool
-from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.builtin_tools import AbstractBuiltinTool, ImageGenerationTool
+from pydantic_ai.models.openai import OpenAIChatModel, OpenAIResponsesModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import AbstractToolset
@@ -50,7 +51,8 @@ def get_agent(
     parameters: dict[str, Any] | None = None,
     thinking: bool = False,
 ) -> Agent[None, str]:
-    pydantic_model: OpenAIChatModel | str
+    pydantic_model: OpenAIChatModel | OpenAIResponsesModel | str
+    builtin_tools: list[AbstractBuiltinTool] = []
     if provider == "ollama":
         pydantic_model = OpenAIChatModel(
             model_name=model,
@@ -59,6 +61,9 @@ def get_agent(
                 api_key=envConfig.OLLAMA_API_KEY or "ollama",
             ),
         )
+    elif provider == "openai-responses":
+        pydantic_model = OpenAIResponsesModel(model_name=model)
+        builtin_tools.append(ImageGenerationTool())
     elif provider.startswith("openai-compat/"):
         from oterm.providers import (
             UNRESOLVED_API_KEY,
@@ -89,6 +94,7 @@ def get_agent(
         instructions=system,
         tools=tools or [],
         toolsets=toolsets or [],
+        builtin_tools=builtin_tools,
         model_settings=_build_model_settings(parameters, thinking, provider),
     )
     return agent

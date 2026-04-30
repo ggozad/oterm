@@ -96,8 +96,7 @@ ChatItem .tool-call-body {
 
 ChatItem .assistantImage {
     width: auto;
-    height: auto;
-    max-height: 20;
+    height: 30;
     margin: 1 0;
 }
 

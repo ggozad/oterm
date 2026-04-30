@@ -265,6 +265,11 @@ class ChatContainer(Widget):
             raise RuntimeError(self._agent_error or "Agent is not configured")
 
         self._stream_usage = RunUsage()
+        # Some providers (notably OpenAI Responses image_generation) emit the
+        # same image twice — once as a partial-image event and once when the
+        # call completes — under the same vendor part id. Dedupe by FilePart.id
+        # so callers don't have to.
+        seen_file_ids: set[str] = set()
 
         async with self.agent.iter(
             user_prompt, message_history=self.pydantic_history
@@ -285,6 +290,10 @@ class ChatContainer(Widget):
                                             content_delta=event.part.content
                                         )
                                 elif isinstance(event.part, FilePart):
+                                    if event.part.id and event.part.id in seen_file_ids:
+                                        continue
+                                    if event.part.id:
+                                        seen_file_ids.add(event.part.id)
                                     yield event.part
                                 elif isinstance(
                                     event.part,

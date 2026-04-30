@@ -94,7 +94,7 @@ def _supports_vision(provider: str, model: str) -> bool:
             or "claude-sonnet-4" in model
             or "claude-haiku-4" in model
         )
-    if provider == "openai":
+    if provider in ("openai", "openai-responses"):
         return any(
             model.startswith(p)
             for p in ("gpt-4o", "gpt-4-turbo", "gpt-4.1", "gpt-5", "o1", "o3", "o4")
