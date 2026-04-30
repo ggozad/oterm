@@ -9,6 +9,7 @@
 - **Welcome screen on first launch.** Replaces the auto-opened "new chat" modal that fired on an empty store, which could swallow the user's first chat if they typed before it appeared.
 - **Streaming pipeline now yields message parts.** `ChatContainer.stream_agent` emits `TextPartDelta | ThinkingPartDelta | FilePart | ToolCallPart | BuiltinToolCallPart | ToolReturnPart | BuiltinToolReturnPart` instead of `(thinking, text)` tuples. Consumers `match` on shape; tool calls and tool returns are surfaced from `CallToolsNode` as well as `ModelRequestNode`. Image-emitting models can now plug in without a parallel code path.
 - **Assistant tool calls render inline as expandable entries.** A `▸ tool call: <name>` line appears between thinking and the response; clicking expands it to show the args and (once the tool returns) the result. Args render type-aware: dicts/lists and JSON-parseable strings as syntax-highlighted Rich JSON, plain strings preserving newlines (truncated), `None` as dim `(none)`.
+- **Android support.** `system_paths` in utils.py was previously missing a data directory for Android and so failed. [choimadeleine]
 
 ### Changed
 

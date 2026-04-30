@@ -178,6 +178,19 @@ class TestGetDefaultDataDir:
         path = get_default_data_dir()
         assert path == tmp_path / "xdg" / "oterm"
 
+    def test_android_default(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(sys, "platform", "android")
+        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+        monkeypatch.setenv("HOME", str(tmp_path))
+        path = get_default_data_dir()
+        assert str(path).endswith(".local/share/oterm")
+
+    def test_android_respects_xdg(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(sys, "platform", "android")
+        monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg"))
+        path = get_default_data_dir()
+        assert path == tmp_path / "xdg" / "oterm"
+
     def test_windows(self, monkeypatch, tmp_path):
         monkeypatch.setattr(sys, "platform", "win32")
         monkeypatch.setenv("USERPROFILE", str(tmp_path))

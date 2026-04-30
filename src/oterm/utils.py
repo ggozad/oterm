@@ -109,7 +109,7 @@ def get_default_data_dir() -> Path:
     """
     Get the user data directory for the current system platform.
 
-    Linux: ~/.local/share/oterm
+    Linux/Android: ~/.local/share/oterm
     macOS: ~/Library/Application Support/oterm
     Windows: C:/Users/<USER>/AppData/Roaming/oterm
 
@@ -125,6 +125,8 @@ def get_default_data_dir() -> Path:
         "darwin": Path(
             os.getenv("XDG_DATA_HOME") or Path(home / "Library/Application Support")
         )
+        / "oterm",
+        "android": Path(os.getenv("XDG_DATA_HOME") or Path(home / ".local/share"))
         / "oterm",
     }
 
