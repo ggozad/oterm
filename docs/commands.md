@@ -51,3 +51,6 @@ For most terminals there exists a key modifier you can use to click and drag to 
 
 ![Image selection](./img/image_selection.png)
 The image selection interface.
+
+![Assistant-emitted image](./img/image_support.png)
+Images returned by the model are rendered inline in the chat. Click an image to save it to disk.
