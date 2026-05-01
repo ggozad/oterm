@@ -1,4 +1,8 @@
+from datetime import datetime
+from pathlib import Path
+
 from textual.app import ComposeResult
+from textual.binding import Binding
 from textual.containers import Container
 from textual.reactive import reactive
 from textual.screen import ModalScreen
@@ -12,17 +16,20 @@ class LogViewer(ModalScreen[str]):
     line_count: reactive[int] = reactive(0)
 
     BINDINGS = [
-        ("escape", "cancel", "Cancel"),
-        ("ctrl+s", "save_logs", "Save logs"),
+        Binding("escape", "cancel", "Cancel"),
+        Binding("ctrl+s", "save_logs", "Save logs", priority=True),
     ]
 
     def action_cancel(self) -> None:
         self.dismiss()
 
     def action_save_logs(self) -> None:
-        from oterm.app.log_export import LogExport
-
-        self.app.push_screen(LogExport())
+        timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+        path = Path.cwd() / f"oterm-logs-{timestamp}.txt"
+        with path.open("w", encoding="utf-8") as file:
+            for group, line in log_lines:
+                file.write(f"[{group.name}] {line}\n")
+        self.notify(f"Logs exported to {path}")
 
     @debounce(0.5)
     async def log_update(self) -> None:
