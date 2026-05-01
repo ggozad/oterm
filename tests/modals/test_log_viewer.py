@@ -41,7 +41,21 @@ async def test_new_log_lines_are_written(monkeypatch):
         assert len(widget.lines) >= 2
 
 
-async def test_ctrl_s_writes_log_file(monkeypatch, tmp_path):
+async def test_log_viewer_shows_save_hint():
+    from textual.widgets import Label
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        screen = LogViewer()
+        app.push_screen(screen)
+        await pilot.pause()
+        labels = [str(label.content) for label in screen.query(Label)]
+        assert any("s" in text and "save" in text.lower() for text in labels), (
+            f"expected a hint mentioning 's' and 'save'; got {labels}"
+        )
+
+
+async def test_save_logs_writes_log_file(monkeypatch, tmp_path):
     import oterm.app.log_viewer as lv
     from oterm.log import LogGroup
 
@@ -56,7 +70,7 @@ async def test_ctrl_s_writes_log_file(monkeypatch, tmp_path):
     async with app.run_test() as pilot:
         app.push_screen(LogViewer())
         await pilot.pause()
-        await pilot.press("ctrl+s")
+        await pilot.press("s")
         await pilot.pause()
 
     files = list(tmp_path.glob("oterm-logs-*.txt"))
@@ -64,7 +78,7 @@ async def test_ctrl_s_writes_log_file(monkeypatch, tmp_path):
     assert files[0].read_text(encoding="utf-8") == "[INFO] hello\n[ERROR] boom\n"
 
 
-async def test_ctrl_s_emits_notification(monkeypatch, tmp_path):
+async def test_save_logs_emits_notification(monkeypatch, tmp_path):
     import oterm.app.log_viewer as lv
     from oterm.log import LogGroup
 
@@ -83,7 +97,7 @@ async def test_ctrl_s_emits_notification(monkeypatch, tmp_path):
     async with app.run_test() as pilot:
         app.push_screen(LogViewer())
         await pilot.pause()
-        await pilot.press("ctrl+s")
+        await pilot.press("s")
         await pilot.pause()
 
     assert any("Logs exported to" in n for n in notifications), notifications

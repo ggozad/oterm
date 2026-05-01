@@ -2,7 +2,6 @@ from datetime import datetime
 from pathlib import Path
 
 from textual.app import ComposeResult
-from textual.binding import Binding
 from textual.containers import Container
 from textual.reactive import reactive
 from textual.screen import ModalScreen
@@ -16,8 +15,8 @@ class LogViewer(ModalScreen[str]):
     line_count: reactive[int] = reactive(0)
 
     BINDINGS = [
-        Binding("escape", "cancel", "Cancel"),
-        Binding("ctrl+s", "save_logs", "Save logs", priority=True),
+        ("escape", "cancel", "Cancel"),
+        ("s", "save_logs", "Save logs"),
     ]
 
     def action_cancel(self) -> None:
@@ -52,3 +51,4 @@ class LogViewer(ModalScreen[str]):
                 auto_scroll=True,
                 wrap=True,
             )
+            yield Label("[dim]press [b]s[/b] to save logs to disk[/dim]")
