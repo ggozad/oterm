@@ -101,3 +101,59 @@ async def test_save_logs_emits_notification(monkeypatch, tmp_path):
         await pilot.pause()
 
     assert any("Logs exported to" in n for n in notifications), notifications
+
+
+async def test_rapid_double_save_creates_two_files(monkeypatch, tmp_path):
+    import oterm.app.log_viewer as lv
+    from oterm.log import LogGroup
+
+    monkeypatch.setattr(lv, "log_lines", [(LogGroup.INFO, "x")])
+    monkeypatch.chdir(tmp_path)
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        app.push_screen(LogViewer())
+        await pilot.pause()
+        await pilot.press("s")
+        await pilot.pause()
+        await pilot.press("s")
+        await pilot.pause()
+
+    files = sorted(tmp_path.glob("oterm-logs-*.txt"))
+    assert len(files) == 2, f"expected two distinct log files, found {files}"
+
+
+async def test_save_logs_handles_oserror(monkeypatch, tmp_path):
+    import oterm.app.log_viewer as lv
+    from oterm.log import LogGroup
+
+    monkeypatch.setattr(lv, "log_lines", [(LogGroup.INFO, "x")])
+    monkeypatch.chdir(tmp_path)
+
+    def _raise(*args, **kwargs):
+        raise PermissionError("read-only filesystem")
+
+    monkeypatch.setattr(lv.Path, "open", _raise)
+
+    notifications: list[tuple[str, dict]] = []
+
+    class _NotifyHost(_Host):
+        def notify(self, message, *args, **kwargs):
+            notifications.append((message, kwargs))
+            return super().notify(message, *args, **kwargs)
+
+    app = _NotifyHost()
+    async with app.run_test() as pilot:
+        app.push_screen(LogViewer())
+        await pilot.pause()
+        await pilot.press("s")
+        await pilot.pause()
+
+    assert list(tmp_path.glob("oterm-logs-*.txt")) == []
+    error_notifs = [
+        (msg, kw) for msg, kw in notifications if kw.get("severity") == "error"
+    ]
+    assert len(error_notifs) == 1, (
+        f"expected one error notification, got {notifications}"
+    )
+    assert "Failed to export" in error_notifs[0][0]
