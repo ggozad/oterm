@@ -24,6 +24,7 @@ from pydantic_ai import (
 )
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import (
+    BinaryImage,
     BuiltinToolCallPart,
     BuiltinToolReturnPart,
     FilePart,
@@ -58,6 +59,7 @@ from oterm.app.chat_rename import ChatRename
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import IMAGE_TOKEN_RE, FlexibleInput, PostableTextArea
+from oterm.config import envConfig
 from oterm.store.store import Store
 from oterm.tools import builtin_tools
 from oterm.tools.mcp.setup import mcp_servers, mcp_tool_meta
@@ -386,9 +388,7 @@ class ChatContainer(Widget):
                         response_chat_item.update_tool_result(
                             piece.tool_call_id, piece.content
                         )
-                    case FilePart(
-                        content=BinaryContent(data=data)
-                    ):  # pragma: no branch
+                    case FilePart(content=BinaryImage(data=data)):
                         await response_chat_item.add_image(data)
                         assistant_images.append(base64.b64encode(data).decode())
                 status.update_usage(
@@ -582,9 +582,7 @@ class ChatContainer(Widget):
                             response_chat_item.update_tool_result(
                                 piece.tool_call_id, piece.content
                             )
-                        case FilePart(  # pragma: no branch
-                            content=BinaryContent(data=data)
-                        ):
+                        case FilePart(content=BinaryImage(data=data)):
                             await response_chat_item.add_image(data)
                             assistant_images.append(base64.b64encode(data).decode())
                     status.update_usage(
@@ -691,6 +689,19 @@ def _truncate(text: str, limit: int) -> str:
     return text[:limit] + "…"
 
 
+class AssistantImage(
+    TerminalImage,  # ty: ignore[unsupported-base]
+    Renderable=TerminalImage._Renderable,
+):
+    """Inline image emitted by the assistant, retaining its source bytes so
+    a click can later write them to disk."""
+
+    def __init__(self, pil_image: PILImage.Image, data: bytes) -> None:
+        super().__init__(pil_image, classes="assistantImage")
+        self.image_bytes = data
+        self.image_format = (pil_image.format or "PNG").lower()
+
+
 class ToolCallItem(Widget):
     """Expandable marker for an assistant tool invocation.
 
@@ -765,7 +776,7 @@ class ChatItem(Widget):
                 return
             if cur.has_class("thinking-body"):
                 return
-            if cur.has_class("assistantImage"):
+            if isinstance(cur, AssistantImage):
                 await self._save_assistant_image(cur)
                 return
             cur = cur.parent  # ty: ignore[invalid-assignment]
@@ -879,11 +890,8 @@ class ChatItem(Widget):
         item.set_result(content)
 
     async def add_image(self, data: bytes) -> None:
-        """Render an image emitted by the assistant before the response widget.
-
-        Stashes the source bytes on the widget so a later click can save them
-        to disk via ``_save_assistant_image``.
-        """
+        """Source bytes are retained on the widget so a later click in
+        ``on_click`` can dispatch to ``_save_assistant_image``."""
         if self.author == "user":
             return
         try:
@@ -894,25 +902,14 @@ class ChatItem(Widget):
             pil_image = PILImage.open(BytesIO(data))
         except UnidentifiedImageError:  # pragma: no cover
             return
-        widget = TerminalImage(pil_image, classes="assistantImage")
-        widget.image_bytes = data  # ty: ignore[invalid-assignment]
-        widget.image_format = pil_image.format  # ty: ignore[invalid-assignment]
-        await self.mount(widget, before=response)
+        await self.mount(AssistantImage(pil_image, data), before=response)
 
-    async def _save_assistant_image(self, image: Widget) -> None:
-        """Write an assistant-emitted image to ``$OTERM_DATA_DIR/downloads``."""
-        from oterm.config import envConfig
-
-        data = getattr(image, "image_bytes", None)
-        if data is None:  # pragma: no cover
-            return
-        fmt = (getattr(image, "image_format", None) or "png").lower()
-        if fmt == "jpeg":
-            fmt = "jpg"
+    async def _save_assistant_image(self, image: AssistantImage) -> None:
+        fmt = "jpg" if image.image_format == "jpeg" else image.image_format
         dest_dir = envConfig.OTERM_DATA_DIR / "downloads"
         dest_dir.mkdir(parents=True, exist_ok=True)
         path = dest_dir / f"oterm-image-{int(time.time() * 1000)}.{fmt}"
-        path.write_bytes(data)
+        path.write_bytes(image.image_bytes)
         self.app.notify(f"Image saved to {path}")
 
     async def finish_stream(self) -> None:
