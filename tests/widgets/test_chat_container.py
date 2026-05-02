@@ -1388,6 +1388,77 @@ class TestThinkingViaResponseTask:
             assistant_rows = [m for m in stored if m.role == "assistant"]
             assert len(assistant_rows[0].images) == 1
 
+    async def test_non_image_file_part_is_ignored_on_stream(self, store, chat_model):
+        """Audio/document FileParts are silently dropped — no widget, no persist."""
+        from pydantic_ai.messages import BinaryContent, FilePart
+        from textual_image.widget import Image as ImageWidget
+
+        from tests._stream_helpers import make_file_aware_agent
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | FilePart]:
+            yield "before "
+            yield FilePart(
+                content=BinaryContent(data=b"ID3\x04audio", media_type="audio/mp3")
+            )
+            yield "after"
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = make_file_aware_agent(stream_fn)
+
+            prompt = app.query_one(FlexibleInput)
+            prompt.text = "say hi"
+            await pilot.press("enter")
+            await wait_until(pilot, lambda: len(container.messages) == 2)
+
+            assert container.messages[-1].text == "before after"
+            assistant = list(container.query(ChatItem))[-1]
+            assert list(assistant.query(ImageWidget)) == []
+            assert container.messages[-1].images == []
+
+    async def test_non_image_file_part_is_ignored_on_regenerate(
+        self, store, chat_model
+    ):
+        from pydantic_ai.messages import BinaryContent, FilePart
+        from textual_image.widget import Image as ImageWidget
+
+        from tests._stream_helpers import make_file_aware_agent
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="ask")
+        user_msg.id = await store.save_message(user_msg)
+        old = MessageModel(chat_id=chat_id, role="assistant", text="old")
+        old.id = await store.save_message(old)
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | FilePart]:
+            yield "regen "
+            yield FilePart(
+                content=BinaryContent(data=b"%PDF-1.4", media_type="application/pdf")
+            )
+            yield "done"
+
+        app = _Host(chat_model, [user_msg, old])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = make_file_aware_agent(stream_fn)
+
+            await container.action_regenerate_llm_message()
+            await wait_until(pilot, lambda: container.messages[-1].text == "regen done")
+
+            assistant = list(container.query(ChatItem))[-1]
+            assert list(assistant.query(ImageWidget)) == []
+            assert container.messages[-1].images == []
+
     async def test_persisted_assistant_image_renders_on_load(self, store, chat_model):
         from io import BytesIO
 
@@ -1513,9 +1584,9 @@ class TestToolCallRendering:
         from io import BytesIO
 
         from PIL import Image as PILImage
-        from textual_image.widget import Image as ImageWidget
 
         import oterm.config
+        from oterm.app.widgets.chat import AssistantImage
 
         monkeypatch.setattr(oterm.config.envConfig, "OTERM_DATA_DIR", tmp_path)
 
@@ -1533,7 +1604,7 @@ class TestToolCallRendering:
 
             await item.add_image(png_bytes)
             await pilot.pause()
-            assistant_image = item.query_one(".assistantImage", ImageWidget)
+            assistant_image = item.query_one(AssistantImage)
             await item._save_assistant_image(assistant_image)
             await pilot.pause()
 
@@ -1549,9 +1620,9 @@ class TestToolCallRendering:
         from io import BytesIO
 
         from PIL import Image as PILImage
-        from textual_image.widget import Image as ImageWidget
 
         import oterm.config
+        from oterm.app.widgets.chat import AssistantImage
 
         monkeypatch.setattr(oterm.config.envConfig, "OTERM_DATA_DIR", tmp_path)
 
@@ -1569,9 +1640,7 @@ class TestToolCallRendering:
 
             await item.add_image(jpg_bytes)
             await pilot.pause()
-            await item._save_assistant_image(
-                item.query_one(".assistantImage", ImageWidget)
-            )
+            await item._save_assistant_image(item.query_one(AssistantImage))
 
             saved = list((tmp_path / "downloads").iterdir())
             assert len(saved) == 1
@@ -1584,9 +1653,9 @@ class TestToolCallRendering:
 
         from PIL import Image as PILImage
         from textual.events import Click
-        from textual_image.widget import Image as ImageWidget
 
         import oterm.config
+        from oterm.app.widgets.chat import AssistantImage
 
         monkeypatch.setattr(oterm.config.envConfig, "OTERM_DATA_DIR", tmp_path)
 
@@ -1604,7 +1673,7 @@ class TestToolCallRendering:
 
             await item.add_image(png_bytes)
             await pilot.pause()
-            assistant_image = item.query_one(".assistantImage", ImageWidget)
+            assistant_image = item.query_one(AssistantImage)
 
             click = Click(
                 widget=assistant_image,
