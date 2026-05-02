@@ -111,6 +111,26 @@ class TestGetAgent:
             str(agent.model.client.base_url).rstrip("/") == "http://localhost:11434/v1"
         )
 
+    def test_ollama_provider_w_api_key(self, monkeypatch):
+        import oterm.config
+        OLLAMA_URL = "https://ollama.example.com"
+        OLLAMA_API_KEY = "TEST_KEY"
+
+        monkeypatch.setattr(
+            oterm.config.envConfig, "OLLAMA_URL", OLLAMA_URL,
+        )
+        monkeypatch.setattr(
+            oterm.config.envConfig, "OLLAMA_API_KEY", OLLAMA_API_KEY
+        )
+        agent = get_agent(provider="ollama", model="llama3")
+        assert isinstance(agent, Agent)
+        assert isinstance(agent.model, OpenAIChatModel)
+        assert isinstance(agent.model._provider, OpenAIProvider)
+        assert (
+            str(agent.model.client.base_url).rstrip("/") == f"{OLLAMA_URL}/v1"
+        )
+        assert agent.model.client.api_key == OLLAMA_API_KEY
+
     def test_openai_compat_missing_endpoint_raises(self, app_config):
         with pytest.raises(ValueError, match="not configured"):
             get_agent(provider="openai-compat/ghost", model="x")
