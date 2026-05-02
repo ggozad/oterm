@@ -1,3 +1,6 @@
+from datetime import datetime
+from pathlib import Path
+
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.reactive import reactive
@@ -13,10 +16,25 @@ class LogViewer(ModalScreen[str]):
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
+        ("s", "save_logs", "Save logs"),
     ]
 
     def action_cancel(self) -> None:
         self.dismiss()
+
+    def action_save_logs(self) -> None:
+        timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S-%f")
+        path = Path.cwd() / f"oterm-logs-{timestamp}.txt"
+        try:
+            with path.open("w", encoding="utf-8") as file:
+                for group, line in log_lines:
+                    file.write(f"[{group.name}] {line}\n")
+        except OSError as error:
+            self.app.notify(
+                f"Failed to export logs to {path}: {error}", severity="error"
+            )
+            return
+        self.app.notify(f"Logs exported to {path}")
 
     @debounce(0.5)
     async def log_update(self) -> None:
@@ -39,3 +57,4 @@ class LogViewer(ModalScreen[str]):
                 auto_scroll=True,
                 wrap=True,
             )
+            yield Label("[dim]press [b]s[/b] to save logs to disk[/dim]")
