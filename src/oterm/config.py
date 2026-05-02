@@ -13,6 +13,8 @@ load_dotenv()
 class EnvConfig(BaseModel):
     OLLAMA_HOST: str = "127.0.0.1:11434"
     OLLAMA_URL: str = ""
+    # API key required for 'ollama.com' cloud models
+    OLLAMA_API_KEY: str | None = None
     OTERM_VERIFY_SSL: bool = True
     OTERM_DATA_DIR: Path = get_default_data_dir()
 
