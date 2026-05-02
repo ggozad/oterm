@@ -111,6 +111,16 @@ class TestGetAgent:
             str(agent.model.client.base_url).rstrip("/") == "http://localhost:11434/v1"
         )
 
+    def test_openai_responses_provider_enables_image_generation_tool(self, monkeypatch):
+        from pydantic_ai.builtin_tools import ImageGenerationTool
+        from pydantic_ai.models.openai import OpenAIResponsesModel
+
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+        agent = get_agent(provider="openai-responses", model="gpt-5.4")
+        assert isinstance(agent, Agent)
+        assert isinstance(agent.model, OpenAIResponsesModel)
+        assert any(isinstance(t, ImageGenerationTool) for t in agent._cap_builtin_tools)
+
     def test_openai_compat_missing_endpoint_raises(self, app_config):
         with pytest.raises(ValueError, match="not configured"):
             get_agent(provider="openai-compat/ghost", model="x")
