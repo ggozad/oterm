@@ -1,0 +1,17 @@
+[project]
+name = "oracle"
+version = "0.1.0"
+description = "An example oterm tool plugin"
+readme = "README.md"
+authors = [
+    { name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = []
+
+[project.entry-points."oterm.tools"]
+oracle = "oracle.tool:oracle"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
