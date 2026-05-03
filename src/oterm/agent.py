@@ -7,6 +7,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import AbstractToolset
 
+from oterm.config import envConfig
 from oterm.providers.ollama import openai_compat_base_url
 from oterm.providers.settings import get_supported_setting_keys
 
@@ -55,7 +56,7 @@ def get_agent(
             model_name=model,
             provider=OpenAIProvider(
                 base_url=openai_compat_base_url(),
-                api_key="ollama",
+                api_key=envConfig.OLLAMA_API_KEY or "ollama",
             ),
         )
     elif provider.startswith("openai-compat/"):
