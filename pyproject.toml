@@ -1,6 +1,6 @@
 [project]
 name = "oterm"
-version = "0.16.0"
+version = "0.17.0"
 description = "The terminal client for Ollama, OpenAI, Anthropic, and any pydantic-ai-supported provider."
 authors = [{ name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }]
 license = { text = "MIT" }
@@ -77,11 +77,7 @@ filterwarnings = [
 [tool.coverage.run]
 branch = true
 source = ["src/oterm"]
-omit = [
-    "src/oterm/cli/oterm.py",
-    "src/oterm/log.py",
-    "src/oterm/app/themes/*",
-]
+omit = ["src/oterm/cli/oterm.py", "src/oterm/log.py", "src/oterm/app/themes/*"]
 
 [tool.coverage.report]
 fail_under = 100
