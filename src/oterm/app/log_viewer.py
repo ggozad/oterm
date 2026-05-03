@@ -1,5 +1,4 @@
 from datetime import datetime
-from pathlib import Path
 
 from textual.app import ComposeResult
 from textual.containers import Container
@@ -7,6 +6,7 @@ from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Label, RichLog
 
+from oterm.config import envConfig
 from oterm.log import log_lines
 from oterm.utils import debounce
 
@@ -23,9 +23,11 @@ class LogViewer(ModalScreen[str]):
         self.dismiss()
 
     def action_save_logs(self) -> None:
+        dest_dir = envConfig.OTERM_DATA_DIR / "logs"
         timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S-%f")
-        path = Path.cwd() / f"oterm-logs-{timestamp}.txt"
+        path = dest_dir / f"oterm-logs-{timestamp}.txt"
         try:
+            dest_dir.mkdir(parents=True, exist_ok=True)
             with path.open("w", encoding="utf-8") as file:
                 for group, line in log_lines:
                     file.write(f"[{group.name}] {line}\n")
