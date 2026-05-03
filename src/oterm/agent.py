@@ -52,15 +52,11 @@ def get_agent(
 ) -> Agent[None, str]:
     pydantic_model: OpenAIChatModel | str
     if provider == "ollama":
-        base_url = openai_compat_base_url()
-        print(f"ollama base URL: {base_url}")
-        api_key = envConfig.OLLAMA_API_KEY or "ollama"
-        print(f"ollama api_key: {api_key}")
         pydantic_model = OpenAIChatModel(
             model_name=model,
             provider=OpenAIProvider(
                 base_url=openai_compat_base_url(),
-                api_key=api_key,
+                api_key=envConfig.OLLAMA_API_KEY or "ollama",
             ),
         )
     elif provider.startswith("openai-compat/"):

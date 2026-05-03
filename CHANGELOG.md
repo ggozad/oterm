@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **`OLLAMA_API_KEY` is now passed through to the Ollama provider** so cloud models on `ollama.com` can authenticate. Previously a hardcoded dummy key (`"ollama"`) was always sent, blocking access to cloud models. [tseaver]
+
 ## [0.16.0] - 2026-04-29
 
 ### Added
