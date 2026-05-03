@@ -1,9 +1,12 @@
+from datetime import datetime
+
 from textual.app import ComposeResult
 from textual.containers import Container
 from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Label, RichLog
 
+from oterm.config import envConfig
 from oterm.log import log_lines
 from oterm.utils import debounce
 
@@ -13,10 +16,27 @@ class LogViewer(ModalScreen[str]):
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
+        ("s", "save_logs", "Save logs"),
     ]
 
     def action_cancel(self) -> None:
         self.dismiss()
+
+    def action_save_logs(self) -> None:
+        dest_dir = envConfig.OTERM_DATA_DIR / "logs"
+        timestamp = datetime.now().strftime("%Y-%m-%d-%H%M%S-%f")
+        path = dest_dir / f"oterm-logs-{timestamp}.txt"
+        try:
+            dest_dir.mkdir(parents=True, exist_ok=True)
+            with path.open("w", encoding="utf-8") as file:
+                for group, line in log_lines:
+                    file.write(f"[{group.name}] {line}\n")
+        except OSError as error:
+            self.app.notify(
+                f"Failed to export logs to {path}: {error}", severity="error"
+            )
+            return
+        self.app.notify(f"Logs exported to {path}")
 
     @debounce(0.5)
     async def log_update(self) -> None:
@@ -39,3 +59,4 @@ class LogViewer(ModalScreen[str]):
                 auto_scroll=True,
                 wrap=True,
             )
+            yield Label("[dim]press [b]s[/b] to save logs to disk[/dim]")
