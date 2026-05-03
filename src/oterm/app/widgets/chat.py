@@ -4,9 +4,12 @@ import binascii
 import json
 import time
 from collections.abc import AsyncGenerator
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
+import PIL.Image as PILImage
+from PIL import UnidentifiedImageError
 from pydantic_ai import (
     Agent,
     BinaryContent,
@@ -21,6 +24,7 @@ from pydantic_ai import (
 )
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import (
+    BinaryImage,
     BuiltinToolCallPart,
     BuiltinToolReturnPart,
     FilePart,
@@ -47,6 +51,7 @@ from textual.widgets import (
     TabbedContent,
 )
 from textual.widgets.markdown import MarkdownStream
+from textual_image.widget import Image as TerminalImage
 
 from oterm.agent import get_agent
 from oterm.app.chat_edit import ChatEdit
@@ -54,6 +59,7 @@ from oterm.app.chat_rename import ChatRename
 from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import IMAGE_TOKEN_RE, FlexibleInput, PostableTextArea
+from oterm.config import envConfig
 from oterm.store.store import Store
 from oterm.tools import builtin_tools
 from oterm.tools.mcp.setup import mcp_servers, mcp_tool_meta
@@ -261,6 +267,11 @@ class ChatContainer(Widget):
             raise RuntimeError(self._agent_error or "Agent is not configured")
 
         self._stream_usage = RunUsage()
+        # Some providers (notably OpenAI Responses image_generation) emit the
+        # same image twice — once as a partial-image event and once when the
+        # call completes — under the same vendor part id. Dedupe by FilePart.id
+        # so callers don't have to.
+        seen_file_ids: set[str] = set()
 
         async with self.agent.iter(
             user_prompt, message_history=self.pydantic_history
@@ -281,6 +292,10 @@ class ChatContainer(Widget):
                                             content_delta=event.part.content
                                         )
                                 elif isinstance(event.part, FilePart):
+                                    if event.part.id and event.part.id in seen_file_ids:
+                                        continue
+                                    if event.part.id:
+                                        seen_file_ids.add(event.part.id)
                                     yield event.part
                                 elif isinstance(
                                     event.part,
@@ -319,6 +334,11 @@ class ChatContainer(Widget):
             chat_item.author = message.role
             chat_item.text = message.text
             await message_container.mount(chat_item)
+            if message.role == "assistant":
+                for b64 in message.images:
+                    decoded = _decode_image(b64)
+                    if decoded is not None:  # pragma: no branch
+                        await chat_item.add_image(decoded.data)
         self.loading = False
         self.loaded = True
         message_container.scroll_end()
@@ -346,6 +366,7 @@ class ChatContainer(Widget):
 
         try:
             text = ""
+            assistant_images: list[str] = []
             user_prompt, skipped = build_user_prompt(
                 message, [img for _, img in self.images]
             )
@@ -367,6 +388,9 @@ class ChatContainer(Widget):
                         response_chat_item.update_tool_result(
                             piece.tool_call_id, piece.content
                         )
+                    case FilePart(content=BinaryImage(data=data)):
+                        await response_chat_item.add_image(data)
+                        assistant_images.append(base64.b64encode(data).decode())
                 status.update_usage(
                     self._stream_usage.input_tokens,
                     self._stream_usage.output_tokens,
@@ -402,7 +426,7 @@ class ChatContainer(Widget):
                 chat_id=chat_id,
                 role="assistant",
                 text=text,
-                images=[],
+                images=assistant_images,
             )
             id = await store.save_message(assistant_message)
             assistant_message.id = id
@@ -537,6 +561,7 @@ class ChatContainer(Widget):
             try:
                 thinking = ""
                 text = ""
+                assistant_images: list[str] = []
                 user_prompt, skipped = build_user_prompt(message.text, message.images)
                 if skipped:
                     self.app.notify(
@@ -557,6 +582,9 @@ class ChatContainer(Widget):
                             response_chat_item.update_tool_result(
                                 piece.tool_call_id, piece.content
                             )
+                        case FilePart(content=BinaryImage(data=data)):
+                            await response_chat_item.add_image(data)
+                            assistant_images.append(base64.b64encode(data).decode())
                     status.update_usage(
                         self._stream_usage.input_tokens,
                         self._stream_usage.output_tokens,
@@ -578,7 +606,7 @@ class ChatContainer(Widget):
                     chat_id=chat_id,
                     role="assistant",
                     text=text,
-                    images=[],
+                    images=assistant_images,
                 )
                 await store.save_message(regenerated_message)
                 regenerated_message.id = response_message_id
@@ -661,6 +689,19 @@ def _truncate(text: str, limit: int) -> str:
     return text[:limit] + "…"
 
 
+class AssistantImage(
+    TerminalImage,  # ty: ignore[unsupported-base]
+    Renderable=TerminalImage._Renderable,
+):
+    """Inline image emitted by the assistant, retaining its source bytes so
+    a click can later write them to disk."""
+
+    def __init__(self, pil_image: PILImage.Image, data: bytes) -> None:
+        super().__init__(pil_image, classes="assistantImage")
+        self.image_bytes = data
+        self.image_format = (pil_image.format or "PNG").lower()
+
+
 class ToolCallItem(Widget):
     """Expandable marker for an assistant tool invocation.
 
@@ -734,6 +775,9 @@ class ChatItem(Widget):
                     self.thoughts_collapsed = not self.thoughts_collapsed
                 return
             if cur.has_class("thinking-body"):
+                return
+            if isinstance(cur, AssistantImage):
+                await self._save_assistant_image(cur)
                 return
             cur = cur.parent  # ty: ignore[invalid-assignment]
 
@@ -844,6 +888,29 @@ class ChatItem(Widget):
         if item is None:  # pragma: no cover
             return
         item.set_result(content)
+
+    async def add_image(self, data: bytes) -> None:
+        """Source bytes are retained on the widget so a later click in
+        ``on_click`` can dispatch to ``_save_assistant_image``."""
+        if self.author == "user":
+            return
+        try:
+            response = self.query_one(".response", Markdown)
+        except NoMatches:  # pragma: no cover
+            return
+        try:
+            pil_image = PILImage.open(BytesIO(data))
+        except UnidentifiedImageError:  # pragma: no cover
+            return
+        await self.mount(AssistantImage(pil_image, data), before=response)
+
+    async def _save_assistant_image(self, image: AssistantImage) -> None:
+        fmt = "jpg" if image.image_format == "jpeg" else image.image_format
+        dest_dir = envConfig.OTERM_DATA_DIR / "downloads"
+        dest_dir.mkdir(parents=True, exist_ok=True)
+        path = dest_dir / f"oterm-image-{int(time.time() * 1000)}.{fmt}"
+        path.write_bytes(image.image_bytes)
+        self.app.notify(f"Image saved to {path}")
 
     async def finish_stream(self) -> None:
         """Drain and stop any active streams started by ``append_*``."""

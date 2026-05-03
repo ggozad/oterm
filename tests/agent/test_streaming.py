@@ -142,6 +142,31 @@ class TestFilePartStreaming:
         text = "".join(p.content_delta for p in chunks if isinstance(p, TextPartDelta))
         assert text == "see this"
 
+    async def test_duplicate_file_parts_are_deduped_by_id(self):
+        """OpenAI Responses streams the same image twice (partial + completed)
+        under the same vendor part id; stream_agent collapses them."""
+        png_bytes = b"\x89PNG\r\nfake"
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | FilePart]:
+            yield FilePart(
+                content=BinaryImage(data=png_bytes, media_type="image/png"),
+                id="img-42",
+            )
+            yield FilePart(
+                content=BinaryImage(data=png_bytes, media_type="image/png"),
+                id="img-42",
+            )
+            yield "done"
+
+        c = _container()
+        _install_file_aware_stream_agent(c, stream_fn)
+
+        chunks = await _collect(c.stream_agent("draw"))
+        files = [p for p in chunks if isinstance(p, FilePart)]
+        assert len(files) == 1
+
 
 class TestToolCallStreaming:
     async def test_tool_call_part_yielded(self):
