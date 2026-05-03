@@ -101,7 +101,7 @@ When configured, an **OpenAI Compatible** provider appears in the provider dropd
 
 | Provider          | Provider ID       | Required env var(s)                             |
 | ----------------- | ----------------- | ----------------------------------------------- |
-| Ollama            | `ollama`          | none — uses `OLLAMA_HOST` / `OLLAMA_URL`        |
+| Ollama            | `ollama`          | none for local; `OLLAMA_API_KEY` for `ollama.com` cloud models. Endpoint via `OLLAMA_HOST` / `OLLAMA_URL`. |
 | OpenAI            | `openai`          | `OPENAI_API_KEY`                                |
 | Anthropic         | `anthropic`       | `ANTHROPIC_API_KEY`                             |
 | Google AI         | `google-gla`      | `GOOGLE_API_KEY`                                |
@@ -125,6 +125,7 @@ For any other backend with an OpenAI-compatible API, see the [`openaiCompatible`
 | `OTERM_VERIFY_SSL`   | `True`               | Set to `False` to disable SSL verification when talking to Ollama.      |
 | `OLLAMA_HOST`        | `127.0.0.1:11434`    | Ollama host/port. Used to derive `OLLAMA_URL` when it isn't set.        |
 | `OLLAMA_URL`         | from `OLLAMA_HOST`   | Full Ollama base URL (e.g. `https://ollama.example.com`).               |
+| `OLLAMA_API_KEY`     | unset                | Bearer token for `ollama.com` cloud models. Local Ollama doesn't need it. |
 
 Provider-specific API keys (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, …) are listed in the [provider table](#providers-and-api-keys) above.
 
