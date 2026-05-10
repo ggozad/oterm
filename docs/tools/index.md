@@ -57,6 +57,7 @@ The following tools are built-in to `oterm` and available by default:
 * `think` - provides the model with a way to think about a question before answering it. This is useful for complex questions that require reasoning. Use it for adding a "thinking" step to the model's response.
 * `date_time` - provides the current date and time in ISO format.
 * `shell` - allows you to run shell commands and use the output as input to the model. Obviously this can be dangerous, so use with caution.
+* `generate_image` - generates an image from a text prompt using an Ollama image-generation model (e.g. `x/z-image-turbo`, `x/flux2-klein`). The default model is `x/z-image-turbo`; override it for a single call via the tool's `model` argument or globally via the `OTERM_OLLAMA_IMAGE_MODEL` environment variable. The image renders inline in the chat. Requires an Ollama server with an image-capable model installed; the host LLM (any provider) writes the prompt and calls the tool.
 
 ### Tool calls in the chat
 
