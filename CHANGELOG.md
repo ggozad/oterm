@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+
+## [0.17.1] - 2026-05-10
+
 ### Added
 
 - **Built-in `generate_image` tool.** Delegates to Ollama's `/api/generate` with image-generation models (`x/z-image-turbo`, `x/flux2-klein`, …). Configure the default model with `OTERM_OLLAMA_IMAGE_MODEL` or override per call via the tool's `model` argument.
