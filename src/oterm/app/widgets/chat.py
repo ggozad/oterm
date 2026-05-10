@@ -30,6 +30,7 @@ from pydantic_ai.messages import (
     FilePart,
     FunctionToolResultEvent,
     ModelMessage,
+    RetryPromptPart,
     ThinkingPart,
     ToolCallPart,
     ToolReturnPart,
@@ -60,6 +61,7 @@ from oterm.app.prompt_history import PromptHistory
 from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import IMAGE_TOKEN_RE, FlexibleInput, PostableTextArea
 from oterm.config import envConfig
+from oterm.log import log
 from oterm.store.store import Store
 from oterm.tools import builtin_tools
 from oterm.tools.mcp.setup import mcp_servers, mcp_tool_meta
@@ -260,7 +262,8 @@ class ChatContainer(Widget):
         | ToolCallPart
         | BuiltinToolCallPart
         | ToolReturnPart
-        | BuiltinToolReturnPart,
+        | BuiltinToolReturnPart
+        | RetryPromptPart,
         Any,
     ]:
         if self.agent is None:
@@ -315,10 +318,16 @@ class ChatContainer(Widget):
                 elif Agent.is_call_tools_node(node):
                     async with node.stream(run.ctx) as tools_stream:
                         async for event in tools_stream:
-                            if isinstance(
-                                event, FunctionToolResultEvent
-                            ) and isinstance(event.result, ToolReturnPart):
-                                yield event.result
+                            if not isinstance(event, FunctionToolResultEvent):
+                                continue
+                            if isinstance(event.part, ToolReturnPart):
+                                yield event.part
+                            elif isinstance(event.part, RetryPromptPart):
+                                log.error(
+                                    f"Tool {event.part.tool_name!r} failed: "
+                                    f"{event.part.model_response()}"
+                                )
+                                yield event.part
             if run.result is not None:  # pragma: no branch
                 self.pydantic_history = list(run.result.all_messages())
                 self._stream_usage = run.result.usage()
@@ -399,6 +408,11 @@ class ChatContainer(Widget):
                                 assistant_images.append(
                                     base64.b64encode(item.data).decode()
                                 )
+                    case RetryPromptPart():
+                        response_chat_item.update_tool_result(
+                            piece.tool_call_id,
+                            f"error: {piece.model_response()}",
+                        )
                     case FilePart(content=BinaryImage(data=data)):
                         await response_chat_item.add_image(data)
                         assistant_images.append(base64.b64encode(data).decode())

@@ -1459,6 +1459,63 @@ class TestThinkingViaResponseTask:
             assert list(assistant.query(ImageWidget)) == []
             assert container.messages[-1].images == []
 
+    async def test_failing_tool_logs_and_shows_error_in_call_widget(
+        self, store, chat_model
+    ):
+        """A tool raising `ModelRetry` is logged and rendered as `error: …`."""
+        from pydantic_ai import Tool
+        from pydantic_ai.exceptions import ModelRetry
+        from pydantic_ai.models.function import DeltaToolCall
+
+        from oterm.log import log_lines
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        def boom(s: str) -> str:
+            raise ModelRetry("kaboom")
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, DeltaToolCall]]:
+            already_retried = any(
+                getattr(m, "parts", None)
+                and any(getattr(p, "part_kind", "") == "retry-prompt" for p in m.parts)
+                for m in messages
+            )
+            if already_retried:
+                yield "gave up"
+                return
+            yield {
+                0: DeltaToolCall(
+                    name="boom", json_args='{"s": "x"}', tool_call_id="tc-b"
+                )
+            }
+
+        log_lines.clear()
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = Agent(
+                FunctionModel(stream_function=stream_fn), tools=[Tool(boom)]
+            )
+
+            prompt = app.query_one(FlexibleInput)
+            prompt.text = "go"
+            await pilot.press("enter")
+            await wait_until(pilot, lambda: len(container.messages) == 2)
+
+            assistant = list(container.query(ChatItem))[-1]
+            tool_items = list(assistant.query(ToolCallItem))
+            assert len(tool_items) == 1
+            assert tool_items[0].tool_name == "boom"
+            assert isinstance(tool_items[0].result, str)
+            assert tool_items[0].result.startswith("error:")
+            assert "kaboom" in tool_items[0].result
+
+            messages = [m for _, m in log_lines]
+            assert any("'boom' failed" in m and "kaboom" in m for m in messages)
+
     async def test_tool_returning_binary_image_renders_inline(self, store, chat_model):
         """A tool returning `BinaryImage` mounts an Image widget and persists."""
         from io import BytesIO
