@@ -1,0 +1,88 @@
+[project]
+site_name = "oterm"
+site_description = "the terminal client for Ollama, OpenAI, Anthropic, and any pydantic-ai-supported provider."
+site_url = "https://ggozad.github.io/oterm/"
+repo_url = "https://github.com/ggozad/oterm"
+repo_name = "ggozad/oterm"
+copyright = "Copyright &copy; 2023&ndash;2026 Yiorgis Gozadinos"
+
+nav = [
+    { oterm = [
+        "index.md",
+        { Installation = "installation.md" },
+        { "Commands & shortcuts" = "commands.md" },
+    ] },
+    { "Chat parameters" = "parameters.md" },
+    { "Model Context Protocol" = ["mcp/index.md"] },
+    { Tools = ["tools/index.md"] },
+    { Configuration = "app_config.md" },
+    { "Debugging / Development" = "development/index.md" },
+    { "RAG example" = "rag_example.md" },
+]
+
+[project.theme]
+custom_dir = "overrides"
+features = [
+    "announce.dismiss",
+    "content.action.edit",
+    "content.action.view",
+    "content.code.annotate",
+    "content.code.copy",
+    "content.code.select",
+    "content.footnote.tooltips",
+    "content.tabs.link",
+    "content.tooltips",
+    "navigation.footer",
+    "navigation.indexes",
+    "navigation.instant",
+    "navigation.instant.prefetch",
+    "navigation.instant.progress",
+    "navigation.path",
+    "navigation.tabs",
+    "navigation.tabs.sticky",
+    "navigation.top",
+    "navigation.tracking",
+    "search.highlight",
+    "search.share",
+    "search.suggest",
+    "toc.follow",
+]
+
+[project.theme.icon]
+repo = "fontawesome/brands/git-alt"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: light)"
+scheme = "default"
+primary = "deep purple"
+accent = "amber"
+toggle.icon = "lucide/sun"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme: dark)"
+scheme = "slate"
+primary = "deep purple"
+accent = "amber"
+toggle.icon = "lucide/moon"
+toggle.name = "Switch to system preference"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/ggozad/oterm"
+name = "oterm on GitHub"
+
+[[project.extra.social]]
+icon = "simple/pypi"
+link = "https://pypi.org/project/oterm/"
+name = "oterm on PyPI"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/bluesky"
+link = "https://bsky.app/profile/ggozad.bsky.social"
+name = "@ggozad.bsky.social on Bluesky"
