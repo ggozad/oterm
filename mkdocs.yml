@@ -2,7 +2,6 @@ site_name: oterm
 site_description: the terminal client for Ollama, OpenAI, Anthropic, and any pydantic-ai-supported provider.
 site_url: https://ggozad.github.io/oterm/
 theme:
-  name: material
   palette:
     - media: "(prefers-color-scheme)"
       toggle:
