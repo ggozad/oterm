@@ -322,7 +322,9 @@ class ChatContainer(Widget):
                                 continue
                             if isinstance(event.part, ToolReturnPart):
                                 yield event.part
-                            elif isinstance(event.part, RetryPromptPart):
+                            elif isinstance(  # pragma: no branch
+                                event.part, RetryPromptPart
+                            ):
                                 log.error(
                                     f"Tool {event.part.tool_name!r} failed: "
                                     f"{event.part.model_response()}"

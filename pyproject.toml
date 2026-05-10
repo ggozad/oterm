@@ -32,6 +32,7 @@ dependencies = [
     "pydantic==2.13.3",
     "pydantic-ai-slim[openai,anthropic,google,vertexai,groq,mistral,cohere,bedrock,huggingface,mcp,fastmcp,logfire]==1.93.0",
     "python-dotenv==1.2.2",
+    "python-multipart>=0.0.27",
     "textual==8.2.4",
     "textual-image==0.12.0",
     "textual-speedups==0.2.1",
