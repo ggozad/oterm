@@ -26,11 +26,11 @@ dependencies = [
     "aiosql==15.0",
     "aiosqlite==0.22.1",
     "fastmcp==3.2.4",
-    "ollama==0.6.1",
+    "ollama==0.6.2",
     "packaging==26.2",
     "pillow==12.2.0",
     "pydantic==2.13.3",
-    "pydantic-ai-slim[openai,anthropic,google,vertexai,groq,mistral,cohere,bedrock,huggingface,mcp,fastmcp,logfire]==1.87.0",
+    "pydantic-ai-slim[openai,anthropic,google,vertexai,groq,mistral,cohere,bedrock,huggingface,mcp,fastmcp,logfire]==1.93.0",
     "python-dotenv==1.2.2",
     "textual==8.2.4",
     "textual-image==0.12.0",
@@ -119,6 +119,7 @@ python-version = "3.13"
 think = "oterm.tools.think:think"
 date_time = "oterm.tools.date_time:date_time"
 shell = "oterm.tools.shell:shell"
+generate_image = "oterm.tools.ollama_image:generate_image"
 
 [build-system]
 requires = ["hatchling"]

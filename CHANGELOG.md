@@ -4,6 +4,12 @@
 
 ### Added
 
+- **Built-in `generate_image` tool.** Delegates to Ollama's `/api/generate` with image-generation models (`x/z-image-turbo`, `x/flux2-klein`, …). Configure the default model with `OTERM_OLLAMA_IMAGE_MODEL` or override per call via the tool's `model` argument.
+
+## [0.17.0] - 2026-05-03
+
+### Added
+
 - **Render assistant-emitted images inline.** When a model returns a `FilePart` during streaming, the image renders between the thinking section and the response, persists alongside the assistant message in the chat store, and reappears on chat reload. Click an image to save it to `$OTERM_DATA_DIR/downloads/`. Works with Google Gemini image-preview models out of the box.
 - **New `openai-responses` provider.** Routes through pydantic-ai's `OpenAIResponsesModel` and enables the `ImageGenerationTool` builtin on every Agent built for it. Pick "OpenAI Responses" in the chat-edit modal, choose a Responses-compatible model (e.g. `gpt-5.4`), and image generation is implicit — no per-chat toggle. Reuses `OPENAI_API_KEY` and the existing OpenAI model lister.
 - **Save logs from the log viewer.** Press `s` in the logs modal to write the current buffer to a timestamped `oterm-logs-<ts>.txt` under `$OTERM_DATA_DIR/logs/`. Useful for debugging MCP servers. [robbyt]

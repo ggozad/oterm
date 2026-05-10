@@ -1459,6 +1459,74 @@ class TestThinkingViaResponseTask:
             assert list(assistant.query(ImageWidget)) == []
             assert container.messages[-1].images == []
 
+    async def test_tool_returning_binary_image_renders_inline(self, store, chat_model):
+        """A tool returning `BinaryImage` mounts an Image widget and persists."""
+        from io import BytesIO
+
+        from PIL import Image as PILImage
+        from pydantic_ai import Tool
+        from pydantic_ai.messages import BinaryImage
+        from pydantic_ai.models.function import DeltaToolCall
+        from textual_image.widget import Image as ImageWidget
+
+        buf = BytesIO()
+        PILImage.new("RGB", (4, 4), "green").save(buf, format="PNG")
+        png_bytes = buf.getvalue()
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        def make_image(prompt: str) -> BinaryImage:
+            return BinaryImage(data=png_bytes, media_type="image/png")
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, DeltaToolCall]]:
+            already_called = any(
+                getattr(m, "parts", None)
+                and any(getattr(p, "part_kind", "") == "tool-return" for p in m.parts)
+                for m in messages
+            )
+            if already_called:
+                yield "done"
+                return
+            yield {
+                0: DeltaToolCall(
+                    name="make_image",
+                    json_args='{"prompt": "a square"}',
+                    tool_call_id="tc-img",
+                )
+            }
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.agent = Agent(
+                FunctionModel(stream_function=stream_fn), tools=[Tool(make_image)]
+            )
+
+            prompt = app.query_one(FlexibleInput)
+            prompt.text = "draw"
+            await pilot.press("enter")
+            await wait_until(pilot, lambda: len(container.messages) == 2)
+
+            assistant = list(container.query(ChatItem))[-1]
+            images = list(assistant.query(ImageWidget))
+            assert len(images) == 1
+            assert images[0].image is not None
+
+            tool_items = list(assistant.query(ToolCallItem))
+            assert len(tool_items) == 1
+            assert tool_items[0].tool_name == "make_image"
+            assert tool_items[0].result is not None
+
+            assistant_row = container.messages[-1]
+            assert len(assistant_row.images) == 1
+            assert base64.b64decode(assistant_row.images[0]) == png_bytes
+            stored = await store.get_messages(chat_id)
+            assistant_rows = [m for m in stored if m.role == "assistant"]
+            assert len(assistant_rows[0].images) == 1
+
     async def test_persisted_assistant_image_renders_on_load(self, store, chat_model):
         from io import BytesIO
 

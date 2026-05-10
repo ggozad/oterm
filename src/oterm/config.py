@@ -17,6 +17,7 @@ class EnvConfig(BaseModel):
     OLLAMA_API_KEY: str | None = None
     OTERM_VERIFY_SSL: bool = True
     OTERM_DATA_DIR: Path = get_default_data_dir()
+    OTERM_OLLAMA_IMAGE_MODEL: str = "x/z-image-turbo"
 
 
 envConfig = EnvConfig.model_validate(os.environ)

@@ -388,6 +388,17 @@ class ChatContainer(Widget):
                         response_chat_item.update_tool_result(
                             piece.tool_call_id, piece.content
                         )
+                        items = (
+                            piece.content
+                            if isinstance(piece.content, list)
+                            else [piece.content]
+                        )
+                        for item in items:
+                            if isinstance(item, BinaryImage):
+                                await response_chat_item.add_image(item.data)
+                                assistant_images.append(
+                                    base64.b64encode(item.data).decode()
+                                )
                     case FilePart(content=BinaryImage(data=data)):
                         await response_chat_item.add_image(data)
                         assistant_images.append(base64.b64encode(data).decode())
