@@ -27,7 +27,7 @@ nav = [
 [project.theme]
 custom_dir = "overrides"
 font.code = "JetBrains Mono"
-favicon = "img/logo.svg"
+favicon = "img/favicon.svg"
 features = [
     "announce.dismiss",
     "content.action.view",
