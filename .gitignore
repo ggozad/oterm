@@ -19,3 +19,5 @@ htmlcov/
 .dev-notes/
 PLAN.md
 /dev/
+.playwright-mcp/
+oterm-home.png

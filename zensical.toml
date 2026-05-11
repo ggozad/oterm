@@ -7,10 +7,12 @@ repo_name = "ggozad/oterm"
 edit_uri = "edit/main/docs/"
 site_author = "Yiorgis Gozadinos"
 copyright = "Copyright &copy; 2023&ndash;2026 Yiorgis Gozadinos"
+extra_css = ["stylesheets/extra.css"]
 
 nav = [
     { oterm = [
         "index.md",
+        { Features = "features.md" },
         { Installation = "installation.md" },
         { "Commands & shortcuts" = "commands.md" },
     ] },
