@@ -4,6 +4,8 @@ site_description = "the terminal client for Ollama, OpenAI, Anthropic, and any p
 site_url = "https://ggozad.github.io/oterm/"
 repo_url = "https://github.com/ggozad/oterm"
 repo_name = "ggozad/oterm"
+edit_uri = "edit/main/docs/"
+site_author = "Yiorgis Gozadinos"
 copyright = "Copyright &copy; 2023&ndash;2026 Yiorgis Gozadinos"
 
 nav = [
@@ -16,35 +18,31 @@ nav = [
     { "Model Context Protocol" = ["mcp/index.md"] },
     { Tools = ["tools/index.md"] },
     { Configuration = "app_config.md" },
-    { "Debugging / Development" = "development/index.md" },
+    { "Debugging / Development" = ["development/index.md"] },
     { "RAG example" = "rag_example.md" },
 ]
 
 [project.theme]
 custom_dir = "overrides"
+font.code = "JetBrains Mono"
+favicon = "img/logo.svg"
 features = [
     "announce.dismiss",
-    "content.action.edit",
     "content.action.view",
     "content.code.annotate",
     "content.code.copy",
     "content.code.select",
     "content.footnote.tooltips",
-    "content.tabs.link",
     "content.tooltips",
+    "navigation.expand",
     "navigation.footer",
     "navigation.indexes",
     "navigation.instant",
     "navigation.instant.prefetch",
     "navigation.instant.progress",
-    "navigation.path",
-    "navigation.tabs",
-    "navigation.tabs.sticky",
     "navigation.top",
     "navigation.tracking",
     "search.highlight",
-    "search.share",
-    "search.suggest",
     "toc.follow",
 ]
 
