@@ -4,7 +4,6 @@ site_description = "the terminal client for Ollama, OpenAI, Anthropic, and any p
 site_url = "https://ggozad.github.io/oterm/"
 repo_url = "https://github.com/ggozad/oterm"
 repo_name = "ggozad/oterm"
-edit_uri = "edit/main/docs/"
 site_author = "Yiorgis Gozadinos"
 copyright = "Copyright &copy; 2023&ndash;2026 Yiorgis Gozadinos"
 extra_css = ["stylesheets/extra.css"]
@@ -30,7 +29,6 @@ font.code = "JetBrains Mono"
 favicon = "img/favicon.svg"
 features = [
     "announce.dismiss",
-    "content.action.view",
     "content.code.annotate",
     "content.code.copy",
     "content.code.select",

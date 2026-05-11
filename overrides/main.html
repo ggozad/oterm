@@ -1,5 +1,15 @@
 {% extends "base.html" %}
 
+{% block extrahead %}
+<meta property="og:type" content="website">
+<meta property="og:title" content="{% if page.title and page.title != config.site_name %}{{ page.title }} – {{ config.site_name }}{% else %}{{ config.site_name }}{% endif %}">
+<meta property="og:description" content="{{ config.site_description }}">
+<meta property="og:url" content="{{ page.canonical_url }}">
+<meta property="og:image" content="{{ config.site_url }}img/chat.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{ config.site_url }}img/chat.png">
+{% endblock %}
+
 {% block announce %}
 oterm is now multi-provider: Ollama, OpenAI, Anthropic, Google, Groq, and any
 <a href="https://ai.pydantic.dev/">pydantic-ai</a> endpoint.
