@@ -61,8 +61,7 @@ dev = [
     "pytest-xdist==3.8.0",
     "textual-dev==1.8.0",
     "homebrew-pypi-poet==0.10.0",
-    "mkdocs==1.6.1",
-    "mkdocs-material==9.7.6",
+    "zensical",
     "pre-commit==4.6.0",
 ]
 

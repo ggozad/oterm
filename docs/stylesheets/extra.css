@@ -1,0 +1,52 @@
+.oterm-hero {
+  padding: 2rem 0 2.5rem;
+}
+
+.oterm-hero__inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  align-items: center;
+}
+
+@media (max-width: 60em) {
+  .oterm-hero__inner {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+.oterm-hero__title {
+  font-family: var(--md-code-font, monospace);
+  font-size: 4.5rem;
+  font-weight: 700;
+  line-height: 1;
+  margin: 0 0 0.75rem;
+  color: var(--md-primary-fg-color);
+  letter-spacing: -0.02em;
+}
+
+.oterm-hero__tagline {
+  font-size: 1.15rem;
+  line-height: 1.5;
+  color: var(--md-default-fg-color--light);
+  margin: 0 0 1.5rem;
+}
+
+.oterm-hero__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.oterm-hero__media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+body:has(.oterm-hero) .md-main {
+  display: none;
+}

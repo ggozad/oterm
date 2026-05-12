@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block extrahead %}
+<meta property="og:type" content="website">
+<meta property="og:title" content="{% if page.title and page.title != config.site_name %}{{ page.title }} – {{ config.site_name }}{% else %}{{ config.site_name }}{% endif %}">
+<meta property="og:description" content="{{ config.site_description }}">
+<meta property="og:url" content="{{ page.canonical_url }}">
+<meta property="og:image" content="{{ config.site_url }}img/chat.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{ config.site_url }}img/chat.png">
+{% endblock %}
+
+{% block announce %}
+oterm is now multi-provider: Ollama, OpenAI, Anthropic, Google, Groq, and any
+<a href="https://ai.pydantic.dev/">pydantic-ai</a> endpoint.
+<a href="https://github.com/ggozad/oterm#whats-new">What's new →</a>
+{% endblock %}
+
+{% block hero %}
+{% if page.url == "" %}
+<section class="oterm-hero">
+  <div class="md-typeset md-grid">
+    <div class="oterm-hero__inner">
+      <div class="oterm-hero__text">
+        <h1 class="oterm-hero__title">oterm</h1>
+        <p class="oterm-hero__tagline">The terminal client for Ollama, OpenAI, Anthropic, and any <a href="https://ai.pydantic.dev/">pydantic-ai</a>-supported provider.</p>
+        <div class="oterm-hero__actions">
+          <a class="md-button md-button--primary" href="installation/">Get started</a>
+          <a class="md-button" href="features/">Learn more</a>
+        </div>
+      </div>
+      <div class="oterm-hero__media">
+        <img src="img/splash.gif" alt="oterm splash">
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
