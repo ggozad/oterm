@@ -6,6 +6,10 @@
 
 - **Docs site rebuilt with [Zensical](https://zensical.org/).** Replaces MkDocs and Material for MkDocs ahead of MkDocs 2.0's breaking changes. Same content with a refreshed look: custom oterm logo and adaptive favicon, JetBrains Mono code blocks, an announcement banner, a hero landing page.
 
+### Fixed
+
+- **Assistant responses containing code fences no longer go blank after streaming finishes.** ([#308](https://github.com/ggozad/oterm/issues/308)) `MarkdownStream`'s per-delta `Markdown.append` advances the widget's internal parse cursor to the start of the trailing top-level token, so an unclosed-then-closed code fence could leave block state that the next refresh would drop. `finish_stream` now forces a full `Markdown.update` with the accumulated text after stopping each stream.
+
 ## [0.17.1] - 2026-05-10
 
 ### Added

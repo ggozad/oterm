@@ -1187,6 +1187,77 @@ class TestChatItemStreaming:
             await item.append_thinking("musing")
             assert item._thinking_stream is not None
             await item.finish_stream()
+
+    async def test_finish_stream_re_renders_full_markdown(
+        self, chat_model, monkeypatch
+    ):
+        """Per-delta ``Markdown.append`` leaves ``_last_parsed_line`` at the
+        start of the trailing top-level token (e.g. an open code fence), so
+        the next refresh can drop the streamed blocks. ``finish_stream`` must
+        force a full ``Markdown.update`` with the accumulated text so the
+        widget is in a clean re-parsed state."""
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            deltas = [
+                "# Summary\n\n",
+                "## Python Example\n\n",
+                "```python\n",
+                'print("Hello, world!")\n',
+                "```\n",
+            ]
+            for d in deltas:
+                await item.append_text(d)
+            await pilot.pause()
+
+            response = item.query_one(".response", Markdown)
+            thinking = item.query_one(".thinking-body", Markdown)
+            update_calls: list[tuple[Markdown, str]] = []
+            original = Markdown.update
+
+            def _track(self, markdown):
+                update_calls.append((self, markdown))
+                return original(self, markdown)
+
+            monkeypatch.setattr(Markdown, "update", _track)
+            await item.finish_stream()
+            await pilot.pause()
+
+            full = "".join(deltas)
+            assert (response, full) in update_calls
+            assert all(target is not thinking for target, _ in update_calls)
+
+    async def test_finish_stream_re_renders_thinking(self, chat_model, monkeypatch):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            await item.append_thinking("step 1\n")
+            await item.append_thinking("```py\nx=1\n```\n")
+            await pilot.pause()
+
+            thinking = item.query_one(".thinking-body", Markdown)
+            update_calls: list[tuple[Markdown, str]] = []
+            original = Markdown.update
+
+            def _track(self, markdown):
+                update_calls.append((self, markdown))
+                return original(self, markdown)
+
+            monkeypatch.setattr(Markdown, "update", _track)
+            await item.finish_stream()
+            await pilot.pause()
+
+            assert (thinking, "step 1\n```py\nx=1\n```\n") in update_calls
             assert item._thinking_stream is None
 
 

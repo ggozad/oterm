@@ -940,13 +940,33 @@ class ChatItem(Widget):
         self.app.notify(f"Image saved to {path}")
 
     async def finish_stream(self) -> None:
-        """Drain and stop any active streams started by ``append_*``."""
+        """Drain and stop any active streams started by ``append_*``.
+
+        Per-delta ``Markdown.append`` advances the widget's internal
+        ``_last_parsed_line`` to the start of the trailing top-level token,
+        so an unclosed-then-closed code fence (or any partial block) can
+        leave block state that drops content on the next refresh. Force a
+        full ``Markdown.update`` with the accumulated text after stopping
+        each stream to reset the widget to a clean re-parsed state.
+        """
         if self._response_stream is not None:
             await self._response_stream.stop()
             self._response_stream = None
+            try:
+                response = self.query_one(".response", Markdown)
+            except NoMatches:  # pragma: no cover
+                pass
+            else:
+                await response.update(self.text)
         if self._thinking_stream is not None:
             await self._thinking_stream.stop()
             self._thinking_stream = None
+            try:
+                body = self.query_one(".thinking-body", Markdown)
+            except NoMatches:  # pragma: no cover
+                pass
+            else:
+                await body.update(self.thinking)
 
     def cancel_streams(self) -> None:
         """Cancel in-flight stream tasks without awaiting.
