@@ -16,13 +16,13 @@ from pydantic_ai.settings import ModelSettings
 
 PROVIDER_SETTINGS_TYPE: dict[str, type] = {
     "ollama": OpenAIChatModelSettings,
-    "openai": OpenAIChatModelSettings,
+    "openai-chat": OpenAIChatModelSettings,
     "openai-responses": OpenAIResponsesModelSettings,
     "deepseek": OpenAIChatModelSettings,
     "grok": OpenAIChatModelSettings,
     "anthropic": AnthropicModelSettings,
-    "google-gla": GoogleModelSettings,
-    "google-vertex": GoogleModelSettings,
+    "google": GoogleModelSettings,
+    "google-cloud": GoogleModelSettings,
     "groq": GroqModelSettings,
     "mistral": MistralModelSettings,
     "cohere": CohereModelSettings,

@@ -37,7 +37,7 @@ class TestBuildModelSettings:
         assert settings["max_tokens"] == 128
         assert "ignored" not in settings
 
-    @pytest.mark.parametrize("provider", ["openai", "anthropic", "groq", "ollama"])
+    @pytest.mark.parametrize("provider", ["openai-chat", "anthropic", "groq", "ollama"])
     def test_seed_roundtrips_for_supported_providers(self, provider):
         settings = _build_model_settings(
             {"seed": 42}, thinking=False, provider=provider

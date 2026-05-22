@@ -351,7 +351,9 @@ async def test_provider_change_resets_model(app_config, monkeypatch):
     import oterm.providers as prov
 
     monkeypatch.setattr(prov, "list_models", lambda p: ["gpt-4o", "gpt-5"])
-    monkeypatch.setattr(prov, "get_available_providers", lambda: ["ollama", "openai"])
+    monkeypatch.setattr(
+        prov, "get_available_providers", lambda: ["ollama", "openai-chat"]
+    )
 
     app = _Host()
     async with app.run_test() as pilot:
@@ -362,11 +364,13 @@ async def test_provider_change_resets_model(app_config, monkeypatch):
 
         from textual.widgets import Select
 
-        event = Select.Changed(screen.query_one("#provider-select", Select), "openai")
+        event = Select.Changed(
+            screen.query_one("#provider-select", Select), "openai-chat"
+        )
         await screen.on_select_changed(event)
         await pilot.pause()
 
-        assert screen.provider == "openai"
+        assert screen.provider == "openai-chat"
         assert screen.model_name == ""
 
 

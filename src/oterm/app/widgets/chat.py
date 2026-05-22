@@ -25,11 +25,11 @@ from pydantic_ai import (
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import (
     BinaryImage,
-    BuiltinToolCallPart,
-    BuiltinToolReturnPart,
     FilePart,
     FunctionToolResultEvent,
     ModelMessage,
+    NativeToolCallPart,
+    NativeToolReturnPart,
     RetryPromptPart,
     ThinkingPart,
     ToolCallPart,
@@ -260,9 +260,9 @@ class ChatContainer(Widget):
         | ThinkingPartDelta
         | FilePart
         | ToolCallPart
-        | BuiltinToolCallPart
+        | NativeToolCallPart
         | ToolReturnPart
-        | BuiltinToolReturnPart
+        | NativeToolReturnPart
         | RetryPromptPart,
         Any,
     ]:
@@ -304,8 +304,8 @@ class ChatContainer(Widget):
                                     event.part,
                                     (
                                         ToolCallPart,
-                                        BuiltinToolCallPart,
-                                        BuiltinToolReturnPart,
+                                        NativeToolCallPart,
+                                        NativeToolReturnPart,
                                     ),
                                 ):  # pragma: no branch
                                     yield event.part
@@ -313,7 +313,7 @@ class ChatContainer(Widget):
                                 if isinstance(
                                     event.delta, (TextPartDelta, ThinkingPartDelta)
                                 ):  # pragma: no branch
-                                    self._stream_usage = run.usage()
+                                    self._stream_usage = run.usage
                                     yield event.delta
                 elif Agent.is_call_tools_node(node):
                     async with node.stream(run.ctx) as tools_stream:
@@ -332,7 +332,7 @@ class ChatContainer(Widget):
                                 yield event.part
             if run.result is not None:  # pragma: no branch
                 self.pydantic_history = list(run.result.all_messages())
-                self._stream_usage = run.result.usage()
+                self._stream_usage = run.result.usage
 
     async def load_messages(self) -> None:
         message_container = self.query_one("#messageContainer")
@@ -393,9 +393,9 @@ class ChatContainer(Widget):
                     case TextPartDelta(content_delta=delta):
                         text += delta
                         await response_chat_item.append_text(delta)
-                    case ToolCallPart() | BuiltinToolCallPart():
+                    case ToolCallPart() | NativeToolCallPart():
                         await response_chat_item.add_tool_call(piece)
-                    case ToolReturnPart() | BuiltinToolReturnPart():
+                    case ToolReturnPart() | NativeToolReturnPart():
                         response_chat_item.update_tool_result(
                             piece.tool_call_id, piece.content
                         )
@@ -603,9 +603,9 @@ class ChatContainer(Widget):
                         case TextPartDelta(content_delta=delta):
                             text += delta or ""
                             response_chat_item.text = text
-                        case ToolCallPart() | BuiltinToolCallPart():
+                        case ToolCallPart() | NativeToolCallPart():
                             await response_chat_item.add_tool_call(piece)
-                        case ToolReturnPart() | BuiltinToolReturnPart():
+                        case ToolReturnPart() | NativeToolReturnPart():
                             response_chat_item.update_tool_result(
                                 piece.tool_call_id, piece.content
                             )
@@ -738,7 +738,7 @@ class ToolCallItem(Widget):
 
     collapsed: reactive[bool] = reactive(True)
 
-    def __init__(self, call: ToolCallPart | BuiltinToolCallPart, **kwargs: Any) -> None:
+    def __init__(self, call: ToolCallPart | NativeToolCallPart, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.tool_name = call.tool_name
         self.tool_call_id = call.tool_call_id
@@ -897,7 +897,7 @@ class ChatItem(Widget):
             self._refresh_thinking_chrome()
         await self._thinking_stream.write(delta)
 
-    async def add_tool_call(self, call: ToolCallPart | BuiltinToolCallPart) -> None:
+    async def add_tool_call(self, call: ToolCallPart | NativeToolCallPart) -> None:
         """Render an expandable tool-call marker before the response widget."""
         if self.author == "user":
             return

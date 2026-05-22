@@ -7,6 +7,7 @@ from oterm.store.upgrades.v0_15_0 import (
     migrate_parameters,
     migrate_tools_to_names,
 )
+from oterm.store.upgrades.v0_18_0 import rename_providers
 
 
 async def _old_chat_schema(db_path):
@@ -208,3 +209,34 @@ class TestMigrateToolsToNames:
         async with aiosqlite.connect(db) as c:
             rows = await c.execute_fetchall("SELECT tools FROM chat")
             assert list(rows)[0][0] == "[]"
+
+
+class TestRenameProviders:
+    async def test_renames_deprecated_provider_ids(self, tmp_path):
+        db = tmp_path / "store.db"
+        await _old_chat_schema(db)
+        await add_provider_remove_format_keep_alive(db)
+        async with aiosqlite.connect(db) as c:
+            await c.executemany(
+                "INSERT INTO chat(name, model, provider) VALUES(?, ?, ?)",
+                [
+                    ("a", "gpt-4o", "openai"),
+                    ("b", "gemini-1.5", "google-gla"),
+                    ("c", "gemini-1.5", "google-vertex"),
+                    ("d", "llama3", "ollama"),
+                ],
+            )
+            await c.commit()
+
+        await rename_providers(db)
+
+        async with aiosqlite.connect(db) as c:
+            rows = await c.execute_fetchall(
+                "SELECT name, provider FROM chat ORDER BY name"
+            )
+            assert list(rows) == [
+                ("a", "openai-chat"),
+                ("b", "google"),
+                ("c", "google-cloud"),
+                ("d", "ollama"),
+            ]
