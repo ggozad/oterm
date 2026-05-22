@@ -30,7 +30,7 @@ dependencies = [
     "packaging==26.2",
     "pillow==12.2.0",
     "pydantic==2.13.3",
-    "pydantic-ai-slim[openai,anthropic,google,vertexai,groq,mistral,cohere,bedrock,huggingface,mcp,fastmcp,logfire]==1.93.0",
+    "pydantic-ai-slim[openai,anthropic,google,vertexai,groq,mistral,cohere,bedrock,huggingface,mcp,logfire]==1.100.0",
     "python-dotenv==1.2.2",
     "python-multipart>=0.0.27",
     "textual==8.2.4",
