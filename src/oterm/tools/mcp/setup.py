@@ -5,7 +5,7 @@ from pydantic_ai.mcp import MCPToolset
 
 from oterm.config import appConfig
 from oterm.log import log
-from oterm.tools.mcp.logging import Logger
+from oterm.tools.mcp.logging import log_handler
 from oterm.utils import expand_env_vars
 
 # Subprocess env overrides that quiet common MCP server runtimes.
@@ -44,7 +44,7 @@ def _build_toolset(name: str, entry: dict) -> MCPToolset:
             url,
             id=name,
             headers=entry.get("headers"),
-            log_handler=Logger(),
+            log_handler=log_handler,
         )
     transport = StdioTransport(
         command=entry["command"],
@@ -52,7 +52,7 @@ def _build_toolset(name: str, entry: dict) -> MCPToolset:
         env={**_STDIO_LOG_ENV, **(entry.get("env") or {})},
         cwd=entry.get("cwd"),
     )
-    return MCPToolset(transport, id=name, log_handler=Logger())
+    return MCPToolset(transport, id=name, log_handler=log_handler)
 
 
 def _build_toolsets(raw: dict[str, dict]) -> dict[str, MCPToolset]:

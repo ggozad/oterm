@@ -5,7 +5,7 @@
 ### Changed
 
 - **Docs site rebuilt with [Zensical](https://zensical.org/).** Replaces MkDocs and Material for MkDocs ahead of MkDocs 2.0's breaking changes. Same content with a refreshed look: custom oterm logo and adaptive favicon, JetBrains Mono code blocks, an announcement banner, a hero landing page.
-- **MCP layer migrated to pydantic-ai 1.100's `MCPToolset`.** Replaces the deprecated `MCPServer*` classes ahead of their removal in pydantic-ai 2.0. The runtime now uses FastMCP's client under the hood (via `fastmcp-slim[client]`). Existing `mcpServers` config entries — stdio, HTTP, SSE, env-var substitution, WebSocket rejection — keep working unchanged.
+- **MCP layer migrated to pydantic-ai 1.100's `MCPToolset`.** Replaces the deprecated `MCPServer*` classes ahead of their removal in pydantic-ai 2.0. The runtime now uses FastMCP's client under the hood (via `fastmcp-slim[client]`). Existing `mcpServers` config entries (stdio, HTTP, SSE, env-var substitution, WebSocket rejection) keep working unchanged.
 - **pydantic-ai 1.100 deprecations cleared end-to-end.** Image generation now registers via `capabilities=[NativeTool(...)]`. Streaming reads `run.usage` as a property. Tool-call parts use `NativeToolCallPart` / `NativeToolReturnPart`. Provider ids align with pydantic-ai's new namespace: `openai` → `openai-chat`, `google-gla` → `google`, `google-vertex` → `google-cloud`. Existing chats are rewritten in place by a one-shot store migration (v0.18.0).
 
 ### Fixed

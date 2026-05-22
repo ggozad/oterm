@@ -50,6 +50,12 @@ class TestBuildToolsets:
         env = _stdio(built["stdio"]).env or {}
         assert env["LOGLEVEL"] == "DEBUG"
 
+    def test_stdio_cwd_is_forwarded(self, tmp_path):
+        built = _build_toolsets(
+            {"stdio": {"command": "mcp", "args": [], "cwd": str(tmp_path)}}
+        )
+        assert _stdio(built["stdio"]).cwd == str(tmp_path)
+
     def test_http_config(self):
         built = _build_toolsets({"http": {"url": "http://example.com/mcp"}})
         assert isinstance(built["http"].client.transport, StreamableHttpTransport)

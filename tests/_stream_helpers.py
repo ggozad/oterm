@@ -7,7 +7,6 @@ Provides a `FunctionModel` variant whose `stream_function` may also yield
 from contextlib import asynccontextmanager
 
 from pydantic_ai import Agent
-from pydantic_ai._instrumentation import get_instructions
 from pydantic_ai.messages import FilePart
 from pydantic_ai.models.function import (
     AgentInfo,
@@ -53,7 +52,7 @@ def make_file_aware_agent(stream_fn) -> Agent:
             output_tools=mrp.output_tools,
             model_settings=model_settings,
             model_request_parameters=mrp,
-            instructions=get_instructions(messages, mrp),
+            instructions=None,
         )
         response_stream = PeekableAsyncStream(
             self.stream_function(messages, agent_info)
