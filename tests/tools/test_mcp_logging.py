@@ -1,12 +1,11 @@
-from mcp.types import LoggingMessageNotificationParams
+from fastmcp.client.logging import LogMessage
 
-from oterm.tools.mcp.logging import Logger
+from oterm.tools.mcp.logging import log_handler
 
 
-async def test_logger_routes_by_level_to_log_lines():
+async def test_log_handler_routes_by_level_to_log_lines():
     import oterm.log
 
-    logger = Logger()
     before = len(oterm.log.log_lines)
 
     for level, data in (
@@ -16,7 +15,7 @@ async def test_logger_routes_by_level_to_log_lines():
         ("error", "E"),
         ("critical", "C"),
     ):
-        await logger(LoggingMessageNotificationParams(level=level, data=data))
+        await log_handler(LogMessage(level=level, data=data))
 
     messages = [msg for _, msg in oterm.log.log_lines[before:]]
     assert "D" in messages

@@ -1,50 +1,67 @@
 import pytest
-from pydantic_ai.mcp import MCPServerSSE, MCPServerStdio, MCPServerStreamableHTTP
+from fastmcp.client.transports import (
+    SSETransport,
+    StdioTransport,
+    StreamableHttpTransport,
+)
+from pydantic_ai.mcp import MCPToolset
 
 from oterm.tools.mcp.setup import (
-    _build_servers,
+    _build_toolsets,
     mcp_servers,
     setup_mcp_servers,
     teardown_mcp_servers,
 )
 
 
-class TestBuildServers:
+def _stdio(toolset: MCPToolset) -> StdioTransport:
+    transport = toolset.client.transport
+    assert isinstance(transport, StdioTransport)
+    return transport
+
+
+def _http(toolset: MCPToolset) -> StreamableHttpTransport:
+    transport = toolset.client.transport
+    assert isinstance(transport, StreamableHttpTransport)
+    return transport
+
+
+class TestBuildToolsets:
     def test_stdio_config(self):
-        built = _build_servers(
+        built = _build_toolsets(
             {"stdio": {"command": "mcp", "args": ["run", "x"], "env": {"FOO": "bar"}}}
         )
-        server = built["stdio"]
-        assert isinstance(server, MCPServerStdio)
-        env = server.env or {}
+        env = _stdio(built["stdio"]).env or {}
         assert env["LOGLEVEL"] == "ERROR"
         assert env["FOO"] == "bar"
 
     def test_stdio_does_not_inherit_parent_env(self, monkeypatch):
         """Secure default: parent env (PATH, secrets, etc.) is not leaked."""
         monkeypatch.setenv("SECRET_TOKEN", "leak-me")
-        built = _build_servers({"stdio": {"command": "mcp", "args": []}})
-        server = built["stdio"]
-        assert isinstance(server, MCPServerStdio)
-        env = server.env or {}
+        built = _build_toolsets({"stdio": {"command": "mcp", "args": []}})
+        env = _stdio(built["stdio"]).env or {}
         assert "SECRET_TOKEN" not in env
         assert "PATH" not in env
 
     def test_stdio_user_env_overrides_logging_overrides(self):
-        built = _build_servers(
+        built = _build_toolsets(
             {"stdio": {"command": "mcp", "args": [], "env": {"LOGLEVEL": "DEBUG"}}}
         )
-        server = built["stdio"]
-        assert isinstance(server, MCPServerStdio)
-        env = server.env or {}
+        env = _stdio(built["stdio"]).env or {}
         assert env["LOGLEVEL"] == "DEBUG"
 
+    def test_stdio_cwd_is_forwarded(self, tmp_path):
+        built = _build_toolsets(
+            {"stdio": {"command": "mcp", "args": [], "cwd": str(tmp_path)}}
+        )
+        assert _stdio(built["stdio"]).cwd == str(tmp_path)
+
     def test_http_config(self):
-        built = _build_servers({"http": {"url": "http://example.com/mcp"}})
-        assert isinstance(built["http"], MCPServerStreamableHTTP)
+        built = _build_toolsets({"http": {"url": "http://example.com/mcp"}})
+        assert isinstance(built["http"].client.transport, StreamableHttpTransport)
 
     def test_http_with_authorization_header(self):
-        built = _build_servers(
+        built = _build_toolsets(
             {
                 "http": {
                     "url": "http://example.com/mcp",
@@ -52,35 +69,24 @@ class TestBuildServers:
                 }
             }
         )
-        server = built["http"]
-        assert isinstance(server, MCPServerStreamableHTTP)
-        assert server.headers == {"Authorization": "Bearer secret"}
+        transport = _http(built["http"])
+        assert transport.headers == {"Authorization": "Bearer secret"}
 
-    def test_url_ending_in_sse_resolves_to_sse_server(self):
-        built = _build_servers({"sse": {"url": "http://example.com/sse"}})
-        assert isinstance(built["sse"], MCPServerSSE)
-
-    def test_sampling_is_disabled(self):
-        built = _build_servers(
-            {
-                "stdio": {"command": "mcp", "args": []},
-                "http": {"url": "http://example.com/mcp"},
-            }
-        )
-        assert built["stdio"].allow_sampling is False
-        assert built["http"].allow_sampling is False
+    def test_url_ending_in_sse_resolves_to_sse_transport(self):
+        built = _build_toolsets({"sse": {"url": "http://example.com/sse"}})
+        assert isinstance(built["sse"].client.transport, SSETransport)
 
     def test_websocket_url_rejected(self):
         with pytest.raises(ValueError, match="WebSocket transport"):
-            _build_servers({"ws": {"url": "ws://example.com/mcp"}})
+            _build_toolsets({"ws": {"url": "ws://example.com/mcp"}})
 
     def test_wss_url_rejected(self):
         with pytest.raises(ValueError, match="WebSocket transport"):
-            _build_servers({"wss": {"url": "wss://example.com/mcp"}})
+            _build_toolsets({"wss": {"url": "wss://example.com/mcp"}})
 
     def test_env_var_substitution_in_env_values(self, monkeypatch):
         monkeypatch.setenv("MY_TOKEN", "shh")
-        built = _build_servers(
+        built = _build_toolsets(
             {
                 "stdio": {
                     "command": "mcp",
@@ -89,14 +95,12 @@ class TestBuildServers:
                 }
             }
         )
-        server = built["stdio"]
-        assert isinstance(server, MCPServerStdio)
-        env = server.env or {}
+        env = _stdio(built["stdio"]).env or {}
         assert env["GITHUB_TOKEN"] == "shh"
 
     def test_env_var_substitution_in_command_and_args(self, monkeypatch):
         monkeypatch.setenv("MCP_BIN", "/opt/bin/mcp")
-        built = _build_servers(
+        built = _build_toolsets(
             {
                 "stdio": {
                     "command": "${MCP_BIN}",
@@ -104,14 +108,13 @@ class TestBuildServers:
                 }
             }
         )
-        server = built["stdio"]
-        assert isinstance(server, MCPServerStdio)
-        assert server.command == "/opt/bin/mcp"
-        assert list(server.args) == ["--config", "/opt/bin/mcp.conf"]
+        transport = _stdio(built["stdio"])
+        assert transport.command == "/opt/bin/mcp"
+        assert list(transport.args) == ["--config", "/opt/bin/mcp.conf"]
 
     def test_env_var_substitution_with_default(self, monkeypatch):
         monkeypatch.delenv("MISSING_VAR", raising=False)
-        built = _build_servers(
+        built = _build_toolsets(
             {
                 "stdio": {
                     "command": "mcp",
@@ -120,15 +123,13 @@ class TestBuildServers:
                 }
             }
         )
-        server = built["stdio"]
-        assert isinstance(server, MCPServerStdio)
-        env = server.env or {}
+        env = _stdio(built["stdio"]).env or {}
         assert env["DEFAULTED"] == "fallback"
 
     def test_env_var_substitution_missing_raises(self, monkeypatch):
         monkeypatch.delenv("UNDEFINED_VAR", raising=False)
         with pytest.raises(ValueError, match="UNDEFINED_VAR"):
-            _build_servers(
+            _build_toolsets(
                 {
                     "stdio": {
                         "command": "mcp",
@@ -140,7 +141,7 @@ class TestBuildServers:
 
     def test_env_var_substitution_in_authorization_header(self, monkeypatch):
         monkeypatch.setenv("BEARER", "s3cret")
-        built = _build_servers(
+        built = _build_toolsets(
             {
                 "http": {
                     "url": "http://x/mcp",
@@ -148,9 +149,8 @@ class TestBuildServers:
                 }
             }
         )
-        server = built["http"]
-        assert isinstance(server, MCPServerStreamableHTTP)
-        assert server.headers == {"Authorization": "Bearer s3cret"}
+        transport = _http(built["http"])
+        assert transport.headers == {"Authorization": "Bearer s3cret"}
 
 
 class TestSetupAndTeardown:
@@ -203,14 +203,14 @@ class TestSetupAndTeardown:
     async def test_unexpected_exception_during_build_is_logged(
         self, app_config, monkeypatch
     ):
-        """Non-ValueError exceptions during _build_servers are caught and logged."""
+        """Non-ValueError exceptions during _build_toolsets are caught and logged."""
         import oterm.log
         import oterm.tools.mcp.setup as setup_mod
 
         def boom(_raw):
             raise RuntimeError("kaboom")
 
-        monkeypatch.setattr(setup_mod, "_build_servers", boom)
+        monkeypatch.setattr(setup_mod, "_build_toolsets", boom)
         app_config.set("mcpServers", {"x": {"url": "http://example.com/mcp"}})
         before = len(oterm.log.log_lines)
         try:

@@ -98,11 +98,11 @@ class TestGetAvailableProviders:
 
     def test_provider_included_when_env_var_present(self, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-x")
-        assert "openai" in get_available_providers()
+        assert "openai-chat" in get_available_providers()
 
     def test_provider_excluded_when_env_var_missing(self, monkeypatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-        assert "openai" not in get_available_providers()
+        assert "openai-chat" not in get_available_providers()
 
     def test_bedrock_needs_both_env_vars(self, monkeypatch):
         monkeypatch.setenv("AWS_ACCESS_KEY_ID", "x")
@@ -187,14 +187,14 @@ class TestListModelsFromApi:
         _install_fake_module(
             monkeypatch, "openai", {"OpenAI": lambda **kw: _FakeClient(items)}
         )
-        assert _list_models_from_api("openai") == ["gpt-3.5-turbo", "gpt-4o"]
+        assert _list_models_from_api("openai-chat") == ["gpt-3.5-turbo", "gpt-4o"]
 
     def test_openai_error_returns_none(self, monkeypatch):
         def boom(**kw):
             raise RuntimeError("down")
 
         _install_fake_module(monkeypatch, "openai", {"OpenAI": boom})
-        assert _list_models_from_api("openai") is None
+        assert _list_models_from_api("openai-chat") is None
 
     def test_anthropic(self, monkeypatch):
         items = [_FakeModelItem("claude-4"), _FakeModelItem("claude-3-haiku")]
@@ -259,7 +259,7 @@ class TestListModelsFromApi:
         _install_fake_module(monkeypatch, "openai", {"OpenAI": boom})
         assert _list_models_from_api("deepseek") is None
 
-    def test_google_gla(self, monkeypatch):
+    def test_google(self, monkeypatch):
         class _Model:
             def __init__(self, name):
                 self.name = name
@@ -279,15 +279,15 @@ class TestListModelsFromApi:
             {"genai": type("M", (), {"Client": _GenaiClient})()},
         )
         monkeypatch.setenv("GOOGLE_API_KEY", "k")
-        assert _list_models_from_api("google-gla") == ["gemini-flash", "gemini-pro"]
+        assert _list_models_from_api("google") == ["gemini-flash", "gemini-pro"]
 
-    def test_google_gla_error_returns_none(self, monkeypatch):
+    def test_google_error_returns_none(self, monkeypatch):
         def boom(**kw):
             raise RuntimeError("x")
 
         fake = type("M", (), {"Client": boom})
         _install_fake_module(monkeypatch, "google", {"genai": fake})
-        assert _list_models_from_api("google-gla") is None
+        assert _list_models_from_api("google") is None
 
     def test_mistral(self, monkeypatch):
         # Build fake mistralai sub-modules the source imports.
@@ -424,8 +424,8 @@ class TestListModelsFromApi:
 
 class TestListModelsFromKnown:
     def test_prefix_matches(self):
-        models = _list_models_from_known("openai")
-        assert all(not m.startswith("openai:") for m in models)
+        models = _list_models_from_known("openai-chat")
+        assert all(not m.startswith("openai-chat:") for m in models)
         assert any("gpt" in m for m in models)
 
 
@@ -457,7 +457,7 @@ class TestListModels:
             monkeypatch, "openai", {"OpenAI": lambda **kw: _FakeClient(items)}
         )
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        models = list_models("openai")
+        models = list_models("openai-chat")
         assert "gpt-4o" in models
         assert "text-embedding-3-small" not in models
 
@@ -467,5 +467,5 @@ class TestListModels:
 
         _install_fake_module(monkeypatch, "openai", {"OpenAI": boom})
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        models = list_models("openai")
+        models = list_models("openai-chat")
         assert any("gpt" in m for m in models)

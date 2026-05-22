@@ -38,7 +38,7 @@ def is_chat_model(provider: str, model: str) -> bool:
         return True
     if provider == "anthropic":
         return True
-    if provider in ("google-gla", "google-vertex"):
+    if provider in ("google", "google-cloud"):
         return "gemini" in model
     if provider == "mistral":
         return not model.startswith("mistral-embed")
@@ -94,12 +94,12 @@ def _supports_vision(provider: str, model: str) -> bool:
             or "claude-sonnet-4" in model
             or "claude-haiku-4" in model
         )
-    if provider in ("openai", "openai-responses"):
+    if provider in ("openai-chat", "openai-responses"):
         return any(
             model.startswith(p)
             for p in ("gpt-4o", "gpt-4-turbo", "gpt-4.1", "gpt-5", "o1", "o3", "o4")
         )
-    if provider in ("google-gla", "google-vertex"):
+    if provider in ("google", "google-cloud"):
         return "gemini" in model
     if provider == "groq":
         return "vision" in model or "llava" in model

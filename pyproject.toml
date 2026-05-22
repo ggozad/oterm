@@ -1,6 +1,6 @@
 [project]
 name = "oterm"
-version = "0.17.2"
+version = "0.18.0"
 description = "The terminal client for Ollama, OpenAI, Anthropic, and any pydantic-ai-supported provider."
 authors = [{ name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }]
 license = { text = "MIT" }
@@ -25,12 +25,11 @@ requires-python = ">=3.10"
 dependencies = [
     "aiosql==15.0",
     "aiosqlite==0.22.1",
-    "fastmcp==3.2.4",
     "ollama==0.6.2",
     "packaging==26.2",
     "pillow==12.2.0",
     "pydantic==2.13.3",
-    "pydantic-ai-slim[openai,anthropic,google,vertexai,groq,mistral,cohere,bedrock,huggingface,mcp,fastmcp,logfire]==1.93.0",
+    "pydantic-ai-slim[openai,anthropic,google,vertexai,groq,mistral,cohere,bedrock,huggingface,mcp,logfire]==1.100.0",
     "python-dotenv==1.2.2",
     "python-multipart>=0.0.27",
     "textual==8.2.4",

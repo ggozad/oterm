@@ -52,7 +52,7 @@ def make_file_aware_agent(stream_fn) -> Agent:
             output_tools=mrp.output_tools,
             model_settings=model_settings,
             model_request_parameters=mrp,
-            instructions=self._get_instructions(messages, mrp),
+            instructions=None,
         )
         response_stream = PeekableAsyncStream(
             self.stream_function(messages, agent_info)

@@ -5,11 +5,11 @@ from oterm.utils import expand_env_vars
 
 PROVIDER_ENV_VARS: dict[str, list[str]] = {
     "ollama": [],
-    "openai": ["OPENAI_API_KEY"],
+    "openai-chat": ["OPENAI_API_KEY"],
     "openai-responses": ["OPENAI_API_KEY"],
     "anthropic": ["ANTHROPIC_API_KEY"],
-    "google-gla": ["GOOGLE_API_KEY"],
-    "google-vertex": ["GOOGLE_APPLICATION_CREDENTIALS"],
+    "google": ["GOOGLE_API_KEY"],
+    "google-cloud": ["GOOGLE_APPLICATION_CREDENTIALS"],
     "groq": ["GROQ_API_KEY"],
     "mistral": ["MISTRAL_API_KEY"],
     "cohere": ["COHERE_API_KEY"],
@@ -22,11 +22,11 @@ PROVIDER_ENV_VARS: dict[str, list[str]] = {
 
 PROVIDER_NAMES: dict[str, str] = {
     "ollama": "Ollama",
-    "openai": "OpenAI",
+    "openai-chat": "OpenAI",
     "openai-responses": "OpenAI Responses",
     "anthropic": "Anthropic",
-    "google-gla": "Google AI",
-    "google-vertex": "Google Vertex AI",
+    "google": "Google AI",
+    "google-cloud": "Google Vertex AI",
     "groq": "Groq",
     "mistral": "Mistral",
     "cohere": "Cohere",
@@ -119,7 +119,7 @@ def _list_anthropic() -> list[str]:
     return sorted(m.id for m in Anthropic().models.list().data)
 
 
-def _list_google_gla() -> list[str]:
+def _list_google() -> list[str]:
     from google import genai
 
     client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY", ""))
@@ -155,10 +155,10 @@ def _list_cohere() -> list[str] | None:
 
 
 _NATIVE_LISTERS: dict[str, Callable[[], list[str] | None]] = {
-    "openai": _list_openai,
+    "openai-chat": _list_openai,
     "openai-responses": _list_openai,
     "anthropic": _list_anthropic,
-    "google-gla": _list_google_gla,
+    "google": _list_google,
     "mistral": _list_mistral,
     "cohere": _list_cohere,
 }

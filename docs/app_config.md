@@ -102,11 +102,11 @@ When configured, an **OpenAI Compatible** provider appears in the provider dropd
 | Provider          | Provider ID       | Required env var(s)                             |
 | ----------------- | ----------------- | ----------------------------------------------- |
 | Ollama            | `ollama`          | none for local; `OLLAMA_API_KEY` for `ollama.com` cloud models. Endpoint via `OLLAMA_HOST` / `OLLAMA_URL`. |
-| OpenAI            | `openai`          | `OPENAI_API_KEY`                                |
+| OpenAI            | `openai-chat`     | `OPENAI_API_KEY`                                |
 | OpenAI Responses  | `openai-responses`| `OPENAI_API_KEY`                                |
 | Anthropic         | `anthropic`       | `ANTHROPIC_API_KEY`                             |
-| Google AI         | `google-gla`      | `GOOGLE_API_KEY`                                |
-| Google Vertex AI  | `google-vertex`   | `GOOGLE_APPLICATION_CREDENTIALS`                |
+| Google AI         | `google`          | `GOOGLE_API_KEY`                                |
+| Google Vertex AI  | `google-cloud`    | `GOOGLE_APPLICATION_CREDENTIALS`                |
 | Groq              | `groq`            | `GROQ_API_KEY`                                  |
 | Mistral           | `mistral`         | `MISTRAL_API_KEY`                               |
 | Cohere            | `cohere`          | `COHERE_API_KEY`                                |

@@ -40,5 +40,5 @@ def test_provider_specific_keys_are_present():
     assert "anthropic_thinking" in anthropic_keys
     assert COMMON_FIELDS <= anthropic_keys
 
-    openai_keys = get_supported_setting_keys("openai")
+    openai_keys = get_supported_setting_keys("openai-chat")
     assert "openai_reasoning_effort" in openai_keys
