@@ -131,14 +131,14 @@ class TestGetAgent:
         assert agent.model.client.api_key == OLLAMA_API_KEY
 
     def test_openai_responses_provider_enables_image_generation_tool(self, monkeypatch):
-        from pydantic_ai.builtin_tools import ImageGenerationTool
         from pydantic_ai.models.openai import OpenAIResponsesModel
+        from pydantic_ai.native_tools import ImageGenerationTool
 
         monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
         agent = get_agent(provider="openai-responses", model="gpt-5.4")
         assert isinstance(agent, Agent)
         assert isinstance(agent.model, OpenAIResponsesModel)
-        assert any(isinstance(t, ImageGenerationTool) for t in agent._cap_builtin_tools)
+        assert any(isinstance(t, ImageGenerationTool) for t in agent._cap_native_tools)
 
     def test_openai_compat_missing_endpoint_raises(self, app_config):
         with pytest.raises(ValueError, match="not configured"):

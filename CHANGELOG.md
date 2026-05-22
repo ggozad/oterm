@@ -5,6 +5,7 @@
 ### Changed
 
 - **Docs site rebuilt with [Zensical](https://zensical.org/).** Replaces MkDocs and Material for MkDocs ahead of MkDocs 2.0's breaking changes. Same content with a refreshed look: custom oterm logo and adaptive favicon, JetBrains Mono code blocks, an announcement banner, a hero landing page.
+- **MCP layer migrated to pydantic-ai 1.100's `MCPToolset`.** Replaces the deprecated `MCPServer*` classes ahead of their removal in pydantic-ai 2.0. The runtime now uses FastMCP's client under the hood (via `fastmcp-slim[client]`). Existing `mcpServers` config entries — stdio, HTTP, SSE, env-var substitution, WebSocket rejection — keep working unchanged.
 
 ### Fixed
 

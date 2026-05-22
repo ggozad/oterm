@@ -1,10 +1,9 @@
-from mcp.client.session import LoggingFnT
 from mcp.types import LoggingMessageNotificationParams
 
 from oterm.log import log
 
 
-class Logger(LoggingFnT):
+class Logger:
     async def __call__(self, params: LoggingMessageNotificationParams) -> None:
         if params.level == "error" or params.level == "critical":
             log.error(params.data)

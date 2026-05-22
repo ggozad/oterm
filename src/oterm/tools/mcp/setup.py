@@ -1,12 +1,7 @@
 import contextlib
 
-from pydantic_ai.mcp import (
-    MCPServer,
-    MCPServerConfig,
-    MCPServerSSE,
-    MCPServerStdio,
-    MCPServerStreamableHTTP,
-)
+from fastmcp.client.transports import StdioTransport
+from pydantic_ai.mcp import MCPToolset
 
 from oterm.config import appConfig
 from oterm.log import log
@@ -26,49 +21,56 @@ class ToolMeta(dict):
     """Typed shape stored in `mcp_tool_meta`: {name, description}."""
 
 
-mcp_servers: dict[str, MCPServer] = {}
+mcp_servers: dict[str, MCPToolset] = {}
 mcp_tool_meta: dict[str, list[ToolMeta]] = {}
 _exit_stack: contextlib.AsyncExitStack | None = None
 
 
-def _build_servers(raw: dict[str, dict]) -> dict[str, MCPServer]:
-    """Build MCP servers from oterm's config.
+def _build_toolset(name: str, entry: dict) -> MCPToolset:
+    """Build a single MCPToolset from an oterm `mcpServers` config entry.
 
-    Schema matches pydantic-ai's MCPServerConfig: each entry is either an
-    stdio shape (`command` / `args` / `env`) or an HTTP shape (`url` /
-    `headers`). URLs ending in `/sse` resolve to MCPServerSSE.
+    Accepts either an HTTP shape (`url` / `headers`) or a stdio shape
+    (`command` / `args` / `env` / `cwd`). Rejects WebSocket URLs explicitly
+    so users get a clear error instead of a transport-layer failure.
     """
-    expanded = expand_env_vars(raw)
-
-    # Pre-validate: reject ws:// URLs explicitly so users get a clear error
-    # instead of pydantic-ai trying to speak streamable-HTTP to a websocket.
-    for name, entry in expanded.items():
-        url = entry.get("url") if isinstance(entry, dict) else None
-        if isinstance(url, str) and url.startswith(("ws://", "wss://")):
+    url = entry.get("url")
+    if isinstance(url, str):
+        if url.startswith(("ws://", "wss://")):
             raise ValueError(
                 f"MCP server {name!r}: WebSocket transport is no longer supported. "
                 "Use HTTP (http:// or https://) transport instead."
             )
+        return MCPToolset(
+            url,
+            id=name,
+            headers=entry.get("headers"),
+            log_handler=Logger(),
+        )
+    transport = StdioTransport(
+        command=entry["command"],
+        args=list(entry.get("args") or []),
+        env={**_STDIO_LOG_ENV, **(entry.get("env") or {})},
+        cwd=entry.get("cwd"),
+    )
+    return MCPToolset(transport, id=name, log_handler=Logger())
 
-    config = MCPServerConfig.model_validate({"mcpServers": expanded})
 
-    servers: dict[str, MCPServer] = {}
-    for name, server in config.mcp_servers.items():
-        server.id = name
-        server.log_handler = Logger()
-        # No sampling_model is configured, so disable sampling rather than let
-        # pydantic-ai advertise it and then crash when a server requests it.
-        server.allow_sampling = False
-        if isinstance(server, MCPServerStdio):
-            server.env = {**_STDIO_LOG_ENV, **(server.env or {})}
-        servers[name] = server
-    return servers
+def _build_toolsets(raw: dict[str, dict]) -> dict[str, MCPToolset]:
+    """Build MCPToolsets from oterm's `mcpServers` config block.
+
+    Schema matches the Claude Desktop / pydantic-ai convention: each entry is
+    either an stdio shape (`command` / `args` / `env` / `cwd`) or an HTTP
+    shape (`url` / `headers`). URLs ending in `/sse` resolve to an SSE
+    transport automatically; other HTTP URLs use Streamable HTTP.
+    """
+    expanded = expand_env_vars(raw)
+    return {name: _build_toolset(name, entry) for name, entry in expanded.items()}
 
 
 async def setup_mcp_servers() -> dict[str, list[ToolMeta]]:
     """Build, enter, and probe each configured MCP server.
 
-    Returns a registry of tool metadata per server name. The server instances
+    Returns a registry of tool metadata per server name. The toolset instances
     themselves are stored in module-global `mcp_servers` and kept entered for
     the app lifetime via `_exit_stack`.
     """
@@ -79,7 +81,7 @@ async def setup_mcp_servers() -> dict[str, list[ToolMeta]]:
     _exit_stack = contextlib.AsyncExitStack()
 
     try:
-        built = _build_servers(configured)
+        built = _build_toolsets(configured)
     except ValueError as e:
         log.error(f"MCP config rejected: {e}")
         return mcp_tool_meta
@@ -87,14 +89,14 @@ async def setup_mcp_servers() -> dict[str, list[ToolMeta]]:
         log.error(f"MCP config could not be parsed: {e}")
         return mcp_tool_meta
 
-    for name, server in built.items():
+    for name, toolset in built.items():
         try:
-            await _exit_stack.enter_async_context(server)
-            tools = await server.list_tools()
+            await _exit_stack.enter_async_context(toolset)
+            tools = await toolset.list_tools()
         except Exception as e:
             log.error(f"MCP server {name!r} failed to initialize: {e}")
             continue
-        mcp_servers[name] = server
+        mcp_servers[name] = toolset
         mcp_tool_meta[name] = [
             ToolMeta(name=t.name, description=t.description or "") for t in tools
         ]
@@ -116,12 +118,7 @@ async def teardown_mcp_servers() -> None:
         mcp_tool_meta.clear()
 
 
-# Re-export for tests + back-compat with anything that imported MCPServerSSE.
 __all__ = [
-    "MCPServer",
-    "MCPServerSSE",
-    "MCPServerStdio",
-    "MCPServerStreamableHTTP",
     "ToolMeta",
     "mcp_servers",
     "mcp_tool_meta",
