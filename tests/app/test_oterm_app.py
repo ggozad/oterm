@@ -390,6 +390,30 @@ class TestActionDelegates:
             await pilot.pause()
             assert called == [True]
 
+    async def test_toggle_thinking_delegates(
+        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
+    ):
+        from oterm.app.oterm import OTerm
+        from oterm.app.widgets.chat import ChatContainer
+
+        app_config.set("splash-screen", False)
+        cm = ChatModel(name="c", model="m")
+        cm.id = await store.save_chat(cm)
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            called: list[bool] = []
+
+            def spy(self):
+                called.append(True)
+
+            monkeypatch.setattr(ChatContainer, "action_toggle_thinking", spy)
+            await app.action_toggle_thinking()
+            await pilot.pause()
+            assert called == [True]
+
     async def test_regenerate_last_message_delegates(
         self, tmp_data_dir, app_config, stub_network, store, monkeypatch
     ):
@@ -427,6 +451,7 @@ class TestActionDelegates:
 
             # None of these should raise.
             await app.action_edit_chat()
+            await app.action_toggle_thinking()
             await app.action_rename_chat()
             await app.action_export_chat()
             await app.action_regenerate_last_message()
@@ -654,6 +679,28 @@ class TestKeymap:
             await pilot.pause()
             calls.clear()  # ignore the on_mount auto-new-chat call
             await pilot.press("f5")
+            await pilot.pause()
+            assert calls == [True]
+
+    async def test_keymap_remaps_toggle_thinking_binding(
+        self, tmp_data_dir, app_config, stub_network, monkeypatch
+    ):
+        import oterm.app.oterm as oterm_mod
+
+        calls: list[bool] = []
+
+        async def spy(self):
+            calls.append(True)
+
+        monkeypatch.setattr(oterm_mod.OTerm, "action_toggle_thinking", spy)
+
+        app_config.set("splash-screen", False)
+        app_config.set("keymap", {"toggle.thinking": "f6"})
+
+        app = oterm_mod.OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            await pilot.press("f6")
             await pilot.pause()
             assert calls == [True]
 

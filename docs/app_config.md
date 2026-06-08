@@ -26,6 +26,7 @@ A complete example showing every supported key:
     "next.chat": "ctrl+tab",
     "prev.chat": "ctrl+shift+tab",
     "new.chat": "ctrl+n",
+    "toggle.thinking": "ctrl+t",
     "show.logs": "ctrl+l",
     "quit": "ctrl+q",
     "newline": "shift+enter",
@@ -65,6 +66,7 @@ Sane defaults are provided, but terminal emulators and shells will sometimes int
 | `next.chat` | `ctrl+tab`         | Switch to the next chat tab.                                            |
 | `prev.chat` | `ctrl+shift+tab`   | Switch to the previous chat tab.                                        |
 | `new.chat`  | `ctrl+n`           | Open the new-chat dialog.                                               |
+| `toggle.thinking` | `ctrl+t`     | Turn thinking mode on or off for the current session (not persisted).  |
 | `show.logs` | `ctrl+l`           | Open the log viewer.                                                    |
 | `quit`      | `ctrl+q`           | Quit `oterm`.                                                           |
 | `newline`   | `shift+enter`      | Insert a newline in the prompt. `ctrl+m` is also accepted as a fallback for terminals that can't distinguish `shift+enter` from `enter`, and is not configurable. |

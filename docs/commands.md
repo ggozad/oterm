@@ -3,6 +3,7 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 
 * `New chat` - create a new chat session
 * `Edit chat parameters` - edit the current chat session (change system prompt, tools, parameters, or thinking)
+* `Toggle thinking` - turn thinking mode on or off for the current session (not persisted)
 * `Rename chat` - rename the current chat session
 * `Export chat` - export the current chat session as markdown
 * `Delete chat` - delete the current chat session
@@ -26,6 +27,7 @@ The following keyboard shortcuts are supported:
 * <kbd>^ Ctrl</kbd>+<kbd>l</kbd> - show logs
 
 * <kbd>^ Ctrl</kbd>+<kbd>n</kbd> - open a new chat
+* <kbd>^ Ctrl</kbd>+<kbd>t</kbd> - toggle thinking mode for the current session (not persisted)
 
 * <kbd>^ Ctrl</kbd>+<kbd>Tab</kbd> - open the next chat
 * <kbd>^ Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> - open the previous chat

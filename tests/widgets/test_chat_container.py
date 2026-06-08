@@ -661,6 +661,123 @@ class TestEditChat:
             assert container.chat_model.model == original_model
 
 
+class TestToggleThinking:
+    async def test_toggle_enables_thinking_for_session_only(
+        self, store, chat_model, monkeypatch
+    ):
+        from oterm.app.widgets import chat as chat_module
+        from oterm.providers.capabilities import ModelCapabilities
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        monkeypatch.setattr(
+            chat_module,
+            "get_capabilities",
+            lambda provider, model: ModelCapabilities(supports_thinking=True),
+        )
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            assert container.chat_model.thinking is False
+
+            container.action_toggle_thinking()
+            await pilot.pause()
+
+            assert container.chat_model.thinking is True
+            assert any("Thinking on" in n.message for n in _notifications(app))
+
+            # Session-only: the stored chat is untouched.
+            reloaded = await store.get_chat(chat_id)
+            assert reloaded is not None and reloaded.thinking is False
+
+    async def test_toggle_disables_thinking_for_session_only(
+        self, store, chat_model, monkeypatch
+    ):
+        from oterm.app.widgets import chat as chat_module
+        from oterm.providers.capabilities import ModelCapabilities
+
+        chat_model.thinking = True
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        monkeypatch.setattr(
+            chat_module,
+            "get_capabilities",
+            lambda provider, model: ModelCapabilities(supports_thinking=True),
+        )
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.action_toggle_thinking()
+            await pilot.pause()
+
+            assert container.chat_model.thinking is False
+            assert any("Thinking off" in n.message for n in _notifications(app))
+
+            reloaded = await store.get_chat(chat_id)
+            assert reloaded is not None and reloaded.thinking is True
+
+    async def test_toggle_rebuilds_agent_with_new_thinking(
+        self, store, chat_model, monkeypatch
+    ):
+        from oterm.app.widgets import chat as chat_module
+        from oterm.providers.capabilities import ModelCapabilities
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        monkeypatch.setattr(
+            chat_module,
+            "get_capabilities",
+            lambda provider, model: ModelCapabilities(supports_thinking=True),
+        )
+
+        thinking_seen: list[bool] = []
+
+        def fake_get_agent(*args, thinking, **kwargs):
+            thinking_seen.append(thinking)
+            return None
+
+        monkeypatch.setattr(chat_module, "get_agent", fake_get_agent)
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            thinking_seen.clear()
+            container.action_toggle_thinking()
+            await pilot.pause()
+            assert thinking_seen == [True]
+
+    async def test_toggle_on_unsupported_model_notifies_and_noops(
+        self, store, chat_model, monkeypatch
+    ):
+        from oterm.app.widgets import chat as chat_module
+        from oterm.providers.capabilities import ModelCapabilities
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+
+        monkeypatch.setattr(
+            chat_module,
+            "get_capabilities",
+            lambda provider, model: ModelCapabilities(supports_thinking=False),
+        )
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            container.action_toggle_thinking()
+            await pilot.pause()
+
+            assert any(
+                "does not support thinking" in n.message for n in _notifications(app)
+            )
+            assert container.chat_model.thinking is False
+
+
 class TestRenameChat:
     async def test_rename_chat_updates_store_and_notifies(
         self, store, chat_model, monkeypatch
