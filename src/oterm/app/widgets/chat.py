@@ -62,6 +62,7 @@ from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import IMAGE_TOKEN_RE, FlexibleInput, PostableTextArea
 from oterm.config import envConfig
 from oterm.log import log
+from oterm.providers.capabilities import get_capabilities
 from oterm.store.store import Store
 from oterm.tools import builtin_tools
 from oterm.tools.mcp.setup import mcp_servers, mcp_tool_meta
@@ -522,6 +523,21 @@ class ChatContainer(Widget):
         self.system = self.chat_model.system
 
         self._rebuild_agent()
+
+    def action_toggle_thinking(self) -> None:
+        """Toggle thinking for the current session only; not persisted."""
+        if not get_capabilities(
+            self.chat_model.provider, self.chat_model.model
+        ).supports_thinking:
+            self.app.notify(
+                f"{self.chat_model.model} does not support thinking.",
+                severity="warning",
+            )
+            return
+
+        self.chat_model.thinking = not self.chat_model.thinking
+        self._rebuild_agent()
+        self.app.notify(f"Thinking {'on' if self.chat_model.thinking else 'off'}.")
 
     @work
     async def action_rename_chat(self) -> None:

@@ -35,6 +35,7 @@ class OTerm(App):
             priority=True,
         ),
         Binding("ctrl+n", "new_chat", "new chat", id="new.chat"),
+        Binding("ctrl+t", "toggle_thinking", "toggle thinking", id="toggle.thinking"),
         Binding("ctrl+l", "show_logs", "show logs", id="show.logs"),
         Binding("ctrl+q", "quit", "quit", id="quit"),
     ]
@@ -46,6 +47,11 @@ class OTerm(App):
             "Edit chat parameters",
             "Allows to redefine model parameters and system prompt",
             self.action_edit_chat,
+        )
+        yield SystemCommand(
+            "Toggle thinking",
+            "Turns thinking mode on or off for the current chat",
+            self.action_toggle_thinking,
         )
         yield SystemCommand(
             "Rename chat", "Renames the current chat", self.action_rename_chat
@@ -124,6 +130,13 @@ class OTerm(App):
             return
         chat = tabs.active_pane.query_one(ChatContainer)
         chat.action_edit_chat()
+
+    async def action_toggle_thinking(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        if tabs.active_pane is None:
+            return
+        chat = tabs.active_pane.query_one(ChatContainer)
+        chat.action_toggle_thinking()
 
     async def action_rename_chat(self) -> None:
         tabs = self.query_one(TabbedContent)
