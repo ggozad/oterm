@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import Any
 
 from pydantic_ai import Agent
@@ -5,11 +6,13 @@ from pydantic_ai import Tool as PydanticTool
 from pydantic_ai.capabilities import AbstractCapability, NativeTool
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIResponsesModel
 from pydantic_ai.native_tools import ImageGenerationTool
+from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import AbstractToolset
 
 from oterm.config import envConfig
+from oterm.providers.capabilities import get_capabilities
 from oterm.providers.ollama import openai_compat_base_url
 from oterm.providers.settings import get_supported_setting_keys
 
@@ -55,12 +58,21 @@ def get_agent(
     pydantic_model: OpenAIChatModel | OpenAIResponsesModel | str
     capabilities: list[AbstractCapability[None]] = []
     if provider == "ollama":
+        ollama_provider = OllamaProvider(
+            base_url=openai_compat_base_url(),
+            api_key=envConfig.OLLAMA_API_KEY or "ollama",
+        )
+        # Ollama's pydantic-ai profiles don't mark thinking-capable models as
+        # supporting thinking, so the unified `thinking` setting is dropped
+        # before the request and thinking can't be turned off. Ollama itself
+        # reports the capability, so trust that and let the setting through.
+        profile = ollama_provider.model_profile(model)
+        if profile is not None and get_capabilities(provider, model).supports_thinking:
+            profile = replace(profile, supports_thinking=True)
         pydantic_model = OpenAIChatModel(
             model_name=model,
-            provider=OpenAIProvider(
-                base_url=openai_compat_base_url(),
-                api_key=envConfig.OLLAMA_API_KEY or "ollama",
-            ),
+            provider=ollama_provider,
+            profile=profile,
         )
     elif provider == "openai-responses":
         pydantic_model = OpenAIResponsesModel(model_name=model)

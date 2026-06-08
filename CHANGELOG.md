@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+
+- **Thinking can now be disabled for Ollama models.** ([#312](https://github.com/ggozad/oterm/issues/312)) Ollama routes through pydantic-ai's `OllamaProvider`, and thinking-capable models are marked `supports_thinking` in their profile, so the chat's thinking toggle reaches Ollama as `reasoning_effort` instead of being silently dropped.
+
 ## [0.18.0] - 2026-05-22
 
 ### Changed

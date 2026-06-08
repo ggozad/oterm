@@ -1,10 +1,30 @@
 import pytest
 from pydantic_ai import Agent
 from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 
 from oterm.agent import _build_model_settings, get_agent
 from oterm.providers import UNRESOLVED_API_KEY
+from oterm.providers.capabilities import ModelCapabilities
+
+
+@pytest.fixture
+def ollama_thinking(monkeypatch):
+    """Stub Ollama capability detection so get_agent stays offline."""
+
+    def _set(supports_thinking: bool) -> None:
+        import oterm.agent as agent_mod
+
+        monkeypatch.setattr(
+            agent_mod,
+            "get_capabilities",
+            lambda provider, model: ModelCapabilities(
+                supports_thinking=supports_thinking
+            ),
+        )
+
+    return _set
 
 
 class TestBuildModelSettings:
@@ -97,26 +117,28 @@ class TestBuildModelSettings:
 
 
 class TestGetAgent:
-    def test_ollama_provider(self, monkeypatch):
+    def test_ollama_provider(self, monkeypatch, ollama_thinking):
         import oterm.config
 
+        ollama_thinking(False)
         monkeypatch.setattr(
             oterm.config.envConfig, "OLLAMA_URL", "http://localhost:11434"
         )
         agent = get_agent(provider="ollama", model="llama3")
         assert isinstance(agent, Agent)
         assert isinstance(agent.model, OpenAIChatModel)
-        assert isinstance(agent.model._provider, OpenAIProvider)
+        assert isinstance(agent.model._provider, OllamaProvider)
         assert (
             str(agent.model.client.base_url).rstrip("/") == "http://localhost:11434/v1"
         )
 
-    def test_ollama_provider_w_api_key(self, monkeypatch):
+    def test_ollama_provider_w_api_key(self, monkeypatch, ollama_thinking):
         import oterm.config
 
         OLLAMA_URL = "https://ollama.example.com"
         OLLAMA_API_KEY = "TEST_KEY"
 
+        ollama_thinking(False)
         monkeypatch.setattr(
             oterm.config.envConfig,
             "OLLAMA_URL",
@@ -126,9 +148,37 @@ class TestGetAgent:
         agent = get_agent(provider="ollama", model="llama3")
         assert isinstance(agent, Agent)
         assert isinstance(agent.model, OpenAIChatModel)
-        assert isinstance(agent.model._provider, OpenAIProvider)
+        assert isinstance(agent.model._provider, OllamaProvider)
         assert str(agent.model.client.base_url).rstrip("/") == f"{OLLAMA_URL}/v1"
         assert agent.model.client.api_key == OLLAMA_API_KEY
+
+    def test_ollama_thinking_capable_model_enables_thinking_in_profile(
+        self, monkeypatch, ollama_thinking
+    ):
+        """A thinking-capable Ollama model must report supports_thinking so
+        pydantic-ai forwards the unified thinking setting (and can disable it)."""
+        import oterm.config
+
+        ollama_thinking(True)
+        monkeypatch.setattr(
+            oterm.config.envConfig, "OLLAMA_URL", "http://localhost:11434"
+        )
+        agent = get_agent(provider="ollama", model="qwen3.6")
+        assert isinstance(agent.model, OpenAIChatModel)
+        assert agent.model.profile.supports_thinking is True
+
+    def test_ollama_non_thinking_model_leaves_thinking_disabled_in_profile(
+        self, monkeypatch, ollama_thinking
+    ):
+        import oterm.config
+
+        ollama_thinking(False)
+        monkeypatch.setattr(
+            oterm.config.envConfig, "OLLAMA_URL", "http://localhost:11434"
+        )
+        agent = get_agent(provider="ollama", model="devstral")
+        assert isinstance(agent.model, OpenAIChatModel)
+        assert agent.model.profile.supports_thinking is False
 
     def test_openai_responses_provider_enables_image_generation_tool(self, monkeypatch):
         from pydantic_ai.models.openai import OpenAIResponsesModel
