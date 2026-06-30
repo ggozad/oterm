@@ -82,7 +82,7 @@ def _supports_thinking(provider: str, model: str) -> bool:
         profile = infer_provider_class(provider).model_profile(model)
     except Exception:
         return False
-    return bool(profile and profile.supports_thinking)
+    return bool(profile and profile.get("supports_thinking", False))
 
 
 def _supports_vision(provider: str, model: str) -> bool:

@@ -1,4 +1,4 @@
-from dataclasses import replace
+import os
 from typing import Any
 
 from pydantic_ai import Agent
@@ -6,6 +6,7 @@ from pydantic_ai import Tool as PydanticTool
 from pydantic_ai.capabilities import AbstractCapability, NativeTool
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIResponsesModel
 from pydantic_ai.native_tools import ImageGenerationTool
+from pydantic_ai.profiles import ModelProfile, merge_profile
 from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
@@ -68,7 +69,7 @@ def get_agent(
         # reports the capability, so trust that and let the setting through.
         profile = ollama_provider.model_profile(model)
         if profile is not None and get_capabilities(provider, model).supports_thinking:
-            profile = replace(profile, supports_thinking=True)
+            profile = merge_profile(profile, ModelProfile(supports_thinking=True))
         pydantic_model = OpenAIChatModel(
             model_name=model,
             provider=ollama_provider,
@@ -97,6 +98,17 @@ def get_agent(
             provider=OpenAIProvider(
                 base_url=config["base_url"],
                 api_key=api_key,
+            ),
+        )
+    elif provider == "grok":
+        from oterm.providers import _BUILTIN_OPENAI_COMPAT, UNRESOLVED_API_KEY
+
+        base_url, env_var = _BUILTIN_OPENAI_COMPAT["grok"]
+        pydantic_model = OpenAIChatModel(
+            model_name=model,
+            provider=OpenAIProvider(
+                base_url=base_url,
+                api_key=os.getenv(env_var) or UNRESOLVED_API_KEY,
             ),
         )
     else:

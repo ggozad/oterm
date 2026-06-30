@@ -28,15 +28,15 @@ dependencies = [
     "ollama==0.6.2",
     "packaging==26.2",
     "pillow==12.2.0",
-    "pydantic==2.13.3",
-    "pydantic-ai-slim[openai,anthropic,google,vertexai,groq,mistral,cohere,bedrock,huggingface,mcp,logfire]==1.100.0",
+    "pydantic==2.13.4",
+    "pydantic-ai-slim[openai,anthropic,google,groq,mistral,cohere,bedrock,huggingface,mcp,logfire]==2.1.0",
     "python-dotenv==1.2.2",
-    "python-multipart>=0.0.27",
-    "textual==8.2.4",
+    "python-multipart>=0.0.32,<0.1",
+    "textual==8.2.8",
     "textual-image==0.12.0",
     "textual-speedups==0.2.1",
     "textualeffects==0.2.0",
-    "typer==0.24.2",
+    "typer==0.26.8",
 ]
 
 [project.urls]
