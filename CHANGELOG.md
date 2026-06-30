@@ -2,6 +2,12 @@
 
 [Unreleased]
 
+### Changed
+
+- **Upgraded to pydantic-ai 2.x** (from 1.100), bringing newer model and provider support.
+- **Grok routes through x.ai's OpenAI-compatible endpoint** (`https://api.x.ai/v1`); the `grok:` provider prefix was removed in pydantic-ai 2.0.
+- Logfire instrumentation defaults to format v5, reporting agent-run-span token usage under `gen_ai.aggregated_usage.*`; dashboards reading run-span usage may need updating.
+
 ## [0.19.0] - 2026-06-08
 
 ### Added

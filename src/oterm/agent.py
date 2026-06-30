@@ -1,4 +1,3 @@
-from dataclasses import replace
 from typing import Any
 
 from pydantic_ai import Agent
@@ -6,6 +5,7 @@ from pydantic_ai import Tool as PydanticTool
 from pydantic_ai.capabilities import AbstractCapability, NativeTool
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIResponsesModel
 from pydantic_ai.native_tools import ImageGenerationTool
+from pydantic_ai.profiles import ModelProfile, merge_profile
 from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
 from pydantic_ai.settings import ModelSettings
@@ -68,7 +68,7 @@ def get_agent(
         # reports the capability, so trust that and let the setting through.
         profile = ollama_provider.model_profile(model)
         if profile is not None and get_capabilities(provider, model).supports_thinking:
-            profile = replace(profile, supports_thinking=True)
+            profile = merge_profile(profile, ModelProfile(supports_thinking=True))
         pydantic_model = OpenAIChatModel(
             model_name=model,
             provider=ollama_provider,

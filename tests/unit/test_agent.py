@@ -165,7 +165,7 @@ class TestGetAgent:
         )
         agent = get_agent(provider="ollama", model="qwen3.6")
         assert isinstance(agent.model, OpenAIChatModel)
-        assert agent.model.profile.supports_thinking is True
+        assert agent.model.profile.get("supports_thinking", False) is True
 
     def test_ollama_non_thinking_model_leaves_thinking_disabled_in_profile(
         self, monkeypatch, ollama_thinking
@@ -178,7 +178,7 @@ class TestGetAgent:
         )
         agent = get_agent(provider="ollama", model="devstral")
         assert isinstance(agent.model, OpenAIChatModel)
-        assert agent.model.profile.supports_thinking is False
+        assert agent.model.profile.get("supports_thinking", False) is False
 
     def test_openai_responses_provider_enables_image_generation_tool(self, monkeypatch):
         from pydantic_ai.models.openai import OpenAIResponsesModel
