@@ -25,6 +25,7 @@ from oterm.providers import (
     ollama,
 )
 from oterm.providers.capabilities import get_capabilities
+from oterm.providers.ollama import parse_modelfile_parameters
 from oterm.providers.settings import get_supported_setting_keys
 from oterm.types import ChatModel
 
@@ -237,10 +238,9 @@ class ChatEdit(ModalScreen[str]):
                 self.models_info[model] = meta
 
             self.model_info = meta
-            self._populate_parameter_inputs(self.parameters)
-            self.query_one(".system", TextArea).load_text(
-                self.system or self.model_info.get("system", "")
-            )
+            modelfile_params = parse_modelfile_parameters(meta.parameters or "")
+            self._populate_parameter_inputs(self.parameters or modelfile_params)
+            self.query_one(".system", TextArea).load_text(self.system or "")
             capabilities: list[str] = list(self.model_info.get("capabilities", []))
         else:
             self.query_one(".size", Label).update("")

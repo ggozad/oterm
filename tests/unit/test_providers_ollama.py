@@ -2,6 +2,7 @@ from oterm.providers import ollama as ollama_mod
 from oterm.providers.ollama import (
     ollama_client_host,
     openai_compat_base_url,
+    parse_modelfile_parameters,
 )
 
 
@@ -64,6 +65,20 @@ class TestOllamaClientHost:
 
         monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", "http://h:1/v1/")
         assert ollama_client_host() == "http://h:1"
+
+
+class TestParseModelfileParameters:
+    def test_ignores_unknown_keys(self):
+        result = parse_modelfile_parameters("unknown_key 42\ntemperature 0.5")
+        assert result == {"temperature": 0.5}
+
+    def test_ignores_invalid_values(self):
+        result = parse_modelfile_parameters("temperature not_a_float\ntop_p 0.9")
+        assert result == {"top_p": 0.9}
+
+    def test_ignores_blank_and_valueless_lines(self):
+        result = parse_modelfile_parameters("\nseed\ntemperature 0.5")
+        assert result == {"temperature": 0.5}
 
 
 class TestOpenAICompatBaseUrl:
