@@ -2,6 +2,12 @@
 
 [Unreleased]
 
+## [0.20.0] - 2026-06-30
+
+### Added
+
+- When selecting an Ollama model with no saved parameters, the `temperature`, `top_p`, `max_tokens`, and `seed` fields are pre-populated from the Modelfile's `PARAMETER` defaults (`num_predict` maps to `max_tokens`). ([#317](https://github.com/ggozad/oterm/pull/317))
+
 ### Changed
 
 - **Upgraded to pydantic-ai 2.x** (from 1.100), bringing newer model and provider support.
