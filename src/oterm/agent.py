@@ -1,3 +1,4 @@
+import os
 from typing import Any
 
 from pydantic_ai import Agent
@@ -97,6 +98,17 @@ def get_agent(
             provider=OpenAIProvider(
                 base_url=config["base_url"],
                 api_key=api_key,
+            ),
+        )
+    elif provider == "grok":
+        from oterm.providers import _BUILTIN_OPENAI_COMPAT, UNRESOLVED_API_KEY
+
+        base_url, env_var = _BUILTIN_OPENAI_COMPAT["grok"]
+        pydantic_model = OpenAIChatModel(
+            model_name=model,
+            provider=OpenAIProvider(
+                base_url=base_url,
+                api_key=os.getenv(env_var) or UNRESOLVED_API_KEY,
             ),
         )
     else:

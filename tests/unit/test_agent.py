@@ -253,6 +253,23 @@ class TestGetAgent:
         assert isinstance(agent.model, OpenAIChatModel)
         assert agent.model.client.api_key == UNRESOLVED_API_KEY
 
+    def test_grok_routes_through_xai_openai_compatible_endpoint(self, monkeypatch):
+        monkeypatch.setenv("GROK_API_KEY", "xai-secret")
+        agent = get_agent(provider="grok", model="grok-4")
+        assert isinstance(agent.model, OpenAIChatModel)
+        assert isinstance(agent.model._provider, OpenAIProvider)
+        assert str(agent.model.client.base_url).rstrip("/") == "https://api.x.ai/v1"
+        assert agent.model.client.api_key == "xai-secret"
+
+    def test_grok_missing_key_falls_back_to_unresolved(self, monkeypatch):
+        """A missing GROK_API_KEY must not leak OPENAI_API_KEY to x.ai."""
+        monkeypatch.delenv("GROK_API_KEY", raising=False)
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-real")
+        agent = get_agent(provider="grok", model="grok-4")
+        assert isinstance(agent.model, OpenAIChatModel)
+        assert agent.model.client.api_key == UNRESOLVED_API_KEY
+        assert agent.model.client.api_key != "sk-real"
+
     def test_fallthrough_provider_uses_prefix_string(self, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
         agent = get_agent(provider="anthropic", model="claude-4")
