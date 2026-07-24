@@ -6,17 +6,24 @@ from textual.widget import Widget
 from textual.widgets import Checkbox
 
 from oterm.tools import builtin_tools, known_tool_names
+from oterm.tools.capabilities import capability_defs
 from oterm.tools.mcp.setup import mcp_tool_meta
 
 _BUILTIN_GROUP = "builtin"
+_CAPABILITIES_GROUP = "capabilities"
 
 
 def _all_groups() -> dict[str, list[dict]]:
-    """Unified {group_name: [{'name', 'description'}, ...]} across builtin + MCP."""
+    """Unified {group_name: [{'name', 'description'}, ...]} across builtin + capabilities + MCP."""
     groups: dict[str, list[dict]] = {}
     if builtin_tools:  # pragma: no branch
         groups[_BUILTIN_GROUP] = [
             {"name": t["name"], "description": t["description"]} for t in builtin_tools
+        ]
+    if capability_defs:  # pragma: no branch
+        groups[_CAPABILITIES_GROUP] = [
+            {"name": c["name"], "description": c["description"]}
+            for c in capability_defs
         ]
     for server_name, metas in mcp_tool_meta.items():
         groups[server_name] = [

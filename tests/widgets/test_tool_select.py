@@ -20,18 +20,24 @@ def _tool_def(name: str):
 
 @pytest.fixture
 def populated_tools(monkeypatch):
-    """Inject fake builtin tools and MCP metadata so ToolSelector has content."""
+    """Inject fake builtin tools, capabilities and MCP metadata so ToolSelector has content."""
     import oterm.app.widgets.tool_select as sel_mod
     import oterm.tools as tools_mod
+    import oterm.tools.capabilities as capabilities_mod
     import oterm.tools.mcp.setup as mcp_setup_mod
 
     builtin = [_tool_def("date_time"), _tool_def("shell")]
+    capability_defs = [
+        {"name": "web_search", "description": "web search", "factory": lambda: None},
+    ]
     mcp_meta = {
         "mcp_server": [{"name": "oracle", "description": "oracle tool"}],
     }
 
     monkeypatch.setattr(tools_mod, "builtin_tools", builtin)
     monkeypatch.setattr(sel_mod, "builtin_tools", builtin)
+    monkeypatch.setattr(sel_mod, "capability_defs", capability_defs)
+    monkeypatch.setattr(capabilities_mod, "capability_defs", capability_defs)
     monkeypatch.setattr(sel_mod, "mcp_tool_meta", mcp_meta)
     monkeypatch.setattr(mcp_setup_mod, "mcp_tool_meta", mcp_meta)
     return builtin, mcp_meta
@@ -53,9 +59,15 @@ class TestToolSelector:
             selector = app.query_one(ToolSelector)
             await pilot.pause()
             names = {c.name for c in selector.query(Checkbox)}
-            assert {"builtin", "mcp_server", "date_time", "shell", "oracle"}.issubset(
-                names
-            )
+            assert {
+                "builtin",
+                "capabilities",
+                "mcp_server",
+                "date_time",
+                "shell",
+                "web_search",
+                "oracle",
+            }.issubset(names)
 
     async def test_initial_selection_reflected_in_checkboxes(self, populated_tools):
         app = _Host(selected=["date_time"])
@@ -101,6 +113,26 @@ class TestToolSelector:
             await pilot.pause()
             assert selector.query_one("#builtin-date_time", Checkbox).value is True
             assert selector.query_one("#builtin-shell", Checkbox).value is True
+
+    async def test_capability_toggle(self, populated_tools):
+        app = _Host()
+        async with app.run_test() as pilot:
+            selector = app.query_one(ToolSelector)
+            await pilot.pause()
+
+            web_search_cb = selector.query_one("#capabilities-web_search", Checkbox)
+            web_search_cb.value = True
+            await pilot.pause()
+            assert "web_search" in selector.selected
+
+    async def test_selected_capability_survives_known_names_filter(
+        self, populated_tools
+    ):
+        app = _Host(selected=["web_search"])
+        async with app.run_test() as pilot:
+            selector = app.query_one(ToolSelector)
+            await pilot.pause()
+            assert "web_search" in selector.selected
 
     async def test_mcp_tool_toggle(self, populated_tools):
         app = _Host()

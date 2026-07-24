@@ -10,10 +10,12 @@ builtin_tools: list[ToolDef] = []
 
 
 def known_tool_names() -> set[str]:
-    """Names of every tool currently available (builtin + connected MCP)."""
+    """Names of everything currently selectable (builtin + capabilities + connected MCP)."""
+    from oterm.tools.capabilities import capability_defs
     from oterm.tools.mcp.setup import mcp_tool_meta
 
     names = {t["name"] for t in builtin_tools}
+    names.update(c["name"] for c in capability_defs)
     for metas in mcp_tool_meta.values():
         names.update(m["name"] for m in metas)
     return names
