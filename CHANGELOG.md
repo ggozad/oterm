@@ -2,6 +2,10 @@
 
 [Unreleased]
 
+### Changed
+
+- pydantic-ai bumped to 2.17.0.
+
 ## [0.20.0] - 2026-06-30
 
 ### Added
