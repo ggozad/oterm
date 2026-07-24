@@ -5,6 +5,7 @@
 * multiple persistent chat sessions, stored together with system prompt & parameter customizations in sqlite.
 * talks to Ollama, OpenAI, Anthropic, Google (AI / Vertex), Groq, Mistral, Cohere, AWS Bedrock, DeepSeek, Cerebras, Grok, Hugging Face, and any OpenAI-compatible endpoint — local (vLLM, LM Studio, llama.cpp, …) or hosted (OpenRouter, LiteLLM, …).
 * tools — built-in (`shell`, `date_time`, `think`), custom Python plugins via entry points, and any [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server.
+* capabilities — web search, URL fetching, persistent memory, and sandboxed file access.
 * allows for easy customization of the model's system prompt and parameters.
 
 ## Using oterm

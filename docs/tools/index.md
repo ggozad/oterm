@@ -59,6 +59,15 @@ The following tools are built-in to `oterm` and available by default:
 * `shell` - allows you to run shell commands and use the output as input to the model. Obviously this can be dangerous, so use with caution.
 * `generate_image` - generates an image from a text prompt using an Ollama image-generation model (e.g. `x/z-image-turbo`, `x/flux2-klein`). The default model is `x/z-image-turbo`; override it for a single call via the tool's `model` argument or globally via the `OTERM_OLLAMA_IMAGE_MODEL` environment variable. The image renders inline in the chat. Requires an Ollama server with an image-capable model installed; the host LLM (any provider) writes the prompt and calls the tool.
 
+### Capabilities
+
+Alongside tools, `oterm` offers [pydantic-ai capabilities](https://ai.pydantic.dev/capabilities/overview/) in the tool selector, under the `capabilities` group:
+
+* `web_search` - searches the web. Uses the provider's native web search when available (e.g. Anthropic, OpenAI), and falls back to DuckDuckGo for providers without one (e.g. Ollama).
+* `web_fetch` - fetches the contents of a URL, using the provider's native URL fetching when available.
+* `memory` - gives the model a persistent memory notebook, shared across all chats and stored in `memory.db` in the oterm data directory. The model reads, writes and searches it with dedicated tools.
+* `filesystem` - lets the model read, write and search files under the directory `oterm` was started from. Paths outside it are rejected, and sensitive files (`.git`, `.env`, keys, secrets) are read-only.
+
 ### Tool calls in the chat
 
 When the model invokes a tool during a response, `oterm` renders the call inline as a collapsible entry between any "thoughts" and the response itself:
