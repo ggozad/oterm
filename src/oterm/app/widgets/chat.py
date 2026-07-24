@@ -65,6 +65,7 @@ from oterm.log import log
 from oterm.providers.capabilities import get_capabilities
 from oterm.store.store import Store
 from oterm.tools import builtin_tools
+from oterm.tools.capabilities import capability_defs
 from oterm.tools.mcp.setup import mcp_servers, mcp_tool_meta
 from oterm.types import ChatModel, MessageModel
 
@@ -151,8 +152,9 @@ def _last_user_prompt_index(history: list[ModelMessage]) -> int | None:
 
 
 def _resolve_tools(tool_names: list[str]):
-    """Split selected tool names into pydantic-ai Tool objects and filtered MCP toolsets."""
+    """Split selected tool names into pydantic-ai Tool objects, filtered MCP toolsets and capabilities."""
     from pydantic_ai import Tool as PydanticTool
+    from pydantic_ai.capabilities import AbstractCapability
     from pydantic_ai.toolsets import AbstractToolset
 
     from oterm.log import log
@@ -165,6 +167,12 @@ def _resolve_tools(tool_names: list[str]):
         available_names.add(tool_def["name"])
         if tool_def["name"] in selected:
             tools.append(tool_def["tool"])
+
+    capabilities: list[AbstractCapability[None]] = []
+    for capability_def in capability_defs:
+        available_names.add(capability_def["name"])
+        if capability_def["name"] in selected:
+            capabilities.append(capability_def["factory"]())
 
     toolsets: list[AbstractToolset[None]] = []
     for server_name, meta in mcp_tool_meta.items():
@@ -182,7 +190,7 @@ def _resolve_tools(tool_names: list[str]):
     if missing:
         log.warning(f"Chat references unavailable tools: {sorted(missing)}")
 
-    return tools, toolsets
+    return tools, toolsets, capabilities
 
 
 class ChatContainer(Widget):
@@ -215,7 +223,7 @@ class ChatContainer(Widget):
 
     def _rebuild_agent(self) -> None:
         """(Re)build the agent for the current chat_model. Defers errors to send time."""
-        tools, toolsets = _resolve_tools(self.chat_model.tools)
+        tools, toolsets, capabilities = _resolve_tools(self.chat_model.tools)
         try:
             self.agent = get_agent(
                 provider=self.chat_model.provider,
@@ -223,6 +231,7 @@ class ChatContainer(Widget):
                 system=self.chat_model.system,
                 tools=tools,
                 toolsets=toolsets,
+                capabilities=capabilities,
                 parameters=self.chat_model.parameters,
                 thinking=self.chat_model.thinking,
             )

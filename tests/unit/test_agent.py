@@ -292,3 +292,26 @@ class TestGetAgent:
         )
         tool_names = [t.name for t in agent._function_toolset.tools.values()]
         assert "hello" in tool_names
+
+    def test_capabilities_passed_through(self):
+        from pydantic_ai.capabilities import WebSearch
+
+        capability = WebSearch(local="duckduckgo")
+        agent = get_agent(provider="ollama", model="llama3", capabilities=[capability])
+        applied = []
+        agent._root_capability.apply(applied.append)
+        assert capability in applied
+
+    def test_capabilities_merge_with_provider_capabilities(self, monkeypatch):
+        from pydantic_ai.capabilities import WebSearch
+        from pydantic_ai.native_tools import ImageGenerationTool
+
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+        capability = WebSearch(local="duckduckgo")
+        agent = get_agent(
+            provider="openai-responses", model="gpt-5.4", capabilities=[capability]
+        )
+        applied = []
+        agent._root_capability.apply(applied.append)
+        assert capability in applied
+        assert any(isinstance(t, ImageGenerationTool) for t in agent._cap_native_tools)

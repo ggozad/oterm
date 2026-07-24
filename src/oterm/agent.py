@@ -53,11 +53,12 @@ def get_agent(
     system: str | None = None,
     tools: list[PydanticTool] | None = None,
     toolsets: list[AbstractToolset[None]] | None = None,
+    capabilities: list[AbstractCapability[None]] | None = None,
     parameters: dict[str, Any] | None = None,
     thinking: bool = False,
 ) -> Agent[None, str]:
     pydantic_model: OpenAIChatModel | OpenAIResponsesModel | str
-    capabilities: list[AbstractCapability[None]] = []
+    capabilities = list(capabilities) if capabilities else []
     if provider == "ollama":
         ollama_provider = OllamaProvider(
             base_url=openai_compat_base_url(),
