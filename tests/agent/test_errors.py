@@ -7,9 +7,10 @@ from oterm.types import ChatModel
 
 class TestResolveTools:
     def test_empty_returns_empty(self):
-        tools, toolsets = _resolve_tools([])
+        tools, toolsets, capabilities = _resolve_tools([])
         assert tools == []
         assert toolsets == []
+        assert capabilities == []
 
     def test_unknown_tool_logged_and_dropped(self, monkeypatch):
         import oterm.log
@@ -17,9 +18,10 @@ class TestResolveTools:
         monkeypatch.setattr("oterm.app.widgets.chat.builtin_tools", [])
         monkeypatch.setattr("oterm.app.widgets.chat.mcp_tool_meta", {})
         before = len(oterm.log.log_lines)
-        tools, toolsets = _resolve_tools(["ghost"])
+        tools, toolsets, capabilities = _resolve_tools(["ghost"])
         assert tools == []
         assert toolsets == []
+        assert capabilities == []
         messages = [msg for _, msg in oterm.log.log_lines[before:]]
         assert any("unavailable tools" in m and "ghost" in m for m in messages)
 
@@ -33,9 +35,26 @@ class TestResolveTools:
             [{"name": "sample", "description": "", "tool": tool}],
         )
         monkeypatch.setattr("oterm.app.widgets.chat.mcp_tool_meta", {})
-        tools, toolsets = _resolve_tools(["sample"])
+        tools, toolsets, capabilities = _resolve_tools(["sample"])
         assert tools == [tool]
         assert toolsets == []
+        assert capabilities == []
+
+    def test_capability_resolved(self, monkeypatch):
+        from pydantic_ai.capabilities import WebSearch
+
+        import oterm.log
+
+        monkeypatch.setattr("oterm.app.widgets.chat.builtin_tools", [])
+        monkeypatch.setattr("oterm.app.widgets.chat.mcp_tool_meta", {})
+        before = len(oterm.log.log_lines)
+        tools, toolsets, capabilities = _resolve_tools(["web_search"])
+        assert tools == []
+        assert toolsets == []
+        assert len(capabilities) == 1
+        assert isinstance(capabilities[0], WebSearch)
+        messages = [msg for _, msg in oterm.log.log_lines[before:]]
+        assert not any("unavailable tools" in m for m in messages)
 
     def test_mcp_tools_become_filtered_toolset(self, monkeypatch):
         class _FakeServer:
@@ -53,8 +72,9 @@ class TestResolveTools:
             {"oracle": [{"name": "ask_oracle", "description": ""}]},
         )
         monkeypatch.setattr("oterm.app.widgets.chat.mcp_servers", {"oracle": server})
-        tools, toolsets = _resolve_tools(["ask_oracle"])
+        tools, toolsets, capabilities = _resolve_tools(["ask_oracle"])
         assert tools == []
+        assert capabilities == []
         assert len(toolsets) == 1
         # The filter predicate accepts the chosen tool name and rejects others.
         from types import SimpleNamespace
@@ -70,6 +90,16 @@ class TestRebuildAgent:
         container = ChatContainer(chat_model=cm, messages=[])
         assert container.agent is not None
         assert container._agent_error is None
+
+    def test_selected_capability_reaches_agent(self):
+        from pydantic_ai.capabilities import WebSearch
+
+        cm = ChatModel(model="llama3", provider="ollama", tools=["web_search"])
+        container = ChatContainer(chat_model=cm, messages=[])
+        assert container.agent is not None
+        capabilities = []
+        container.agent._root_capability.apply(capabilities.append)
+        assert any(isinstance(c, WebSearch) for c in capabilities)
 
     def test_failure_captures_error_message(self, app_config):
         cm = ChatModel(model="m", provider="openai-compat/does-not-exist")

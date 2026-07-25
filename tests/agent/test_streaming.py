@@ -232,9 +232,10 @@ class TestResolveTools:
         monkeypatch.setattr(chat_mod, "mcp_servers", {})
         monkeypatch.setattr(chat_mod, "builtin_tools", [])
 
-        tools, toolsets = chat_mod._resolve_tools(["nonexistent"])
+        tools, toolsets, capabilities = chat_mod._resolve_tools(["nonexistent"])
         assert tools == []
         assert toolsets == []
+        assert capabilities == []
 
 
 class TestImagePrompt:

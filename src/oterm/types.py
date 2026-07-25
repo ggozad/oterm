@@ -1,13 +1,21 @@
+from collections.abc import Callable
 from typing import Any, Literal, TypedDict
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Tool as PydanticTool
+from pydantic_ai.capabilities import AbstractCapability
 
 
 class ToolDef(TypedDict):
     name: str
     description: str
     tool: PydanticTool
+
+
+class CapabilityDef(TypedDict):
+    name: str
+    description: str
+    factory: Callable[[], AbstractCapability[None]]
 
 
 class ChatModel(BaseModel):

@@ -2,6 +2,10 @@
 
 [Unreleased]
 
+### Added
+
+- Selectable capabilities alongside tools: `web_search` (native provider search or DuckDuckGo), `web_fetch` (native or local URL fetching), `memory` (persistent cross-chat notebook in `$OTERM_DATA_DIR/memory.db`), and `filesystem` (file access sandboxed to the launch directory).
+
 ### Changed
 
 - pydantic-ai bumped to 2.17.0.
