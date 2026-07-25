@@ -2,6 +2,8 @@
 
 [Unreleased]
 
+## [0.21.0] - 2026-07-25
+
 ### Added
 
 - Selectable capabilities alongside tools: `web_search` (native provider search or DuckDuckGo), `web_fetch` (native or local URL fetching), `memory` (persistent cross-chat notebook in `$OTERM_DATA_DIR/memory.db`), and `filesystem` (file access sandboxed to the launch directory).
