@@ -9,6 +9,7 @@
 ### Changed
 
 - pydantic-ai bumped to 2.17.0.
+- pillow bumped to 12.3.0; vulnerable transitive dependencies (pyasn1, setuptools, pymdown-extensions) upgraded.
 
 ### Fixed
 
