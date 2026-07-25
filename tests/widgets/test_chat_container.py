@@ -23,7 +23,7 @@ from oterm.app.widgets.chat import (
 )
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.types import ChatModel, MessageModel
-from tests._helpers import wait_until
+from tests._helpers import image_b64, wait_until
 
 
 class _Host(App):
@@ -358,7 +358,7 @@ class TestImages:
             container = app.query_one(ChatContainer)
             container.agent = Agent(FunctionModel(stream_function=stream_fn))
 
-            good = base64.b64encode(b"\x89PNG\r\n").decode()
+            good = image_b64()
             bad = "not-valid-base64!!"
 
             user_prompt, skipped = build_user_prompt("look", [good, bad])
@@ -375,6 +375,32 @@ class TestImages:
             await pilot.pause()
 
 
+class TestDecodeImage:
+    def test_jpeg_labeled_jpeg(self):
+        from oterm.app.widgets.chat import _decode_image
+
+        content = _decode_image(image_b64("JPEG"))
+        assert content is not None
+        assert content.media_type == "image/jpeg"
+
+    def test_png_labeled_png(self):
+        from oterm.app.widgets.chat import _decode_image
+
+        content = _decode_image(image_b64("PNG"))
+        assert content is not None
+        assert content.media_type == "image/png"
+
+    def test_non_image_bytes_return_none(self):
+        from oterm.app.widgets.chat import _decode_image
+
+        assert _decode_image(base64.b64encode(b"not an image").decode()) is None
+
+    def test_invalid_b64_returns_none(self):
+        from oterm.app.widgets.chat import _decode_image
+
+        assert _decode_image("not-valid!!") is None
+
+
 class TestBuildUserPrompt:
     def test_no_tokens_no_images_returns_text(self):
         from oterm.app.widgets.chat import build_user_prompt
@@ -386,7 +412,7 @@ class TestBuildUserPrompt:
 
         from oterm.app.widgets.chat import build_user_prompt
 
-        good = base64.b64encode(b"\x89PNG\r\n").decode()
+        good = image_b64()
         prompt, skipped = build_user_prompt("describe", [good])
         assert skipped == 0
         assert isinstance(prompt, list)
@@ -398,7 +424,7 @@ class TestBuildUserPrompt:
 
         from oterm.app.widgets.chat import build_user_prompt
 
-        good = base64.b64encode(b"\x89PNG\r\n").decode()
+        good = image_b64()
         prompt, skipped = build_user_prompt("see [Image #1] please", [good])
         assert skipped == 0
         assert isinstance(prompt, list)
@@ -411,8 +437,8 @@ class TestBuildUserPrompt:
 
         from oterm.app.widgets.chat import build_user_prompt
 
-        good1 = base64.b64encode(b"\x89PNG\r\n1").decode()
-        good2 = base64.b64encode(b"\x89PNG\r\n2").decode()
+        good1 = image_b64("PNG")
+        good2 = image_b64("JPEG")
         prompt, skipped = build_user_prompt("[Image #2] only", [good1, good2])
         assert skipped == 0
         assert isinstance(prompt, list)
@@ -446,7 +472,7 @@ class TestBuildUserPrompt:
 
         from oterm.app.widgets.chat import build_user_prompt
 
-        good = base64.b64encode(b"\x89PNG\r\n").decode()
+        good = image_b64()
         prompt, skipped = build_user_prompt("see [Image #1]", [good])
         assert skipped == 0
         assert isinstance(prompt, list)
@@ -462,7 +488,7 @@ class TestPydanticHistoryRebuild:
 
         chat_id = await store.save_chat(chat_model)
         chat_model.id = chat_id
-        good = base64.b64encode(b"\x89PNG\r\n").decode()
+        good = image_b64()
         msg = MessageModel(
             chat_id=chat_id,
             role="user",
@@ -491,7 +517,7 @@ class TestPydanticHistoryRebuild:
 
         chat_id = await store.save_chat(chat_model)
         chat_model.id = chat_id
-        good = base64.b64encode(b"\x89PNG\r\n").decode()
+        good = image_b64()
         msg = MessageModel(
             chat_id=chat_id,
             role="user",

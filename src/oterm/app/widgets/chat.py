@@ -83,7 +83,11 @@ def _decode_image(b64: str) -> BinaryContent | None:
         data = base64.b64decode(b64, validate=True)
     except (binascii.Error, ValueError):
         return None
-    return BinaryContent(data=data, media_type="image/png")
+    try:
+        fmt = PILImage.open(BytesIO(data)).format or "PNG"
+    except UnidentifiedImageError:
+        return None
+    return BinaryContent(data=data, media_type=f"image/{fmt.lower()}")
 
 
 def build_user_prompt(

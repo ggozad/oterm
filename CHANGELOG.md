@@ -6,6 +6,10 @@
 
 - pydantic-ai bumped to 2.17.0.
 
+### Fixed
+
+- Attached images are sent with their actual media type instead of always `image/png`; unrecognizable image data is skipped.
+
 ## [0.20.0] - 2026-06-30
 
 ### Added
