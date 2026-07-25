@@ -27,7 +27,7 @@ dependencies = [
     "aiosqlite==0.22.1",
     "ollama==0.6.2",
     "packaging==26.2",
-    "pillow==12.2.0",
+    "pillow==12.3.0",
     "pydantic==2.13.4",
     "pydantic-ai-harness==0.10.0",
     "pydantic-ai-slim[openai,anthropic,google,groq,mistral,cohere,bedrock,huggingface,mcp,logfire,duckduckgo,web-fetch]==2.17.0",
