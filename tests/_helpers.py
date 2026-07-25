@@ -1,7 +1,18 @@
 """Shared test helpers."""
 
 import asyncio
+from base64 import b64encode
 from collections.abc import Callable
+from io import BytesIO
+
+import PIL.Image as PILImage
+
+
+def image_b64(fmt: str = "PNG") -> str:
+    """Base64 of a real 1x1 image in the given format."""
+    buffer = BytesIO()
+    PILImage.new("RGB", (1, 1)).save(buffer, format=fmt)
+    return b64encode(buffer.getvalue()).decode()
 
 
 async def wait_until(

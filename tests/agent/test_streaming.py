@@ -1,4 +1,3 @@
-import base64
 from collections.abc import AsyncIterator
 
 from pydantic_ai import Agent, Tool
@@ -19,6 +18,7 @@ from pydantic_ai.models.function import (
 
 from oterm.app.widgets.chat import ChatContainer
 from oterm.types import ChatModel
+from tests._helpers import image_b64
 from tests._stream_helpers import make_file_aware_agent
 
 
@@ -250,8 +250,9 @@ class TestImagePrompt:
         c = _container()
         _install_stream_agent(c, stream_fn)
 
-        img_b64 = base64.b64encode(b"\x89PNG\r\n").decode()
-        user_prompt, _ = build_user_prompt("what is this?", [img_b64])
+        img_b64 = image_b64()
+        user_prompt, skipped = build_user_prompt("what is this?", [img_b64])
+        assert skipped == 0
         chunks = await _collect(c.stream_agent(user_prompt))
         text = "".join(p.content_delta for p in chunks if isinstance(p, TextPartDelta))
         assert text == "see this"
