@@ -12,7 +12,16 @@ cli = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
 
 
 async def upgrade_db():
-    await Store.get_store()
+    from oterm.tools import load_tools
+    from oterm.tools.mcp.setup import teardown_mcp_servers
+
+    # The 0.22.0 upgrade qualifies MCP tool names by server, which it can only
+    # do while the servers are connected.
+    await load_tools()
+    try:
+        await Store.get_store()
+    finally:
+        await teardown_mcp_servers()
 
 
 @cli.command()

@@ -84,6 +84,17 @@ class TestBuildToolsets:
         with pytest.raises(ValueError, match="WebSocket transport"):
             _build_toolsets({"wss": {"url": "wss://example.com/mcp"}})
 
+    @pytest.mark.parametrize("name", ["k8s.lab", "my server", "a/b", "grafana!"])
+    def test_server_name_with_provider_invalid_characters_rejected(self, name):
+        """The name prefixes every tool sent to the model, so providers see it."""
+        with pytest.raises(ValueError, match="letters, digits"):
+            _build_toolsets({name: {"url": "http://example.com/mcp"}})
+
+    @pytest.mark.parametrize("name", ["k8s", "my-server", "my_server", "grafana2"])
+    def test_provider_valid_server_names_accepted(self, name):
+        built = _build_toolsets({name: {"url": "http://example.com/mcp"}})
+        assert name in built
+
     def test_env_var_substitution_in_env_values(self, monkeypatch):
         monkeypatch.setenv("MY_TOKEN", "shh")
         built = _build_toolsets(
@@ -197,6 +208,46 @@ class TestSetupAndTeardown:
             assert meta == {}
             messages = [msg for _, msg in oterm.log.log_lines[before:]]
             assert any("WebSocket" in m for m in messages)
+        finally:
+            await teardown_mcp_servers()
+
+    async def test_invalid_server_name_in_config_logs_and_skips_all(self, app_config):
+        import oterm.log
+
+        app_config.set("mcpServers", {"k8s.lab": {"url": "http://localhost/mcp"}})
+        before = len(oterm.log.log_lines)
+        try:
+            meta = await setup_mcp_servers()
+            assert meta == {}
+            messages = [msg for _, msg in oterm.log.log_lines[before:]]
+            assert any("k8s.lab" in m and "letters, digits" in m for m in messages)
+        finally:
+            await teardown_mcp_servers()
+
+    async def test_tool_over_provider_name_limit_is_dropped(
+        self, app_config, mcp_server_config
+    ):
+        """`{server}_{tool}` must stay within the 64 characters providers allow."""
+        import oterm.log
+
+        long_name = "s" * 60
+        app_config.set("mcpServers", {long_name: mcp_server_config["stdio"]})
+        before = len(oterm.log.log_lines)
+        try:
+            meta = await setup_mcp_servers()
+            assert meta[long_name] == []
+            messages = [msg for _, msg in oterm.log.log_lines[before:]]
+            assert any("oracle" in m and "64" in m for m in messages)
+        finally:
+            await teardown_mcp_servers()
+
+    async def test_tools_within_provider_name_limit_are_kept(
+        self, app_config, mcp_server_config
+    ):
+        app_config.set("mcpServers", {"short": mcp_server_config["stdio"]})
+        try:
+            meta = await setup_mcp_servers()
+            assert {m["name"] for m in meta["short"]} == {"oracle", "puzzle_solver"}
         finally:
             await teardown_mcp_servers()
 

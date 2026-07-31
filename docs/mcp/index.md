@@ -17,6 +17,10 @@ Add MCP servers under the `mcpServers` key in `oterm`'s [config.json](../app_con
 
 [MCP tools](https://modelcontextprotocol.io/docs/concepts/tools) appear in oterm's tool selector and can be enabled per chat.
 
+The model sees each MCP tool as `{server}_{tool}` — the `query_prometheus` tool on a server configured as `grafana` is presented as `grafana_query_prometheus`. Two servers can therefore export the same tool name, and each is selectable on its own.
+
+Because the server name reaches the model, it may only contain letters, digits, underscores and hyphens — `k8s-lab` is fine, `k8s.lab` is not. A server whose name has other characters is refused when the config loads, and a tool whose qualified name is over 64 characters is skipped; both are reported in the log.
+
 !!! note
     Not all models support tools. For models that don't, the tool selection is disabled.
 

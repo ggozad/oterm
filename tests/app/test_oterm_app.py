@@ -8,6 +8,7 @@ from oterm.types import ChatModel, MessageModel
 def stub_network(monkeypatch):
     """Keep OTerm.on_mount from touching the network or spawning MCP servers."""
     import oterm.app.oterm as oterm_mod
+    import oterm.tools.mcp.setup as mcp_setup_mod
     import oterm.utils as utils_mod
 
     async def _up_to_date():
@@ -23,7 +24,7 @@ def stub_network(monkeypatch):
 
     monkeypatch.setattr(utils_mod, "is_up_to_date", _up_to_date)
     monkeypatch.setattr(oterm_mod, "is_up_to_date", _up_to_date)
-    monkeypatch.setattr(oterm_mod, "setup_mcp_servers", _no_mcp)
+    monkeypatch.setattr(mcp_setup_mod, "setup_mcp_servers", _no_mcp)
 
     async def _no_teardown():
         return None
@@ -232,8 +233,8 @@ class TestLoadTools:
     async def test_discovers_entry_point_tools(
         self, tmp_data_dir, app_config, stub_network
     ):
-        import oterm.app.oterm as oterm_mod
         import oterm.tools as tools_mod
+        import oterm.tools.mcp.setup as mcp_setup_mod
 
         def fake_tool() -> str:
             """Sample."""
@@ -253,7 +254,7 @@ class TestLoadTools:
         original_discover = tools_mod.discover_tools
         original_builtins = tools_mod.builtin_tools
         tools_mod.discover_tools = fake_discover  # ty: ignore[invalid-assignment]
-        oterm_mod.setup_mcp_servers = fake_mcp_setup  # ty: ignore[invalid-assignment]
+        mcp_setup_mod.setup_mcp_servers = fake_mcp_setup  # ty: ignore[invalid-assignment]
         try:
             from oterm.app.oterm import OTerm
 

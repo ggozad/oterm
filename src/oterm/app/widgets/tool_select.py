@@ -5,7 +5,7 @@ from textual.reactive import reactive
 from textual.widget import Widget
 from textual.widgets import Checkbox
 
-from oterm.tools import builtin_tools, known_tool_names
+from oterm.tools import builtin_tools, known_tool_names, qualified_tool_name
 from oterm.tools.capabilities import capability_defs
 from oterm.tools.mcp.setup import mcp_tool_meta
 
@@ -27,7 +27,11 @@ def _all_groups() -> dict[str, list[dict]]:
         ]
     for server_name, metas in mcp_tool_meta.items():
         groups[server_name] = [
-            {"name": m["name"], "description": m["description"]} for m in metas
+            {
+                "name": qualified_tool_name(server_name, m["name"]),
+                "description": m["description"],
+            }
+            for m in metas
         ]
     return groups
 
@@ -98,7 +102,7 @@ class ToolSelector(Widget):
                             yield Checkbox(
                                 id=f"{group}-{meta['name']}",
                                 name=meta["name"],
-                                label=meta["name"],
+                                label=meta["name"].removeprefix(f"{group}_"),
                                 tooltip=meta["description"],
                                 value=meta["name"] in self.selected,
                                 classes="tool",
