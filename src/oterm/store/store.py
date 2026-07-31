@@ -193,6 +193,20 @@ class Store:
                 )
             return None
 
+    async def get_last_provider(self) -> str | None:
+        """Provider of the most recently created chat, or None when there are none."""
+        async with aiosqlite.connect(self.db_path) as connection:
+            res = await connection.execute(
+                """
+                SELECT provider
+                FROM chat
+                ORDER BY id DESC
+                LIMIT 1;
+                """
+            )
+            row = await res.fetchone()
+            return row[0] if row else None
+
     async def delete_chat(self, id: int) -> None:
         async with aiosqlite.connect(self.db_path) as connection:
             await connection.execute("PRAGMA foreign_keys = on;")

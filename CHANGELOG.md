@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- New chats pre-select the provider of the last created chat. ([#298](https://github.com/ggozad/oterm/issues/298))
+
 ## [0.22.0] - 2026-07-31
 
 ### Fixed
