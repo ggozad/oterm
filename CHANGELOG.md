@@ -5,6 +5,7 @@
 ### Added
 
 - New chats pre-select the provider of the last created chat. ([#298](https://github.com/ggozad/oterm/issues/298))
+- Copy the last message of the current chat, bound to <kbd>Ctrl</kbd>+<kbd>o</kbd> (`copy.message`), with a matching `Copy message` command palette entry. ([#310](https://github.com/ggozad/oterm/issues/310))
 
 ## [0.22.0] - 2026-07-31
 

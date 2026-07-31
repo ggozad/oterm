@@ -27,6 +27,7 @@ A complete example showing every supported key:
     "prev.chat": "ctrl+shift+tab",
     "new.chat": "ctrl+n",
     "toggle.thinking": "ctrl+t",
+    "copy.message": "ctrl+o",
     "show.logs": "ctrl+l",
     "quit": "ctrl+q",
     "newline": "shift+enter",
@@ -59,7 +60,11 @@ Each key is optional; the sections below cover them in turn. For `mcpServers`, s
 
 ### `keymap` — customizing key bindings
 
-Sane defaults are provided, but terminal emulators and shells will sometimes intercept them. Override any of the bindings below by setting the matching key in the `keymap` block:
+Sane defaults are provided, but terminal emulators and shells will sometimes intercept them.
+
+When picking a replacement, avoid the keys the prompt's text editor already claims. The prompt is focused most of the time, and a binding on the focused widget wins over an application one, so such a key will silently do nothing. The editor takes most navigation and editing keys, notably `ctrl+a`, `ctrl+c`, `ctrl+d`, `ctrl+e`, `ctrl+k`, `ctrl+u`, `ctrl+v`, `ctrl+w`, `ctrl+x`, `ctrl+y`, `ctrl+z`, `ctrl+shift+k`, `ctrl+backspace`, `ctrl+left` and `ctrl+right` (with their `shift` variants), `f6`, `f7`, the arrow keys, `home`, `end`, `pageup`, `pagedown`, and the `super+` equivalents on macOS. The authoritative list is `TextArea.BINDINGS` in the installed version of Textual.
+
+Override any of the bindings below by setting the matching key in the `keymap` block:
 
 | ID          | Default            | Action                                                                  |
 | ----------- | ------------------ | ----------------------------------------------------------------------- |
@@ -67,6 +72,7 @@ Sane defaults are provided, but terminal emulators and shells will sometimes int
 | `prev.chat` | `ctrl+shift+tab`   | Switch to the previous chat tab.                                        |
 | `new.chat`  | `ctrl+n`           | Open the new-chat dialog.                                               |
 | `toggle.thinking` | `ctrl+t`     | Turn thinking mode on or off for the current session (not persisted).  |
+| `copy.message` | `ctrl+o`        | Copy the last message of the current chat to the clipboard.             |
 | `show.logs` | `ctrl+l`           | Open the log viewer.                                                    |
 | `quit`      | `ctrl+q`           | Quit `oterm`.                                                           |
 | `newline`   | `shift+enter`      | Insert a newline in the prompt. `ctrl+m` is also accepted as a fallback for terminals that can't distinguish `shift+enter` from `enter`, and is not configurable. |

@@ -931,6 +931,88 @@ class TestHistoryCallback:
             assert prompt.text == "line1\nline2"
 
 
+class TestCopyMessage:
+    async def test_copies_last_message_to_clipboard(self, chat_model):
+        messages = [
+            MessageModel(chat_id=1, role="user", text="the question"),
+            MessageModel(chat_id=1, role="assistant", text="the answer"),
+        ]
+        app = _Host(chat_model, messages)
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            copied: list[str] = []
+            app.copy_to_clipboard = lambda t: copied.append(t)  # ty: ignore[invalid-assignment]
+
+            container.action_copy_message()
+            await pilot.pause()
+
+            assert copied == ["the answer"]
+            assert any("copied" in n.message.lower() for n in _notifications(app))
+
+    async def test_copy_is_a_silent_noop_with_nothing_to_copy(self, chat_model):
+        """No messages, and an assistant item mounted by response_task before its
+        first delta, both copy nothing and say nothing."""
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            copied: list[str] = []
+            app.copy_to_clipboard = lambda t: copied.append(t)  # ty: ignore[invalid-assignment]
+
+            container.action_copy_message()
+            await pilot.pause()
+            assert copied == []
+            assert _notifications(app) == []
+
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            container.action_copy_message()
+            await pilot.pause()
+            assert copied == []
+            assert _notifications(app) == []
+
+    async def test_clicking_an_empty_message_copies_nothing(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test(size=(120, 40)) as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            copied: list[str] = []
+            app.copy_to_clipboard = lambda t: copied.append(t)  # ty: ignore[invalid-assignment]
+
+            await pilot.click(item.query_one(".response", Markdown))
+            await pilot.pause()
+            assert copied == []
+            assert _notifications(app) == []
+
+    async def test_copies_streaming_text_not_yet_in_messages(self, chat_model):
+        """``messages`` is only appended once streaming finishes, so the copy must
+        read the widget to pick up a response still in flight."""
+        messages = [MessageModel(chat_id=1, role="assistant", text="stale")]
+        app = _Host(chat_model, messages)
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            streaming = ChatItem()
+            streaming.author = "assistant"
+            await container.query_one("#messageContainer").mount(streaming)
+            await streaming.append_text("in flight")
+            await pilot.pause()
+
+            copied: list[str] = []
+            app.copy_to_clipboard = lambda t: copied.append(t)  # ty: ignore[invalid-assignment]
+
+            container.action_copy_message()
+            await pilot.pause()
+
+            assert copied == ["in flight"]
+
+
 class TestChatItemClickCopy:
     async def test_clicking_copies_text_to_clipboard(self, chat_model):
         app = _Host(chat_model, [])

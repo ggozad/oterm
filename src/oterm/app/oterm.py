@@ -38,6 +38,7 @@ class OTerm(App):
         ),
         Binding("ctrl+n", "new_chat", "new chat", id="new.chat"),
         Binding("ctrl+t", "toggle_thinking", "toggle thinking", id="toggle.thinking"),
+        Binding("ctrl+o", "copy_message", "copy message", id="copy.message"),
         Binding("ctrl+l", "show_logs", "show logs", id="show.logs"),
         Binding("ctrl+q", "quit", "quit", id="quit"),
     ]
@@ -54,6 +55,11 @@ class OTerm(App):
             "Toggle thinking",
             "Turns thinking mode on or off for the current chat",
             self.action_toggle_thinking,
+        )
+        yield SystemCommand(
+            "Copy message",
+            "Copies the last message of the current chat to the clipboard",
+            self.action_copy_message,
         )
         yield SystemCommand(
             "Rename chat", "Renames the current chat", self.action_rename_chat
@@ -145,6 +151,13 @@ class OTerm(App):
             return
         chat = tabs.active_pane.query_one(ChatContainer)
         chat.action_toggle_thinking()
+
+    async def action_copy_message(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        if tabs.active_pane is None:
+            return
+        chat = tabs.active_pane.query_one(ChatContainer)
+        chat.action_copy_message()
 
     async def action_rename_chat(self) -> None:
         tabs = self.query_one(TabbedContent)

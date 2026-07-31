@@ -558,6 +558,13 @@ class ChatContainer(Widget):
         self._rebuild_agent()
         self.app.notify(f"Thinking {'on' if self.chat_model.thinking else 'off'}.")
 
+    def action_copy_message(self) -> None:
+        """Copy the last message. Reads the widget, not ``self.messages``, which
+        is only appended once a response has finished streaming."""
+        items = list(self.query_one("#messageContainer").query(ChatItem))
+        if items:
+            items[-1].copy()
+
     @work
     async def action_rename_chat(self) -> None:
         chat_id = self.chat_model.id
@@ -843,6 +850,11 @@ class ChatItem(Widget):
                 return
             cur = cur.parent  # ty: ignore[invalid-assignment]
 
+        self.copy()
+
+    def copy(self) -> None:
+        if not self.text:
+            return
         self.app.copy_to_clipboard(self.text)
         widgets = self.query(".text")
         for widget in widgets:

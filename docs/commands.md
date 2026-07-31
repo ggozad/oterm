@@ -24,6 +24,7 @@ The following keyboard shortcuts are supported:
 * <kbd>Shift</kbd>+<kbd>Enter</kbd> or <kbd>^ Ctrl</kbd>+<kbd>m</kbd> - insert a newline; the prompt grows to fit (up to 10 lines)
 * <kbd>^ Ctrl</kbd>+<kbd>i</kbd> - select an image to include with the next message
 * <kbd>↑/↓</kbd> (while messages are focused) - navigate through the messages
+* <kbd>^ Ctrl</kbd>+<kbd>o</kbd> - copy the last message of the current chat to the clipboard
 * <kbd>^ Ctrl</kbd>+<kbd>l</kbd> - show logs
 
 * <kbd>^ Ctrl</kbd>+<kbd>n</kbd> - open a new chat
@@ -43,6 +44,7 @@ While the model is inferring the next message, you can press <kbd>Esc</kbd> to c
 
 It is difficult to properly support copy/paste in terminal applications. You can copy blocks to your clipboard as such:
 
+* <kbd>^ Ctrl</kbd>+<kbd>o</kbd> will copy the last message of the current chat to the clipboard.
 * clicking a message will copy it to the clipboard.
 * clicking a code block will only copy the code block to the clipboard.
 
