@@ -463,6 +463,30 @@ class TestActionDelegates:
             await pilot.pause()
             assert called == [True]
 
+    async def test_copy_message_delegates(
+        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
+    ):
+        from oterm.app.oterm import OTerm
+        from oterm.app.widgets.chat import ChatContainer
+
+        app_config.set("splash-screen", False)
+        cm = ChatModel(name="c", model="m")
+        cm.id = await store.save_chat(cm)
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+
+            called: list[bool] = []
+
+            def spy(self):
+                called.append(True)
+
+            monkeypatch.setattr(ChatContainer, "action_copy_message", spy)
+            await app.action_copy_message()
+            await pilot.pause()
+            assert called == [True]
+
     async def test_regenerate_last_message_delegates(
         self, tmp_data_dir, app_config, stub_network, store, monkeypatch
     ):
@@ -506,6 +530,7 @@ class TestActionDelegates:
             await app.action_regenerate_last_message()
             await app.action_clear_chat()
             await app.action_prompt_history()
+            await app.action_copy_message()
 
     async def test_prompt_history_delegates_to_active_container(
         self, tmp_data_dir, app_config, stub_network, store, monkeypatch
@@ -731,6 +756,42 @@ class TestKeymap:
             await pilot.pause()
             assert calls == [True]
 
+    async def test_copy_message_key_reaches_the_action_from_the_prompt(
+        self, tmp_data_dir, app_config, stub_network, store, monkeypatch
+    ):
+        """The prompt is focused on mount, so the default must not be a key
+        PostableTextArea already claims (it inherits all of TextArea.BINDINGS)."""
+        import oterm.app.oterm as oterm_mod
+        from oterm.app.widgets.prompt import PostableTextArea
+
+        app_config.set("splash-screen", False)
+        cm = ChatModel(name="c", model="m")
+        cm.id = await store.save_chat(cm)
+
+        calls: list[bool] = []
+
+        async def spy(self):
+            calls.append(True)
+
+        monkeypatch.setattr(oterm_mod.OTerm, "action_copy_message", spy)
+
+        app = oterm_mod.OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            tabs = app.query_one(TabbedContent)
+            assert tabs.active_pane is not None
+            prompt = tabs.active_pane.query_one(PostableTextArea)
+            prompt.focus()
+            await pilot.pause()
+            assert app.focused is prompt
+
+            key = next(
+                b.key for b in oterm_mod.OTerm.BINDINGS if b.id == "copy.message"
+            )
+            await pilot.press(key)
+            await pilot.pause()
+            assert calls == [True]
+
     async def test_keymap_remaps_toggle_thinking_binding(
         self, tmp_data_dir, app_config, stub_network, monkeypatch
     ):
@@ -796,11 +857,14 @@ class TestSystemCommands:
             for title in (
                 "New chat",
                 "Edit chat parameters",
+                "Toggle thinking",
+                "Copy message",
                 "Rename chat",
                 "Clear chat",
                 "Delete chat",
                 "Export chat",
                 "Regenerate last message",
+                "Prompt history",
                 "Show logs",
             ):
                 assert title in cmds
