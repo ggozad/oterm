@@ -2,6 +2,7 @@ import pytest
 from textual.widgets import TabbedContent, TabPane
 
 from oterm.types import ChatModel, MessageModel
+from tests._helpers import wait_until
 
 
 @pytest.fixture(autouse=True)
@@ -306,6 +307,53 @@ class TestNewChat:
 
             assert app.query_one(EmptyState).display is False
             assert app.query_one(TabbedContent).display is True
+
+    @pytest.mark.parametrize(
+        "chats,available,expected",
+        [
+            (["ollama", "anthropic"], ["ollama", "anthropic"], "anthropic"),
+            (["anthropic"], ["groq", "ollama"], "ollama"),
+        ],
+        ids=["most_recent_chat", "unavailable_falls_back"],
+    )
+    async def test_new_chat_provider_comes_from_the_last_chat(
+        self,
+        tmp_data_dir,
+        app_config,
+        stub_network,
+        store,
+        monkeypatch,
+        chats,
+        available,
+        expected,
+    ):
+        """A new chat starts on the most recently created chat's provider, unless
+        that provider is no longer available."""
+        import oterm.app.oterm as oterm_mod
+        from oterm.app.oterm import OTerm
+
+        app_config.set("splash-screen", False)
+        for provider in chats:
+            await store.save_chat(
+                ChatModel(name=provider, model="m", provider=provider)
+            )
+
+        monkeypatch.setattr(oterm_mod, "get_available_providers", lambda: available)
+
+        seen: list[str] = []
+
+        async def capture(self, screen):
+            seen.append(screen.provider)
+            return None
+
+        monkeypatch.setattr(OTerm, "push_screen_wait", capture)
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            app.action_new_chat()
+            await wait_until(pilot, lambda: bool(seen))
+            assert seen == [expected]
 
     async def test_new_chat_cancelled_modal_noop(self, fresh_app, store, monkeypatch):
         from oterm.app.oterm import OTerm

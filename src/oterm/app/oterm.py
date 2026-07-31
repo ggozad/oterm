@@ -13,6 +13,7 @@ from oterm.app.themes.solarized_dark import solarized_dark
 from oterm.app.widgets.chat import ChatContainer
 from oterm.app.widgets.empty_state import EmptyState
 from oterm.config import appConfig
+from oterm.providers import get_available_providers
 from oterm.store.store import Store
 from oterm.tools import load_tools
 from oterm.tools.mcp.setup import teardown_mcp_servers
@@ -100,7 +101,13 @@ class OTerm(App):
     @work
     async def action_new_chat(self) -> None:
         store = await Store.get_store()
-        model_info: str | None = await self.push_screen_wait(ChatEdit())
+        last_provider = await store.get_last_provider()
+        chat_model = (
+            ChatModel(provider=last_provider)
+            if last_provider in get_available_providers()
+            else ChatModel()
+        )
+        model_info: str | None = await self.push_screen_wait(ChatEdit(chat_model))
         if not model_info:
             return
 

@@ -71,6 +71,17 @@ async def test_get_chat_missing_returns_none(store: Store):
     assert await store.get_chat(9999) is None
 
 
+async def test_get_last_provider_returns_most_recently_created(store: Store):
+    await store.save_chat(ChatModel(name="first", model="m", provider="ollama"))
+    await store.save_chat(ChatModel(name="second", model="m", provider="anthropic"))
+
+    assert await store.get_last_provider() == "anthropic"
+
+
+async def test_get_last_provider_with_no_chats_returns_none(store: Store):
+    assert await store.get_last_provider() is None
+
+
 async def test_rename_chat(store: Store):
     chat = ChatModel(name="old", model="m")
     chat_id = await store.save_chat(chat)
