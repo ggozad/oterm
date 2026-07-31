@@ -159,9 +159,10 @@ def _resolve_tools(tool_names: list[str]):
     """Split selected tool names into pydantic-ai Tool objects, filtered MCP toolsets and capabilities."""
     from pydantic_ai import Tool as PydanticTool
     from pydantic_ai.capabilities import AbstractCapability
-    from pydantic_ai.toolsets import AbstractToolset
+    from pydantic_ai.toolsets import AbstractToolset, PrefixedToolset
 
     from oterm.log import log
+    from oterm.tools import qualified_tool_name
 
     selected = set(tool_names)
     tools: list[PydanticTool] = []
@@ -180,13 +181,18 @@ def _resolve_tools(tool_names: list[str]):
 
     toolsets: list[AbstractToolset[None]] = []
     for server_name, meta in mcp_tool_meta.items():
-        names_on_server = {m["name"] for m in meta}
-        available_names |= names_on_server
-        chosen = selected & names_on_server
+        by_qualified = {
+            qualified_tool_name(server_name, m["name"]): m["name"] for m in meta
+        }
+        available_names |= by_qualified.keys()
+        chosen = {by_qualified[q] for q in selected & by_qualified.keys()}
         if chosen:
             toolsets.append(
-                mcp_servers[server_name].filtered(
-                    lambda _ctx, td, names=chosen: td.name in names
+                PrefixedToolset(
+                    mcp_servers[server_name].filtered(
+                        lambda _ctx, td, names=chosen: td.name in names
+                    ),
+                    server_name,
                 )
             )
 

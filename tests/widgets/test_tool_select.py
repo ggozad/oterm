@@ -32,6 +32,7 @@ def populated_tools(monkeypatch):
     ]
     mcp_meta = {
         "mcp_server": [{"name": "oracle", "description": "oracle tool"}],
+        "other_server": [{"name": "oracle", "description": "another oracle tool"}],
     }
 
     monkeypatch.setattr(tools_mod, "builtin_tools", builtin)
@@ -63,10 +64,12 @@ class TestToolSelector:
                 "builtin",
                 "capabilities",
                 "mcp_server",
+                "other_server",
                 "date_time",
                 "shell",
                 "web_search",
-                "oracle",
+                "mcp_server_oracle",
+                "other_server_oracle",
             }.issubset(names)
 
     async def test_initial_selection_reflected_in_checkboxes(self, populated_tools):
@@ -140,10 +143,41 @@ class TestToolSelector:
             selector = app.query_one(ToolSelector)
             await pilot.pause()
 
-            oracle_cb = selector.query_one("#mcp_server-oracle", Checkbox)
+            oracle_cb = selector.query_one("#mcp_server-mcp_server_oracle", Checkbox)
             oracle_cb.value = True
             await pilot.pause()
-            assert "oracle" in selector.selected
+            assert "mcp_server_oracle" in selector.selected
+
+    async def test_same_tool_name_on_two_servers_selected_independently(
+        self, populated_tools
+    ):
+        """Regression for #321: selecting one server's tool leaves the other alone."""
+        app = _Host(selected=["mcp_server_oracle"])
+        async with app.run_test() as pilot:
+            selector = app.query_one(ToolSelector)
+            await pilot.pause()
+            assert (
+                selector.query_one("#mcp_server-mcp_server_oracle", Checkbox).value
+                is True
+            )
+            assert (
+                selector.query_one("#other_server-other_server_oracle", Checkbox).value
+                is False
+            )
+
+    async def test_group_select_all_reflects_only_its_own_server(self, populated_tools):
+        """A server's select-all box ignores identically named tools on other servers."""
+        app = _Host(selected=["mcp_server_oracle"])
+        async with app.run_test() as pilot:
+            selector = app.query_one(ToolSelector)
+            await pilot.pause()
+            groups = {
+                c.name: c
+                for c in selector.query(Checkbox)
+                if c.has_class("tool-group-select-all")
+            }
+            assert groups["mcp_server"].value is True
+            assert groups["other_server"].value is False
 
     async def test_unknown_checkbox_name_is_ignored(self, populated_tools):
         """Defensive: a Checkbox.Changed with a name we don't recognize is a no-op."""

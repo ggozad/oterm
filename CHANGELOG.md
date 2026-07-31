@@ -2,6 +2,11 @@
 
 [Unreleased]
 
+### Fixed
+
+- MCP tool names are qualified by server as `{server}_{tool}`, so two servers exporting the same tool name no longer conflict and each is selectable independently. The `0.22.0` store upgrade rewrites existing chat selections for servers reachable at that launch. ([#321](https://github.com/ggozad/oterm/issues/321))
+- MCP server names that providers would reject as part of a tool name are refused at config load, and tools whose qualified name exceeds 64 characters are skipped.
+
 ## [0.21.0] - 2026-07-25
 
 ### Added

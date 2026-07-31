@@ -1,6 +1,11 @@
 from pydantic_ai import Tool as PydanticTool
 
-from oterm.tools import builtin_tools, discover_tools, make_tool_def
+from oterm.tools import (
+    builtin_tools,
+    discover_tools,
+    known_tool_names,
+    make_tool_def,
+)
 
 
 def _hello() -> str:
@@ -74,3 +79,26 @@ class TestDiscoverTools:
 
 def test_builtin_tools_is_a_list():
     assert isinstance(builtin_tools, list)
+
+
+class TestKnownToolNames:
+    def test_mcp_names_are_qualified_by_server(self, monkeypatch):
+        import oterm.tools as tools_mod
+        import oterm.tools.capabilities as capabilities_mod
+        import oterm.tools.mcp.setup as mcp_setup_mod
+
+        monkeypatch.setattr(tools_mod, "builtin_tools", [{"name": "shell"}])
+        monkeypatch.setattr(capabilities_mod, "capability_defs", [])
+        monkeypatch.setattr(
+            mcp_setup_mod,
+            "mcp_tool_meta",
+            {
+                "k8s": [{"name": "query_prometheus", "description": ""}],
+                "grafana": [{"name": "query_prometheus", "description": ""}],
+            },
+        )
+        assert known_tool_names() == {
+            "shell",
+            "k8s_query_prometheus",
+            "grafana_query_prometheus",
+        }

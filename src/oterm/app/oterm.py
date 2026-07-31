@@ -14,7 +14,8 @@ from oterm.app.widgets.chat import ChatContainer
 from oterm.app.widgets.empty_state import EmptyState
 from oterm.config import appConfig
 from oterm.store.store import Store
-from oterm.tools.mcp.setup import setup_mcp_servers, teardown_mcp_servers
+from oterm.tools import load_tools
+from oterm.tools.mcp.setup import teardown_mcp_servers
 from oterm.types import ChatModel
 from oterm.utils import is_up_to_date
 
@@ -198,13 +199,6 @@ class OTerm(App):
         screen = LogViewer()
         self.push_screen(screen)
 
-    async def load_tools(self):
-        from oterm.tools import builtin_tools, discover_tools
-
-        builtin_tools.clear()
-        builtin_tools.extend(discover_tools())
-        await setup_mcp_servers()
-
     @work(exclusive=True, group="checks")
     async def perform_checks(self) -> None:
         up_to_date, _, latest = await is_up_to_date()
@@ -216,6 +210,9 @@ class OTerm(App):
 
     async def on_mount(self) -> None:
         self.register_theme(solarized_dark)
+        # Tools load first: the store upgrade that qualifies MCP tool names by
+        # server needs the connected servers' tool lists.
+        await load_tools()
         store = await Store.get_store()
         theme = appConfig.get("theme")
         if theme:  # pragma: no branch
@@ -232,8 +229,6 @@ class OTerm(App):
         keymap = appConfig.get("keymap")
         if keymap:
             self.set_keymap(keymap)
-
-        await self.load_tools()
 
         async def on_splash_done(message) -> None:
             tabs = self.query_one(TabbedContent)

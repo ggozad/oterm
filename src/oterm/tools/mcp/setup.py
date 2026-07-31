@@ -1,10 +1,12 @@
 import contextlib
+import re
 
 from fastmcp.client.transports import StdioTransport
 from pydantic_ai.mcp import MCPToolset
 
 from oterm.config import appConfig
 from oterm.log import log
+from oterm.tools import qualified_tool_name
 from oterm.tools.mcp.logging import log_handler
 from oterm.utils import expand_env_vars
 
@@ -15,6 +17,12 @@ _STDIO_LOG_ENV = {
     "RUST_LOG": "error",
     "FASTMCP_LOG_LEVEL": "ERROR",
 }
+
+# Providers accept tool names matching ^[a-zA-Z0-9_-]{1,64}$. A server's name
+# prefixes each of its tool names, so the charset applies to the name itself
+# and the length limit to the combination.
+_SERVER_NAME = re.compile(r"[a-zA-Z0-9_-]+")
+_TOOL_NAME_MAX_LENGTH = 64
 
 
 class ToolMeta(dict):
@@ -33,6 +41,12 @@ def _build_toolset(name: str, entry: dict) -> MCPToolset:
     (`command` / `args` / `env` / `cwd`). Rejects WebSocket URLs explicitly
     so users get a clear error instead of a transport-layer failure.
     """
+    if not _SERVER_NAME.fullmatch(name):
+        raise ValueError(
+            f"MCP server {name!r}: the name may only contain letters, digits, "
+            "underscores and hyphens, as it prefixes every tool name sent to "
+            "the model."
+        )
     url = entry.get("url")
     if isinstance(url, str):
         if url.startswith(("ws://", "wss://")):
@@ -96,11 +110,21 @@ async def setup_mcp_servers() -> dict[str, list[ToolMeta]]:
         except Exception as e:
             log.error(f"MCP server {name!r} failed to initialize: {e}")
             continue
+        metas: list[ToolMeta] = []
+        for tool in tools:
+            qualified = qualified_tool_name(name, tool.name)
+            if len(qualified) > _TOOL_NAME_MAX_LENGTH:
+                log.error(
+                    f"MCP server {name!r}: skipping tool {tool.name!r}, as "
+                    f"{qualified!r} is over the {_TOOL_NAME_MAX_LENGTH} character "
+                    "limit providers impose. Use a shorter server name."
+                )
+                continue
+            metas.append(ToolMeta(name=tool.name, description=tool.description or ""))
+
         mcp_servers[name] = toolset
-        mcp_tool_meta[name] = [
-            ToolMeta(name=t.name, description=t.description or "") for t in tools
-        ]
-        log.info(f"Loaded MCP server {name} with {len(tools)} tool(s)")
+        mcp_tool_meta[name] = metas
+        log.info(f"Loaded MCP server {name} with {len(metas)} tool(s)")
 
     return mcp_tool_meta
 

@@ -9,6 +9,11 @@ from oterm.types import ToolDef
 builtin_tools: list[ToolDef] = []
 
 
+def qualified_tool_name(server: str, tool: str) -> str:
+    """Identity of an MCP tool, matching the name `PrefixedToolset` exposes."""
+    return f"{server}_{tool}"
+
+
 def known_tool_names() -> set[str]:
     """Names of everything currently selectable (builtin + capabilities + connected MCP)."""
     from oterm.tools.capabilities import capability_defs
@@ -16,8 +21,8 @@ def known_tool_names() -> set[str]:
 
     names = {t["name"] for t in builtin_tools}
     names.update(c["name"] for c in capability_defs)
-    for metas in mcp_tool_meta.values():
-        names.update(m["name"] for m in metas)
+    for server, metas in mcp_tool_meta.items():
+        names.update(qualified_tool_name(server, m["name"]) for m in metas)
     return names
 
 
@@ -28,6 +33,15 @@ def make_tool_def(func: Callable) -> ToolDef:
         "description": pydantic_tool.description or "",
         "tool": pydantic_tool,
     }
+
+
+async def load_tools() -> None:
+    """Populate `builtin_tools` and connect the configured MCP servers."""
+    from oterm.tools.mcp.setup import setup_mcp_servers
+
+    builtin_tools.clear()
+    builtin_tools.extend(discover_tools())
+    await setup_mcp_servers()
 
 
 def discover_tools() -> list[ToolDef]:
