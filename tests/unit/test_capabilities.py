@@ -91,8 +91,8 @@ class TestGetCapabilities:
         caps = get_capabilities("grok", "grok-vision-beta")
         assert caps.supports_vision is True
 
-    def test_deepseek_reasoner_thinking(self):
-        caps = get_capabilities("deepseek", "deepseek-reasoner")
+    def test_deepseek_thinking(self):
+        caps = get_capabilities("deepseek", "deepseek-v4-flash")
         assert caps.supports_thinking is True
 
     def test_unknown_provider_defaults(self):
