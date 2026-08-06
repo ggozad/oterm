@@ -69,13 +69,8 @@ def _supports_thinking(provider: str, model: str) -> bool:
     """Per-provider reasoning/thinking support, sourced from pydantic-ai profiles.
 
     Falls back to ``False`` for providers pydantic-ai doesn't recognise (e.g.
-    ``huggingface``) and for malformed model names. DeepSeek is special-cased
-    because its profile delegates to the OpenAI profile, which doesn't know
-    about the ``-reasoner`` suffix.
+    ``huggingface``) and for malformed model names.
     """
-    if provider == "deepseek":
-        return "reasoner" in model
-
     from pydantic_ai.providers import infer_provider_class
 
     try:
