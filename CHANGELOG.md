@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.23.1] - 2026-08-06
+
+### Fixed
+
+- DeepSeek V4 models report thinking support. ([#328](https://github.com/ggozad/oterm/issues/328)) [pescador-barquero]
+
 ## [0.23.0] - 2026-07-31
 
 ### Added
