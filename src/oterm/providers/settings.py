@@ -29,6 +29,7 @@ PROVIDER_SETTINGS_TYPE: dict[str, type] = {
     "bedrock": BedrockModelSettings,
     "cerebras": CerebrasModelSettings,
     "huggingface": HuggingFaceModelSettings,
+    "orcarouter": OpenAIChatModelSettings,
 }
 
 

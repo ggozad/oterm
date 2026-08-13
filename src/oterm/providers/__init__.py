@@ -18,6 +18,7 @@ PROVIDER_ENV_VARS: dict[str, list[str]] = {
     "grok": ["GROK_API_KEY"],
     "cerebras": ["CEREBRAS_API_KEY"],
     "huggingface": ["HF_TOKEN"],
+    "orcarouter": ["ORCAROUTER_API_KEY"],
 }
 
 PROVIDER_NAMES: dict[str, str] = {
@@ -35,6 +36,7 @@ PROVIDER_NAMES: dict[str, str] = {
     "grok": "Grok",
     "cerebras": "Cerebras",
     "huggingface": "Hugging Face",
+    "orcarouter": "OrcaRouter",
 }
 
 
@@ -169,6 +171,7 @@ _BUILTIN_OPENAI_COMPAT: dict[str, tuple[str, str]] = {
     "deepseek": ("https://api.deepseek.com/v1", "DEEPSEEK_API_KEY"),
     "cerebras": ("https://api.cerebras.ai/v1", "CEREBRAS_API_KEY"),
     "grok": ("https://api.x.ai/v1", "GROK_API_KEY"),
+    "orcarouter": ("https://api.orcarouter.ai/v1", "ORCAROUTER_API_KEY"),
 }
 
 

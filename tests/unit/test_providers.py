@@ -259,6 +259,27 @@ class TestListModelsFromApi:
         _install_fake_module(monkeypatch, "openai", {"OpenAI": boom})
         assert _list_models_from_api("deepseek") is None
 
+    def test_builtin_compat_orcarouter(self, monkeypatch):
+        monkeypatch.setenv("ORCAROUTER_API_KEY", "k")
+        items = [_FakeModelItem("anthropic/claude-4")]
+        _install_fake_module(
+            monkeypatch, "openai", {"OpenAI": lambda **kw: _FakeClient(items)}
+        )
+        assert _list_models_from_api("orcarouter") == ["anthropic/claude-4"]
+
+    def test_builtin_compat_orcarouter_no_api_key(self, monkeypatch):
+        monkeypatch.delenv("ORCAROUTER_API_KEY", raising=False)
+        assert _list_models_from_api("orcarouter") is None
+
+    def test_builtin_compat_orcarouter_error(self, monkeypatch):
+        monkeypatch.setenv("ORCAROUTER_API_KEY", "k")
+
+        def boom(**kw):
+            raise RuntimeError("x")
+
+        _install_fake_module(monkeypatch, "openai", {"OpenAI": boom})
+        assert _list_models_from_api("orcarouter") is None
+
     def test_google(self, monkeypatch):
         class _Model:
             def __init__(self, name):

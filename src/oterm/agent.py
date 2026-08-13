@@ -112,6 +112,17 @@ def get_agent(
                 api_key=os.getenv(env_var) or UNRESOLVED_API_KEY,
             ),
         )
+    elif provider == "orcarouter":
+        from oterm.providers import _BUILTIN_OPENAI_COMPAT, UNRESOLVED_API_KEY
+
+        base_url, env_var = _BUILTIN_OPENAI_COMPAT["orcarouter"]
+        pydantic_model = OpenAIChatModel(
+            model_name=model,
+            provider=OpenAIProvider(
+                base_url=base_url,
+                api_key=os.getenv(env_var) or UNRESOLVED_API_KEY,
+            ),
+        )
     else:
         pydantic_model = f"{provider}:{model}"
 

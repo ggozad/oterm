@@ -270,6 +270,26 @@ class TestGetAgent:
         assert agent.model.client.api_key == UNRESOLVED_API_KEY
         assert agent.model.client.api_key != "sk-real"
 
+    def test_orcarouter_routes_through_orcarouter_endpoint(self, monkeypatch):
+        monkeypatch.setenv("ORCAROUTER_API_KEY", "sk-orca-secret")
+        agent = get_agent(provider="orcarouter", model="anthropic/claude-4")
+        assert isinstance(agent.model, OpenAIChatModel)
+        assert isinstance(agent.model._provider, OpenAIProvider)
+        assert (
+            str(agent.model.client.base_url).rstrip("/")
+            == "https://api.orcarouter.ai/v1"
+        )
+        assert agent.model.client.api_key == "sk-orca-secret"
+
+    def test_orcarouter_missing_key_falls_back_to_unresolved(self, monkeypatch):
+        """A missing ORCAROUTER_API_KEY must not leak OPENAI_API_KEY to OrcaRouter."""
+        monkeypatch.delenv("ORCAROUTER_API_KEY", raising=False)
+        monkeypatch.setenv("OPENAI_API_KEY", "sk-real")
+        agent = get_agent(provider="orcarouter", model="anthropic/claude-4")
+        assert isinstance(agent.model, OpenAIChatModel)
+        assert agent.model.client.api_key == UNRESOLVED_API_KEY
+        assert agent.model.client.api_key != "sk-real"
+
     def test_fallthrough_provider_uses_prefix_string(self, monkeypatch):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
         agent = get_agent(provider="anthropic", model="claude-4")

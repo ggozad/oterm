@@ -123,8 +123,11 @@ When configured, an **OpenAI Compatible** provider appears in the provider dropd
 | Grok              | `grok`            | `GROK_API_KEY`                                  |
 | Cerebras          | `cerebras`        | `CEREBRAS_API_KEY`                              |
 | Hugging Face      | `huggingface`     | `HF_TOKEN`                                      |
+| OrcaRouter        | `orcarouter`      | `ORCAROUTER_API_KEY`                            |
 
 The `openai-responses` provider routes through OpenAI's Responses API and enables image generation as a builtin tool — pick a Responses-compatible model (e.g. `gpt-5.4`) and ask for an image in the prompt. Returned images render inline in the chat; click one to save it to `$OTERM_DATA_DIR/downloads/`.
+
+[OrcaRouter](https://www.orcarouter.ai) is a gateway to 500+ models from a single OpenAI-compatible endpoint (`https://api.orcarouter.ai/v1`). It also runs gateway-level, zero-trust security for AI agents on the same endpoint — screening every prompt/response and governing every tool call on a default-deny basis, with no application code changes. Set `ORCAROUTER_API_KEY` to an `sk-orca-` key and pick any model from the [models catalog](https://www.orcarouter.ai/models) (e.g. `anthropic/claude-4`).
 
 For any other backend with an OpenAI-compatible API, see the [`openaiCompatible`](#openaicompatible-custom-openai-compatible-endpoints) config block above.
 
