@@ -1,8 +1,8 @@
 from mcp import SamplingMessage
-from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.mcpserver import Context, MCPServer
 from mcp.types import ModelHint, ModelPreferences, TextContent
 
-mcp = FastMCP("TestServer", port=8080)
+mcp = MCPServer("TestServer")
 
 
 @mcp.resource("config://app")
