@@ -1,3 +1,7 @@
+import os
+from functools import cache
+from importlib import import_module
+from importlib.util import find_spec
 from pathlib import Path
 
 from pydantic_ai.capabilities import AbstractCapability, WebFetch, WebSearch
@@ -27,6 +31,15 @@ def _filesystem() -> AbstractCapability[None]:
     return FileSystem(root_dir=Path.cwd())
 
 
+@cache
+def _speak() -> AbstractCapability[None]:
+    # Shared across chats: the factory runs per chat and each Speaks owns worker
+    # threads the factory contract gives no place to close.
+    # onnxruntime reads this once, as it is imported.
+    os.environ.setdefault("ORT_DISABLE_TELEMETRY", "1")
+    return import_module("pydantic_ai_tts").Speaks()
+
+
 capability_defs: list[CapabilityDef] = [
     {
         "name": "web_search",
@@ -49,3 +62,13 @@ capability_defs: list[CapabilityDef] = [
         "factory": _filesystem,
     },
 ]
+
+
+if find_spec("pydantic_ai_tts") is not None:
+    capability_defs.append(
+        {
+            "name": "speak",
+            "description": "Speak responses aloud as they stream.",
+            "factory": _speak,
+        }
+    )

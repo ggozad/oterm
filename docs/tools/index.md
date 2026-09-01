@@ -67,6 +67,7 @@ Alongside tools, `oterm` offers [pydantic-ai capabilities](https://ai.pydantic.d
 * `web_fetch` - fetches the contents of a URL, using the provider's native URL fetching when available.
 * `memory` - gives the model a persistent memory notebook, shared across all chats and stored in `memory.db` in the oterm data directory. The model reads, writes and searches it with dedicated tools.
 * `filesystem` - lets the model read, write and search files under the directory `oterm` was started from. Paths outside it are rejected, and sensitive files (`.git`, `.env`, keys, secrets) are read-only.
+* `speak` - reads the response aloud as it streams, through [piper](https://github.com/OHF-Voice/piper1-gpl). The voice is GLaDOS. There is no setting to change it. [pydantic-ai-tts](https://pypi.org/project/pydantic-ai-tts/) can synthesize 175 catalogue voices. You get the one from the enrichment center. Install with `pip install oterm[speak]`, which requires Python 3.11 or newer and brings `piper-tts` (GPL-3.0) along with it. The capability appears in the selector only once it is installed, so if you cannot see it, it is not there. On the first response a voice model downloads and nothing whatsoever appears to happen. That is expected. Everything here is expected. `oterm` also sets `ORT_DISABLE_TELEMETRY=1` before onnxruntime loads, unless you have already set it yourself. The Enrichment Center gathers quite enough data without help.
 
 ### Tool calls in the chat
 
