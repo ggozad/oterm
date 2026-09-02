@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `speak` capability, reading responses aloud through piper in the GLaDOS voice as they stream. Install with the `oterm[speak]` extra, which requires Python 3.11 or newer. The entry appears only when `pydantic-ai-tts` is importable. onnxruntime telemetry is disabled unless `ORT_DISABLE_TELEMETRY` is already set.
+
 ## [0.23.1] - 2026-08-06
 
 ### Fixed
