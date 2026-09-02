@@ -1,6 +1,6 @@
 [project]
 name = "oterm"
-version = "0.23.1"
+version = "0.24.0"
 description = "The terminal client for Ollama, OpenAI, Anthropic, and any pydantic-ai-supported provider."
 authors = [{ name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }]
 license = { text = "MIT" }
@@ -55,6 +55,7 @@ oterm = "oterm.cli.oterm:cli"
 
 [dependency-groups]
 dev = [
+    "oterm[speak]",
     "ruff==0.16.5",
     "ty==0.0.77",
     "pdbpp==0.12.1",
@@ -65,7 +66,6 @@ dev = [
     "pytest-textual-snapshot==1.0.0",
     "pytest-xdist==3.8.0",
     "textual-dev==1.8.0",
-    "homebrew-pypi-poet==0.10.0",
     "zensical",
     "pre-commit==4.6.2",
 ]

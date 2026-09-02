@@ -17,6 +17,7 @@ Full install methods, configuration, and usage: **[oterm Documentation](https://
 
 ## What's new
 
+* **Spoken responses.** The new `speak` capability reads replies aloud through [piper](https://github.com/OHF-Voice/piper1-gpl) as they stream, in the GLaDOS voice. Run `uvx "oterm[speak]"`, which needs Python 3.11 or newer. The base install is untouched and the capability appears only once the extra is present.
 * **Multi-provider, via pydantic-ai (breaking).** `oterm` is no longer Ollama-only — it drives any [pydantic-ai](https://ai.pydantic.dev/)-supported provider: OpenAI, Anthropic, Google (AI / Vertex), Groq, Mistral, Cohere, AWS Bedrock, DeepSeek, Cerebras, Grok, Hugging Face, OpenAI-compatible endpoints (vLLM, LM Studio, llama.cpp, OpenRouter, LiteLLM, …), and Ollama. Set the matching API key and the provider appears in the new-chat dropdown.
 * **Refreshed chat UI.** Borderless accent-driven layout, auto-growing prompt, inline `[Image #N]` attachment tokens, a collapsing thinking section, and a live token-usage footer in place of the spinner.
 * **Faster streaming.** Markdown is now updated as deltas arrive instead of being re-rendered on every token, so long responses don't slow the terminal as they grow.
