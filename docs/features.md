@@ -10,7 +10,7 @@
 
 ## Using oterm
 
-`oterm` picks up providers automatically from your environment. If [Ollama](https://github.com/ollama/ollama) is running on `http://127.0.0.1:11434` it shows up out of the box; for any other hosted provider, set the relevant API key (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.) and it appears in the provider dropdown. For other local runners (vLLM, LM Studio, llama.cpp, …) or hosted OpenAI-compatible endpoints (OpenRouter, LiteLLM, …), add an entry to the `openaiCompatible` section of `config.json`. See [Providers and API keys](app_config.md#providers-and-api-keys) and the [`openaiCompatible`](app_config.md#openaicompatible-custom-openai-compatible-endpoints) config block.
+`oterm` picks up providers automatically from your environment. If [Ollama](https://github.com/ollama/ollama) is running on `http://127.0.0.1:11434` it shows up out of the box ([llmman](https://github.com/llmmanorg/llmman) serves the same API on port `17434`; see [Using with llmman](app_config.md#using-with-llmman)); for any other hosted provider, set the relevant API key (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc.) and it appears in the provider dropdown. For other local runners (vLLM, LM Studio, llama.cpp, …) or hosted OpenAI-compatible endpoints (OpenRouter, LiteLLM, …), add an entry to the `openaiCompatible` section of `config.json`. See [Providers and API keys](app_config.md#providers-and-api-keys) and the [`openaiCompatible`](app_config.md#openaicompatible-custom-openai-compatible-endpoints) config block.
 
 To point Ollama at a non-default host or disable SSL verification, see [Environment variables](app_config.md#environment-variables).
 

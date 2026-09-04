@@ -128,6 +128,18 @@ The `openai-responses` provider routes through OpenAI's Responses API and enable
 
 For any other backend with an OpenAI-compatible API, see the [`openaiCompatible`](#openaicompatible-custom-openai-compatible-endpoints) config block above.
 
+### Using with llmman
+
+[llmman](https://github.com/llmmanorg/llmman) is a local model runner that serves the Ollama API (alongside OpenAI- and Anthropic-compatible ones) on port `17434`. Point the `ollama` provider at it and it works as a drop-in, including model listing and capability detection:
+
+```sh
+llmman serve
+llmman pull gemma4
+OLLAMA_HOST=127.0.0.1:17434 oterm
+```
+
+Alternatively, add `http://localhost:17434/v1` as an [`openaiCompatible`](#openaicompatible-custom-openai-compatible-endpoints) endpoint (no `api_key` needed).
+
 ## Environment variables
 
 | Variable             | Default              | Purpose                                                                 |
