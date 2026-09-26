@@ -2,35 +2,34 @@
 
 `oterm` has support for Anthropic's open-source [Model Context Protocol](https://modelcontextprotocol.io). It connects to [MCP servers](https://github.com/modelcontextprotocol/servers) and exposes their tools to whichever model you're chatting with.
 
-Add MCP servers under the `mcpServers` key in `oterm`'s [config.json](../app_config.md). The schema matches the convention used by Claude Desktop, Cursor, and pydantic-ai — so you can copy a config block between hosts.
+Add MCP servers under the `mcpServers` key in `oterm`'s [config.json](../app_config.md). The schema matches the convention used by Claude Desktop, Cursor, and pydantic-ai, so you can copy a config block between hosts.
 
 !!! warning "Breaking changes from earlier oterm releases"
     The MCP integration was rewritten on top of pydantic-ai's MCP support. If you're upgrading, your existing `mcpServers` config likely needs the following edits:
 
-    - **`auth: { type: bearer, token: "X" }`** is no longer recognised. Use `headers: { "Authorization": "Bearer X" }` instead. Old configs are silently dropped — you'll see 401s from the server until you migrate.
-    - **`cwd`** is no longer recognised. Use an absolute path in `command` (or pass the working directory via `args`).
+    - **`auth: { type: bearer, token: "X" }`** is no longer recognised. Use `headers: { "Authorization": "Bearer X" }` instead. Old configs are silently dropped, and you'll see 401s from the server until you migrate.
     - **`ws://` / `wss://` transports** are no longer supported. Use HTTP transport instead.
-    - **MCP prompts** are gone — the "Use MCP prompt" command, the modal, and the prompt config in test fixtures are all removed.
-    - **Stdio subprocess env is no longer inherited from the parent shell.** Declare every env var you need explicitly under `env`. Use `${VAR}` substitution to pull values from the parent environment without committing secrets — see [Environment variables](#environment-variables) below.
+    - **MCP prompts** are not supported. The "Use MCP prompt" command is gone.
+    - **Stdio subprocesses no longer inherit the parent environment**, apart from `HOME`, `LOGNAME`, `PATH`, `SHELL`, `TERM` and `USER`. Declare every other env var you need under `env`. Use `${VAR}` substitution to pull values from the parent environment without committing secrets. See [Environment variables](#environment-variables) below.
 
-### Tools
+## Tools
 
 [MCP tools](https://modelcontextprotocol.io/docs/concepts/tools) appear in oterm's tool selector and can be enabled per chat.
 
-The model sees each MCP tool as `{server}_{tool}` — the `query_prometheus` tool on a server configured as `grafana` is presented as `grafana_query_prometheus`. Two servers can therefore export the same tool name, and each is selectable on its own.
+The model sees each MCP tool as `{server}_{tool}`: the `query_prometheus` tool on a server configured as `grafana` is presented as `grafana_query_prometheus`. Two servers can therefore export the same tool name, and each is selectable on its own.
 
-Because the server name reaches the model, it may only contain letters, digits, underscores and hyphens — `k8s-lab` is fine, `k8s.lab` is not. A server whose name has other characters is refused when the config loads, and a tool whose qualified name is over 64 characters is skipped; both are reported in the log.
+Because the server name reaches the model, it may only contain letters, digits, underscores and hyphens: `k8s-lab` is fine, `k8s.lab` is not. A server whose name has other characters is refused when the config loads, and a tool whose qualified name is over 64 characters is skipped; both are reported in the log.
 
 !!! note
     Not all models support tools. For models that don't, the tool selection is disabled.
 
     Smaller LLMs are often less capable with tools than larger ones. If you have issues, try reducing the number of tools attached to a chat, increasing the context size, or using a larger LLM.
 
-### Transports
+## Transports
 
-#### `stdio` transport
+### `stdio` transport
 
-For local MCP servers. Accepts `command`, `args`, and `env`. For the [git](https://github.com/modelcontextprotocol/servers/tree/main/src/git) MCP server:
+For local MCP servers. Accepts `command`, `args`, `env` and `cwd`. For the [git](https://github.com/modelcontextprotocol/servers/tree/main/src/git) MCP server:
 
 ```json
 {
@@ -50,7 +49,7 @@ For local MCP servers. Accepts `command`, `args`, and `env`. For the [git](https
 }
 ```
 
-#### `Streamable HTTP` transport
+### `Streamable HTTP` transport
 
 For remote MCP servers over HTTP. The `url` must start with `http://` or `https://`. URLs ending in `/sse` are treated as SSE; everything else is streamable HTTP.
 
@@ -64,9 +63,9 @@ For remote MCP servers over HTTP. The `url` must start with `http://` or `https:
 }
 ```
 
-### HTTP headers (auth)
+## HTTP headers (auth)
 
-Use the `headers` dict to attach arbitrary HTTP headers — including `Authorization` for bearer-token auth:
+Use the `headers` dict to attach arbitrary HTTP headers, including `Authorization` for bearer-token auth:
 
 ```json
 {
@@ -81,9 +80,9 @@ Use the `headers` dict to attach arbitrary HTTP headers — including `Authoriza
 }
 ```
 
-### Environment variables
+## Environment variables
 
-For security, `stdio` MCP subprocesses do **not** inherit `oterm`'s parent environment. That keeps credentials like `OPENAI_API_KEY` or `AWS_SECRET_ACCESS_KEY` out of third-party MCP server processes unless you explicitly share them.
+For security, `stdio` MCP subprocesses do **not** inherit `oterm`'s environment, apart from `HOME`, `LOGNAME`, `PATH`, `SHELL`, `TERM` and `USER`. That keeps credentials like `OPENAI_API_KEY` or `AWS_SECRET_ACCESS_KEY` out of third-party MCP server processes unless you explicitly share them.
 
 Declare env vars in the `env` dict of each server. Any string value (in `env`, `command`, `args`, `url`, or `headers`) can reference the parent environment via `${VAR}` (required) or `${VAR:-default}` (optional with fallback):
 
@@ -103,6 +102,6 @@ Declare env vars in the `env` dict of each server. Any string value (in `env`, `
 
 If a referenced variable is not set and has no default, server setup fails with an error naming the missing variable.
 
-### Sampling
+## Sampling
 
-MCP [sampling](https://modelcontextprotocol.io/docs/concepts/sampling) is not currently supported — `oterm` advertises sampling as disabled to every server, so any sampling request is rejected by the protocol rather than crashing the chat.
+MCP [sampling](https://modelcontextprotocol.io/docs/concepts/sampling) is not supported. `oterm` advertises sampling as disabled to every server, so any sampling request is rejected by the protocol rather than crashing the chat.
