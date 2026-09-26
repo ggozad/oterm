@@ -15,7 +15,8 @@
 - Regenerating a response no longer discards images attached to the unsent prompt.
 - Anthropic Claude 5 models are reported as supporting images.
 - oterm starts on platforms other than Linux, macOS, Windows and Android, using `~/.local/share/oterm` as the data directory.
-- `oterm --config` no longer prints a trailing blank line.
+- `oterm --config` no longer prints a trailing blank line, and masks `OLLAMA_API_KEY`.
+- `oterm --help` describes each option.
 
 ### Security
 
