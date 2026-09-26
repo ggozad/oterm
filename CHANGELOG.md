@@ -7,6 +7,16 @@
 - Python 3.10 is no longer supported. oterm requires Python 3.11 or newer.
 - `pydantic-ai-slim` bumped to 2.51.0 and `pydantic-ai-harness` to 0.36.0.
 
+### Fixed
+
+- Regenerating a response now shows images returned by tools and the error from a failed tool call, and stores those images with the message.
+- Regenerating a response sent in the same session no longer leaves the previous answer on screen.
+- A failed regeneration keeps the previous answer on screen.
+- Regenerating a response no longer discards images attached to the unsent prompt.
+- Anthropic Claude 5 models are reported as supporting images.
+- oterm starts on platforms other than Linux, macOS, Windows and Android, using `~/.local/share/oterm` as the data directory.
+- `oterm --config` no longer prints a trailing blank line.
+
 ### Security
 
 - The `web_fetch` capability picks up the pydantic-ai 2.44.0 fixes for GHSA-fpf4-vwcp-v4hp and GHSA-22h6-qm39-v87j.

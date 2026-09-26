@@ -7,12 +7,11 @@ log_lines: list[tuple[LogGroup, str]] = []
 
 
 def supress_logging() -> None:
-    """Configure logging for CLI runs.
+    """Drop the root logger's handlers and raise its level to ERROR.
 
-    - Silence ALL non-oterm loggers by detaching root handlers and setting
-      their level to ERROR.
+    Third-party warnings and below are discarded. Errors still reach stderr
+    through `logging.lastResort`.
     """
-    # Silence root logger completely
     root = logging.getLogger()
     for hdlr in root.handlers[:]:
         root.removeHandler(hdlr)

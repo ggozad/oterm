@@ -109,29 +109,20 @@ def get_default_data_dir() -> Path:
     """
     Get the user data directory for the current system platform.
 
-    Linux/Android: ~/.local/share/oterm
-    macOS: ~/Library/Application Support/oterm
     Windows: C:/Users/<USER>/AppData/Roaming/oterm
+    macOS: ~/Library/Application Support/oterm
+    Linux and other platforms: ~/.local/share/oterm
 
-    :return: User Data Path
-    :rtype: Path
+    XDG_DATA_HOME overrides the base directory everywhere except Windows.
     """
     home = Path.home()
-
-    system_paths = {
-        "win32": home / "AppData/Roaming/oterm",
-        "linux": Path(os.getenv("XDG_DATA_HOME") or Path(home / ".local/share"))
-        / "oterm",
-        "darwin": Path(
-            os.getenv("XDG_DATA_HOME") or Path(home / "Library/Application Support")
-        )
-        / "oterm",
-        "android": Path(os.getenv("XDG_DATA_HOME") or Path(home / ".local/share"))
-        / "oterm",
-    }
-
-    data_path = system_paths[sys.platform]
-    return data_path
+    if sys.platform == "win32":
+        return home / "AppData/Roaming/oterm"
+    if sys.platform == "darwin":
+        default = home / "Library/Application Support"
+    else:
+        default = home / ".local/share"
+    return Path(os.getenv("XDG_DATA_HOME") or default) / "oterm"
 
 
 def semantic_version_to_int(version: str) -> int:

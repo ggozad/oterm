@@ -48,7 +48,7 @@ def oterm(
         typer.echo(envConfig.OTERM_DATA_DIR)
         exit(0)
     if config:
-        typer.echo(pprint(envConfig))
+        pprint(envConfig)
         exit(0)
 
     # Delay import to avoid sixel detection running unless necessary

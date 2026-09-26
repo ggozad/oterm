@@ -191,6 +191,13 @@ class TestGetDefaultDataDir:
         path = get_default_data_dir()
         assert path == tmp_path / "xdg" / "oterm"
 
+    def test_other_unix_uses_xdg_layout(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(sys, "platform", "freebsd14")
+        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+        monkeypatch.setenv("HOME", str(tmp_path))
+        path = get_default_data_dir()
+        assert str(path).endswith(".local/share/oterm")
+
     def test_windows(self, monkeypatch, tmp_path):
         monkeypatch.setattr(sys, "platform", "win32")
         monkeypatch.setenv("USERPROFILE", str(tmp_path))

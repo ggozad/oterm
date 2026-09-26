@@ -60,3 +60,16 @@ class TestUpgradeDb:
         with pytest.raises(RuntimeError, match="boom"):
             await upgrade_db()
         assert torn_down == [True]
+
+
+class TestConfigOption:
+    def test_prints_the_config_once(self):
+        from typer.testing import CliRunner
+
+        from oterm.cli.oterm import cli
+
+        result = CliRunner().invoke(cli, ["--config"])
+
+        assert result.exit_code == 0
+        assert "OTERM_DATA_DIR" in result.output
+        assert not result.output.endswith("\n\n")
