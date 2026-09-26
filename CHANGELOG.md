@@ -1,5 +1,16 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Python 3.10 is no longer supported. oterm requires Python 3.11 or newer.
+- `pydantic-ai-slim` bumped to 2.51.0 and `pydantic-ai-harness` to 0.36.0.
+
+### Security
+
+- The `web_fetch` capability picks up the pydantic-ai 2.44.0 fixes for GHSA-fpf4-vwcp-v4hp and GHSA-22h6-qm39-v87j.
+
 ## [0.24.0] - 2026-09-02
 
 ### Added

@@ -14,14 +14,13 @@ classifiers = [
     "Operating System :: Microsoft :: Windows :: Windows 11",
     "Operating System :: MacOS",
     "Operating System :: POSIX :: Linux",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Typing :: Typed",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "aiosql==15.0",
     "aiosqlite==0.22.1",
@@ -29,12 +28,12 @@ dependencies = [
     "packaging==26.3",
     "pillow==12.3.0",
     "pydantic==2.13.5",
-    "pydantic-ai-harness==0.28.0",
-    "pydantic-ai-slim[openai,anthropic,google,groq,mistral,cohere,bedrock,huggingface,mcp,logfire,duckduckgo,web-fetch]==2.37.0",
+    "pydantic-ai-harness==0.36.0",
+    "pydantic-ai-slim[openai,anthropic,google,groq,mistral,cohere,bedrock,huggingface,mcp,logfire,duckduckgo,web-fetch]==2.51.0",
     "python-dotenv==1.2.3",
     "python-multipart>=0.0.32,<0.1",
     "textual==8.2.8",
-    # 0.13.x requires Python >=3.12; oterm supports >=3.10.
+    # 0.13.x requires Python >=3.12; oterm supports >=3.11.
     "textual-image==0.12.0",
     "textual-speedups==0.2.1",
     "textualeffects==0.2.0",
@@ -42,7 +41,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-speak = ["pydantic-ai-tts>=0.1.0; python_version >= '3.11'"]
+speak = ["pydantic-ai-tts>=0.1.0"]
 
 [project.urls]
 Homepage = "https://github.com/ggozad/oterm"
@@ -56,8 +55,8 @@ oterm = "oterm.cli.oterm:cli"
 [dependency-groups]
 dev = [
     "oterm[speak]",
-    "ruff==0.16.5",
-    "ty==0.0.77",
+    "ruff==0.16.9",
+    "ty==0.0.84",
     "pdbpp==0.12.1",
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",

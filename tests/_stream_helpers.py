@@ -4,10 +4,12 @@ Provides a `FunctionModel` variant whose `stream_function` may also yield
 `FilePart` items, which the standard `FunctionModel` does not support.
 """
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from pydantic_ai import Agent
 from pydantic_ai.messages import FilePart
+from pydantic_ai.models import StreamedResponse
 from pydantic_ai.models.function import (
     AgentInfo,
     FunctionModel,
@@ -35,14 +37,12 @@ class _FileAwareStream(FunctionStreamedResponse):
         self._iter = original_iter
 
 
-def make_file_aware_agent(stream_fn) -> Agent:
-    """Build an `Agent` whose model accepts `FilePart` items in its stream."""
-    model = FunctionModel(stream_function=stream_fn)
-
+class _FileAwareModel(FunctionModel):
     @asynccontextmanager
     async def request_stream(
         self, messages, model_settings, model_request_parameters, run_context=None
-    ):
+    ) -> AsyncIterator[StreamedResponse]:
+        assert self.stream_function is not None
         model_settings, mrp = self.prepare_request(
             model_settings, model_request_parameters
         )
@@ -64,5 +64,7 @@ def make_file_aware_agent(stream_fn) -> Agent:
             _iter=response_stream,
         )
 
-    model.request_stream = request_stream.__get__(model, type(model))
-    return Agent(model)
+
+def make_file_aware_agent(stream_fn) -> Agent:
+    """Build an `Agent` whose model accepts `FilePart` items in its stream."""
+    return Agent(_FileAwareModel(stream_function=stream_fn))
