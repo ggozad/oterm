@@ -419,6 +419,17 @@ class TestBuildUserPrompt:
         assert prompt[0] == "describe"
         assert isinstance(prompt[1], BinaryContent)
 
+    def test_empty_text_with_images_sends_only_the_images(self):
+        from pydantic_ai import BinaryContent
+
+        from oterm.app.widgets.chat import build_user_prompt
+
+        prompt, skipped = build_user_prompt("", [image_b64()])
+        assert skipped == 0
+        assert isinstance(prompt, list)
+        assert len(prompt) == 1
+        assert isinstance(prompt[0], BinaryContent)
+
     def test_token_interleaves_image_at_position(self):
         from pydantic_ai import BinaryContent
 

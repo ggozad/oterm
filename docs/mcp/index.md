@@ -10,7 +10,7 @@ Add MCP servers under the `mcpServers` key in `oterm`'s [config.json](../app_con
     - **`auth: { type: bearer, token: "X" }`** is no longer recognised. Use `headers: { "Authorization": "Bearer X" }` instead. Old configs are silently dropped, and you'll see 401s from the server until you migrate.
     - **`ws://` / `wss://` transports** are no longer supported. Use HTTP transport instead.
     - **MCP prompts** are not supported. The "Use MCP prompt" command is gone.
-    - **Stdio subprocesses no longer inherit the parent environment**, apart from `HOME`, `LOGNAME`, `PATH`, `SHELL`, `TERM` and `USER`. Declare every other env var you need under `env`. Use `${VAR}` substitution to pull values from the parent environment without committing secrets. See [Environment variables](#environment-variables) below.
+    - **Stdio subprocesses no longer inherit the parent environment**, apart from a few basics (on Linux and macOS: `HOME`, `LOGNAME`, `PATH`, `SHELL`, `TERM` and `USER`). Declare every other env var you need under `env`. Use `${VAR}` substitution to pull values from the parent environment without committing secrets. See [Environment variables](#environment-variables) below.
 
 ## Tools
 
@@ -82,7 +82,7 @@ Use the `headers` dict to attach arbitrary HTTP headers, including `Authorizatio
 
 ## Environment variables
 
-For security, `stdio` MCP subprocesses do **not** inherit `oterm`'s environment, apart from `HOME`, `LOGNAME`, `PATH`, `SHELL`, `TERM` and `USER`. That keeps credentials like `OPENAI_API_KEY` or `AWS_SECRET_ACCESS_KEY` out of third-party MCP server processes unless you explicitly share them.
+For security, `stdio` MCP subprocesses do **not** inherit `oterm`'s environment, apart from a few basics: `HOME`, `LOGNAME`, `PATH`, `SHELL`, `TERM` and `USER` on Linux and macOS, and `APPDATA`, `HOMEDRIVE`, `HOMEPATH`, `LOCALAPPDATA`, `PATH`, `PATHEXT`, `PROCESSOR_ARCHITECTURE`, `SYSTEMDRIVE`, `SYSTEMROOT`, `TEMP`, `USERNAME` and `USERPROFILE` on Windows. That keeps credentials like `OPENAI_API_KEY` or `AWS_SECRET_ACCESS_KEY` out of third-party MCP server processes unless you explicitly share them.
 
 Declare env vars in the `env` dict of each server. Any string value (in `env`, `command`, `args`, `url`, or `headers`) can reference the parent environment via `${VAR}` (required) or `${VAR:-default}` (optional with fallback):
 

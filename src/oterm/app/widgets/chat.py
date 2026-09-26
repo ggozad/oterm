@@ -387,6 +387,12 @@ class ChatContainer(Widget):
         await message_container.mount(status)
         message_container.scroll_end()
 
+        def discard_turn() -> None:
+            response_chat_item.cancel_streams()
+            user_chat_item.remove()
+            response_chat_item.remove()
+            status.remove()
+
         try:
             user_images = [img for _, img in self.images]
             text, assistant_images = await self._stream_response(
@@ -407,20 +413,17 @@ class ChatContainer(Widget):
             self.messages.append(assistant_message)
             self.images = []
 
-        except (asyncio.CancelledError, Exception) as e:
-            response_chat_item.cancel_streams()
-            user_chat_item.remove()
-            response_chat_item.remove()
-            status.remove()
-            if isinstance(e, asyncio.CancelledError):
-                try:
-                    self.query_one("#prompt", FlexibleInput).text = message
-                except NoMatches:  # pragma: no cover
-                    pass
-                self.images = []
-            else:
-                self.app.notify(_error_message(e), severity="error")
-                message_container.scroll_end()
+        except asyncio.CancelledError:
+            discard_turn()
+            try:
+                self.query_one("#prompt", FlexibleInput).text = message
+            except NoMatches:  # pragma: no cover
+                pass
+            self.images = []
+        except Exception as e:
+            discard_turn()
+            self.app.notify(_error_message(e), severity="error")
+            message_container.scroll_end()
 
     async def _stream_response(
         self,
