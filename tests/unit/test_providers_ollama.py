@@ -9,8 +9,8 @@ from oterm.providers.ollama import (
 class _FakeClient:
     last_kwargs: dict = {}
 
-    def __init__(self, host=None, verify=None):
-        type(self).last_kwargs = {"host": host, "verify": verify}
+    def __init__(self, host=None, verify=None, timeout=None):
+        type(self).last_kwargs = {"host": host, "verify": verify, "timeout": timeout}
 
     def list(self):
         return "list-response"
@@ -29,7 +29,11 @@ class TestClientWrappers:
 
         result = ollama_mod.list_models()
         assert result == "list-response"
-        assert _FakeClient.last_kwargs == {"host": "http://host:123", "verify": False}
+        assert _FakeClient.last_kwargs == {
+            "host": "http://host:123",
+            "verify": False,
+            "timeout": None,
+        }
 
     def test_list_models_strips_v1_suffix(self, monkeypatch):
         """OLLAMA_URL set to the OpenAI-compat base must still work for /api/list."""

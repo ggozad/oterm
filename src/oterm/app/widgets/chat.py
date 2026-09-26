@@ -37,6 +37,7 @@ from pydantic_ai.messages import (
     ToolCallPart,
     ToolReturnPart,
 )
+from pydantic_ai.models import Model
 from pydantic_ai.toolsets import AbstractToolset, PrefixedToolset
 from pydantic_ai.usage import RunUsage
 from rich.console import Group, RenderableType
@@ -65,7 +66,9 @@ from oterm.app.widgets.image import ImageAdded
 from oterm.app.widgets.prompt import IMAGE_TOKEN_RE, FlexibleInput, PostableTextArea
 from oterm.config import envConfig
 from oterm.log import log
+from oterm.providers import openai_compat_context_window
 from oterm.providers.capabilities import get_capabilities
+from oterm.providers.ollama import running_context_length
 from oterm.store.store import Store
 from oterm.tools import builtin_tools, qualified_tool_name
 from oterm.tools.capabilities import capability_defs
@@ -223,6 +226,7 @@ class ChatContainer(Widget):
         self.images: list[tuple[Path, str]] = []
         self.inference_task: asyncio.Task | None = None
         self._stream_usage: RunUsage = RunUsage()
+        self._context_used = 0
 
     def _rebuild_agent(self) -> None:
         """(Re)build the agent for the current chat_model. Defers errors to send time."""
@@ -283,6 +287,7 @@ class ChatContainer(Widget):
             raise RuntimeError(self._agent_error or "Agent is not configured")
 
         self._stream_usage = RunUsage()
+        self._context_used = 0
         # Some providers (notably OpenAI Responses image_generation) emit the
         # same image twice under one vendor part id: as a partial-image event
         # and again when the call completes. Dedupe by FilePart.id.
@@ -345,6 +350,23 @@ class ChatContainer(Widget):
             if run.result is not None:  # pragma: no branch
                 self.pydantic_history = list(run.result.all_messages())
                 self._stream_usage = run.result.usage
+                self._context_used = run.result.response.usage.total_tokens
+
+    async def _context_window(self) -> int | None:
+        # Local servers report the context they actually run a model with,
+        # which only exists once the model is loaded, so ask after each reply.
+        provider, model = self.chat_model.provider, self.chat_model.model
+        if provider == "ollama":
+            return await asyncio.to_thread(running_context_length, model)
+        if provider.startswith("openai-compat/"):
+            endpoint = provider.removeprefix("openai-compat/")
+            return await asyncio.to_thread(
+                openai_compat_context_window, endpoint, model
+            )
+        # Agent resolves a model name into a Model when it is built.
+        agent_model = self.agent.model if self.agent is not None else None
+        assert isinstance(agent_model, Model)
+        return agent_model.context_window
 
     async def load_messages(self) -> None:
         message_container = self.query_one("#messageContainer")
@@ -482,9 +504,16 @@ class ChatContainer(Widget):
             self._stream_usage.input_tokens, self._stream_usage.output_tokens
         )
         status.finish()
+        if self._context_used:  # pragma: no branch
+            self._show_context(status, self._context_used)
         if _near_bottom(message_container):  # pragma: no branch
             self.call_after_refresh(message_container.scroll_end)
         return reply, reply_images
+
+    @work(group="context", exit_on_error=False)
+    async def _show_context(self, status: "UsageStatus", used: int) -> None:
+        """Add the context figure once the window is known, without holding up the turn."""
+        status.update_context(used, await self._context_window())
 
     @on(FlexibleInput.Submitted)
     async def on_submit(self, event: FlexibleInput.Submitted) -> None:
@@ -1001,6 +1030,7 @@ class UsageStatus(Static):
         self._streaming = True
         self._input_tokens = 0
         self._output_tokens = 0
+        self._context_usage: tuple[int, int | None] | None = None
         self._started_at = time.monotonic()
         self._elapsed = 0.0
         self._timer: Any = None
@@ -1022,6 +1052,10 @@ class UsageStatus(Static):
         self._output_tokens = output_tokens
         self._refresh_text()
 
+    def update_context(self, used: int, window: int | None) -> None:
+        self._context_usage = (used, window)
+        self._refresh_text()
+
     def finish(self) -> None:
         if not self._streaming:
             return
@@ -1040,5 +1074,21 @@ class UsageStatus(Static):
             parts.append(f"↑ {self._input_tokens}")
         if self._output_tokens:
             parts.append(f"↓ {self._output_tokens}")
+        if self._context_usage is not None:
+            used, window = self._context_usage
+            if window:
+                parts.append(
+                    f"ctx {_compact(used)} / {_compact(window)} ({round(100 * used / window)}%)"
+                )
+            else:
+                parts.append(f"ctx {_compact(used)}")
         parts.append(f"{self._elapsed:.1f}s")
         self.update("  ".join(parts))
+
+
+def _compact(tokens: int) -> str:
+    if tokens < 1000:
+        return str(tokens)
+    if tokens < 1_000_000:
+        return f"{tokens / 1000:.1f}k"
+    return f"{tokens / 1_000_000:.1f}M"

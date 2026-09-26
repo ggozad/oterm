@@ -39,6 +39,9 @@ PROVIDER_NAMES: dict[str, str] = {
 }
 
 
+LOOKUP_TIMEOUT = 5.0
+"""Seconds allowed for each context-window lookup, which runs after every reply."""
+
 UNRESOLVED_API_KEY = "unresolved-api-key"
 """Placeholder sent to OpenAI-compatible endpoints when no key is configured.
 
@@ -76,6 +79,15 @@ def get_openai_compatible_providers() -> dict[str, dict]:
     }
 
 
+def openai_compat_endpoint(endpoint_name: str) -> tuple[str, str] | None:
+    """Base URL and API key of a configured OpenAI-compatible endpoint."""
+    config = get_openai_compatible_providers().get(endpoint_name)
+    if config is None:
+        return None
+    api_key = resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
+    return config["base_url"], api_key
+
+
 def get_all_providers() -> list[str]:
     return list(PROVIDER_ENV_VARS.keys())
 
@@ -104,6 +116,48 @@ def _list_via_openai_client(base_url: str, api_key: str) -> list[str]:
 
     client = OpenAI(base_url=base_url, api_key=api_key)
     return sorted(m.id for m in client.models.list().data)
+
+
+def openai_compat_context_window(endpoint_name: str, model: str) -> int | None:
+    """The context window an OpenAI-compatible server reports for ``model``.
+
+    vLLM and oMLX list ``max_model_len`` in ``/v1/models``. LM Studio reports
+    ``loaded_context_length`` in its own ``/api/v0/models``, once the model is loaded.
+    """
+    import httpx
+    from openai import OpenAI
+
+    endpoint = openai_compat_endpoint(endpoint_name)
+    if endpoint is None:
+        return None
+    base_url, api_key = endpoint
+    base_url = base_url.rstrip("/")
+    try:
+        client = OpenAI(
+            base_url=base_url, api_key=api_key, timeout=LOOKUP_TIMEOUT, max_retries=0
+        )
+        listed = {m.id: m for m in client.models.list().data}
+    except Exception as e:
+        log.warning(f"Failed to read the context window of {model!r}: {e}")
+        return None
+    value = getattr(listed.get(model), "max_model_len", None)
+    if isinstance(value, int):
+        return value
+
+    try:
+        response = httpx.get(
+            f"{base_url.removesuffix('/v1')}/api/v0/models",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=LOOKUP_TIMEOUT,
+        )
+        response.raise_for_status()
+        models = response.json().get("data", [])
+    except Exception:
+        return None
+    value = next(
+        (m.get("loaded_context_length") for m in models if m.get("id") == model), None
+    )
+    return value if isinstance(value, int) else None
 
 
 def _list_openai() -> list[str]:
@@ -173,13 +227,11 @@ BUILTIN_OPENAI_COMPAT: dict[str, tuple[str, str]] = {
 
 def _list_models_from_api(provider: str) -> list[str] | None:
     if provider.startswith("openai-compat/"):
-        endpoint_name = provider.removeprefix("openai-compat/")
-        config = get_openai_compatible_providers().get(endpoint_name)
-        if not config:
+        endpoint = openai_compat_endpoint(provider.removeprefix("openai-compat/"))
+        if endpoint is None:
             return None
-        api_key = resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
         try:
-            return _list_via_openai_client(config["base_url"], api_key)
+            return _list_via_openai_client(*endpoint)
         except Exception as e:
             log.warning(f"Failed to list models for {provider}: {e}")
             return None

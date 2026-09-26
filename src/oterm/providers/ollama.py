@@ -2,6 +2,7 @@ from typing import Any
 
 from ollama import Client, ListResponse, ShowResponse
 
+from oterm import providers
 from oterm.config import envConfig
 
 _MODELFILE_KEYS: dict[str, tuple[str, type]] = {
@@ -28,8 +29,10 @@ def openai_compat_base_url() -> str:
     return f"{ollama_client_host()}/v1"
 
 
-def _client() -> Client:
-    return Client(host=ollama_client_host(), verify=envConfig.OTERM_VERIFY_SSL)
+def _client(timeout: float | None = None) -> Client:
+    return Client(
+        host=ollama_client_host(), verify=envConfig.OTERM_VERIFY_SSL, timeout=timeout
+    )
 
 
 def list_models() -> ListResponse:
@@ -38,6 +41,15 @@ def list_models() -> ListResponse:
 
 def show_model(model: str) -> ShowResponse:
     return _client().show(model)
+
+
+def running_context_length(model: str) -> int | None:
+    """The context length Ollama runs ``model`` with, once it is loaded."""
+    try:
+        loaded = _client(timeout=providers.LOOKUP_TIMEOUT).ps().models
+    except Exception:
+        return None
+    return next((m.context_length for m in loaded if m.model == model), None)
 
 
 def parse_modelfile_parameters(params_str: str) -> dict[str, Any]:

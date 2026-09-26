@@ -5,8 +5,9 @@ from pathlib import Path
 
 import pytest
 from pydantic_ai import Agent
-from pydantic_ai.messages import ModelMessage, TextPartDelta
+from pydantic_ai.messages import ModelMessage, ModelResponse, TextPartDelta
 from pydantic_ai.models.function import AgentInfo, FunctionModel
+from pydantic_ai.profiles import ModelProfile
 from rich.console import Console
 from rich.json import JSON
 from rich.text import Text
@@ -23,7 +24,7 @@ from oterm.app.widgets.chat import (
 )
 from oterm.app.widgets.prompt import FlexibleInput
 from oterm.types import ChatModel, MessageModel
-from tests._helpers import image_b64, wait_until
+from tests._helpers import image_b64, json_server, wait_until
 
 
 class _Host(App):
@@ -2199,6 +2200,44 @@ class TestUsageStatus:
             assert "↑ 42" in rendered
             assert "↓ 7" in rendered
 
+    async def test_update_context_renders_used_window_and_percentage(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            status = UsageStatus()
+            await container.query_one("#messageContainer").mount(status)
+            await pilot.pause()
+
+            status.update_context(used=1234, window=4096)
+            await pilot.pause()
+            assert "ctx 1.2k / 4.1k (30%)" in str(status.render())
+
+    async def test_update_context_renders_million_token_windows(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            status = UsageStatus()
+            await container.query_one("#messageContainer").mount(status)
+            await pilot.pause()
+
+            status.update_context(used=250_000, window=1_050_000)
+            await pilot.pause()
+            assert "ctx 250.0k / 1.1M (24%)" in str(status.render())
+
+    async def test_update_context_without_window_renders_tokens_only(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            status = UsageStatus()
+            await container.query_one("#messageContainer").mount(status)
+            await pilot.pause()
+
+            status.update_context(used=850, window=None)
+            await pilot.pause()
+            rendered = str(status.render())
+            assert "ctx 850" in rendered
+            assert "%" not in rendered
+
     async def test_finish_drops_spinner_glyph(self, chat_model):
         app = _Host(chat_model, [])
         async with app.run_test() as pilot:
@@ -2253,3 +2292,135 @@ class TestUsageStatus:
             # After success, the spinner glyph is gone but the line remains.
             rendered = str(statuses[0].render())
             assert not any(frame in rendered for frame in UsageStatus.SPINNER_FRAMES)
+
+
+async def _stream_hello(
+    messages: list[ModelMessage], info: AgentInfo
+) -> AsyncIterator[str]:
+    yield "hello there"
+
+
+async def _run_turn(app: "_Host", agent: Agent) -> "tuple[ChatContainer, str]":
+    """Send one prompt through the real UI and return the finished footer text."""
+    async with app.run_test() as pilot:
+        container = app.query_one(ChatContainer)
+        container.agent = agent
+        app.query_one(FlexibleInput).text = "hi"
+        await pilot.press("enter")
+        await wait_until(pilot, lambda: len(container.messages) == 2)
+        status = list(container.query(UsageStatus))[-1]
+        await wait_until(pilot, lambda: "ctx" in str(status.render()))
+        return container, str(status.render())
+
+
+def _last_response_tokens(container: ChatContainer) -> int:
+    response = container.pydantic_history[-1]
+    assert isinstance(response, ModelResponse)
+    return response.usage.total_tokens
+
+
+class TestContextWindowFooter:
+    async def test_model_profile_window(self, store, chat_model):
+        chat_model.provider = "anthropic"
+        chat_model.id = await store.save_chat(chat_model)
+        agent = Agent(
+            FunctionModel(
+                stream_function=_stream_hello,
+                profile=ModelProfile(context_window=1000),
+            )
+        )
+        container, footer = await _run_turn(_Host(chat_model, []), agent)
+        used = _last_response_tokens(container)
+        assert f"ctx {used} / 1.0k ({round(used / 10)}%)" in footer
+
+    async def test_turn_is_saved_without_waiting_for_the_window_lookup(
+        self, store, chat_model, monkeypatch
+    ):
+        import oterm.config
+
+        chat_model.id = await store.save_chat(chat_model)
+        ps = {
+            "/api/ps": {
+                "models": [
+                    {
+                        "name": "test-model",
+                        "model": "test-model",
+                        "context_length": 8192,
+                    }
+                ]
+            }
+        }
+        with json_server(ps, delay=0.5) as url:
+            monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", url)
+            app = _Host(chat_model, [])
+            async with app.run_test() as pilot:
+                container = app.query_one(ChatContainer)
+                container.agent = Agent(FunctionModel(stream_function=_stream_hello))
+                app.query_one(FlexibleInput).text = "hi"
+                await pilot.press("enter")
+
+                await wait_until(pilot, lambda: len(container.messages) == 2)
+                status = list(container.query(UsageStatus))[-1]
+                assert not status._streaming
+                assert "ctx" not in str(status.render())
+
+                await asyncio.sleep(0.8)
+                await wait_until(pilot, lambda: "/ 8.2k" in str(status.render()))
+                assert "/ 8.2k" in str(status.render())
+
+    async def test_ollama_running_context_length(self, store, chat_model, monkeypatch):
+        import oterm.config
+
+        chat_model.id = await store.save_chat(chat_model)
+        ps = {
+            "/api/ps": {
+                "models": [
+                    {
+                        "name": "test-model",
+                        "model": "test-model",
+                        "context_length": 8192,
+                    }
+                ]
+            }
+        }
+        with json_server(ps) as url:
+            monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", url)
+            _, footer = await _run_turn(
+                _Host(chat_model, []),
+                Agent(FunctionModel(stream_function=_stream_hello)),
+            )
+        assert "/ 8.2k" in footer
+
+    async def test_openai_compat_server_window(self, store, chat_model, app_config):
+        models = {
+            "/v1/models": {
+                "object": "list",
+                "data": [
+                    {
+                        "id": "test-model",
+                        "object": "model",
+                        "created": 0,
+                        "owned_by": "vllm",
+                        "max_model_len": 262144,
+                    }
+                ],
+            }
+        }
+        with json_server(models) as url:
+            app_config.set("openaiCompatible", {"local": {"base_url": f"{url}/v1"}})
+            chat_model.provider = "openai-compat/local"
+            chat_model.id = await store.save_chat(chat_model)
+            _, footer = await _run_turn(
+                _Host(chat_model, []),
+                Agent(FunctionModel(stream_function=_stream_hello)),
+            )
+        assert "/ 262.1k" in footer
+
+    async def test_unknown_window_shows_tokens_only(self, store, chat_model):
+        chat_model.provider = "anthropic"
+        chat_model.id = await store.save_chat(chat_model)
+        container, footer = await _run_turn(
+            _Host(chat_model, []), Agent(FunctionModel(stream_function=_stream_hello))
+        )
+        assert f"ctx {_last_response_tokens(container)}" in footer
+        assert "%" not in footer
