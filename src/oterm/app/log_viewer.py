@@ -8,7 +8,6 @@ from textual.widgets import Label, RichLog
 
 from oterm.config import envConfig
 from oterm.log import log_lines
-from oterm.utils import debounce
 
 
 class LogViewer(ModalScreen[str]):
@@ -38,17 +37,16 @@ class LogViewer(ModalScreen[str]):
             return
         self.app.notify(f"Logs exported to {path}")
 
-    @debounce(0.5)
-    async def log_update(self) -> None:
+    def log_update(self) -> None:
         widget = self.query_one(RichLog)
         new_lines = log_lines[self.line_count :]
         self.line_count += len(new_lines)
         for group, line in new_lines:
             widget.write(f"[b]{group.name}[/b] - {line}")
-        await self.log_update()
 
-    async def on_screen_resume(self) -> None:
-        await self.log_update()
+    def on_mount(self) -> None:
+        self.log_update()
+        self.set_interval(0.5, self.log_update)
 
     def compose(self) -> ComposeResult:
         with Container(id="log-viewer", classes="screen-container full-height"):

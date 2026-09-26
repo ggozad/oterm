@@ -15,13 +15,14 @@ class Capabilities(Widget):
 
     def __init__(
         self,
-        caps: list[Literal["thinking"] | Literal["tools"] | Literal["vision"]] = [],
+        caps: list[Literal["thinking"] | Literal["tools"] | Literal["vision"]]
+        | None = None,
         name: str | None = None,
         id: str | None = None,
         classes: str | None = None,
     ) -> None:
         super().__init__(name=name, id=id, classes=classes)
-        self.caps = caps
+        self.caps = caps or []
 
     def watch_caps(self) -> None:
         try:

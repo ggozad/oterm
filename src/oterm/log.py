@@ -6,7 +6,7 @@ from textual import Logger, LogGroup
 log_lines: list[tuple[LogGroup, str]] = []
 
 
-def supress_logging() -> None:
+def suppress_logging() -> None:
     """Drop the root logger's handlers and raise its level to ERROR.
 
     Third-party warnings and below are discarded. Errors still reach stderr
@@ -28,8 +28,7 @@ class OtermLogger(Logger):
     @property
     def info(self) -> "OtermLogger":
         """Logs information."""
-        res = OtermLogger(self._log, LogGroup.INFO)
-        return res
+        return OtermLogger(self._log, LogGroup.INFO)
 
     @property
     def warning(self) -> "OtermLogger":

@@ -633,7 +633,7 @@ class TestEditChat:
 
         from oterm.types import ChatModel
 
-        updated_json = ChatModel(
+        updated = ChatModel(
             id=chat_id,
             name="renamed",
             model=chat_model.model,  # store.edit_chat doesn't update model
@@ -642,12 +642,12 @@ class TestEditChat:
             parameters={"temperature": 0.2},
             tools=[],
             thinking=True,
-        ).model_dump_json()
+        )
 
         app = _Host(chat_model, [])
 
         async def fake_push_screen_wait(self, screen):
-            return updated_json
+            return updated
 
         monkeypatch.setattr(type(app), "push_screen_wait", fake_push_screen_wait)
 
@@ -1066,7 +1066,7 @@ class TestChatItemUser:
 
             item.text = "hi"
             await pilot.pause()
-            # No Markdown should be queried — and no exception raised.
+            # No Markdown is queried, and no exception is raised.
             assert not list(item.query(Markdown))
 
     async def test_setting_thinking_on_user_item_is_noop(self, chat_model):
@@ -1221,7 +1221,7 @@ class TestThinkingCollapse:
 
             await pilot.click(label)
             await pilot.pause()
-            # Click on label returns early — no toggle, no copy.
+            # Click on label returns early: no toggle, no copy.
             assert item.thoughts_collapsed is False
             assert copied == []
 
@@ -1685,7 +1685,7 @@ class TestThinkingViaResponseTask:
             assert len(assistant_rows[0].images) == 1
 
     async def test_non_image_file_part_is_ignored_on_stream(self, store, chat_model):
-        """Audio/document FileParts are silently dropped — no widget, no persist."""
+        """Audio/document FileParts are dropped: no widget, nothing persisted."""
         from pydantic_ai.messages import BinaryContent, FilePart
         from textual_image.widget import Image as ImageWidget
 
@@ -2213,7 +2213,7 @@ class TestUsageStatus:
             await container.query_one("#messageContainer").mount(status)
             await pilot.pause()
             status.finish()
-            # Second finish is a no-op — must not raise even with the timer gone.
+            # Second finish is a no-op and must not raise with the timer gone.
             status.finish()
 
     async def test_status_persists_after_successful_turn(self, store, chat_model):

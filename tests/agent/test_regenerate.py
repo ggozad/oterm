@@ -398,11 +398,8 @@ def _has_orphan_tool_call(history: list[ModelMessage]) -> bool:
 
 
 class TestRegenerateAfterToolUse:
-    """Regenerate must truncate the entire prior turn, including tool messages.
-
-    Before the fix, regenerate sliced the last 2 messages off `pydantic_history`,
-    which left orphan ToolCallParts when the prior turn used a tool.
-    """
+    """Regenerate truncates the entire prior turn, including tool messages,
+    so no orphan ToolCallParts remain in `pydantic_history`."""
 
     async def test_truncation_drops_full_tool_turn(self, store, chat_model):
         chat_id = await store.save_chat(chat_model)

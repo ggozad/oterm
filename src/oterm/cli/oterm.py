@@ -5,7 +5,7 @@ import typer
 from rich.pretty import pprint
 
 from oterm.config import envConfig
-from oterm.log import supress_logging
+from oterm.log import suppress_logging
 from oterm.store.store import Store
 
 cli = typer.Typer(context_settings={"help_option_names": ["-h", "--help"]})
@@ -32,8 +32,8 @@ def oterm(
     sqlite: bool = typer.Option(None, "--db"),
     data_dir: bool = typer.Option(None, "--data-dir"),
 ):
-    # Configure logging early to suppress all third-party package logs
-    supress_logging()
+    # Before any third-party package gets a chance to log.
+    suppress_logging()
 
     if version:
         typer.echo(f"oterm v{metadata.version('oterm')}")

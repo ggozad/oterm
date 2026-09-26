@@ -7,33 +7,33 @@ from oterm.providers import (
     UNRESOLVED_API_KEY,
     _list_models_from_api,
     _list_models_from_known,
-    _resolve_api_key,
     get_all_providers,
     get_available_providers,
     get_openai_compatible_providers,
     get_provider_name,
     list_models,
+    resolve_api_key,
 )
 
 
 class TestResolveApiKey:
     def test_none_returns_none(self):
-        assert _resolve_api_key(None) is None
+        assert resolve_api_key(None) is None
 
     def test_literal_returns_as_is(self):
-        assert _resolve_api_key("sk-real") == "sk-real"
+        assert resolve_api_key("sk-real") == "sk-real"
 
     def test_env_var_expansion(self, monkeypatch):
         monkeypatch.setenv("MY_KEY", "secret")
-        assert _resolve_api_key("${MY_KEY}") == "secret"
+        assert resolve_api_key("${MY_KEY}") == "secret"
 
     def test_env_var_with_default(self, monkeypatch):
         monkeypatch.delenv("MAYBE_KEY", raising=False)
-        assert _resolve_api_key("${MAYBE_KEY:-fallback}") == "fallback"
+        assert resolve_api_key("${MAYBE_KEY:-fallback}") == "fallback"
 
     def test_missing_env_var_returns_none(self, monkeypatch):
         monkeypatch.delenv("MISSING_VAR", raising=False)
-        assert _resolve_api_key("${MISSING_VAR}") is None
+        assert resolve_api_key("${MISSING_VAR}") is None
 
     def test_unresolved_api_key_constant(self):
         assert UNRESOLVED_API_KEY == "unresolved-api-key"

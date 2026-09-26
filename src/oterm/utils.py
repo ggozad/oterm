@@ -1,9 +1,6 @@
-import asyncio
 import os
 import re
 import sys
-from collections.abc import Callable
-from functools import wraps
 from importlib import metadata
 from pathlib import Path
 from typing import Any
@@ -38,71 +35,6 @@ def expand_env_vars(value: Any) -> Any:
     if isinstance(value, list):
         return [expand_env_vars(v) for v in value]
     return value
-
-
-def debounce(wait: float) -> Callable:
-    """
-    A decorator to debounce a function, ensuring it is called only after a specified delay
-    and always executes after the last call.
-
-    Args:
-        wait (float): The debounce delay in seconds.
-
-    Returns:
-        Callable: The decorated function.
-    """
-
-    def decorator(func: Callable) -> Callable:
-        last_call = None
-        task = None
-
-        @wraps(func)
-        async def debounced(*args, **kwargs):
-            nonlocal last_call, task
-            last_call = asyncio.get_event_loop().time()
-
-            if task:
-                task.cancel()
-
-            async def call_func():
-                await asyncio.sleep(wait)
-                if asyncio.get_event_loop().time() - last_call >= wait:  # ty: ignore[unsupported-operator]  # pragma: no branch
-                    await func(*args, **kwargs)
-
-            task = asyncio.create_task(call_func())
-
-        return debounced
-
-    return decorator
-
-
-def throttle(interval: float) -> Callable:
-    """
-    A decorator to throttle a function, ensuring it is called at most once per interval.
-    The first call executes immediately, subsequent calls within the interval are ignored.
-
-    Args:
-        interval (float): The throttle interval in seconds.
-
-    Returns:
-        Callable: The decorated function.
-    """
-
-    def decorator(func: Callable) -> Callable:
-        last_called_at = None
-
-        @wraps(func)
-        async def throttled(*args, **kwargs):
-            nonlocal last_called_at
-            now = asyncio.get_event_loop().time()
-
-            if last_called_at is None or now - last_called_at >= interval:
-                last_called_at = now
-                await func(*args, **kwargs)
-
-        return throttled
-
-    return decorator
 
 
 def get_default_data_dir() -> Path:

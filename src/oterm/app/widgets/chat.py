@@ -22,6 +22,8 @@ from pydantic_ai import (
     ThinkingPartDelta,
     UserPromptPart,
 )
+from pydantic_ai import Tool as PydanticTool
+from pydantic_ai.capabilities import AbstractCapability
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import (
     BinaryImage,
@@ -35,6 +37,7 @@ from pydantic_ai.messages import (
     ToolCallPart,
     ToolReturnPart,
 )
+from pydantic_ai.toolsets import AbstractToolset, PrefixedToolset
 from pydantic_ai.usage import RunUsage
 from rich.console import Group, RenderableType
 from rich.json import JSON
@@ -64,7 +67,7 @@ from oterm.config import envConfig
 from oterm.log import log
 from oterm.providers.capabilities import get_capabilities
 from oterm.store.store import Store
-from oterm.tools import builtin_tools
+from oterm.tools import builtin_tools, qualified_tool_name
 from oterm.tools.capabilities import capability_defs
 from oterm.tools.mcp.setup import mcp_servers, mcp_tool_meta
 from oterm.types import ChatModel, MessageModel
@@ -99,40 +102,37 @@ def build_user_prompt(
     When the text has no tokens, all images follow the text; messages stored
     without tokens take this path. Returns (user_prompt, skipped_count).
     """
-    matches = list(IMAGE_TOKEN_RE.finditer(text))
-    if not matches:
-        if not images:
-            return text, 0
-        parts: list[str | BinaryContent] = [text] if text else []
-        skipped = 0
-        for b64 in images:
-            content = _decode_image(b64)
-            if content is None:
-                skipped += 1
-            else:
-                parts.append(content)
-        if not any(isinstance(p, BinaryContent) for p in parts):
-            return text, skipped
-        return parts, skipped
-
-    parts = []
-    last = 0
+    parts: list[str | BinaryContent] = []
     skipped = 0
-    for m in matches:
-        if m.start() > last:
-            parts.append(text[last : m.start()])
-        idx = int(m.group(1))
-        if 1 <= idx <= len(images):
-            content = _decode_image(images[idx - 1])
-            if content is None:
-                skipped += 1
-            else:
-                parts.append(content)
+
+    def add_image(b64: str) -> None:
+        nonlocal skipped
+        content = _decode_image(b64)
+        if content is None:
+            skipped += 1
         else:
-            parts.append(m.group(0))
-        last = m.end()
-    if last < len(text):
-        parts.append(text[last:])
+            parts.append(content)
+
+    matches = list(IMAGE_TOKEN_RE.finditer(text))
+    if matches:
+        last = 0
+        for m in matches:
+            if m.start() > last:
+                parts.append(text[last : m.start()])
+            idx = int(m.group(1))
+            if 1 <= idx <= len(images):
+                add_image(images[idx - 1])
+            else:
+                parts.append(m.group(0))
+            last = m.end()
+        if last < len(text):
+            parts.append(text[last:])
+    else:
+        if text:
+            parts.append(text)
+        for b64 in images:
+            add_image(b64)
+
     if not any(isinstance(p, BinaryContent) for p in parts):
         return text, skipped
     return parts, skipped
@@ -155,13 +155,6 @@ def _last_user_prompt_index(history: list[ModelMessage]) -> int | None:
 
 def _resolve_tools(tool_names: list[str]):
     """Split selected tool names into pydantic-ai Tool objects, filtered MCP toolsets and capabilities."""
-    from pydantic_ai import Tool as PydanticTool
-    from pydantic_ai.capabilities import AbstractCapability
-    from pydantic_ai.toolsets import AbstractToolset, PrefixedToolset
-
-    from oterm.log import log
-    from oterm.tools import qualified_tool_name
-
     selected = set(tool_names)
     tools: list[PydanticTool] = []
     available_names: set[str] = set()
@@ -208,31 +201,27 @@ def _error_message(error: Exception) -> str:
 
 
 class ChatContainer(Widget):
-    messages: reactive[list[MessageModel]] = reactive([])
-    images: list[tuple[Path, str]] = []
-
     def __init__(
         self,
         *children: Widget,
-        messages: list[MessageModel] = [],
+        messages: list[MessageModel] | None = None,
         chat_model: ChatModel,
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
 
-        self.messages = messages
+        self.messages: list[MessageModel] = messages if messages is not None else []
         self.chat_model = chat_model
-        self.model = chat_model.model
-        self.system = chat_model.system
 
         self.pydantic_history: list[ModelMessage] = self._build_pydantic_history(
-            messages
+            self.messages
         )
 
         self._rebuild_agent()
         self.loaded = False
         self.loading = False
-        self.images = []
+        self.images: list[tuple[Path, str]] = []
+        self.inference_task: asyncio.Task | None = None
         self._stream_usage: RunUsage = RunUsage()
 
     def _rebuild_agent(self) -> None:
@@ -507,27 +496,22 @@ class ChatContainer(Widget):
         self.inference_task = asyncio.create_task(self.response_task(message))
 
     def key_escape(self) -> None:
-        if hasattr(self, "inference_task"):  # pragma: no branch
+        if self.inference_task is not None:  # pragma: no branch
             self.inference_task.cancel()
 
     @work
     async def action_edit_chat(self) -> None:
         screen = ChatEdit(chat_model=self.chat_model, edit_mode=True)
 
-        model_info = await self.app.push_screen_wait(screen)
-        if model_info is None:
+        edited = await self.app.push_screen_wait(screen)
+        if edited is None:
             return
-
-        self.chat_model = ChatModel.model_validate_json(model_info)
+        self.chat_model = edited
 
         store = await Store.get_store()
         await store.edit_chat(self.chat_model)
 
         self.pydantic_history = self._build_pydantic_history(self.messages)
-
-        self.model = self.chat_model.model
-        self.system = self.chat_model.system
-
         self._rebuild_agent()
 
     def action_toggle_thinking(self) -> None:
@@ -586,8 +570,7 @@ class ChatContainer(Widget):
             return
         if len(self.messages) < 2:
             return
-        in_flight = getattr(self, "inference_task", None)
-        if in_flight is not None and not in_flight.done():
+        if self.inference_task is not None and not self.inference_task.done():
             return  # pragma: no cover
         chat_id = self.chat_model.id
         assert chat_id is not None
@@ -676,7 +659,7 @@ class ChatContainer(Widget):
         self.app.notify(f"Image {ev.path} added.")
 
     def compose(self) -> ComposeResult:
-        yield Static(f"model: {self.model}", id="info")
+        yield Static(f"model: {self.chat_model.model}", id="info")
         yield VerticalScroll(id="messageContainer")
         yield FlexibleInput("", id="prompt")
 
@@ -974,8 +957,8 @@ class ChatItem(Widget):
 
         Used in error/cancellation paths where the chat item is about to be
         removed; awaiting a graceful flush from inside an exception handler
-        is unsafe. Reaches into ``MarkdownStream._task`` (Textual private API,
-        verified against textual==8.2.4) because ``stream.stop()`` awaits.
+        is unsafe. Reaches into ``MarkdownStream._task``, a Textual private
+        attribute, because ``stream.stop()`` awaits.
         """
         for stream in (self._response_stream, self._thinking_stream):
             task = getattr(stream, "_task", None)
@@ -985,8 +968,6 @@ class ChatItem(Widget):
         self._thinking_stream = None
 
     def compose(self) -> ComposeResult:
-        """A chat item."""
-
         if self.author == "user":
             with Horizontal(classes="user chatItem"):
                 yield Static("❯", classes="prompt-marker")

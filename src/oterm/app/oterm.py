@@ -113,11 +113,10 @@ class OTerm(App):
             if last_provider in get_available_providers()
             else ChatModel()
         )
-        model_info: str | None = await self.push_screen_wait(ChatEdit(chat_model))
-        if not model_info:
+        edited = await self.push_screen_wait(ChatEdit(chat_model))
+        if edited is None:
             return
-
-        chat_model = ChatModel.model_validate_json(model_info)
+        chat_model = edited
         tabs = self.query_one(TabbedContent)
         tab_count = tabs.tab_count
 
@@ -138,80 +137,59 @@ class OTerm(App):
         tabs.active = f"chat-{id}"
         self._update_empty_state()
 
+    def _active_chat(self) -> ChatContainer | None:
+        pane = self.query_one(TabbedContent).active_pane
+        return pane.query_one(ChatContainer) if pane is not None else None
+
     async def action_edit_chat(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
-            return
-        chat = tabs.active_pane.query_one(ChatContainer)
-        chat.action_edit_chat()
+        if chat := self._active_chat():
+            chat.action_edit_chat()
 
     async def action_toggle_thinking(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
-            return
-        chat = tabs.active_pane.query_one(ChatContainer)
-        chat.action_toggle_thinking()
+        if chat := self._active_chat():
+            chat.action_toggle_thinking()
 
     async def action_copy_message(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
-            return
-        chat = tabs.active_pane.query_one(ChatContainer)
-        chat.action_copy_message()
+        if chat := self._active_chat():
+            chat.action_copy_message()
 
     async def action_rename_chat(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
-            return
-        chat = tabs.active_pane.query_one(ChatContainer)
-        chat.action_rename_chat()
+        if chat := self._active_chat():
+            chat.action_rename_chat()
 
     async def action_clear_chat(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
-            return
-        chat = tabs.active_pane.query_one(ChatContainer)
-        await chat.action_clear_chat()
+        if chat := self._active_chat():
+            await chat.action_clear_chat()
 
     async def action_delete_chat(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
+        chat = self._active_chat()
+        if chat is None or chat.chat_model.id is None:
             return
-        chat = tabs.active_pane.query_one(ChatContainer)
         store = await Store.get_store()
-
-        if chat.chat_model.id is not None:
-            await store.delete_chat(chat.chat_model.id)
-            await tabs.remove_pane(tabs.active)
-            self.notify(f"Deleted {chat.chat_model.name}", severity="information")
-            self._update_empty_state()
+        await store.delete_chat(chat.chat_model.id)
+        tabs = self.query_one(TabbedContent)
+        await tabs.remove_pane(tabs.active)
+        self.notify(f"Deleted {chat.chat_model.name}", severity="information")
+        self._update_empty_state()
 
     async def action_export_chat(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
+        chat = self._active_chat()
+        if chat is None or chat.chat_model.id is None:
             return
-        chat = tabs.active_pane.query_one(ChatContainer)
-
-        if chat.chat_model.id is not None:
-            screen = ChatExport(
+        self.push_screen(
+            ChatExport(
                 chat_id=chat.chat_model.id,
                 file_name=f"{slugify(chat.chat_model.name)}.md",
             )
-            self.push_screen(screen)
+        )
 
     async def action_regenerate_last_message(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
-            return
-        chat = tabs.active_pane.query_one(ChatContainer)
-        await chat.action_regenerate_llm_message()
+        if chat := self._active_chat():
+            await chat.action_regenerate_llm_message()
 
     async def action_prompt_history(self) -> None:
-        tabs = self.query_one(TabbedContent)
-        if tabs.active_pane is None:
-            return
-        chat = tabs.active_pane.query_one(ChatContainer)
-        await chat.action_history()
+        if chat := self._active_chat():
+            await chat.action_history()
 
     async def action_show_logs(self) -> None:
         from oterm.app.log_viewer import LogViewer
@@ -245,7 +223,6 @@ class OTerm(App):
         self.watch(self.app, "theme", self.on_theme_change, init=False)
 
         saved_chats = await store.get_chats()
-        # Apply any remap of key bindings.
         keymap = appConfig.get("keymap")
         if keymap:
             self.set_keymap(keymap)
@@ -253,7 +230,6 @@ class OTerm(App):
         async def on_splash_done(message) -> None:
             tabs = self.query_one(TabbedContent)
             for chat_model in saved_chats:
-                # Only process chats with a valid ID
                 if chat_model.id is not None:
                     messages = await store.get_messages(chat_model.id)
                     container = ChatContainer(

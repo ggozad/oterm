@@ -45,14 +45,11 @@ class ToolSelector(Widget):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
-        selected: list[str] = [],
+        selected: list[str] | None = None,
     ) -> None:
         super().__init__(name=name, id=id, classes=classes, disabled=disabled)
         known = known_tool_names()
-        self.selected = [n for n in selected if n in known]
-
-    def on_mount(self) -> None:
-        pass
+        self.selected = [n for n in selected or [] if n in known]
 
     @on(Checkbox.Changed)
     def on_checkbox_toggled(self, ev: Checkbox.Changed):
@@ -82,7 +79,7 @@ class ToolSelector(Widget):
                             pass
                     return
 
-    def _all_group_tools_selected(self, group: str, metas: list[dict]) -> bool:
+    def _all_group_tools_selected(self, metas: list[dict]) -> bool:
         return all(meta["name"] in self.selected for meta in metas)
 
     def compose(self) -> ComposeResult:
@@ -95,7 +92,7 @@ class ToolSelector(Widget):
                         label=group,
                         tooltip=f"Select all tools from {group}",
                         classes="tool-group-select-all",
-                        value=self._all_group_tools_selected(group, metas),
+                        value=self._all_group_tools_selected(metas),
                     )
                     with Vertical(classes="tools"):
                         for meta in metas:

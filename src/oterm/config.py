@@ -54,5 +54,4 @@ class AppConfig:
             json.dump(self._data, f)
 
 
-# Expose AppConfig object for app to import
 appConfig = AppConfig()

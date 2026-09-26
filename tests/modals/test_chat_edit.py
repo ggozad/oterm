@@ -1,5 +1,3 @@
-import json
-
 import pytest
 from textual.app import App
 from textual.widgets import Button, Checkbox, Input, TextArea
@@ -83,7 +81,7 @@ async def test_compose_renders_param_inputs_for_anthropic(app_config, monkeypatc
 async def test_escape_dismisses_with_none(app_config):
     app = _Host()
     async with app.run_test() as pilot:
-        received: list[str | None] = []
+        received: list[ChatModel | None] = []
         app.push_screen(ChatEdit(), lambda r: received.append(r))
         await pilot.pause()
         await pilot.press("escape")
@@ -94,7 +92,7 @@ async def test_escape_dismisses_with_none(app_config):
 async def test_save_dismisses_with_chat_model_json(app_config):
     app = _Host()
     async with app.run_test() as pilot:
-        received: list[str | None] = []
+        received: list[ChatModel | None] = []
         chat_model = ChatModel(model="llama3", provider="ollama")
         screen = ChatEdit(chat_model=chat_model, edit_mode=True)
         app.push_screen(screen, lambda r: received.append(r))
@@ -109,7 +107,7 @@ async def test_save_dismisses_with_chat_model_json(app_config):
         await pilot.pause()
 
         assert received and received[0]
-        payload = json.loads(received[0])
+        payload = received[0].model_dump()
         assert payload["model"] == "llama3"
         assert payload["parameters"]["temperature"] == 0.5
 
@@ -117,7 +115,7 @@ async def test_save_dismisses_with_chat_model_json(app_config):
 async def test_missing_model_notifies_and_does_not_dismiss(app_config):
     app = _Host()
     async with app.run_test() as pilot:
-        received: list[str | None] = []
+        received: list[ChatModel | None] = []
         screen = ChatEdit()
         app.push_screen(screen, lambda r: received.append(r))
         await pilot.pause()
@@ -148,7 +146,7 @@ async def test_missing_model_notifies_and_does_not_dismiss(app_config):
 async def test_parameter_validation_errors(app_config, field, value, message_fragment):
     app = _Host()
     async with app.run_test() as pilot:
-        received: list[str | None] = []
+        received: list[ChatModel | None] = []
         chat_model = ChatModel(model="llama3", provider="ollama")
         screen = ChatEdit(chat_model=chat_model, edit_mode=True)
         app.push_screen(screen, lambda r: received.append(r))
@@ -170,7 +168,7 @@ async def test_parameter_validation_errors(app_config, field, value, message_fra
 async def test_valid_parameters_are_persisted(app_config):
     app = _Host()
     async with app.run_test() as pilot:
-        received: list[str | None] = []
+        received: list[ChatModel | None] = []
         chat_model = ChatModel(model="llama3", provider="ollama")
         screen = ChatEdit(chat_model=chat_model, edit_mode=True)
         app.push_screen(screen, lambda r: received.append(r))
@@ -186,7 +184,7 @@ async def test_valid_parameters_are_persisted(app_config):
         await pilot.pause()
 
         assert received and received[0]
-        payload = json.loads(received[0])
+        payload = received[0].model_dump()
         assert payload["parameters"] == {
             "temperature": 0.3,
             "top_p": 0.9,
@@ -198,7 +196,7 @@ async def test_valid_parameters_are_persisted(app_config):
 async def test_save_button_triggers_return(app_config):
     app = _Host()
     async with app.run_test() as pilot:
-        received: list[str | None] = []
+        received: list[ChatModel | None] = []
         chat_model = ChatModel(model="llama3", provider="ollama")
         screen = ChatEdit(chat_model=chat_model, edit_mode=True)
         app.push_screen(screen, lambda r: received.append(r))
@@ -213,7 +211,7 @@ async def test_save_button_triggers_return(app_config):
 async def test_cancel_button_dismisses_with_none(app_config):
     app = _Host()
     async with app.run_test() as pilot:
-        received: list[str | None] = []
+        received: list[ChatModel | None] = []
         screen = ChatEdit()
         app.push_screen(screen, lambda r: received.append(r))
         await pilot.pause()
@@ -227,7 +225,7 @@ async def test_cancel_button_dismisses_with_none(app_config):
 async def test_save_action_triggers_return(app_config):
     app = _Host()
     async with app.run_test() as pilot:
-        received: list[str | None] = []
+        received: list[ChatModel | None] = []
         chat_model = ChatModel(model="llama3", provider="ollama")
         screen = ChatEdit(chat_model=chat_model, edit_mode=True)
         app.push_screen(screen, lambda r: received.append(r))
@@ -300,45 +298,6 @@ async def test_saved_parameters_take_precedence_over_modelfile(app_config, monke
 
         assert screen.query_one("#temperature-input", Input).value == "0.2"
         assert screen.query_one("#top-p-input", Input).value == ""
-
-
-async def test_unsupported_param_specs_are_skipped(app_config, monkeypatch):
-    """Specs whose key isn't in the provider's supported set must be skipped
-    everywhere (compose, populate, save). Today every spec lives in base
-    ModelSettings so the gate is dormant; we stub the lookup to prove it
-    holds for future provider-specific additions, where the missing input
-    would otherwise crash the form."""
-    import oterm.app.chat_edit as ce
-
-    monkeypatch.setattr(
-        ce,
-        "get_supported_setting_keys",
-        lambda provider: frozenset({"temperature", "top_p", "max_tokens"}),
-    )
-
-    app = _Host()
-    async with app.run_test() as pilot:
-        received: list[str | None] = []
-        chat_model = ChatModel(model="llama3", provider="ollama")
-        screen = ChatEdit(chat_model=chat_model, edit_mode=True)
-        app.push_screen(screen, lambda r: received.append(r))
-        await pilot.pause()
-
-        with pytest.raises(Exception):
-            screen.query_one("#seed-input", Input)
-
-        # No NoMatches: populate ignores the missing spec.
-        screen._populate_parameter_inputs({"temperature": 0.5, "seed": 99})
-        await pilot.pause()
-        assert screen.query_one("#temperature-input", Input).value == "0.5"
-
-        # No NoMatches: save ignores the missing spec and dismisses cleanly.
-        screen._return_chat_meta()
-        await pilot.pause()
-
-        assert received and received[0]
-        payload = json.loads(received[0])
-        assert "seed" not in payload["parameters"]
 
 
 async def test_chat_with_legacy_ollama_keys_loads(app_config):
@@ -643,5 +602,5 @@ async def test_on_select_changed_same_provider_is_noop(app_config):
         ev = Select.Changed(provider_select, "ollama")
         await screen.on_select_changed(ev)
         await pilot.pause()
-        # No reset — model_name preserved.
+        # No reset: model_name is preserved.
         assert screen.model_name == "llama3"

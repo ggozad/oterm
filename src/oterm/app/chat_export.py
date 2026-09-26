@@ -25,8 +25,6 @@ def slugify(value):
 
 
 class ChatExport(ModalScreen[str]):
-    chat_id: int
-    file_name: str = ""
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]

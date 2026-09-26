@@ -115,7 +115,7 @@ class TestResolveTools:
         assert sorted(ts.prefix for ts in toolsets) == ["grafana", "k8s"]
 
     def test_unqualified_mcp_tool_name_is_unavailable(self, monkeypatch):
-        """A bare MCP tool name no longer resolves to any server."""
+        """A bare MCP tool name resolves to no server."""
         import oterm.log
 
         server = _FakeServer()

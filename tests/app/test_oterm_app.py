@@ -279,12 +279,8 @@ class TestNewChat:
 
         from oterm.app.oterm import OTerm
 
-        chat_json = ChatModel(model="llama3", provider="ollama").model_dump_json(
-            exclude_none=True
-        )
-
         async def fake_push_screen_wait(self, screen):
-            return chat_json
+            return ChatModel(model="llama3", provider="ollama")
 
         monkeypatch.setattr(OTerm, "push_screen_wait", fake_push_screen_wait)
 

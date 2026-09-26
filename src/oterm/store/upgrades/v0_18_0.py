@@ -6,9 +6,8 @@ import aiosqlite
 # pydantic-ai 1.100 renamed provider ids ahead of 2.0:
 #   google-gla    → google
 #   google-vertex → google-cloud
-# and warned on bare `openai:` (2.0 will switch that namespace to the
-# Responses API). oterm now stores the new ids; existing chat rows get
-# rewritten in place.
+# and 2.0 moved bare `openai:` to the Responses API, so chats on the Chat
+# Completions API are stored as `openai-chat`.
 _PROVIDER_RENAMES = {
     "google-gla": "google",
     "google-vertex": "google-cloud",
