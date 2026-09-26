@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Yiorgis Gozadinos", email = "ggozadinos@gmail.com" }
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = []
 
 [project.entry-points."oterm.tools"]
