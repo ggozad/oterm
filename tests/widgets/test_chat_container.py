@@ -5,7 +5,14 @@ from pathlib import Path
 
 import pytest
 from pydantic_ai import Agent
-from pydantic_ai.messages import ModelMessage, ModelResponse, TextPartDelta
+from pydantic_ai.messages import (
+    ModelMessage,
+    ModelResponse,
+    SystemPromptPart,
+    TextPart,
+    TextPartDelta,
+)
+from pydantic_ai.models import Model
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.profiles import ModelProfile
 from rich.console import Console
@@ -2425,6 +2432,33 @@ class TestContextWindowFooter:
             )
         assert "/ 8.2k" in footer
 
+    async def test_ollama_window_reaches_the_rebuilt_agent(
+        self, store, chat_model, monkeypatch
+    ):
+        import oterm.config
+
+        chat_model.id = await store.save_chat(chat_model)
+        ps = {
+            "/api/ps": {
+                "models": [
+                    {
+                        "name": "test-model",
+                        "model": "test-model",
+                        "context_length": 8192,
+                    }
+                ]
+            }
+        }
+        with json_server(ps) as url:
+            monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", url)
+            container, _ = await _run_turn(
+                _Host(chat_model, []),
+                Agent(FunctionModel(stream_function=_stream_hello)),
+            )
+        assert container.agent is not None
+        assert isinstance(container.agent.model, Model)
+        assert container.agent.model.context_window == 8192
+
     async def test_openai_compat_server_window(self, store, chat_model, app_config):
         models = {
             "/v1/models": {
@@ -2458,3 +2492,63 @@ class TestContextWindowFooter:
         )
         assert f"ctx {_last_response_tokens(container)}" in footer
         assert "%" not in footer
+
+
+def _long_chat(chat_id: int, turns: int) -> list[MessageModel]:
+    messages: list[MessageModel] = []
+    for i in range(turns):
+        messages.append(
+            MessageModel(chat_id=chat_id, role="user", text=f"question {i} " * 5)
+        )
+        messages.append(
+            MessageModel(chat_id=chat_id, role="assistant", text=f"answer {i} " * 5)
+        )
+    return messages
+
+
+def _summarizing_agent(context_window: int) -> Agent:
+    """The chat's own summarize capability, on a scripted model with a known window."""
+    from oterm.app.widgets.chat import _resolve_tools
+
+    def reply(messages: list[ModelMessage], info: AgentInfo) -> ModelResponse:
+        return ModelResponse(parts=[TextPart(content="the summary")])
+
+    _, _, capabilities = _resolve_tools(["summarize"])
+    return Agent(
+        FunctionModel(
+            reply,
+            stream_function=_stream_hello,
+            profile=ModelProfile(context_window=context_window),
+        ),
+        capabilities=capabilities,
+    )
+
+
+def _summaries(container: ChatContainer) -> list[str]:
+    return [
+        part.content
+        for message in container.pydantic_history
+        for part in getattr(message, "parts", [])
+        if isinstance(part, SystemPromptPart)
+    ]
+
+
+class TestSummarize:
+    async def test_long_chat_is_summarized_and_the_user_told(self, store, chat_model):
+        chat_model.provider = "anthropic"
+        chat_model.id = await store.save_chat(chat_model)
+        app = _Host(chat_model, _long_chat(chat_model.id, turns=15))
+        container, _ = await _run_turn(app, _summarizing_agent(context_window=200))
+
+        assert any("the summary" in s for s in _summaries(container))
+        assert len(container.pydantic_history) < 30
+        assert any("summarized" in n.message for n in _notifications(app))
+
+    async def test_short_chat_is_left_alone(self, store, chat_model):
+        chat_model.provider = "anthropic"
+        chat_model.id = await store.save_chat(chat_model)
+        app = _Host(chat_model, _long_chat(chat_model.id, turns=1))
+        container, _ = await _run_turn(app, _summarizing_agent(context_window=100_000))
+
+        assert _summaries(container) == []
+        assert not any("summarized" in n.message for n in _notifications(app))

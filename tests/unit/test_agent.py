@@ -4,10 +4,12 @@ from pydantic_ai.models import override_allow_model_requests
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai_harness.compaction import SummarizingCompaction
 
 from oterm.agent import _build_model_settings, get_agent
 from oterm.providers import UNRESOLVED_API_KEY
 from oterm.providers.capabilities import ModelCapabilities
+from oterm.tools.capabilities import _summarize
 
 
 @pytest.fixture
@@ -368,3 +370,83 @@ class TestOpenAICompatThinking:
             "top_k": 20,
             "chat_template_kwargs": {"enable_thinking": False},
         }
+
+
+class TestContextWindowInProfile:
+    def test_ollama_model_reports_the_given_window(self, monkeypatch, ollama_thinking):
+        import oterm.config
+
+        ollama_thinking(True)
+        monkeypatch.setattr(
+            oterm.config.envConfig, "OLLAMA_URL", "http://localhost:11434"
+        )
+        agent = get_agent(provider="ollama", model="qwen3.8:27b", context_window=8192)
+        assert isinstance(agent.model, OpenAIChatModel)
+        assert agent.model.context_window == 8192
+        assert agent.model.profile.get("supports_thinking") is True
+
+    def test_openai_compat_model_reports_the_given_window(self, app_config):
+        app_config.set(
+            "openaiCompatible", {"local": {"base_url": "http://localhost:8000/v1"}}
+        )
+        agent = get_agent(
+            provider="openai-compat/local", model="Custom/Q-27B", context_window=4096
+        )
+        assert isinstance(agent.model, OpenAIChatModel)
+        assert agent.model.context_window == 4096
+
+    def test_no_window_leaves_the_profile_alone(self, app_config):
+        app_config.set(
+            "openaiCompatible", {"local": {"base_url": "http://localhost:8000/v1"}}
+        )
+        agent = get_agent(provider="openai-compat/local", model="Custom/Q-27B")
+        assert isinstance(agent.model, OpenAIChatModel)
+        assert agent.model.context_window is None
+
+
+def _summarizing(agent: Agent[None, str]) -> "SummarizingCompaction":
+    applied: list = []
+    agent._root_capability.apply(applied.append)
+    return next(c for c in applied if isinstance(c, SummarizingCompaction))
+
+
+class TestSummarizeFitsTheWindow:
+    def test_known_window_keeps_a_share_of_it(self, app_config):
+        app_config.set(
+            "openaiCompatible", {"local": {"base_url": "http://localhost:1234/v1"}}
+        )
+        agent = get_agent(
+            provider="openai-compat/local",
+            model="gemma",
+            capabilities=[_summarize()],
+            context_window=4096,
+        )
+        assert _summarizing(agent).keep_tokens == 1638
+
+    def test_other_capabilities_pass_through_unchanged(self, app_config):
+        from pydantic_ai.capabilities import WebSearch
+
+        app_config.set(
+            "openaiCompatible", {"local": {"base_url": "http://localhost:1234/v1"}}
+        )
+        capability = WebSearch(local="duckduckgo")
+        agent = get_agent(
+            provider="openai-compat/local",
+            model="gemma",
+            capabilities=[capability],
+            context_window=4096,
+        )
+        applied: list = []
+        agent._root_capability.apply(applied.append)
+        assert capability in applied
+
+    def test_unknown_window_keeps_the_last_messages(self, app_config):
+        app_config.set(
+            "openaiCompatible", {"local": {"base_url": "http://localhost:1234/v1"}}
+        )
+        agent = get_agent(
+            provider="openai-compat/local", model="gemma", capabilities=[_summarize()]
+        )
+        summarizing = _summarizing(agent)
+        assert summarizing.keep_tokens is None
+        assert summarizing.keep_messages == 20

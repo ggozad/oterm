@@ -1,4 +1,5 @@
 import os
+from dataclasses import replace
 from functools import cache
 from importlib import import_module
 from importlib.util import find_spec
@@ -6,6 +7,7 @@ from pathlib import Path
 
 from pydantic_ai.capabilities import AbstractCapability, WebFetch, WebSearch
 from pydantic_ai_harness import FileSystem
+from pydantic_ai_harness.compaction import SummarizingCompaction
 from pydantic_ai_harness.memory import Memory, SqliteMemoryStore
 
 from oterm.types import CapabilityDef
@@ -29,6 +31,19 @@ def _memory() -> AbstractCapability[None]:
 
 def _filesystem() -> AbstractCapability[None]:
     return FileSystem(root_dir=Path.cwd())
+
+
+def _summarize() -> AbstractCapability[None]:
+    return SummarizingCompaction(max_fraction=0.8, keep_messages=20)
+
+
+def fit_to_window(
+    capability: AbstractCapability[None], context_window: int
+) -> AbstractCapability[None]:
+    """Keep 40% of the window after summarizing, so the tail and summary fit."""
+    if isinstance(capability, SummarizingCompaction):
+        return replace(capability, keep_tokens=int(context_window * 0.4))
+    return capability
 
 
 @cache
@@ -60,6 +75,11 @@ capability_defs: list[CapabilityDef] = [
         "name": "filesystem",
         "description": "Read, write and search files under the directory oterm was started from.",
         "factory": _filesystem,
+    },
+    {
+        "name": "summarize",
+        "description": "Summarize older messages once the conversation fills 80% of the model's context window.",
+        "factory": _summarize,
     },
 ]
 

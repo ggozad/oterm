@@ -21,6 +21,7 @@ from oterm.providers import (
 from oterm.providers.capabilities import get_capabilities
 from oterm.providers.ollama import openai_compat_base_url
 from oterm.providers.settings import get_supported_setting_keys
+from oterm.tools.capabilities import fit_to_window
 
 
 def _build_model_settings(
@@ -69,9 +70,12 @@ def get_agent(
     capabilities: list[AbstractCapability[None]] | None = None,
     parameters: dict[str, Any] | None = None,
     thinking: bool = False,
+    context_window: int | None = None,
 ) -> Agent[None, str]:
     pydantic_model: OpenAIChatModel | OpenAIResponsesModel | str
     capabilities = list(capabilities) if capabilities else []
+    if context_window:
+        capabilities = [fit_to_window(c, context_window) for c in capabilities]
     if provider == "ollama":
         ollama_provider = OllamaProvider(
             base_url=openai_compat_base_url(),
@@ -84,6 +88,10 @@ def get_agent(
         profile = ollama_provider.model_profile(model)
         if profile is not None and get_capabilities(provider, model).supports_thinking:
             profile = merge_profile(profile, ModelProfile(supports_thinking=True))
+        if context_window:
+            profile = merge_profile(
+                profile, ModelProfile(context_window=context_window)
+            )
         pydantic_model = OpenAIChatModel(
             model_name=model,
             provider=ollama_provider,
@@ -107,6 +115,9 @@ def get_agent(
                 base_url=base_url,
                 api_key=api_key,
             ),
+            profile=ModelProfile(context_window=context_window)
+            if context_window
+            else None,
         )
     elif provider == "grok":
         base_url, env_var = BUILTIN_OPENAI_COMPAT["grok"]
