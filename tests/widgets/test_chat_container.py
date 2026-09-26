@@ -2224,6 +2224,40 @@ class TestUsageStatus:
             await pilot.pause()
             assert "ctx 250.0k / 1.1M (24%)" in str(status.render())
 
+    @pytest.mark.parametrize(("used", "variable"), [(600, "warning"), (900, "error")])
+    async def test_context_colour_follows_how_full_the_window_is(
+        self, chat_model, used, variable
+    ):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            status = UsageStatus()
+            await container.query_one("#messageContainer").mount(status)
+            await pilot.pause()
+
+            status.update_context(used=used, window=1000)
+            await pilot.pause()
+            segment = next(s for s in status.render_line(0) if "ctx" in s.text)
+            assert segment.style is not None and segment.style.color is not None
+            expected = app.theme_variables[variable].lower()
+            assert segment.style.color.name.lower() == expected
+
+    async def test_context_below_half_keeps_the_line_colour(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            status = UsageStatus()
+            await container.query_one("#messageContainer").mount(status)
+            await pilot.pause()
+
+            status.update_context(used=200, window=1000)
+            await pilot.pause()
+            segments = [s for s in status.render_line(0) if s.text.strip()]
+            ctx = next(s for s in segments if "ctx" in s.text)
+            elapsed = next(s for s in segments if s.text.strip().endswith("s"))
+            assert ctx.style is not None and elapsed.style is not None
+            assert ctx.style.color == elapsed.style.color
+
     async def test_update_context_without_window_renders_tokens_only(self, chat_model):
         app = _Host(chat_model, [])
         async with app.run_test() as pilot:

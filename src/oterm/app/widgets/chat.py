@@ -1077,9 +1077,13 @@ class UsageStatus(Static):
         if self._context_usage is not None:
             used, window = self._context_usage
             if window:
-                parts.append(
-                    f"ctx {_compact(used)} / {_compact(window)} ({round(100 * used / window)}%)"
-                )
+                percent = round(100 * used / window)
+                text = f"ctx {_compact(used)} / {_compact(window)} ({percent}%)"
+                if percent >= 80:
+                    text = f"[$error]{text}[/]"
+                elif percent >= 50:
+                    text = f"[$warning]{text}[/]"
+                parts.append(text)
             else:
                 parts.append(f"ctx {_compact(used)}")
         parts.append(f"{self._elapsed:.1f}s")
