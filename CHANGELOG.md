@@ -17,6 +17,7 @@
 - oterm starts on platforms other than Linux, macOS, Windows and Android, using `~/.local/share/oterm` as the data directory.
 - `oterm --config` no longer prints a trailing blank line, and masks `OLLAMA_API_KEY`.
 - `oterm --help` describes each option.
+- Turning thinking off on an OpenAI-compatible endpoint sends `chat_template_kwargs.enable_thinking: false`.
 
 ### Security
 
