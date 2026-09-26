@@ -60,6 +60,13 @@ class TestGetCapabilities:
         assert caps.supports_thinking is True
         assert caps.supports_vision is True
 
+    def test_anthropic_claude_5_has_vision(self):
+        for model in ("claude-opus-5-5", "claude-sonnet-5", "claude-fable-5-1"):
+            assert get_capabilities("anthropic", model).supports_vision is True, model
+
+    def test_anthropic_claude_2_has_no_vision(self):
+        assert get_capabilities("anthropic", "claude-2.1").supports_vision is False
+
     def test_anthropic_thinking_via_profile(self):
         # pydantic-ai's anthropic profile reports supports_thinking=True
         # uniformly; we delegate, so the toggle is enabled even on older

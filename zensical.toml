@@ -28,7 +28,6 @@ custom_dir = "overrides"
 font.code = "JetBrains Mono"
 favicon = "img/favicon.svg"
 features = [
-    "announce.dismiss",
     "content.code.annotate",
     "content.code.copy",
     "content.code.select",

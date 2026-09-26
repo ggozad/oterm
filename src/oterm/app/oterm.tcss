@@ -206,11 +206,6 @@ UsageStatus {
     margin-right: 1;
 }
 
-#edit-chat-container {
-    margin: 1;
-    padding: 1;
-}
-
 .capability {
     margin-right: 1
 }
@@ -271,10 +266,6 @@ UsageStatus {
     height: auto;
     width: 50%;
 
-}
-
-#edit-chat-container .button-container  {
-    margin: 1;
 }
 
 #chat-edit-screen {
@@ -368,13 +359,4 @@ TabPane {
 
 MarkdownFence {
     max-height: 50;
-}
-
-Button.icon {
-    min-width: 5;
-}
-
-#app-root {
-    height: 50vh;
-    max-height: 50vh;
 }

@@ -11,7 +11,6 @@ from textual.containers import (
     Horizontal,
     Vertical,
 )
-from textual.reactive import reactive
 from textual.screen import ModalScreen
 from textual.widgets import Button, Checkbox, Input, Label, Select, TextArea
 
@@ -26,7 +25,6 @@ from oterm.providers import (
 )
 from oterm.providers.capabilities import get_capabilities
 from oterm.providers.ollama import parse_modelfile_parameters
-from oterm.providers.settings import get_supported_setting_keys
 from oterm.types import ChatModel
 
 
@@ -78,20 +76,11 @@ _PARAM_SPECS: tuple[_ParamSpec, ...] = (
 )
 
 
-class ChatEdit(ModalScreen[str]):
-    models: list[str] = []
+class ChatEdit(ModalScreen[ChatModel]):
+    # Shared across instances so reopening the dialog skips repeat `show` calls.
     models_info: dict[str, ShowResponse] = {}
-    models_size: dict[str, int] = {}
 
-    provider: reactive[str] = reactive("ollama")
-    model_name: reactive[str] = reactive("")
-    bytes: reactive[int] = reactive(0)
     model_info: ShowResponse
-    system: reactive[str] = reactive("")
-    parameters: reactive[dict[str, Any]] = reactive({})
-    tools: reactive[list[str]] = reactive([])
-    edit_mode: reactive[bool] = reactive(False)
-    thinking: reactive[bool] = reactive(False)
 
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
@@ -117,6 +106,8 @@ class ChatEdit(ModalScreen[str]):
         self.edit_mode = edit_mode
         self.thinking = chat_model.thinking
         self._loaded_model: str = ""
+        self.models: list[str] = []
+        self.models_size: dict[str, int] = {}
 
     def _return_chat_meta(self) -> None:
         model = self.query_one(ModelSelect).value.strip()
@@ -130,8 +121,6 @@ class ChatEdit(ModalScreen[str]):
 
         parameters: dict[str, Any] = {}
         for spec in _PARAM_SPECS:
-            if spec.key not in get_supported_setting_keys(self.provider):
-                continue
             raw = self.query_one(f"#{spec.input_id}", Input).value.strip()
             if not raw:
                 continue
@@ -150,18 +139,18 @@ class ChatEdit(ModalScreen[str]):
         self.tools = self.query_one(ToolSelector).selected
         self.thinking = self.query_one("#thinking-checkbox", Checkbox).value
 
-        updated_chat_model = ChatModel(
-            id=self.chat_model.id,
-            name=self.chat_model.name,
-            model=model,
-            system=system,
-            provider=self.provider,
-            parameters=parameters,
-            tools=self.tools,
-            thinking=self.thinking,
+        self.dismiss(
+            ChatModel(
+                id=self.chat_model.id,
+                name=self.chat_model.name,
+                model=model,
+                system=system,
+                provider=self.provider,
+                parameters=parameters,
+                tools=self.tools,
+                thinking=self.thinking,
+            )
         )
-
-        self.dismiss(updated_chat_model.model_dump_json(exclude_none=True))
 
     def action_cancel(self) -> None:
         self.dismiss()
@@ -223,8 +212,7 @@ class ChatEdit(ModalScreen[str]):
         if self.provider == "ollama":
             size = self.models_size.get(model)
             if size:
-                self.bytes = size
-                self.query_one(".size", Label).update(f"{(self.bytes / 1.0e9):.2f} GB")
+                self.query_one(".size", Label).update(f"{(size / 1.0e9):.2f} GB")
             else:
                 self.query_one(".size", Label).update("")
 
@@ -267,10 +255,7 @@ class ChatEdit(ModalScreen[str]):
         self.query_one(".caps", Capabilities).caps = display_caps  # ty: ignore[invalid-assignment]
 
     def _populate_parameter_inputs(self, parameters: dict[str, Any]) -> None:
-        supported = get_supported_setting_keys(self.provider)
         for spec in _PARAM_SPECS:
-            if spec.key not in supported:
-                continue
             self.query_one(f"#{spec.input_id}", Input).value = str(
                 parameters.get(spec.key, "")
             )
@@ -340,14 +325,9 @@ class ChatEdit(ModalScreen[str]):
                         id="tool-selector-container", selected=self.tools
                     )
                 with Vertical():
-                    visible_specs = [
-                        s
-                        for s in _PARAM_SPECS
-                        if s.key in get_supported_setting_keys(self.provider)
-                    ]
-                    for i in range(0, len(visible_specs), 2):
+                    for i in range(0, len(_PARAM_SPECS), 2):
                         with Horizontal(classes="param-row"):
-                            for spec in visible_specs[i : i + 2]:
+                            for spec in _PARAM_SPECS[i : i + 2]:
                                 yield Label(f"{spec.label}:", classes="title")
                                 yield Input(
                                     value=str(self.parameters.get(spec.key, "")),

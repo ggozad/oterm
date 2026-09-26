@@ -13,6 +13,12 @@ from pydantic_ai.settings import ModelSettings
 from pydantic_ai.toolsets import AbstractToolset
 
 from oterm.config import envConfig
+from oterm.providers import (
+    BUILTIN_OPENAI_COMPAT,
+    UNRESOLVED_API_KEY,
+    get_openai_compatible_providers,
+    resolve_api_key,
+)
 from oterm.providers.capabilities import get_capabilities
 from oterm.providers.ollama import openai_compat_base_url
 from oterm.providers.settings import get_supported_setting_keys
@@ -34,12 +40,11 @@ def _build_model_settings(
     # Anthropic rejects temperature / top_p when extended thinking is on
     # (must be temperature=1 and top_p>=0.95). pydantic-ai only auto-drops
     # these for Opus 4.7+, so handle every other thinking-capable Anthropic
-    # model here. Anthropic also requires max_tokens > thinking.budget_tokens
-    # (pydantic-ai uses 10000 for thinking=True), so bump it if needed.
+    # model here. Anthropic also requires max_tokens > thinking.budget_tokens.
     if thinking and provider == "anthropic":
         settings.pop("temperature", None)
         settings.pop("top_p", None)
-        # 10000 (pydantic-ai's default thinking.budget_tokens) + 4096 output buffer.
+        # pydantic-ai's thinking=True budget of 10000, plus 4096 for the answer.
         min_max_tokens = 14096
         if settings.get("max_tokens", 0) < min_max_tokens:
             settings["max_tokens"] = min_max_tokens
@@ -80,12 +85,6 @@ def get_agent(
         pydantic_model = OpenAIResponsesModel(model_name=model)
         capabilities.append(NativeTool(ImageGenerationTool()))
     elif provider.startswith("openai-compat/"):
-        from oterm.providers import (
-            UNRESOLVED_API_KEY,
-            _resolve_api_key,
-            get_openai_compatible_providers,
-        )
-
         endpoint_name = provider.removeprefix("openai-compat/")
         config = get_openai_compatible_providers().get(endpoint_name)
         if config is None:
@@ -93,7 +92,7 @@ def get_agent(
                 f"OpenAI-compatible endpoint {endpoint_name!r} is not configured. "
                 f"Add it to the `openaiCompatible` section of your config.json."
             )
-        api_key = _resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
+        api_key = resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
         pydantic_model = OpenAIChatModel(
             model_name=model,
             provider=OpenAIProvider(
@@ -102,9 +101,7 @@ def get_agent(
             ),
         )
     elif provider == "grok":
-        from oterm.providers import _BUILTIN_OPENAI_COMPAT, UNRESOLVED_API_KEY
-
-        base_url, env_var = _BUILTIN_OPENAI_COMPAT["grok"]
+        base_url, env_var = BUILTIN_OPENAI_COMPAT["grok"]
         pydantic_model = OpenAIChatModel(
             model_name=model,
             provider=OpenAIProvider(

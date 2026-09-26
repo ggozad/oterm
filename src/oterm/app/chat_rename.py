@@ -6,8 +6,6 @@ from textual.widgets import Input, Label
 
 
 class ChatRename(ModalScreen[str]):
-    old_name: str = ""
-
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]

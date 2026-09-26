@@ -1,8 +1,8 @@
-# Oracle — example oterm tool plugin
+# Oracle: example oterm tool plugin
 
 A minimal example of how to ship a Python package whose function is auto-discovered as an oterm tool.
 
-The tool itself is intentionally trivial — `oracle(question)` always answers `"oterm"` — so you can focus on the packaging:
+The tool itself is trivial, `oracle(question)` always answers `"oterm"`, so you can focus on the packaging:
 
 - `src/oracle/tool.py` defines the function. Its name, docstring, and type annotations are what oterm passes to the model.
 - `pyproject.toml` registers the function under the `oterm.tools` entry-point group:

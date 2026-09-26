@@ -22,6 +22,8 @@ from pydantic_ai import (
     ThinkingPartDelta,
     UserPromptPart,
 )
+from pydantic_ai import Tool as PydanticTool
+from pydantic_ai.capabilities import AbstractCapability
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import (
     BinaryImage,
@@ -35,6 +37,7 @@ from pydantic_ai.messages import (
     ToolCallPart,
     ToolReturnPart,
 )
+from pydantic_ai.toolsets import AbstractToolset, PrefixedToolset
 from pydantic_ai.usage import RunUsage
 from rich.console import Group, RenderableType
 from rich.json import JSON
@@ -64,7 +67,7 @@ from oterm.config import envConfig
 from oterm.log import log
 from oterm.providers.capabilities import get_capabilities
 from oterm.store.store import Store
-from oterm.tools import builtin_tools
+from oterm.tools import builtin_tools, qualified_tool_name
 from oterm.tools.capabilities import capability_defs
 from oterm.tools.mcp.setup import mcp_servers, mcp_tool_meta
 from oterm.types import ChatModel, MessageModel
@@ -96,44 +99,40 @@ def build_user_prompt(
 ) -> tuple[str | list[str | BinaryContent], int]:
     """Interleave text and images by `[Image #N]` tokens, 1-indexed into images.
 
-    Falls back to appending all images at the end when no tokens appear, so
-    history saved before tokens existed still renders correctly on regenerate.
-    Returns (user_prompt, skipped_count).
+    When the text has no tokens, all images follow the text; messages stored
+    without tokens take this path. Returns (user_prompt, skipped_count).
     """
-    matches = list(IMAGE_TOKEN_RE.finditer(text))
-    if not matches:
-        if not images:
-            return text, 0
-        parts: list[str | BinaryContent] = [text] if text else []
-        skipped = 0
-        for b64 in images:
-            content = _decode_image(b64)
-            if content is None:
-                skipped += 1
-            else:
-                parts.append(content)
-        if not any(isinstance(p, BinaryContent) for p in parts):
-            return text, skipped
-        return parts, skipped
-
-    parts = []
-    last = 0
+    parts: list[str | BinaryContent] = []
     skipped = 0
-    for m in matches:
-        if m.start() > last:
-            parts.append(text[last : m.start()])
-        idx = int(m.group(1))
-        if 1 <= idx <= len(images):
-            content = _decode_image(images[idx - 1])
-            if content is None:
-                skipped += 1
-            else:
-                parts.append(content)
+
+    def add_image(b64: str) -> None:
+        nonlocal skipped
+        content = _decode_image(b64)
+        if content is None:
+            skipped += 1
         else:
-            parts.append(m.group(0))
-        last = m.end()
-    if last < len(text):
-        parts.append(text[last:])
+            parts.append(content)
+
+    matches = list(IMAGE_TOKEN_RE.finditer(text))
+    if matches:
+        last = 0
+        for m in matches:
+            if m.start() > last:
+                parts.append(text[last : m.start()])
+            idx = int(m.group(1))
+            if 1 <= idx <= len(images):
+                add_image(images[idx - 1])
+            else:
+                parts.append(m.group(0))
+            last = m.end()
+        if last < len(text):
+            parts.append(text[last:])
+    else:
+        if text:
+            parts.append(text)
+        for b64 in images:
+            add_image(b64)
+
     if not any(isinstance(p, BinaryContent) for p in parts):
         return text, skipped
     return parts, skipped
@@ -142,9 +141,8 @@ def build_user_prompt(
 def _last_user_prompt_index(history: list[ModelMessage]) -> int | None:
     """Index of the most recent ModelRequest carrying a UserPromptPart.
 
-    A "turn" in pydantic-ai history starts at a UserPromptPart and ends at
-    the next assistant text response, but a tool-using turn fans out into
-    request/response/request/response. Slicing a fixed -2 corrupts that.
+    A turn starts at a UserPromptPart, and a tool-using turn spans several
+    request/response pairs, so its start is not at a fixed offset from the end.
     """
     for i in range(len(history) - 1, -1, -1):
         msg = history[i]
@@ -157,13 +155,6 @@ def _last_user_prompt_index(history: list[ModelMessage]) -> int | None:
 
 def _resolve_tools(tool_names: list[str]):
     """Split selected tool names into pydantic-ai Tool objects, filtered MCP toolsets and capabilities."""
-    from pydantic_ai import Tool as PydanticTool
-    from pydantic_ai.capabilities import AbstractCapability
-    from pydantic_ai.toolsets import AbstractToolset, PrefixedToolset
-
-    from oterm.log import log
-    from oterm.tools import qualified_tool_name
-
     selected = set(tool_names)
     tools: list[PydanticTool] = []
     available_names: set[str] = set()
@@ -203,32 +194,34 @@ def _resolve_tools(tool_names: list[str]):
     return tools, toolsets, capabilities
 
 
-class ChatContainer(Widget):
-    messages: reactive[list[MessageModel]] = reactive([])
-    images: list[tuple[Path, str]] = []
+def _error_message(error: Exception) -> str:
+    if isinstance(error, ModelHTTPError):
+        return f"There was an error running your request: {error}"
+    return f"Unexpected error: {error}"
 
+
+class ChatContainer(Widget):
     def __init__(
         self,
         *children: Widget,
-        messages: list[MessageModel] = [],
+        messages: list[MessageModel] | None = None,
         chat_model: ChatModel,
         **kwargs,
     ) -> None:
         super().__init__(*children, **kwargs)
 
-        self.messages = messages
+        self.messages: list[MessageModel] = messages if messages is not None else []
         self.chat_model = chat_model
-        self.model = chat_model.model
-        self.system = chat_model.system
 
         self.pydantic_history: list[ModelMessage] = self._build_pydantic_history(
-            messages
+            self.messages
         )
 
         self._rebuild_agent()
         self.loaded = False
         self.loading = False
-        self.images = []
+        self.images: list[tuple[Path, str]] = []
+        self.inference_task: asyncio.Task | None = None
         self._stream_usage: RunUsage = RunUsage()
 
     def _rebuild_agent(self) -> None:
@@ -291,9 +284,8 @@ class ChatContainer(Widget):
 
         self._stream_usage = RunUsage()
         # Some providers (notably OpenAI Responses image_generation) emit the
-        # same image twice — once as a partial-image event and once when the
-        # call completes — under the same vendor part id. Dedupe by FilePart.id
-        # so callers don't have to.
+        # same image twice under one vendor part id: as a partial-image event
+        # and again when the call completes. Dedupe by FilePart.id.
         seen_file_ids: set[str] = set()
 
         async with self.agent.iter(
@@ -395,117 +387,104 @@ class ChatContainer(Widget):
         await message_container.mount(status)
         message_container.scroll_end()
 
-        try:
-            text = ""
-            assistant_images: list[str] = []
-            user_prompt, skipped = build_user_prompt(
-                message, [img for _, img in self.images]
-            )
-            if skipped:
-                self.app.notify(
-                    f"Skipped {skipped} malformed image(s)", severity="warning"
-                )
-            async for piece in self.stream_agent(user_prompt):
-                follow = _near_bottom(message_container)
-                match piece:
-                    case ThinkingPartDelta(content_delta=delta):
-                        await response_chat_item.append_thinking(delta or "")
-                    case TextPartDelta(content_delta=delta):
-                        text += delta
-                        await response_chat_item.append_text(delta)
-                    case ToolCallPart() | NativeToolCallPart():
-                        await response_chat_item.add_tool_call(piece)
-                    case ToolReturnPart() | NativeToolReturnPart():
-                        response_chat_item.update_tool_result(
-                            piece.tool_call_id, piece.content
-                        )
-                        items = (
-                            piece.content
-                            if isinstance(piece.content, list)
-                            else [piece.content]
-                        )
-                        for item in items:
-                            if isinstance(item, BinaryImage):
-                                await response_chat_item.add_image(item.data)
-                                assistant_images.append(
-                                    base64.b64encode(item.data).decode()
-                                )
-                    case RetryPromptPart():
-                        response_chat_item.update_tool_result(
-                            piece.tool_call_id,
-                            f"error: {piece.model_response()}",
-                        )
-                    case FilePart(content=BinaryImage(data=data)):
-                        await response_chat_item.add_image(data)
-                        assistant_images.append(base64.b64encode(data).decode())
-                status.update_usage(
-                    self._stream_usage.input_tokens,
-                    self._stream_usage.output_tokens,
-                )
-                if follow:  # pragma: no branch
-                    message_container.scroll_end()
-
-            await response_chat_item.finish_stream()
-
-            status.update_usage(
-                self._stream_usage.input_tokens,
-                self._stream_usage.output_tokens,
-            )
-            status.finish()
-            if _near_bottom(message_container):  # pragma: no branch
-                self.call_after_refresh(message_container.scroll_end)
-
-            store = await Store.get_store()
-
-            user_message = MessageModel(
-                id=None,
-                chat_id=chat_id,
-                role="user",
-                text=message,
-                images=[img for _, img in self.images],
-            )
-            id = await store.save_message(user_message)
-            user_message.id = id
-            self.messages.append(user_message)
-
-            assistant_message = MessageModel(
-                id=None,
-                chat_id=chat_id,
-                role="assistant",
-                text=text,
-                images=assistant_images,
-            )
-            id = await store.save_message(assistant_message)
-            assistant_message.id = id
-            self.messages.append(assistant_message)
-            self.images = []
-
-        except asyncio.CancelledError:
+        def discard_turn() -> None:
             response_chat_item.cancel_streams()
             user_chat_item.remove()
             response_chat_item.remove()
             status.remove()
+
+        try:
+            user_images = [img for _, img in self.images]
+            text, assistant_images = await self._stream_response(
+                response_chat_item, status, message, user_images
+            )
+
+            store = await Store.get_store()
+            user_message = MessageModel(
+                chat_id=chat_id, role="user", text=message, images=user_images
+            )
+            user_message.id = await store.save_message(user_message)
+            self.messages.append(user_message)
+
+            assistant_message = MessageModel(
+                chat_id=chat_id, role="assistant", text=text, images=assistant_images
+            )
+            assistant_message.id = await store.save_message(assistant_message)
+            self.messages.append(assistant_message)
+            self.images = []
+
+        except asyncio.CancelledError:
+            discard_turn()
             try:
                 self.query_one("#prompt", FlexibleInput).text = message
             except NoMatches:  # pragma: no cover
                 pass
             self.images = []
-        except ModelHTTPError as e:
-            response_chat_item.cancel_streams()
-            user_chat_item.remove()
-            response_chat_item.remove()
-            status.remove()
-            self.app.notify(
-                f"There was an error running your request: {e}", severity="error"
-            )
-            message_container.scroll_end()
         except Exception as e:
-            response_chat_item.cancel_streams()
-            user_chat_item.remove()
-            response_chat_item.remove()
-            status.remove()
-            self.app.notify(f"Unexpected error: {e}", severity="error")
+            discard_turn()
+            self.app.notify(_error_message(e), severity="error")
             message_container.scroll_end()
+
+    async def _stream_response(
+        self,
+        item: "ChatItem",
+        status: "UsageStatus",
+        text: str,
+        images: list[str],
+    ) -> tuple[str, list[str]]:
+        """Stream the agent's reply to `text` and `images` into `item`.
+
+        Returns the reply text and the base64 images it produced.
+        """
+        message_container = self.query_one("#messageContainer")
+        user_prompt, skipped = build_user_prompt(text, images)
+        if skipped:
+            self.app.notify(f"Skipped {skipped} malformed image(s)", severity="warning")
+
+        reply = ""
+        reply_images: list[str] = []
+        async for piece in self.stream_agent(user_prompt):
+            follow = _near_bottom(message_container)
+            match piece:
+                case ThinkingPartDelta(content_delta=delta):
+                    await item.append_thinking(delta or "")
+                case TextPartDelta(content_delta=delta):
+                    reply += delta
+                    await item.append_text(delta)
+                case ToolCallPart() | NativeToolCallPart():
+                    await item.add_tool_call(piece)
+                case ToolReturnPart() | NativeToolReturnPart():
+                    item.update_tool_result(piece.tool_call_id, piece.content)
+                    contents = (
+                        piece.content
+                        if isinstance(piece.content, list)
+                        else [piece.content]
+                    )
+                    for content in contents:
+                        if isinstance(content, BinaryImage):
+                            await item.add_image(content.data)
+                            reply_images.append(base64.b64encode(content.data).decode())
+                case RetryPromptPart():
+                    item.update_tool_result(
+                        piece.tool_call_id, f"error: {piece.model_response()}"
+                    )
+                case FilePart(content=BinaryImage(data=data)):
+                    await item.add_image(data)
+                    reply_images.append(base64.b64encode(data).decode())
+            status.update_usage(
+                self._stream_usage.input_tokens, self._stream_usage.output_tokens
+            )
+            if follow:  # pragma: no branch
+                message_container.scroll_end()
+
+        await item.finish_stream()
+        status.update_usage(
+            self._stream_usage.input_tokens, self._stream_usage.output_tokens
+        )
+        status.finish()
+        if _near_bottom(message_container):  # pragma: no branch
+            self.call_after_refresh(message_container.scroll_end)
+        return reply, reply_images
 
     @on(FlexibleInput.Submitted)
     async def on_submit(self, event: FlexibleInput.Submitted) -> None:
@@ -520,27 +499,22 @@ class ChatContainer(Widget):
         self.inference_task = asyncio.create_task(self.response_task(message))
 
     def key_escape(self) -> None:
-        if hasattr(self, "inference_task"):  # pragma: no branch
+        if self.inference_task is not None:  # pragma: no branch
             self.inference_task.cancel()
 
     @work
     async def action_edit_chat(self) -> None:
         screen = ChatEdit(chat_model=self.chat_model, edit_mode=True)
 
-        model_info = await self.app.push_screen_wait(screen)
-        if model_info is None:
+        edited = await self.app.push_screen_wait(screen)
+        if edited is None:
             return
-
-        self.chat_model = ChatModel.model_validate_json(model_info)
+        self.chat_model = edited
 
         store = await Store.get_store()
         await store.edit_chat(self.chat_model)
 
         self.pydantic_history = self._build_pydantic_history(self.messages)
-
-        self.model = self.chat_model.model
-        self.system = self.chat_model.system
-
         self._rebuild_agent()
 
     def action_toggle_thinking(self) -> None:
@@ -599,15 +573,23 @@ class ChatContainer(Widget):
             return
         if len(self.messages) < 2:
             return
-        in_flight = getattr(self, "inference_task", None)
-        if in_flight is not None and not in_flight.done():
+        if self.inference_task is not None and not self.inference_task.done():
             return  # pragma: no cover
         chat_id = self.chat_model.id
         assert chat_id is not None
         response_message_id = self.messages[-1].id
         popped_message = self.messages.pop()
         message_container = self.query_one("#messageContainer")
-        message_container.children[-1].remove()
+        children = list(message_container.children)
+        last_user = max(
+            i
+            for i, child in enumerate(children)
+            if isinstance(child, ChatItem) and child.author == "user"
+        )
+        # The old answer and its usage line, hidden until the new answer lands.
+        stale = children[last_user + 1 :]
+        for widget in stale:
+            widget.display = False
         response_chat_item = ChatItem()
         response_chat_item.author = "assistant"
         message_container.mount(response_chat_item)
@@ -623,75 +605,34 @@ class ChatContainer(Widget):
         def restore_state() -> None:
             self.messages.append(popped_message)
             self.pydantic_history = self.pydantic_history + popped_history
+            response_chat_item.cancel_streams()
             response_chat_item.remove()
             status.remove()
+            for widget in stale:
+                widget.display = True
 
         async def response_task() -> None:
             try:
-                thinking = ""
-                text = ""
-                assistant_images: list[str] = []
-                user_prompt, skipped = build_user_prompt(message.text, message.images)
-                if skipped:
-                    self.app.notify(
-                        f"Skipped {skipped} malformed image(s)", severity="warning"
-                    )
-                async for piece in self.stream_agent(user_prompt):
-                    follow = _near_bottom(message_container)
-                    match piece:
-                        case ThinkingPartDelta(content_delta=delta):
-                            thinking += delta or ""
-                            response_chat_item.thinking = thinking
-                        case TextPartDelta(content_delta=delta):
-                            text += delta or ""
-                            response_chat_item.text = text
-                        case ToolCallPart() | NativeToolCallPart():
-                            await response_chat_item.add_tool_call(piece)
-                        case ToolReturnPart() | NativeToolReturnPart():
-                            response_chat_item.update_tool_result(
-                                piece.tool_call_id, piece.content
-                            )
-                        case FilePart(content=BinaryImage(data=data)):
-                            await response_chat_item.add_image(data)
-                            assistant_images.append(base64.b64encode(data).decode())
-                    status.update_usage(
-                        self._stream_usage.input_tokens,
-                        self._stream_usage.output_tokens,
-                    )
-                    if follow:  # pragma: no branch
-                        message_container.scroll_end()
-
-                status.update_usage(
-                    self._stream_usage.input_tokens,
-                    self._stream_usage.output_tokens,
+                text, images = await self._stream_response(
+                    response_chat_item, status, message.text, message.images
                 )
-                status.finish()
-                if _near_bottom(message_container):  # pragma: no branch
-                    self.call_after_refresh(message_container.scroll_end)
-
                 store = await Store.get_store()
                 regenerated_message = MessageModel(
                     id=response_message_id,
                     chat_id=chat_id,
                     role="assistant",
                     text=text,
-                    images=assistant_images,
+                    images=images,
                 )
                 await store.save_message(regenerated_message)
-                regenerated_message.id = response_message_id
                 self.messages.append(regenerated_message)
-                self.images = []
-
+                for widget in stale:
+                    widget.remove()
             except asyncio.CancelledError:
                 restore_state()
-            except ModelHTTPError as e:
-                restore_state()
-                self.app.notify(
-                    f"There was an error running your request: {e}", severity="error"
-                )
             except Exception as e:
                 restore_state()
-                self.app.notify(f"Unexpected error: {e}", severity="error")
+                self.app.notify(_error_message(e), severity="error")
 
         self.inference_task = asyncio.create_task(response_task())
 
@@ -721,7 +662,7 @@ class ChatContainer(Widget):
         self.app.notify(f"Image {ev.path} added.")
 
     def compose(self) -> ComposeResult:
-        yield Static(f"model: {self.model}", id="info")
+        yield Static(f"model: {self.chat_model.model}", id="info")
         yield VerticalScroll(id="messageContainer")
         yield FlexibleInput("", id="prompt")
 
@@ -909,11 +850,10 @@ class ChatItem(Widget):
     async def append_text(self, delta: str) -> None:
         """Stream a text delta into the response Markdown widget.
 
-        Writes the delta via Textual's ``MarkdownStream`` (which batches and
-        appends incrementally) instead of re-parsing the whole document each
-        token through ``watch_text``. ``self.text`` is kept in sync via
-        ``set_reactive`` so click-to-copy and chrome logic see live state
-        without firing the watcher's full re-render.
+        Writes through Textual's ``MarkdownStream``, which batches deltas.
+        ``self.text`` is updated with ``set_reactive`` so click-to-copy and the
+        thinking chrome see the live text without ``watch_text`` re-rendering
+        the whole document.
         """
         if self.author == "user" or not delta:
             return
@@ -964,8 +904,8 @@ class ChatItem(Widget):
         item.set_result(content)
 
     async def add_image(self, data: bytes) -> None:
-        """Source bytes are retained on the widget so a later click in
-        ``on_click`` can dispatch to ``_save_assistant_image``."""
+        """Mount an assistant image above the response, keeping its source
+        bytes so a click can save them to disk."""
         if self.author == "user":
             return
         try:
@@ -1020,8 +960,8 @@ class ChatItem(Widget):
 
         Used in error/cancellation paths where the chat item is about to be
         removed; awaiting a graceful flush from inside an exception handler
-        is unsafe. Reaches into ``MarkdownStream._task`` (Textual private API,
-        verified against textual==8.2.4) because ``stream.stop()`` awaits.
+        is unsafe. Reaches into ``MarkdownStream._task``, a Textual private
+        attribute, because ``stream.stop()`` awaits.
         """
         for stream in (self._response_stream, self._thinking_stream):
             task = getattr(stream, "_task", None)
@@ -1031,8 +971,6 @@ class ChatItem(Widget):
         self._thinking_stream = None
 
     def compose(self) -> ComposeResult:
-        """A chat item."""
-
         if self.author == "user":
             with Horizontal(classes="user chatItem"):
                 yield Static("❯", classes="prompt-marker")

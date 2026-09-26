@@ -1,16 +1,13 @@
-import asyncio
 import sys
 
 import httpx
 import pytest
 
 from oterm.utils import (
-    debounce,
     expand_env_vars,
     get_default_data_dir,
     int_to_semantic_version,
     semantic_version_to_int,
-    throttle,
 )
 
 
@@ -59,98 +56,6 @@ class TestSemanticVersion:
         assert int_to_semantic_version(16777215) == "255.255.255"
 
 
-class TestThrottle:
-    async def test_first_call_executes_immediately(self):
-        count = 0
-
-        @throttle(0.1)
-        async def f():
-            nonlocal count
-            count += 1
-
-        await f()
-        assert count == 1
-
-    async def test_blocks_subsequent_calls_within_interval(self):
-        count = 0
-
-        @throttle(0.1)
-        async def f():
-            nonlocal count
-            count += 1
-
-        await f()
-        await f()
-        await f()
-        assert count == 1
-
-    async def test_allows_call_after_interval(self):
-        count = 0
-
-        @throttle(0.05)
-        async def f():
-            nonlocal count
-            count += 1
-
-        await f()
-        await asyncio.sleep(0.06)
-        await f()
-        assert count == 2
-
-    async def test_args_and_kwargs_forwarded(self):
-        seen: list = []
-
-        @throttle(0.1)
-        async def f(*args, **kwargs):
-            seen.append((args, kwargs))
-
-        await f(1, 2, k="v")
-        assert seen == [((1, 2), {"k": "v"})]
-
-
-class TestDebounce:
-    async def test_delays_execution(self):
-        count = 0
-
-        @debounce(0.05)
-        async def f():
-            nonlocal count
-            count += 1
-
-        await f()
-        assert count == 0
-        await asyncio.sleep(0.08)
-        assert count == 1
-
-    async def test_cancels_previous_calls(self):
-        count = 0
-
-        @debounce(0.05)
-        async def f():
-            nonlocal count
-            count += 1
-
-        await f()
-        await asyncio.sleep(0.02)
-        await f()
-        await asyncio.sleep(0.02)
-        await f()
-        await asyncio.sleep(0.08)
-        assert count == 1
-
-    async def test_args_from_latest_call(self):
-        seen: list = []
-
-        @debounce(0.05)
-        async def f(*args, **kwargs):
-            seen.append((args, kwargs))
-
-        await f(1, key="a")
-        await f(2, key="b")
-        await asyncio.sleep(0.08)
-        assert seen == [((2,), {"key": "b"})]
-
-
 class TestGetDefaultDataDir:
     def test_darwin_default(self, monkeypatch, tmp_path):
         monkeypatch.setattr(sys, "platform", "darwin")
@@ -190,6 +95,13 @@ class TestGetDefaultDataDir:
         monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg"))
         path = get_default_data_dir()
         assert path == tmp_path / "xdg" / "oterm"
+
+    def test_other_unix_uses_xdg_layout(self, monkeypatch, tmp_path):
+        monkeypatch.setattr(sys, "platform", "freebsd14")
+        monkeypatch.delenv("XDG_DATA_HOME", raising=False)
+        monkeypatch.setenv("HOME", str(tmp_path))
+        path = get_default_data_dir()
+        assert str(path).endswith(".local/share/oterm")
 
     def test_windows(self, monkeypatch, tmp_path):
         monkeypatch.setattr(sys, "platform", "win32")

@@ -82,13 +82,7 @@ def _supports_thinking(provider: str, model: str) -> bool:
 
 def _supports_vision(provider: str, model: str) -> bool:
     if provider == "anthropic":
-        return (
-            "claude-3" in model
-            or "claude-4" in model
-            or "claude-opus-4" in model
-            or "claude-sonnet-4" in model
-            or "claude-haiku-4" in model
-        )
+        return model.startswith("claude-") and not model.startswith("claude-2")
     if provider in ("openai-chat", "openai-responses"):
         return any(
             model.startswith(p)

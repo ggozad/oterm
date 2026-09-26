@@ -6,12 +6,11 @@ from textual.widgets import Label, OptionList
 
 
 class PromptHistory(ModalScreen[str]):
-    history: list[str] = []
     BINDINGS = [
         ("escape", "cancel", "Cancel"),
     ]
 
-    def __init__(self, history=[]) -> None:
+    def __init__(self, history: list[str]) -> None:
         self.history = history
         super().__init__()
 

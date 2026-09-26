@@ -1,130 +1,77 @@
 # RAG with haiku.rag
 
-<!-- ![Splash](img/haiku-rag-demo.gif) -->
-
 <video controls>
 <source  src="../img/haiku-rag-demo.mp4" type="video/mp4">
 </video>
 
-Transform oterm into a powerful RAG (Retrieval-Augmented Generation) system by integrating with [haiku.rag](https://github.com/ggozad/haiku.rag) (from `oterm`'s author), a SQLite-based RAG library that works seamlessly with oterm through MCP.
+[haiku.rag](https://github.com/ggozad/haiku.rag), also by `oterm`'s author, is a RAG library. It stores documents in LanceDB, searches them with hybrid (vector and full-text) search, and serves that search over MCP. Its default configuration runs the embedding model through Ollama.
 
-## What is haiku.rag?
+## Build a database
 
-haiku.rag is a comprehensive RAG library that:
+The MCP server opens the database read-only, so documents go in through the `haiku-rag` command line:
 
-- Uses only SQLite (no external vector databases needed)
-- Supports 40+ file formats (PDF, DOCX, HTML, Markdown, code files, URLs)
-- Provides hybrid search (semantic + full-text) with Reciprocal Rank Fusion
-- Works with multiple embedding providers (Ollama, OpenAI, VoyageAI)
-- Offers built-in reranking and question-answering capabilities
-- Exposes functionality through MCP tools for seamless AI assistant integration
+```bash
+uvx haiku-rag init --db /path/to/rag.lancedb
+uvx haiku-rag add-src /path/to/report.pdf --db /path/to/rag.lancedb
+uvx haiku-rag add-src https://example.com/article.html --db /path/to/rag.lancedb
+uvx haiku-rag add-src /path/to/notes/ --db /path/to/rag.lancedb
+```
 
-## Configuration
+A directory is added recursively. See the haiku.rag [command line reference](https://ggozad.github.io/haiku.rag/cli/) for everything else, including listing and deleting documents.
 
-Add the haiku-rag MCP server to your oterm configuration. Edit your `config.json` file (run `oterm --data-dir` to find its location) and add:
+## Connect oterm
+
+Add the server to `config.json` (run `oterm --data-dir` to find it):
 
 ```json
 {
   "mcpServers": {
     "haiku-rag": {
       "command": "uvx",
-      "args": [
-        "haiku-rag",
-        "serve",
-        "--stdio",
-        "--db",
-        "/path/to/your/rag.db"
-      ]
+      "args": ["haiku-rag", "mcp", "--stdio", "--db", "/path/to/rag.lancedb"]
     }
   }
 }
 ```
 
-Replace `/path/to/your/rag.db` with the path where you want to store your RAG database.
+Restart `oterm`, then select the `haiku-rag` tools when creating or editing a chat.
 
-## Available RAG Tools
+## Tools
 
-Once configured, oterm will have access to powerful RAG capabilities through these MCP tools:
+| Tool | What it does |
+| ---- | ------------ |
+| `search_documents` | Hybrid search over the database. |
+| `search_documents_by_image` | Search by image. Only offered with a multimodal embedder. |
+| `list_documents` | Titles, URIs and metadata of the stored documents. |
+| `get_document` | A whole document, in reading order. |
+| `get_document_outline` | A document's heading tree, with page numbers. |
+| `get_document_section` | The text of one section of a document. |
+| `execute_code` | Runs a Python program in a sandbox over the selected documents. |
 
-- **Add documents**: Upload text, files, or URLs to your knowledge base
-- **List documents**: View all documents in your RAG database
-- **Delete documents**: Remove documents from your knowledge base
-- **Update documents**: Modify existing documents
-- **Search documents**: Performs hybrid search on your knowledge base
+The model sees them as `haiku-rag_search_documents` and so on. The haiku.rag [MCP reference](https://ggozad.github.io/haiku.rag/mcp/) documents their arguments.
 
-## Usage Examples
+Then ask questions such as:
 
-### 1. Building a Personal Knowledge Base
+> What does the report say about revenue in the third quarter?
 
-Start a new chat in oterm and use the RAG tools to build your knowledge base:
+> Which of my notes mention the migration, and what did we decide?
 
-> ```Add this document to my knowledge base: "Machine Learning is a subset of artificial intelligence that focuses on algorithms that can learn from data..."```
+## Configuration
 
-### 2. Adding Files
-
-You can add various file types:
-
-> ```Please add the PDF file at /Users/me/Documents/research_paper.pdf to my RAG database```
-
-### 3. Adding Web Content
-
-Add content from URLs:
-
-> ```Add the content from https://example.com/article to my knowledge base```
-
-### 4. Searching Your Knowledge Base
-
-Perform semantic searches:
-
-> ```Search my knowledge base for information about "neural networks"```
-
-### 5. Question Answering
-
-Ask questions about your documents:
-
-> ```Based on my knowledge base, what are the main differences between supervised and unsupervised learning?```
-
-
-## Advanced Configuration
-
-### Custom Embedding Providers
-
-Configure haiku.rag to use different embedding providers, rerankers, models by setting environment variables.
-See `haiku.rag` [documentation](https://ggozad.github.io/haiku.rag/configuration/)
+haiku.rag reads `haiku.rag.yaml` from the path in `HAIKU_RAG_CONFIG_PATH`, then the current directory, then its own data directory. The MCP server runs in the directory `oterm` was started from, so either set `cwd` on the server or point it at the file:
 
 ```json
 {
   "mcpServers": {
     "haiku-rag": {
       "command": "uvx",
-      "args": [
-        "haiku-rag",
-        "serve",
-        "--stdio",
-        "--db",
-        "/path/to/rag.db"
-      ],
+      "args": ["haiku-rag", "mcp", "--stdio", "--db", "/path/to/rag.lancedb"],
       "env": {
-        "EMBEDDINGS_PROVIDER": "ollama",
-        "EMBEDDINGS_MODEL": "nomic-embed-text"
+        "HAIKU_RAG_CONFIG_PATH": "/path/to/haiku.rag.yaml"
       }
     }
   }
 }
 ```
 
-## Further Reading
-
-- [haiku.rag Documentation](https://ggozad.github.io/haiku.rag/)
-- [haiku.rag GitHub Repository](https://github.com/ggozad/haiku.rag)
-
-## Example Use Cases
-
-### Research Assistant
-Build a personal research database by adding academic papers, articles, and notes. Ask questions across your entire research collection.
-
-### Documentation Helper
-Index your project's documentation, code comments, and README files. Get instant answers about your codebase.
-
-### Learning Companion
-Add course materials, textbooks, and learning resources. Create a personalized tutor that can answer questions about your study materials.
+The embedding model in that configuration must match the one the database was built with. See the haiku.rag [configuration guide](https://ggozad.github.io/haiku.rag/configuration/) for providers, models and reranking.

@@ -9,47 +9,40 @@ oterm's internal log viewer showing the Brave Search MCP tool in action.
 
 ## Setup for development
 
-- Create a virtual environment
-```sh
-uv venv
-```
-- Activate the virtual environment
-```sh
-source .venv/bin/activate
-# or on Windows
-.venv\Scripts\activate
-```
-
-- Install oterm
-```sh
-uv pip install oterm
-```
-or checkout the repository and install the oterm package from source
 ```sh
 git clone git@github.com:ggozad/oterm.git
+cd oterm
 uv sync
+uv run oterm
+```
+
+Tests, linting and type checking:
+
+```sh
+uv run pytest
+uv run ruff check
+uv run ruff format
+uv run ty check
 ```
 
 ### Debugging
 
-- In order to inspect logs from oterm, open a new terminal and run:
-```sh
-source .venv/bin/activate
-textual console -x SYSTEM -x EVENT -x WORKER -x DEBUG
-```
-This will start the textual console and listen all log messages from oterm, hiding some of the textual UI messsages.
+To see oterm's log messages as they happen, start the Textual console in one terminal:
 
-- You can now start oterm in debug mode:
 ```sh
-source .venv/bin/activate
-textual run -c --dev oterm
+uv run textual console -x SYSTEM -x EVENT -x WORKER -x DEBUG
+```
+
+This hides most of Textual's own messages. Then start oterm in development mode in another:
+
+```sh
+uv run textual run -c --dev oterm
 ```
 
 ## Documentation
 
-oterm uses [mkdocs](https://www.mkdocs.org/) with [material](https://squidfunk.github.io/mkdocs-material/) to generate the documentation. To build the documentation, run:
+oterm uses [Zensical](https://zensical.org/) to generate the documentation, configured in `zensical.toml`. To serve it locally, run:
 ```sh
-source .venv/bin/activate
-mkdocs serve -o
+uv run zensical serve
 ```
-This will start a local server and open the documentation pages in your default web browser.
+and open the printed URL. `uv run zensical build` builds the static site.

@@ -33,12 +33,30 @@ async def test_new_log_lines_are_written(monkeypatch):
     async with app.run_test() as pilot:
         screen = LogViewer()
         app.push_screen(screen)
-        await pilot.pause(0.6)  # let debounce fire
+        await pilot.pause()
 
         widget = screen.query_one(RichLog)
         assert screen.line_count == 2
         # RichLog appends lines; just verify it received something.
         assert len(widget.lines) >= 2
+
+
+async def test_lines_logged_while_open_are_written(monkeypatch):
+    import oterm.app.log_viewer as lv
+    from oterm.log import LogGroup
+
+    fake_lines = [(LogGroup.INFO, "hello")]
+    monkeypatch.setattr(lv, "log_lines", fake_lines)
+
+    app = _Host()
+    async with app.run_test() as pilot:
+        screen = LogViewer()
+        app.push_screen(screen)
+        await pilot.pause()
+        fake_lines.append((LogGroup.ERROR, "later"))
+        await pilot.pause(0.6)
+
+        assert screen.line_count == 2
 
 
 async def test_log_viewer_shows_save_hint():

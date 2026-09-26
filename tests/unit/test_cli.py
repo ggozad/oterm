@@ -60,3 +60,48 @@ class TestUpgradeDb:
         with pytest.raises(RuntimeError, match="boom"):
             await upgrade_db()
         assert torn_down == [True]
+
+
+class TestConfigOption:
+    def test_prints_the_config_once(self):
+        from typer.testing import CliRunner
+
+        from oterm.cli.oterm import cli
+
+        result = CliRunner().invoke(cli, ["--config"])
+
+        assert result.exit_code == 0
+        assert "OTERM_DATA_DIR" in result.output
+        assert not result.output.endswith("\n\n")
+
+    def test_masks_the_ollama_api_key(self, monkeypatch):
+        from typer.testing import CliRunner
+
+        import oterm.config
+        from oterm.cli.oterm import cli
+
+        monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_API_KEY", "sk-secret")
+
+        result = CliRunner().invoke(cli, ["--config"])
+
+        assert result.exit_code == 0
+        assert "sk-secret" not in result.output
+        assert "OLLAMA_API_KEY='***'" in result.output
+
+
+class TestHelp:
+    def test_every_option_is_described(self):
+        from typer.testing import CliRunner
+
+        from oterm.cli.oterm import cli
+
+        output = CliRunner().invoke(cli, ["--help"]).output
+
+        for text in (
+            "Print the version",
+            "Apply pending database upgrades",
+            "Print the environment settings",
+            "Print the path of the chat database",
+            "Print the data directory",
+        ):
+            assert text in output, text

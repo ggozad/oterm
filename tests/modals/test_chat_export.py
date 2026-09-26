@@ -57,7 +57,7 @@ async def test_submit_writes_file_and_dismisses(tmp_path, store):
     assert "hi" in content
     assert "*assistant*" in content
     assert "hello" in content
-    # Dismissed (with no explicit value — calls dismiss() at the end)
+    # Dismissed with no value: on_submit ends with dismiss().
     assert received == [None]
 
 

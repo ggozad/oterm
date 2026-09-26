@@ -1,3 +1,4 @@
+import base64
 import json
 from collections.abc import AsyncIterator
 
@@ -9,7 +10,12 @@ from pydantic_ai import (
     Tool,
     UserPromptPart,
 )
-from pydantic_ai.messages import ModelMessage, ToolCallPart, ToolReturnPart
+from pydantic_ai.messages import (
+    ModelMessage,
+    RetryPromptPart,
+    ToolCallPart,
+    ToolReturnPart,
+)
 from pydantic_ai.models.function import (
     AgentInfo,
     DeltaThinkingPart,
@@ -156,6 +162,116 @@ class TestRegenerateHappyPath:
             )
             assert container.messages[-1].text == "redo answer"
 
+    async def test_tool_returning_binary_image_renders_and_persists(
+        self, store, chat_model
+    ):
+        from pydantic_ai.messages import BinaryImage
+        from textual_image.widget import Image as ImageWidget
+
+        from oterm.app.widgets.chat import ChatItem
+        from tests._helpers import image_b64
+
+        png_bytes = base64.b64decode(image_b64())
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="draw")
+        user_msg.id = await store.save_message(user_msg)
+        old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
+        old_assistant.id = await store.save_message(old_assistant)
+
+        def make_image(prompt: str) -> BinaryImage:
+            return BinaryImage(data=png_bytes, media_type="image/png")
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, DeltaToolCall]]:
+            if any(
+                isinstance(p, ToolReturnPart)
+                for m in messages
+                if isinstance(m, ModelRequest)
+                for p in m.parts
+            ):
+                yield "done"
+                return
+            yield {
+                0: DeltaToolCall(
+                    name="make_image",
+                    json_args='{"prompt": "a square"}',
+                    tool_call_id="tc-img",
+                )
+            }
+
+        app = _Host(chat_model, [user_msg, old_assistant])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = Agent(
+                FunctionModel(stream_function=stream_fn),
+                tools=[Tool(make_image, takes_ctx=False)],
+            )
+
+            await container.action_regenerate_llm_message()
+            await wait_until(pilot, lambda: container.messages[-1].text == "done")
+
+            assistant = list(container.query(ChatItem))[-1]
+            assert len(list(assistant.query(ImageWidget))) == 1
+            assert container.messages[-1].images == [
+                base64.b64encode(png_bytes).decode()
+            ]
+            stored = await store.get_messages(chat_id)
+            assert stored[-1].images == container.messages[-1].images
+
+    async def test_failing_tool_shows_error_in_call_widget(self, store, chat_model):
+        from pydantic_ai.exceptions import ModelRetry
+
+        from oterm.app.widgets.chat import ChatItem, ToolCallItem
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="go")
+        user_msg.id = await store.save_message(user_msg)
+        old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
+        old_assistant.id = await store.save_message(old_assistant)
+
+        def boom(s: str) -> str:
+            raise ModelRetry("kaboom")
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, DeltaToolCall]]:
+            if any(
+                isinstance(p, RetryPromptPart)
+                for m in messages
+                if isinstance(m, ModelRequest)
+                for p in m.parts
+            ):
+                yield "gave up"
+                return
+            yield {
+                0: DeltaToolCall(
+                    name="boom", json_args='{"s": "x"}', tool_call_id="tc-b"
+                )
+            }
+
+        app = _Host(chat_model, [user_msg, old_assistant])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = Agent(
+                FunctionModel(stream_function=stream_fn),
+                tools=[Tool(boom, takes_ctx=False)],
+            )
+
+            await container.action_regenerate_llm_message()
+            await wait_until(pilot, lambda: container.messages[-1].text == "gave up")
+
+            assistant = list(container.query(ChatItem))[-1]
+            tool_items = list(assistant.query(ToolCallItem))
+            assert len(tool_items) == 1
+            assert isinstance(tool_items[0].result, str)
+            assert tool_items[0].result.startswith("error:")
+            assert "kaboom" in tool_items[0].result
+
 
 class TestRegenerateErrorRestore:
     async def test_exception_restores_state_and_notifies(self, store, chat_model):
@@ -282,11 +398,8 @@ def _has_orphan_tool_call(history: list[ModelMessage]) -> bool:
 
 
 class TestRegenerateAfterToolUse:
-    """Regenerate must truncate the entire prior turn, including tool messages.
-
-    Before the fix, regenerate sliced the last 2 messages off `pydantic_history`,
-    which left orphan ToolCallParts when the prior turn used a tool.
-    """
+    """Regenerate truncates the entire prior turn, including tool messages,
+    so no orphan ToolCallParts remain in `pydantic_history`."""
 
     async def test_truncation_drops_full_tool_turn(self, store, chat_model):
         chat_id = await store.save_chat(chat_model)
@@ -359,3 +472,108 @@ class TestRegenerateAfterToolUse:
             assert _count_user_prompts(container.pydantic_history) == 1
             assert not _has_orphan_tool_call(container.pydantic_history)
             assert container.messages[-1].text == "regenerated answer"
+
+
+class TestRegenerateAfterLiveSend:
+    async def test_replaces_the_answer_sent_in_this_session(self, store, chat_model):
+        from oterm.app.widgets.chat import ChatItem, UsageStatus
+        from oterm.app.widgets.prompt import FlexibleInput
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        replies = iter(["first", "second"])
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            yield next(replies)
+
+        app = _Host(chat_model, [])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+
+            app.query_one(FlexibleInput).text = "ask"
+            await pilot.press("enter")
+            await wait_until(pilot, lambda: len(container.messages) == 2)
+
+            await container.action_regenerate_llm_message()
+            await wait_until(pilot, lambda: container.messages[-1].text == "second")
+            await pilot.pause()
+
+            answers = [
+                i.text for i in container.query(ChatItem) if i.author == "assistant"
+            ]
+            assert answers == ["second"]
+            assert len(container.query(UsageStatus)) == 1
+
+    async def test_failed_regenerate_keeps_the_old_answer_on_screen(
+        self, store, chat_model
+    ):
+        from oterm.app.widgets.chat import ChatItem
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="q")
+        user_msg.id = await store.save_message(user_msg)
+        old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
+        old_assistant.id = await store.save_message(old_assistant)
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            raise RuntimeError("boom")
+            yield  # pragma: no cover
+
+        app = _Host(chat_model, [user_msg, old_assistant])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+
+            await container.action_regenerate_llm_message()
+            await wait_until(
+                pilot,
+                lambda: any(
+                    "Unexpected error" in n.message for n in _notifications(app)
+                ),
+            )
+            await pilot.pause()
+
+            answers = [
+                i.text
+                for i in container.query(ChatItem)
+                if i.author == "assistant" and i.display
+            ]
+            assert answers == ["old"]
+
+    async def test_keeps_images_attached_to_the_unsent_prompt(self, store, chat_model):
+        from pathlib import Path
+
+        from tests._helpers import image_b64
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        user_msg = MessageModel(chat_id=chat_id, role="user", text="q")
+        user_msg.id = await store.save_message(user_msg)
+        old_assistant = MessageModel(chat_id=chat_id, role="assistant", text="old")
+        old_assistant.id = await store.save_message(old_assistant)
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str]:
+            yield "new"
+
+        app = _Host(chat_model, [user_msg, old_assistant])
+        async with app.run_test() as pilot:
+            container = app.query_one(ChatContainer)
+            await container.load_messages()
+            container.agent = Agent(FunctionModel(stream_function=stream_fn))
+            draft = (Path("cat.png"), image_b64())
+            container.images = [draft]
+
+            await container.action_regenerate_llm_message()
+            await wait_until(pilot, lambda: container.messages[-1].text == "new")
+
+            assert container.images == [draft]

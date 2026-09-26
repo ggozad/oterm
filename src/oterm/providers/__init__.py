@@ -1,6 +1,7 @@
 import os
 from collections.abc import Callable
 
+from oterm.log import log
 from oterm.utils import expand_env_vars
 
 PROVIDER_ENV_VARS: dict[str, list[str]] = {
@@ -46,7 +47,7 @@ to the ``OPENAI_API_KEY`` environment variable, which would leak it to a
 different endpoint (e.g. a local vLLM or OpenRouter)."""
 
 
-def _resolve_api_key(api_key: str | None) -> str | None:
+def resolve_api_key(api_key: str | None) -> str | None:
     """Resolve an API key, expanding ``${VAR}`` / ``${VAR:-default}`` references.
 
     Returns ``None`` if a referenced variable is undefined and no default is
@@ -57,8 +58,6 @@ def _resolve_api_key(api_key: str | None) -> str | None:
     try:
         return expand_env_vars(api_key)
     except ValueError as e:
-        from oterm.log import log
-
         log.warning(f"openaiCompatible api_key cannot be resolved: {e}")
         return None
 
@@ -94,7 +93,7 @@ def get_available_providers() -> list[str]:
         if not env_vars or all(os.getenv(var) for var in env_vars):
             available.append(provider_id)
     for name, config in get_openai_compatible_providers().items():
-        api_key = _resolve_api_key(config.get("api_key"))
+        api_key = resolve_api_key(config.get("api_key"))
         if api_key is not None or "api_key" not in config:
             available.append(f"openai-compat/{name}")
     return available
@@ -164,7 +163,7 @@ _NATIVE_LISTERS: dict[str, Callable[[], list[str] | None]] = {
 }
 
 # OpenAI-compatible providers shipped with oterm: hard-coded base URL + env var.
-_BUILTIN_OPENAI_COMPAT: dict[str, tuple[str, str]] = {
+BUILTIN_OPENAI_COMPAT: dict[str, tuple[str, str]] = {
     "groq": ("https://api.groq.com/openai/v1", "GROQ_API_KEY"),
     "deepseek": ("https://api.deepseek.com/v1", "DEEPSEEK_API_KEY"),
     "cerebras": ("https://api.cerebras.ai/v1", "CEREBRAS_API_KEY"),
@@ -173,22 +172,20 @@ _BUILTIN_OPENAI_COMPAT: dict[str, tuple[str, str]] = {
 
 
 def _list_models_from_api(provider: str) -> list[str] | None:
-    from oterm.log import log
-
     if provider.startswith("openai-compat/"):
         endpoint_name = provider.removeprefix("openai-compat/")
         config = get_openai_compatible_providers().get(endpoint_name)
         if not config:
             return None
-        api_key = _resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
+        api_key = resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
         try:
             return _list_via_openai_client(config["base_url"], api_key)
         except Exception as e:
             log.warning(f"Failed to list models for {provider}: {e}")
             return None
 
-    if provider in _BUILTIN_OPENAI_COMPAT:
-        base_url, env_var = _BUILTIN_OPENAI_COMPAT[provider]
+    if provider in BUILTIN_OPENAI_COMPAT:
+        base_url, env_var = BUILTIN_OPENAI_COMPAT[provider]
         api_key = os.getenv(env_var, "")
         if not api_key:
             return None
@@ -225,7 +222,6 @@ def list_models(provider: str) -> list[str]:
     from oterm.providers.capabilities import is_chat_model
 
     if provider == "ollama":
-        from oterm.log import log
         from oterm.providers import ollama
 
         try:

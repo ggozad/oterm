@@ -1,7 +1,7 @@
-## Installation
+# Installation
 
 !!! note
-    `oterm` works with multiple LLM providers — local and hosted. For local models, point it at [Ollama](https://github.com/ollama/ollama?tab=readme-ov-file#ollama), [vLLM](https://docs.vllm.ai/), [LM Studio](https://lmstudio.ai/), [llama.cpp](https://github.com/ggml-org/llama.cpp), or any OpenAI-compatible runner. For hosted providers (OpenAI, Anthropic, Groq, …), set the relevant API key. See [Providers and API keys](app_config.md#providers-and-api-keys) and the [`openaiCompatible`](app_config.md#openaicompatible-custom-openai-compatible-endpoints) config block.
+    `oterm` works with local and hosted LLM providers. For local models, point it at [Ollama](https://github.com/ollama/ollama?tab=readme-ov-file#ollama), [vLLM](https://docs.vllm.ai/), [LM Studio](https://lmstudio.ai/), [llama.cpp](https://github.com/ggml-org/llama.cpp), or any OpenAI-compatible runner. For hosted providers (OpenAI, Anthropic, Groq, …), set the relevant API key. See [Providers and API keys](app_config.md#providers-and-api-keys) and the [`openaiCompatible`](app_config.md#openaicompatible-custom-openai-compatible-endpoints) config block.
 
 === "uvx"
 
@@ -14,9 +14,6 @@
     ```bash
     brew install oterm
     ```
-
-    !!! note
-        Since version `0.13.1`, `oterm` is in the official `homebrew/core` repository. If you have installed `oterm` by tapping `ggozad/formulas` you can now remove the tap and reinstall `oterm`.
 
 === "yay (Arch)"
 
@@ -48,6 +45,22 @@
     pkg install misc/py-oterm
     ```
 
+### Spoken responses
+
+The [`speak`](tools/index.md#capabilities) capability needs the `speak` extra, which brings in `piper-tts` (GPL-3.0):
+
+=== "uvx"
+
+    ```bash
+    uvx "oterm[speak]"
+    ```
+
+=== "pip"
+
+    ```bash
+    pip install "oterm[speak]"
+    ```
+
 ## Updating oterm
 
 Use the same package manager you installed with.
@@ -68,6 +81,12 @@ Use the same package manager you installed with.
 
     ```bash
     yay -Syu oterm
+    ```
+
+=== "nix-env (NixOS)"
+
+    ```bash
+    nix-env -uA nixpkgs.oterm
     ```
 
 === "pip"

@@ -11,6 +11,20 @@ from oterm.types import ChatModel, MessageModel
 from oterm.utils import int_to_semantic_version, semantic_version_to_int
 
 
+def _chat_from_row(row) -> ChatModel:
+    id, name, model, system, provider, parameters, tools, thinking = row
+    return ChatModel(
+        id=id,
+        name=name,
+        model=model,
+        system=system,
+        provider=provider,
+        parameters=json.loads(parameters),
+        tools=json.loads(tools),
+        thinking=thinking,
+    )
+
+
 class Store:
     db_path: Path
 
@@ -26,7 +40,6 @@ class Store:
         self.db_path = data_path / "store.db"
 
         if not self.db_path.exists():
-            # Create tables and set user_version
             async with aiosqlite.connect(self.db_path) as connection:
                 await connection.executescript(
                     """
@@ -55,7 +68,6 @@ class Store:
                 )
                 await self.set_user_version(metadata.version("oterm"))
         else:
-            # Upgrade database
             current_version: str = metadata.version("oterm")
             db_version = await self.get_user_version()
             for version, steps in upgrades:
@@ -145,19 +157,7 @@ class Store:
                 """
             )
 
-            return [
-                ChatModel(
-                    id=id,
-                    name=name,
-                    model=model,
-                    system=system,
-                    provider=provider,
-                    parameters=json.loads(parameters),
-                    tools=json.loads(tools),
-                    thinking=thinking,
-                )
-                for id, name, model, system, provider, parameters, tools, thinking in chats
-            ]
+            return [_chat_from_row(row) for row in chats]
 
     async def get_chat(self, id: int) -> ChatModel | None:
         async with aiosqlite.connect(self.db_path) as connection:
@@ -169,29 +169,8 @@ class Store:
                 """,
                 {"id": id},
             )
-            chat = next(iter(chat), None)
-            if chat:
-                (
-                    id,
-                    name,
-                    model,
-                    system,
-                    provider,
-                    parameters,
-                    tools,
-                    thinking,
-                ) = chat
-                return ChatModel(
-                    id=id,
-                    name=name,
-                    model=model,
-                    system=system,
-                    provider=provider,
-                    parameters=json.loads(parameters),
-                    tools=json.loads(tools),
-                    thinking=thinking,
-                )
-            return None
+            row = next(iter(chat), None)
+            return _chat_from_row(row) if row else None
 
     async def get_last_provider(self) -> str | None:
         """Provider of the most recently created chat, or None when there are none."""

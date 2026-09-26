@@ -1,5 +1,6 @@
 import contextlib
 import re
+from typing import TypedDict
 
 from fastmcp.client.transports import StdioTransport
 from pydantic_ai.mcp import MCPToolset
@@ -25,8 +26,9 @@ _SERVER_NAME = re.compile(r"[a-zA-Z0-9_-]+")
 _TOOL_NAME_MAX_LENGTH = 64
 
 
-class ToolMeta(dict):
-    """Typed shape stored in `mcp_tool_meta`: {name, description}."""
+class ToolMeta(TypedDict):
+    name: str
+    description: str
 
 
 mcp_servers: dict[str, MCPToolset] = {}
@@ -51,7 +53,7 @@ def _build_toolset(name: str, entry: dict) -> MCPToolset:
     if isinstance(url, str):
         if url.startswith(("ws://", "wss://")):
             raise ValueError(
-                f"MCP server {name!r}: WebSocket transport is no longer supported. "
+                f"MCP server {name!r}: WebSocket transport is not supported. "
                 "Use HTTP (http:// or https://) transport instead."
             )
         return MCPToolset(
@@ -140,12 +142,3 @@ async def teardown_mcp_servers() -> None:
         _exit_stack = None
         mcp_servers.clear()
         mcp_tool_meta.clear()
-
-
-__all__ = [
-    "ToolMeta",
-    "mcp_servers",
-    "mcp_tool_meta",
-    "setup_mcp_servers",
-    "teardown_mcp_servers",
-]
