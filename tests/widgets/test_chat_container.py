@@ -12,7 +12,6 @@ from pydantic_ai.messages import (
     TextPart,
     TextPartDelta,
 )
-from pydantic_ai.models import Model
 from pydantic_ai.models.function import AgentInfo, FunctionModel
 from pydantic_ai.profiles import ModelProfile
 from rich.console import Console
@@ -2346,12 +2345,43 @@ async def _run_turn(app: "_Host", agent: Agent) -> "tuple[ChatContainer, str]":
     async with app.run_test() as pilot:
         container = app.query_one(ChatContainer)
         container.agent = agent
+        before = len(container.messages)
         app.query_one(FlexibleInput).text = "hi"
         await pilot.press("enter")
-        await wait_until(pilot, lambda: len(container.messages) == 2)
+        await wait_until(pilot, lambda: len(container.messages) == before + 2)
         status = list(container.query(UsageStatus))[-1]
         await wait_until(pilot, lambda: "ctx" in str(status.render()))
         return container, str(status.render())
+
+
+def _build_with(monkeypatch, agent: Agent) -> list[dict]:
+    """Have every agent build return ``agent``; returns the arguments of each build."""
+    import oterm.app.widgets.chat as chat_module
+
+    builds: list[dict] = []
+
+    def get_agent(**kwargs):
+        builds.append(kwargs)
+        return agent
+
+    monkeypatch.setattr(chat_module, "get_agent", get_agent)
+    return builds
+
+
+def _no_usage(monkeypatch) -> None:
+    """Make FunctionModel report no token usage, as a server that omits it would."""
+    import pydantic_ai.models.function as function_model
+    from pydantic_ai.usage import RequestUsage
+
+    monkeypatch.setattr(
+        function_model, "_estimate_usage", lambda *args, **kwargs: RequestUsage()
+    )
+    monkeypatch.setattr(function_model, "_estimate_string_tokens", lambda text: 0)
+
+
+_LOADED_AT_8K = {
+    "models": [{"name": "test-model", "model": "test-model", "context_length": 8192}]
+}
 
 
 def _last_response_tokens(container: ChatContainer) -> int:
@@ -2394,9 +2424,11 @@ class TestContextWindowFooter:
         with json_server(ps, delay=0.5) as url:
             monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", url)
             app = _Host(chat_model, [])
+            agent = Agent(FunctionModel(stream_function=_stream_hello))
+            _build_with(monkeypatch, agent)
             async with app.run_test() as pilot:
                 container = app.query_one(ChatContainer)
-                container.agent = Agent(FunctionModel(stream_function=_stream_hello))
+                container.agent = agent
                 app.query_one(FlexibleInput).text = "hi"
                 await pilot.press("enter")
 
@@ -2426,40 +2458,14 @@ class TestContextWindowFooter:
         }
         with json_server(ps) as url:
             monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", url)
-            _, footer = await _run_turn(
-                _Host(chat_model, []),
-                Agent(FunctionModel(stream_function=_stream_hello)),
-            )
+            agent = Agent(FunctionModel(stream_function=_stream_hello))
+            _build_with(monkeypatch, agent)
+            _, footer = await _run_turn(_Host(chat_model, []), agent)
         assert "/ 8.2k" in footer
 
-    async def test_ollama_window_reaches_the_rebuilt_agent(
-        self, store, chat_model, monkeypatch
+    async def test_openai_compat_server_window(
+        self, store, chat_model, app_config, monkeypatch
     ):
-        import oterm.config
-
-        chat_model.id = await store.save_chat(chat_model)
-        ps = {
-            "/api/ps": {
-                "models": [
-                    {
-                        "name": "test-model",
-                        "model": "test-model",
-                        "context_length": 8192,
-                    }
-                ]
-            }
-        }
-        with json_server(ps) as url:
-            monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", url)
-            container, _ = await _run_turn(
-                _Host(chat_model, []),
-                Agent(FunctionModel(stream_function=_stream_hello)),
-            )
-        assert container.agent is not None
-        assert isinstance(container.agent.model, Model)
-        assert container.agent.model.context_window == 8192
-
-    async def test_openai_compat_server_window(self, store, chat_model, app_config):
         models = {
             "/v1/models": {
                 "object": "list",
@@ -2478,10 +2484,9 @@ class TestContextWindowFooter:
             app_config.set("openaiCompatible", {"local": {"base_url": f"{url}/v1"}})
             chat_model.provider = "openai-compat/local"
             chat_model.id = await store.save_chat(chat_model)
-            _, footer = await _run_turn(
-                _Host(chat_model, []),
-                Agent(FunctionModel(stream_function=_stream_hello)),
-            )
+            agent = Agent(FunctionModel(stream_function=_stream_hello))
+            _build_with(monkeypatch, agent)
+            _, footer = await _run_turn(_Host(chat_model, []), agent)
         assert "/ 262.1k" in footer
 
     async def test_unknown_window_shows_tokens_only(self, store, chat_model):
@@ -2552,3 +2557,91 @@ class TestSummarize:
 
         assert _summaries(container) == []
         assert not any("summarized" in n.message for n in _notifications(app))
+
+
+class TestServerWindow:
+    async def test_local_window_is_read_when_the_chat_opens(
+        self, store, chat_model, app_config, monkeypatch
+    ):
+        models = {
+            "/v1/models": {
+                "object": "list",
+                "data": [
+                    {
+                        "id": "test-model",
+                        "object": "model",
+                        "created": 0,
+                        "owned_by": "vllm",
+                        "max_model_len": 262144,
+                    }
+                ],
+            }
+        }
+        with json_server(models) as url:
+            app_config.set("openaiCompatible", {"local": {"base_url": f"{url}/v1"}})
+            chat_model.provider = "openai-compat/local"
+            chat_model.id = await store.save_chat(chat_model)
+            builds = _build_with(
+                monkeypatch, Agent(FunctionModel(stream_function=_stream_hello))
+            )
+            app = _Host(chat_model, [])
+            async with app.run_test() as pilot:
+                await wait_until(pilot, lambda: builds[-1]["context_window"] == 262144)
+        assert [b["context_window"] for b in builds] == [None, 262144]
+
+    @pytest.mark.parametrize("reports_usage", [True, False])
+    async def test_window_reported_after_the_first_reply_reaches_the_agent(
+        self, store, chat_model, monkeypatch, reports_usage
+    ):
+        import oterm.config
+
+        if not reports_usage:
+            _no_usage(monkeypatch)
+        chat_model.id = await store.save_chat(chat_model)
+        ps: dict = {"/api/ps": {"models": []}}
+        with json_server(ps) as url:
+            monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", url)
+            agent = Agent(FunctionModel(stream_function=_stream_hello))
+            builds = _build_with(monkeypatch, agent)
+            app = _Host(chat_model, [])
+            async with app.run_test() as pilot:
+                container = app.query_one(ChatContainer)
+                await app.workers.wait_for_complete()
+                assert builds[-1]["context_window"] is None
+                ps["/api/ps"] = _LOADED_AT_8K
+                app.query_one(FlexibleInput).text = "hi"
+                await pilot.press("enter")
+                await wait_until(pilot, lambda: builds[-1]["context_window"] == 8192)
+                await app.workers.wait_for_complete()
+                footer = str(list(container.query(UsageStatus))[-1].render())
+        assert builds[-1]["context_window"] == 8192
+        assert ("ctx" in footer) is reports_usage
+
+    async def test_editing_the_chat_forgets_the_server_window(
+        self, store, chat_model, monkeypatch
+    ):
+        import oterm.config
+
+        chat_id = await store.save_chat(chat_model)
+        chat_model.id = chat_id
+        edited = ChatModel(id=chat_id, model="other-model", provider="ollama")
+        app = _Host(chat_model, [])
+
+        async def fake_push_screen_wait(self, screen):
+            return edited
+
+        monkeypatch.setattr(type(app), "push_screen_wait", fake_push_screen_wait)
+        with json_server({"/api/ps": _LOADED_AT_8K}) as url:
+            monkeypatch.setattr(oterm.config.envConfig, "OLLAMA_URL", url)
+            builds = _build_with(
+                monkeypatch, Agent(FunctionModel(stream_function=_stream_hello))
+            )
+            async with app.run_test() as pilot:
+                container = app.query_one(ChatContainer)
+                await wait_until(pilot, lambda: builds[-1]["context_window"] == 8192)
+                assert builds[-1]["context_window"] == 8192
+                container.action_edit_chat()
+                await wait_until(pilot, lambda: builds[-1]["model"] == "other-model")
+                await app.workers.wait_for_complete()
+        assert builds[-1]["model"] == "other-model"
+        assert builds[-1]["context_window"] is None

@@ -272,6 +272,7 @@ class ChatContainer(Widget):
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
+        self._load_server_window()
 
     async def stream_agent(
         self, user_prompt: str | list[str | BinaryContent]
@@ -355,8 +356,9 @@ class ChatContainer(Widget):
                 self.pydantic_history = list(run.result.all_messages())
                 self._stream_usage = run.result.usage
                 self._context_used = run.result.response.usage.total_tokens
-                # oterm sends its system prompt as instructions, so a new system
-                # prompt in the history is a summary from the summarize capability.
+                # oterm sends its system prompt as instructions and none of its
+                # capabilities add system prompts, so a new system prompt in the
+                # history is a summary from the summarize capability.
                 if _system_prompts(self.pydantic_history) - system_prompts_before:
                     self.app.notify(
                         "Older messages were summarized to fit the context window."
@@ -377,6 +379,22 @@ class ChatContainer(Widget):
         agent_model = self.agent.model if self.agent is not None else None
         assert isinstance(agent_model, Model)
         return agent_model.context_window
+
+    @work(group="context", exit_on_error=False)
+    async def _load_server_window(self) -> None:
+        if _is_local(self.chat_model.provider):
+            self._use_server_window(await self._context_window())
+
+    def _use_server_window(self, window: int | None) -> None:
+        """Rebuild the agent around the window the server runs the model with."""
+        # Compaction reads the window from the model profile, and local
+        # servers only report it once the model is loaded.
+        if _is_local(self.chat_model.provider) and window not in (
+            None,
+            self._server_context_window,
+        ):
+            self._server_context_window = window
+            self._rebuild_agent()
 
     async def load_messages(self) -> None:
         message_container = self.query_one("#messageContainer")
@@ -514,8 +532,7 @@ class ChatContainer(Widget):
             self._stream_usage.input_tokens, self._stream_usage.output_tokens
         )
         status.finish()
-        if self._context_used:  # pragma: no branch
-            self._show_context(status, self._context_used)
+        self._show_context(status, self._context_used)
         if _near_bottom(message_container):  # pragma: no branch
             self.call_after_refresh(message_container.scroll_end)
         return reply, reply_images
@@ -524,15 +541,9 @@ class ChatContainer(Widget):
     async def _show_context(self, status: "UsageStatus", used: int) -> None:
         """Add the context figure once the window is known, without holding up the turn."""
         window = await self._context_window()
-        status.update_context(used, window)
-        # Compaction reads the window from the model profile, and local
-        # servers only report it once the model is loaded.
-        if _is_local(self.chat_model.provider) and window not in (
-            None,
-            self._server_context_window,
-        ):
-            self._server_context_window = window
-            self._rebuild_agent()
+        if used:
+            status.update_context(used, window)
+        self._use_server_window(window)
 
     @on(FlexibleInput.Submitted)
     async def on_submit(self, event: FlexibleInput.Submitted) -> None:
@@ -563,7 +574,9 @@ class ChatContainer(Widget):
         await store.edit_chat(self.chat_model)
 
         self.pydantic_history = self._build_pydantic_history(self.messages)
+        self._server_context_window = None
         self._rebuild_agent()
+        self._load_server_window()
 
     def action_toggle_thinking(self) -> None:
         """Toggle thinking for the current session only; not persisted."""
