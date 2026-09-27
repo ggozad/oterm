@@ -49,6 +49,15 @@ def _build_model_settings(
         if settings.get("max_tokens", 0) < min_max_tokens:
             settings["max_tokens"] = min_max_tokens
 
+    # pydantic-ai drops `thinking` for model names its profiles don't recognise,
+    # which is most models behind OpenAI-compatible servers. vLLM and oMLX read
+    # this chat-template switch instead; servers that don't know it ignore it.
+    if not thinking and provider.startswith("openai-compat/"):
+        settings["extra_body"] = {
+            **(settings.get("extra_body") or {}),
+            "chat_template_kwargs": {"enable_thinking": False},
+        }
+
     return ModelSettings(**settings)
 
 

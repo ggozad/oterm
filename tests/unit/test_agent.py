@@ -1,5 +1,6 @@
 import pytest
 from pydantic_ai import Agent
+from pydantic_ai.models import override_allow_model_requests
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai.providers.openai import OpenAIProvider
@@ -315,3 +316,55 @@ class TestGetAgent:
         agent._root_capability.apply(applied.append)
         assert capability in applied
         assert any(isinstance(t, ImageGenerationTool) for t in agent._cap_native_tools)
+
+
+class _RequestSent(Exception):
+    pass
+
+
+async def _sent_request(agent: Agent[None, str]) -> dict:
+    """Run the agent and return the keyword arguments its OpenAI client was called with."""
+    assert isinstance(agent.model, OpenAIChatModel)
+    sent: dict = {}
+
+    async def record(**kwargs):
+        sent.update(kwargs)
+        raise _RequestSent
+
+    agent.model.client.chat.completions.create = record  # ty: ignore[invalid-assignment]
+    with override_allow_model_requests(True), pytest.raises(_RequestSent):
+        await agent.run("hi")
+    return sent
+
+
+class TestOpenAICompatThinking:
+    @pytest.fixture(autouse=True)
+    def endpoint(self, app_config):
+        app_config.set(
+            "openaiCompatible",
+            {"local": {"base_url": "http://localhost:8000/v1"}},
+        )
+
+    async def test_thinking_off_disables_it_in_the_chat_template(self):
+        agent = get_agent(provider="openai-compat/local", model="Custom/Q-27B")
+        sent = await _sent_request(agent)
+        assert sent["extra_body"]["chat_template_kwargs"] == {"enable_thinking": False}
+
+    async def test_thinking_on_leaves_the_server_default(self):
+        agent = get_agent(
+            provider="openai-compat/local", model="Custom/Q-27B", thinking=True
+        )
+        sent = await _sent_request(agent)
+        assert "chat_template_kwargs" not in (sent.get("extra_body") or {})
+
+    async def test_thinking_off_keeps_user_extra_body(self):
+        agent = get_agent(
+            provider="openai-compat/local",
+            model="Custom/Q-27B",
+            parameters={"extra_body": {"top_k": 20}},
+        )
+        sent = await _sent_request(agent)
+        assert sent["extra_body"] == {
+            "top_k": 20,
+            "chat_template_kwargs": {"enable_thinking": False},
+        }

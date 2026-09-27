@@ -103,6 +103,8 @@ Each entry takes:
 
 Each endpoint appears in the provider dropdown under its name. Select it and type the model name. If the endpoint exposes `/v1/models`, suggestions appear as you type.
 
+With thinking turned off, `oterm` sends `chat_template_kwargs: {"enable_thinking": false}` with each request. vLLM and oMLX pass it to the model's chat template, which turns thinking off. LM Studio accepts the field and ignores it. With thinking on, nothing extra is sent and the server's default applies.
+
 ## Providers and API keys
 
 `oterm` discovers providers from your environment at startup. A provider appears in the new-chat dropdown only when its required environment variables are set. `.env` files in the working directory are loaded automatically.
