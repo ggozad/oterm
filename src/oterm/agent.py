@@ -16,8 +16,7 @@ from oterm.config import envConfig
 from oterm.providers import (
     BUILTIN_OPENAI_COMPAT,
     UNRESOLVED_API_KEY,
-    get_openai_compatible_providers,
-    resolve_api_key,
+    openai_compat_endpoint,
 )
 from oterm.providers.capabilities import get_capabilities
 from oterm.providers.ollama import openai_compat_base_url
@@ -95,17 +94,17 @@ def get_agent(
         capabilities.append(NativeTool(ImageGenerationTool()))
     elif provider.startswith("openai-compat/"):
         endpoint_name = provider.removeprefix("openai-compat/")
-        config = get_openai_compatible_providers().get(endpoint_name)
-        if config is None:
+        endpoint = openai_compat_endpoint(endpoint_name)
+        if endpoint is None:
             raise ValueError(
                 f"OpenAI-compatible endpoint {endpoint_name!r} is not configured. "
                 f"Add it to the `openaiCompatible` section of your config.json."
             )
-        api_key = resolve_api_key(config.get("api_key")) or UNRESOLVED_API_KEY
+        base_url, api_key = endpoint
         pydantic_model = OpenAIChatModel(
             model_name=model,
             provider=OpenAIProvider(
-                base_url=config["base_url"],
+                base_url=base_url,
                 api_key=api_key,
             ),
         )

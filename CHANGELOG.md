@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- The usage footer shows context used against the model's context window, in the theme's warning colour from 50% and its error colour from 80%. The window comes from the pydantic-ai model profile, Ollama's loaded models, `max_model_len` in `/v1/models` (vLLM, oMLX), or LM Studio's `loaded_context_length`.
+
 ### Changed
 
 - Python 3.10 is no longer supported. oterm requires Python 3.11 or newer.
