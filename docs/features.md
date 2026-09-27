@@ -5,7 +5,7 @@
 * multiple persistent chat sessions, stored together with system prompt & parameter customizations in sqlite.
 * talks to Ollama, OpenAI, Anthropic, Google (AI / Vertex), Groq, Mistral, Cohere, AWS Bedrock, DeepSeek, Cerebras, Grok, Hugging Face, and any OpenAI-compatible endpoint, local (vLLM, LM Studio, llama.cpp, …) or hosted (OpenRouter, LiteLLM, …).
 * tools: built-in (`shell`, `date_time`, `think`, `generate_image`), custom Python plugins via entry points, and any [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server.
-* capabilities: web search, URL fetching, persistent memory, file access limited to the start directory, and responses spoken aloud in the GLaDOS voice.
+* capabilities: web search, URL fetching, persistent memory, file access limited to the start directory, summarizing long conversations to fit the context window, and responses spoken aloud in the GLaDOS voice.
 * allows for easy customization of the model's system prompt and parameters.
 * shows how much of the model's context window the conversation uses. For local servers this is the window the server actually runs the model with.
 
