@@ -33,6 +33,7 @@ from pydantic_ai.messages import (
     NativeToolCallPart,
     NativeToolReturnPart,
     RetryPromptPart,
+    SystemPromptPart,
     ThinkingPart,
     ToolCallPart,
     ToolReturnPart,
@@ -220,6 +221,7 @@ class ChatContainer(Widget):
             self.messages
         )
 
+        self._server_context_window: int | None = None
         self._rebuild_agent()
         self.loaded = False
         self.loading = False
@@ -241,6 +243,7 @@ class ChatContainer(Widget):
                 capabilities=capabilities,
                 parameters=self.chat_model.parameters,
                 thinking=self.chat_model.thinking,
+                context_window=self._server_context_window,
             )
             self._agent_error: str | None = None
         except Exception as e:
@@ -269,6 +272,7 @@ class ChatContainer(Widget):
 
     def on_mount(self) -> None:
         self.query_one("#prompt").focus()
+        self._load_server_window()
 
     async def stream_agent(
         self, user_prompt: str | list[str | BinaryContent]
@@ -288,6 +292,7 @@ class ChatContainer(Widget):
 
         self._stream_usage = RunUsage()
         self._context_used = 0
+        system_prompts_before = _system_prompts(self.pydantic_history)
         # Some providers (notably OpenAI Responses image_generation) emit the
         # same image twice under one vendor part id: as a partial-image event
         # and again when the call completes. Dedupe by FilePart.id.
@@ -351,6 +356,13 @@ class ChatContainer(Widget):
                 self.pydantic_history = list(run.result.all_messages())
                 self._stream_usage = run.result.usage
                 self._context_used = run.result.response.usage.total_tokens
+                # oterm sends its system prompt as instructions and none of its
+                # capabilities add system prompts, so a new system prompt in the
+                # history is a summary from the summarize capability.
+                if _system_prompts(self.pydantic_history) - system_prompts_before:
+                    self.app.notify(
+                        "Older messages were summarized to fit the context window."
+                    )
 
     async def _context_window(self) -> int | None:
         # Local servers report the context they actually run a model with,
@@ -367,6 +379,22 @@ class ChatContainer(Widget):
         agent_model = self.agent.model if self.agent is not None else None
         assert isinstance(agent_model, Model)
         return agent_model.context_window
+
+    @work(group="context", exit_on_error=False)
+    async def _load_server_window(self) -> None:
+        if _is_local(self.chat_model.provider):
+            self._use_server_window(await self._context_window())
+
+    def _use_server_window(self, window: int | None) -> None:
+        """Rebuild the agent around the window the server runs the model with."""
+        # Compaction reads the window from the model profile, and local
+        # servers only report it once the model is loaded.
+        if _is_local(self.chat_model.provider) and window not in (
+            None,
+            self._server_context_window,
+        ):
+            self._server_context_window = window
+            self._rebuild_agent()
 
     async def load_messages(self) -> None:
         message_container = self.query_one("#messageContainer")
@@ -504,8 +532,7 @@ class ChatContainer(Widget):
             self._stream_usage.input_tokens, self._stream_usage.output_tokens
         )
         status.finish()
-        if self._context_used:  # pragma: no branch
-            self._show_context(status, self._context_used)
+        self._show_context(status, self._context_used)
         if _near_bottom(message_container):  # pragma: no branch
             self.call_after_refresh(message_container.scroll_end)
         return reply, reply_images
@@ -513,7 +540,10 @@ class ChatContainer(Widget):
     @work(group="context", exit_on_error=False)
     async def _show_context(self, status: "UsageStatus", used: int) -> None:
         """Add the context figure once the window is known, without holding up the turn."""
-        status.update_context(used, await self._context_window())
+        window = await self._context_window()
+        if used:
+            status.update_context(used, window)
+        self._use_server_window(window)
 
     @on(FlexibleInput.Submitted)
     async def on_submit(self, event: FlexibleInput.Submitted) -> None:
@@ -544,7 +574,9 @@ class ChatContainer(Widget):
         await store.edit_chat(self.chat_model)
 
         self.pydantic_history = self._build_pydantic_history(self.messages)
+        self._server_context_window = None
         self._rebuild_agent()
+        self._load_server_window()
 
     def action_toggle_thinking(self) -> None:
         """Toggle thinking for the current session only; not persisted."""
@@ -1088,6 +1120,20 @@ class UsageStatus(Static):
                 parts.append(f"ctx {_compact(used)}")
         parts.append(f"{self._elapsed:.1f}s")
         self.update("  ".join(parts))
+
+
+def _system_prompts(messages: list[ModelMessage]) -> set[str]:
+    return {
+        part.content
+        for message in messages
+        if isinstance(message, ModelRequest)
+        for part in message.parts
+        if isinstance(part, SystemPromptPart)
+    }
+
+
+def _is_local(provider: str) -> bool:
+    return provider == "ollama" or provider.startswith("openai-compat/")
 
 
 def _compact(tokens: int) -> str:

@@ -4,6 +4,7 @@
 
 ### Added
 
+- `summarize` capability: older messages are summarized once the conversation reaches 80% of the model's context window, keeping the most recent 40% of the window. The summary is written by the chat's model with the chat's parameters, thinking off. A notification says when it happens. Local servers are asked for the window they run the model with when the chat opens and after each reply; until they report one, requests are sent as they are.
 - The usage footer shows context used against the model's context window, in the theme's warning colour from 50% and its error colour from 80%. The window comes from the pydantic-ai model profile, Ollama's loaded models, `max_model_len` in `/v1/models` (vLLM, oMLX), or LM Studio's `loaded_context_length`.
 
 ### Changed

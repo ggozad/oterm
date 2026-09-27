@@ -24,7 +24,7 @@ def image_b64(fmt: str = "PNG") -> str:
 async def wait_until(
     pilot, predicate: Callable[[], bool], *, max_iters: int = 80
 ) -> None:
-    """Pump the event loop until ``predicate()`` is truthy or we give up.
+    """Pump the event loop until ``predicate()`` is truthy; raise if it never is.
 
     A single ``await pilot.pause()`` is unreliable for actions that schedule
     background tasks (notably ``ChatContainer.action_regenerate_llm_message``,
@@ -36,6 +36,7 @@ async def wait_until(
             return
         await asyncio.sleep(0)
         await pilot.pause()
+    raise TimeoutError(f"condition still false after {max_iters} iterations")
 
 
 @contextmanager
