@@ -4,6 +4,7 @@ from typing import Any
 from pydantic_ai import Agent
 from pydantic_ai import Tool as PydanticTool
 from pydantic_ai.capabilities import AbstractCapability, NativeTool
+from pydantic_ai.models import infer_model
 from pydantic_ai.models.openai import OpenAIChatModel, OpenAIResponsesModel
 from pydantic_ai.native_tools import ImageGenerationTool
 from pydantic_ai.profiles import ModelProfile, merge_profile
@@ -21,7 +22,7 @@ from oterm.providers import (
 from oterm.providers.capabilities import get_capabilities
 from oterm.providers.ollama import openai_compat_base_url
 from oterm.providers.settings import get_supported_setting_keys
-from oterm.tools.capabilities import fit_to_window
+from oterm.tools.capabilities import fit_to_model
 
 
 def _build_model_settings(
@@ -61,6 +62,14 @@ def _build_model_settings(
     return ModelSettings(**settings)
 
 
+def _summary_settings(
+    parameters: dict[str, Any] | None, provider: str
+) -> ModelSettings:
+    """The chat's sampling parameters, without thinking or a max_tokens cap that would cut a summary short."""
+    parameters = {k: v for k, v in (parameters or {}).items() if k != "max_tokens"}
+    return _build_model_settings(parameters, thinking=False, provider=provider)
+
+
 def get_agent(
     provider: str = "ollama",
     model: str = "",
@@ -74,8 +83,6 @@ def get_agent(
 ) -> Agent[None, str]:
     pydantic_model: OpenAIChatModel | OpenAIResponsesModel | str
     capabilities = list(capabilities) if capabilities else []
-    if context_window:
-        capabilities = [fit_to_window(c, context_window) for c in capabilities]
     if provider == "ollama":
         ollama_provider = OllamaProvider(
             base_url=openai_compat_base_url(),
@@ -131,8 +138,14 @@ def get_agent(
     else:
         pydantic_model = f"{provider}:{model}"
 
+    resolved_model = infer_model(pydantic_model)
+    summary_settings = _summary_settings(parameters, provider)
+    capabilities = [
+        fit_to_model(c, resolved_model.context_window, summary_settings)
+        for c in capabilities
+    ]
     agent: Agent[None, str] = Agent(
-        pydantic_model,
+        resolved_model,
         instructions=system,
         tools=tools or [],
         toolsets=toolsets or [],

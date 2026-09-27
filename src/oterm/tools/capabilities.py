@@ -6,6 +6,7 @@ from importlib.util import find_spec
 from pathlib import Path
 
 from pydantic_ai.capabilities import AbstractCapability, WebFetch, WebSearch
+from pydantic_ai.settings import ModelSettings
 from pydantic_ai_harness import FileSystem
 from pydantic_ai_harness.compaction import SummarizingCompaction
 from pydantic_ai_harness.memory import Memory, SqliteMemoryStore
@@ -37,13 +38,22 @@ def _summarize() -> AbstractCapability[None]:
     return SummarizingCompaction(max_fraction=0.8, keep_messages=20)
 
 
-def fit_to_window(
-    capability: AbstractCapability[None], context_window: int
+def fit_to_model(
+    capability: AbstractCapability[None],
+    context_window: int | None,
+    model_settings: ModelSettings,
 ) -> AbstractCapability[None]:
-    """Keep 40% of the window after summarizing, so the tail and summary fit."""
-    if isinstance(capability, SummarizingCompaction):
-        return replace(capability, keep_tokens=int(context_window * 0.4))
-    return capability
+    """Write summaries with the chat's settings.
+
+    Keeps 40% of the window after summarizing, so the tail and summary fit.
+    """
+    if not isinstance(capability, SummarizingCompaction):
+        return capability
+    return replace(
+        capability,
+        keep_tokens=int(context_window * 0.4) if context_window else None,
+        model_settings=model_settings,
+    )
 
 
 @cache

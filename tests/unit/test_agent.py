@@ -450,3 +450,39 @@ class TestSummarizeFitsTheWindow:
         summarizing = _summarizing(agent)
         assert summarizing.keep_tokens is None
         assert summarizing.keep_messages == 20
+
+    def test_cloud_window_keeps_a_share_of_it(self, monkeypatch):
+        from pydantic_ai.models import Model
+
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+        agent = get_agent(
+            provider="anthropic", model="claude-sonnet-4-5", capabilities=[_summarize()]
+        )
+        assert isinstance(agent.model, Model)
+        window = agent.model.context_window
+        assert window
+        assert _summarizing(agent).keep_tokens == int(window * 0.4)
+
+
+class TestSummaryModelSettings:
+    def test_summary_keeps_sampling_params_without_thinking_or_a_cap(self, app_config):
+        app_config.set(
+            "openaiCompatible", {"local": {"base_url": "http://localhost:1234/v1"}}
+        )
+        agent = get_agent(
+            provider="openai-compat/local",
+            model="gemma",
+            capabilities=[_summarize()],
+            parameters={"temperature": 0.2, "max_tokens": 256},
+            thinking=True,
+        )
+        assert _summarizing(agent).model_settings == {
+            "temperature": 0.2,
+            "thinking": False,
+            "extra_body": {"chat_template_kwargs": {"enable_thinking": False}},
+        }
+        assert agent.model_settings == {
+            "temperature": 0.2,
+            "max_tokens": 256,
+            "thinking": True,
+        }
