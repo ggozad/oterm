@@ -7,6 +7,7 @@
 * tools: built-in (`shell`, `date_time`, `think`, `generate_image`), custom Python plugins via entry points, and any [Model Context Protocol (MCP)](https://modelcontextprotocol.io) server.
 * capabilities: web search, URL fetching, persistent memory, file access limited to the start directory, and responses spoken aloud in the GLaDOS voice.
 * allows for easy customization of the model's system prompt and parameters.
+* shows how much of the model's context window the conversation uses. For local servers this is the window the server actually runs the model with.
 
 ## Using oterm
 
