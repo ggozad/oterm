@@ -29,6 +29,7 @@ A complete example showing every supported key:
     "toggle.thinking": "ctrl+t",
     "copy.message": "ctrl+o",
     "show.logs": "ctrl+l",
+    "go.to.chat": "ctrl+f",
     "quit": "ctrl+q",
     "newline": "shift+enter",
     "add.image": "ctrl+i"
@@ -74,6 +75,7 @@ Override any of the bindings below by setting the matching key in the `keymap` b
 | `toggle.thinking` | `ctrl+t`     | Turn thinking mode on or off for the current session (not persisted).  |
 | `copy.message` | `ctrl+o`        | Copy the last message of the current chat to the clipboard.             |
 | `show.logs` | `ctrl+l`           | Open the log viewer.                                                    |
+| `go.to.chat` | `ctrl+f`          | Search the chats by name and switch to one.                             |
 | `quit`      | `ctrl+q`           | Quit `oterm`.                                                           |
 | `newline`   | `shift+enter`      | Insert a newline in the prompt. `ctrl+m` is also accepted as a fallback for terminals that can't distinguish `shift+enter` from `enter`, and is not configurable. |
 | `add.image` | `ctrl+i`           | Attach an image to the next message.                                    |

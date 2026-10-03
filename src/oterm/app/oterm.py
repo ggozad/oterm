@@ -1,4 +1,5 @@
 from collections.abc import Iterable
+from functools import partial
 
 from textual import on, work
 from textual.app import App, ComposeResult, SystemCommand
@@ -40,6 +41,7 @@ class OTerm(App):
         Binding("ctrl+t", "toggle_thinking", "toggle thinking", id="toggle.thinking"),
         Binding("ctrl+o", "copy_message", "copy message", id="copy.message"),
         Binding("ctrl+l", "show_logs", "show logs", id="show.logs"),
+        Binding("ctrl+f", "go_to_chat", "go to chat", id="go.to.chat"),
         Binding("ctrl+q", "quit", "quit", id="quit"),
     ]
 
@@ -88,6 +90,9 @@ class OTerm(App):
         yield SystemCommand(
             "Show logs", "Shows the logs of the app", self.action_show_logs
         )
+        yield SystemCommand(
+            "Go to chat", "Switches to a chat picked by name", self.action_go_to_chat
+        )
 
     async def action_quit(self) -> None:
         self.log("Quitting...")
@@ -102,7 +107,25 @@ class OTerm(App):
         if tabs.active not in pane_ids:  # pragma: no cover
             return
         idx = pane_ids.index(tabs.active)
-        tabs.active = pane_ids[(idx + change) % len(pane_ids)]
+        self._open_chat(pane_ids[(idx + change) % len(pane_ids)])
+
+    def action_go_to_chat(self) -> None:
+        tabs = self.query_one(TabbedContent)
+        self.search_commands(
+            [
+                (
+                    str(tabs.get_tab(pane).label),
+                    partial(self._open_chat, pane.id or ""),
+                )
+                for pane in tabs.query(TabPane)
+            ],
+            placeholder="Search chats…",
+        )
+
+    def _open_chat(self, pane_id: str) -> None:
+        tabs = self.query_one(TabbedContent)
+        tabs.active = pane_id
+        tabs.get_pane(pane_id).query_one("#prompt").focus()
 
     @work
     async def action_new_chat(self) -> None:
