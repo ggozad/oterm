@@ -17,7 +17,7 @@
 
 === "yay (Arch)"
 
-    Maintained by [Daniel Chesters](https://github.com/DanielChesters).
+    Community package maintained by [Rafael Dominiquini](https://github.com/Dominiquini). May lag behind the latest release.
 
     ```bash
     yay -S oterm
@@ -25,7 +25,7 @@
 
 === "nix-env (NixOS)"
 
-    Maintained by [Gaël James](https://github.com/gaelj).
+    Community package maintained by [Gaël James](https://github.com/gaelj). May lag behind the latest release.
 
     ```bash
     nix-env -iA nixpkgs.oterm
@@ -39,7 +39,7 @@
 
 === "pkg (FreeBSD)"
 
-    Maintained by [Nicola Vitale](https://github.com/nivit).
+    Community package maintained by [Nicola Vitale](https://github.com/nivit). May lag behind the latest release.
 
     ```bash
     pkg install misc/py-oterm
