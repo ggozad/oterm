@@ -14,6 +14,7 @@ By pressing <kbd>^ Ctrl</kbd>+<kbd>p</kbd> you can access the command palette fr
 * `Regenerate last message` - regenerates the last assistant message. Useful if you want to change the system prompt or parameters, or just try again.
 * `Prompt history` - browse previously sent prompts in the current chat and re-use one.
 * `Show logs` - shows the logs of the current oterm session.
+* `Go to chat` - search the chats by name and switch to one.
 
 The palette also surfaces Textual's built-in commands (`Theme`, `Quit`, `Keys`, `Screenshot`, `Maximize`/`Minimize`).
 
@@ -35,6 +36,7 @@ The following keyboard shortcuts are supported:
 
 * <kbd>^ Ctrl</kbd>+<kbd>Tab</kbd> - open the next chat
 * <kbd>^ Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> - open the previous chat
+* <kbd>^ Ctrl</kbd>+<kbd>f</kbd> - search the chats by name and switch to one
 
 The prompt is always a multi-line input that auto-grows as you type or paste; long lines wrap. To recall a previously sent prompt, open `Prompt history` from the command palette (<kbd>^ Ctrl</kbd>+<kbd>p</kbd>).
 

@@ -117,6 +117,31 @@ class TestCycleChat:
             await pilot.pause()
             assert tabs.active == f"chat-{ids[0]}"
 
+    async def test_cycle_key_focuses_the_prompt_of_the_new_chat(
+        self, tmp_data_dir, app_config, stub_network, store
+    ):
+        from oterm.app.widgets.prompt import PostableTextArea
+
+        app_config.set("splash-screen", False)
+        for n in ("a", "b"):
+            cm = ChatModel(name=n, model="m")
+            cm.id = await store.save_chat(cm)
+
+        from oterm.app.oterm import OTerm
+
+        app = OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            tabs = app.query_one(TabbedContent)
+            before = tabs.active
+
+            await pilot.press("ctrl+tab")
+            await pilot.pause()
+
+            assert tabs.active != before
+            assert isinstance(app.focused, PostableTextArea)
+            assert tabs.active_pane in app.focused.ancestors
+
     async def test_cycle_with_no_active_pane_is_noop(self, fresh_app, monkeypatch):
         app = fresh_app
         async with app.run_test() as pilot:
@@ -862,5 +887,49 @@ class TestSystemCommands:
                 "Regenerate last message",
                 "Prompt history",
                 "Show logs",
+                "Go to chat",
             ):
                 assert title in cmds
+
+
+class TestGoToChat:
+    async def test_go_to_chat_key_opens_the_chat_picked_from_the_prompt(
+        self, tmp_data_dir, app_config, stub_network, store
+    ):
+        from textual.command import CommandList, CommandPalette
+
+        import oterm.app.oterm as oterm_mod
+        from oterm.app.widgets.prompt import PostableTextArea
+
+        app_config.set("splash-screen", False)
+        ids = []
+        for name in ("alpha", "beta", "gamma"):
+            cm = ChatModel(name=name, model="m")
+            cm.id = await store.save_chat(cm)
+            ids.append(cm.id)
+
+        app = oterm_mod.OTerm()
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            tabs = app.query_one(TabbedContent)
+            tabs.active = f"chat-{ids[0]}"
+            await pilot.pause()
+            assert tabs.active_pane is not None
+            tabs.active_pane.query_one(PostableTextArea).focus()
+            await pilot.pause()
+
+            key = next(b.key for b in oterm_mod.OTerm.BINDINGS if b.id == "go.to.chat")
+            await pilot.press(key)
+            await pilot.pause()
+            await pilot.press(*"beta")
+            await wait_until(
+                pilot,
+                lambda: (
+                    isinstance(app.screen, CommandPalette)
+                    and app.screen.query_one(CommandList).option_count == 1
+                ),
+            )
+            await pilot.press("enter")
+            await wait_until(pilot, lambda: tabs.active == f"chat-{ids[1]}")
+            assert isinstance(app.focused, PostableTextArea)
+            assert tabs.active_pane in app.focused.ancestors
