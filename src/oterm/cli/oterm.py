@@ -37,6 +37,9 @@ def oterm(
         None, "--db", help="Print the path of the chat database."
     ),
     data_dir: bool = typer.Option(None, "--data-dir", help="Print the data directory."),
+    chat: str = typer.Option(
+        None, "--chat", help="Open a specific chat by id or name."
+    ),
 ):
     # Before any third-party package gets a chance to log.
     suppress_logging()
@@ -61,7 +64,10 @@ def oterm(
     # Delay import to avoid sixel detection running unless necessary
     from oterm.app.oterm import app
 
+    app.chat = chat
     app.run()
+    if app.return_code:
+        raise typer.Exit(code=app.return_code)
 
 
 if __name__ == "__main__":

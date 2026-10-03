@@ -72,6 +72,7 @@ For most terminals there exists a key modifier you can use to click and drag to 
 | `--version`, `-v` | Print the version and exit. |
 | `--data-dir` | Print the data directory and exit. |
 | `--db` | Print the path of the chat database and exit. |
+| `--chat <id_or_name>` | Open a specific chat by its id or name (most recently created wins on duplicate names). |
 | `--config` | Print the settings read from the environment (`OLLAMA_URL`, `OTERM_DATA_DIR`, …) and exit. `OLLAMA_API_KEY` is masked. |
 | `--upgrade` | Connect the MCP servers, apply any pending database upgrades and exit. `oterm` also applies them at startup. |
 | `--help`, `-h` | Show the options and exit. |

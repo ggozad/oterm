@@ -368,6 +368,113 @@ class TestNewChat:
             assert app.query_one(TabbedContent).tab_count == initial
 
 
+class TestChatFlag:
+    async def test_selects_chat_by_name(
+        self, tmp_data_dir, app_config, stub_network, store
+    ):
+        app_config.set("splash-screen", False)
+        chat_a = ChatModel(name="alpha", model="m")
+        chat_a.id = await store.save_chat(chat_a)
+        chat_b = ChatModel(name="beta", model="m")
+        chat_b.id = await store.save_chat(chat_b)
+
+        from oterm.app.oterm import OTerm
+
+        app = OTerm(chat="beta")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            tabs = app.query_one(TabbedContent)
+            assert tabs.active == f"chat-{chat_b.id}"
+
+    async def test_selects_chat_by_id(
+        self, tmp_data_dir, app_config, stub_network, store
+    ):
+        app_config.set("splash-screen", False)
+        chat_a = ChatModel(name="alpha", model="m")
+        chat_a.id = await store.save_chat(chat_a)
+        chat_b = ChatModel(name="beta", model="m")
+        chat_b.id = await store.save_chat(chat_b)
+
+        from oterm.app.oterm import OTerm
+
+        app = OTerm(chat=str(chat_b.id))
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            tabs = app.query_one(TabbedContent)
+            assert tabs.active == f"chat-{chat_b.id}"
+
+    async def test_duplicate_names_select_most_recent(
+        self, tmp_data_dir, app_config, stub_network, store
+    ):
+        app_config.set("splash-screen", False)
+        first = ChatModel(name="dup", model="m")
+        first.id = await store.save_chat(first)
+        second = ChatModel(name="dup", model="m")
+        second.id = await store.save_chat(second)
+
+        from oterm.app.oterm import OTerm
+
+        app = OTerm(chat="dup")
+        async with app.run_test() as pilot:
+            await pilot.pause()
+            tabs = app.query_one(TabbedContent)
+            assert tabs.active == f"chat-{second.id}"
+
+    async def test_no_match_exits_nonzero(
+        self, tmp_data_dir, app_config, stub_network, store
+    ):
+        app_config.set("splash-screen", False)
+        chat_a = ChatModel(name="alpha", model="m")
+        chat_a.id = await store.save_chat(chat_a)
+
+        from oterm.app.oterm import OTerm
+
+        app = OTerm(chat="bogus")
+        async with app.run_test() as pilot:
+            for _ in range(30):
+                await pilot.pause()
+                if app.return_code is not None:
+                    break
+        assert app.return_code == 1
+
+    async def test_no_match_with_empty_store_exits_nonzero(
+        self, tmp_data_dir, app_config, stub_network, store
+    ):
+        app_config.set("splash-screen", False)
+
+        from oterm.app.oterm import OTerm
+
+        app = OTerm(chat="anything")
+        async with app.run_test() as pilot:
+            for _ in range(30):
+                await pilot.pause()
+                if app.return_code is not None:
+                    break
+        assert app.return_code == 1
+
+    async def test_fail_lookup_prints_error_and_available_chats(self, capfd):
+        from oterm.app.oterm import OTerm
+
+        chat_a = ChatModel(name="alpha", model="m")
+        chat_a.id = 7
+        app = OTerm(chat="bogus")
+        app._fail_chat_lookup([chat_a])
+        err = capfd.readouterr().err
+        assert "bogus" in err
+        assert "alpha" in err
+        assert "7" in err
+        assert app.return_code == 1
+
+    async def test_fail_lookup_empty_store_mentions_no_saved_chats(self, capfd):
+        from oterm.app.oterm import OTerm
+
+        app = OTerm(chat="anything")
+        app._fail_chat_lookup([])
+        err = capfd.readouterr().err
+        assert "no saved chats" in err
+        assert app.return_code == 1
+
+
 class TestQuit:
     async def test_ctrl_q_exits(self, fresh_app):
         app = fresh_app

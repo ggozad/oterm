@@ -1,3 +1,4 @@
+import sys
 from collections.abc import Iterable
 
 from textual import on, work
@@ -25,6 +26,11 @@ class OTerm(App):
     TITLE = "oterm"
     SUB_TITLE = "the terminal LLM client."
     CSS_PATH = "oterm.tcss"
+
+    def __init__(self, chat: str | None = None) -> None:
+        super().__init__()
+        self.chat = chat
+
     BINDINGS = [
         Binding(
             "ctrl+tab", "cycle_chat(+1)", "next chat", id="next.chat", priority=True
@@ -240,6 +246,9 @@ class OTerm(App):
                         chat_model.name, container, id=f"chat-{chat_model.id}"
                     )
                     tabs.add_pane(pane)
+            if self.chat is not None and not self._select_chat(saved_chats):
+                self._fail_chat_lookup(saved_chats)
+                return
             self._update_empty_state()
             self.perform_checks()
 
@@ -247,6 +256,45 @@ class OTerm(App):
             self.push_screen(splash, callback=on_splash_done)
         else:
             await on_splash_done("")
+
+    def _select_chat(self, chats: list[ChatModel]) -> bool:
+        """Activate the tab for the ``--chat`` argument.
+
+        Matches by integer id first, then by exact name (most recently created
+        wins on duplicate names). Returns False when no chat matches.
+        """
+        match: ChatModel | None = None
+        if self.chat is not None and self.chat.isdigit():
+            for chat in chats:
+                if chat.id == int(self.chat):
+                    match = chat
+                    break
+        if match is None:
+            named = [chat for chat in chats if chat.name == self.chat]
+            if named:
+                match = max(named, key=lambda chat: chat.id or 0)
+        if match is None or match.id is None:
+            return False
+        self.query_one(TabbedContent).active = f"chat-{match.id}"
+        return True
+
+    def _fail_chat_lookup(self, chats: list[ChatModel]) -> None:
+        """Print a friendly error and exit when ``--chat`` matches nothing.
+
+        ``sys.__stderr__`` is used instead of ``sys.stderr`` because Textual
+        redirects the latter to an internal buffer while the app runs.
+        """
+        available = (
+            "\n".join(
+                f"  {chat.id}: {chat.name}" for chat in chats if chat.id is not None
+            )
+            or "  (no saved chats)"
+        )
+        print(
+            f"No chat found for --chat '{self.chat}'.\nAvailable chats:\n{available}",
+            file=sys.__stderr__,
+        )
+        self.exit(return_code=1)
 
     def on_theme_change(self, old_value: str, new_value: str) -> None:
         if appConfig.get("theme") != new_value:

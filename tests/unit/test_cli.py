@@ -103,5 +103,6 @@ class TestHelp:
             "Print the environment settings",
             "Print the path of the chat database",
             "Print the data directory",
+            "Open a specific chat by id or name",
         ):
             assert text in output, text
