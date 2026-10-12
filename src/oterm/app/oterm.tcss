@@ -270,10 +270,13 @@ UsageStatus {
 
 #chat-edit-screen {
     height: 100%;
+    overflow-y: auto;
 }
 
 #top-row {
     height: 1fr;
+    /* provider select, model input and three rows of the model list */
+    min-height: 12;
     margin-top: 1;
 }
 
@@ -284,6 +287,8 @@ UsageStatus {
 
 #bottom-row {
     height: 1fr;
+    /* three rows of parameters */
+    min-height: 9;
     margin-top: 1;
 }
 

@@ -1,6 +1,6 @@
 import pytest
 from textual.app import App
-from textual.widgets import Button, Checkbox, Input, TextArea
+from textual.widgets import Button, Checkbox, Input, OptionList, TextArea
 
 from oterm.app.chat_edit import ChatEdit
 from oterm.app.widgets.model_select import ModelSelect
@@ -604,3 +604,16 @@ async def test_on_select_changed_same_provider_is_noop(app_config):
         await pilot.pause()
         # No reset: model_name is preserved.
         assert screen.model_name == "llama3"
+
+
+class _StyledHost(App):
+    CSS_PATH = "../../src/oterm/app/oterm.tcss"
+
+
+async def test_model_list_stays_visible_on_short_terminal(app_config):
+    app = _StyledHost()
+    async with app.run_test(size=(120, 24)) as pilot:
+        app.push_screen(ChatEdit())
+        await pilot.pause()
+        options = app.screen.query_one("#model-select-options", OptionList)
+        assert options.content_region.height >= 3
