@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-10-12
+
 ### Added
 
 - `Go to chat` command (`ctrl+f`, keymap id `go.to.chat`): searches the chats by name and switches to the one picked.
@@ -9,7 +11,7 @@
 ### Fixed
 
 - Switching chats with `ctrl+tab` or `ctrl+shift+tab` focuses the new chat's prompt.
-- The chat edit screen shows at least three rows of the model list and scrolls when the terminal is too short to fit it.
+- The chat edit screen shows at least three rows of the model list and scrolls when the terminal is too short to fit it. ([#344](https://github.com/ggozad/oterm/issues/344))
 
 ## [0.25.0] - 2026-09-27
 
