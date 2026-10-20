@@ -53,7 +53,7 @@ Using AI tools to write code, issues or pull requests is fine. What matters is t
 
 ## Automated contributions
 
-oterm is a tool for people who use it. Pull requests opened by automated agents, by contribution services, or by accounts that open pull requests across many projects without using them will be closed, and the account may be blocked.
+oterm is a tool for people who use it. Issues and pull requests opened by automated agents, by contribution or promotion services, or by accounts that open them across many projects without using them will be closed, and the account may be blocked.
 
 ## License
 
