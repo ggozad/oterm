@@ -19,6 +19,7 @@ from rich.json import JSON
 from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.widgets import Markdown
+from textual.widgets.markdown import MarkdownFence
 
 from oterm.app.widgets.chat import (
     ChatContainer,
@@ -1052,6 +1053,22 @@ class TestChatItemClickCopy:
             await pilot.click(markdown)
             await pilot.pause()
             assert copied == ["the answer"]
+
+
+class TestChatItemCodeBlock:
+    async def test_long_code_block_renders_every_line(self, chat_model):
+        app = _Host(chat_model, [])
+        async with app.run_test(size=(120, 40)) as pilot:
+            container = app.query_one(ChatContainer)
+            item = ChatItem()
+            item.author = "assistant"
+            lines = "\n".join(f"{n:03}" for n in range(1, 61))
+            item.text = f"```text\n{lines}\n```"
+            await container.query_one("#messageContainer").mount(item)
+            await pilot.pause()
+
+            fence = item.query_one(MarkdownFence)
+            assert fence.outer_size.height >= 60
 
 
 class TestChatItemUser:

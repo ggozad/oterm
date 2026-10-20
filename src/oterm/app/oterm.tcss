@@ -361,7 +361,3 @@ TabbedContent {
 TabPane {
     height: 1fr;
 }
-
-MarkdownFence {
-    max-height: 50;
-}
