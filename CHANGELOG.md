@@ -4,6 +4,10 @@
 
 ## [0.26.1] - 2026-10-21
 
+### Changed
+
+- `pydantic-ai-slim` bumped to 2.59.0 and `pydantic-ai-harness` to 0.59.0.
+
 ### Fixed
 
 - Code blocks longer than 49 lines render in full. ([#346](https://github.com/ggozad/oterm/issues/346))
