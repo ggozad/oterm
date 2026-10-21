@@ -5,6 +5,8 @@ from pydantic_ai.messages import (
     BinaryImage,
     FilePart,
     ModelMessage,
+    NativeToolCallPart,
+    NativeToolReturnPart,
     TextPartDelta,
     ThinkingPartDelta,
     ToolCallPart,
@@ -197,6 +199,81 @@ class TestToolCallStreaming:
         tool_calls = [p for p in chunks if isinstance(p, ToolCallPart)]
         assert len(tool_calls) == 1
         assert tool_calls[0].tool_name == "echo"
+
+    async def test_tool_call_part_carries_args_streamed_in_deltas(self):
+        def echo(s: str) -> str:
+            return f"echoed: {s}"
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, DeltaToolCall]]:
+            if len(messages) > 1:
+                yield "done"
+                return
+            yield {0: DeltaToolCall(name="echo", tool_call_id="tc-1")}
+            yield {0: DeltaToolCall(json_args='{"s": ')}
+            yield {0: DeltaToolCall(json_args='"hi"}')}
+
+        c = _container()
+        c.agent = Agent(FunctionModel(stream_function=stream_fn), tools=[Tool(echo)])
+
+        chunks = await _collect(c.stream_agent("call it"))
+        tool_calls = [p for p in chunks if isinstance(p, ToolCallPart)]
+        assert len(tool_calls) == 1
+        assert tool_calls[0].args_as_dict() == {"s": "hi"}
+
+    async def test_interleaved_tool_calls_carry_their_full_args(self):
+        def echo(s: str) -> str:
+            return f"echoed: {s}"
+
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, DeltaToolCall]]:
+            if len(messages) > 1:
+                yield "done"
+                return
+            yield {0: DeltaToolCall(name="echo", json_args='{"s": ', tool_call_id="a")}
+            yield {1: DeltaToolCall(name="echo", json_args='{"s": ', tool_call_id="b")}
+            yield {0: DeltaToolCall(json_args='"first"}')}
+            yield {1: DeltaToolCall(json_args='"second"}')}
+
+        c = _container()
+        c.agent = Agent(FunctionModel(stream_function=stream_fn), tools=[Tool(echo)])
+
+        chunks = await _collect(c.stream_agent("call both"))
+        tool_calls = [p for p in chunks if isinstance(p, ToolCallPart)]
+        assert [p.args_as_dict() for p in tool_calls] == [
+            {"s": "first"},
+            {"s": "second"},
+        ]
+
+    async def test_native_tool_call_and_return_yielded(self):
+        async def stream_fn(
+            messages: list[ModelMessage], info: AgentInfo
+        ) -> AsyncIterator[str | dict[int, NativeToolCallPart | NativeToolReturnPart]]:
+            yield {
+                0: NativeToolCallPart(
+                    tool_name="web_search", args={"q": "oterm"}, tool_call_id="n-1"
+                )
+            }
+            yield {
+                1: NativeToolReturnPart(
+                    tool_name="web_search", content="results", tool_call_id="n-1"
+                )
+            }
+            yield "done"
+
+        c = _container()
+        _install_stream_agent(c, stream_fn)
+
+        chunks = await _collect(c.stream_agent("search"))
+        native = [
+            p
+            for p in chunks
+            if isinstance(p, (NativeToolCallPart, NativeToolReturnPart))
+        ]
+        assert [type(p) for p in native] == [NativeToolCallPart, NativeToolReturnPart]
+        assert native[0].args_as_dict() == {"q": "oterm"}
 
 
 class TestHistoryUpdate:

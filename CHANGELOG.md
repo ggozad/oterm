@@ -7,6 +7,7 @@
 ### Fixed
 
 - Code blocks longer than 49 lines render in full. ([#346](https://github.com/ggozad/oterm/issues/346))
+- Tool calls show their args for providers that stream them, such as LM Studio.
 
 ## [0.26.0] - 2026-10-12
 
