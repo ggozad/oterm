@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.26.1] - 2026-10-21
+
 ### Fixed
 
 - Code blocks longer than 49 lines render in full. ([#346](https://github.com/ggozad/oterm/issues/346))
