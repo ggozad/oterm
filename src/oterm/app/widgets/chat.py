@@ -322,21 +322,25 @@ class ChatContainer(Widget):
                                     if event.part.id:
                                         seen_file_ids.add(event.part.id)
                                     yield event.part
-                                elif isinstance(
-                                    event.part,
-                                    (
-                                        ToolCallPart,
-                                        NativeToolCallPart,
-                                        NativeToolReturnPart,
-                                    ),
-                                ):  # pragma: no branch
-                                    yield event.part
                             elif isinstance(event, PartDeltaEvent):
                                 if isinstance(
                                     event.delta, (TextPartDelta, ThinkingPartDelta)
-                                ):  # pragma: no branch
+                                ):
                                     self._stream_usage = run.usage
                                     yield event.delta
+                        # Tool call args stream in deltas that can interleave
+                        # across calls, so a call is complete only once the
+                        # response is.
+                        for part in request_stream.response.parts:
+                            if isinstance(
+                                part,
+                                (
+                                    ToolCallPart,
+                                    NativeToolCallPart,
+                                    NativeToolReturnPart,
+                                ),
+                            ):
+                                yield part
                 elif Agent.is_call_tools_node(node):
                     async with node.stream(run.ctx) as tools_stream:
                         async for event in tools_stream:
