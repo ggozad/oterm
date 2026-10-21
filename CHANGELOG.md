@@ -7,6 +7,7 @@
 ### Changed
 
 - `pydantic-ai-slim` bumped to 2.59.0 and `pydantic-ai-harness` to 0.59.0.
+- `pillow` bumped to 13.0.0.
 
 ### Fixed
 
