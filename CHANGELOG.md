@@ -4,6 +4,7 @@
 
 ### Changed
 
+- The installation docs link to the community package pages, note that those packages are maintained outside the project and may lag behind the latest release, and list what packagers need.
 - Locked `fastmcp-slim` 4.1.4, `filelock` 4.2.4, `opentelemetry-api` 1.45.1, `logfire` 5.4.0 and `virtualenv` 21.15.0.
 
 ## [0.26.1] - 2026-10-21
