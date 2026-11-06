@@ -4,7 +4,7 @@
 
 ### Changed
 
-- Locked `fastmcp-slim` 4.1.4, `filelock` 4.2.4, `opentelemetry-api` 1.45.1, `logfire` 5.4.0, `virtualenv` 21.15.0, `authlib` 1.9.2 and `msgpack` 1.2.4.
+- Locked `fastmcp-slim` 4.1.4, `filelock` 4.2.4, `opentelemetry-api` 1.45.1, `logfire` 5.4.0, `virtualenv` 21.15.0, `authlib` 1.9.2, `msgpack` 1.2.4, `pyasn1` 0.6.5, `joserfc` 1.8.0 and `dnspython` 2.9.2.
 
 ## [0.26.1] - 2026-10-21
 
